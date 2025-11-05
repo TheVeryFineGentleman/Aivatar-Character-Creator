@@ -153,7 +153,7 @@ const Index = () => {
       
       // Call Google Gemini API directly
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
