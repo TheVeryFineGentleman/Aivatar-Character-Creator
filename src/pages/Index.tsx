@@ -43,6 +43,7 @@ const Index = () => {
   const [customPrompt, setCustomPrompt] = useState("");
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
 
@@ -262,7 +263,7 @@ const Index = () => {
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
     console.log("🔄 Starte while-Schleife...");
-    while (generationQueueRef.current.length > 0 && isGenerating) {
+    while (generationQueueRef.current.length > 0 && isGeneratingRef.current) {
       console.log("🔄 While-Iteration startet, Queue:", generationQueueRef.current.length);
       const batch = generationQueueRef.current.splice(0, CONCURRENT_REQUESTS);
       console.log("🔄 Batch erstellt:", batch);
@@ -347,6 +348,7 @@ const Index = () => {
 
     console.log("✅ Validierung erfolgreich, starte Generierung...");
     setIsGenerating(true);
+    isGeneratingRef.current = true;
     
     // Initialize slots
     const slots: ImageSlotData[] = Array(imageCount[0]).fill(null).map(() => ({
@@ -385,6 +387,7 @@ const Index = () => {
       });
     } finally {
       setIsGenerating(false);
+      isGeneratingRef.current = false;
       generationQueueRef.current = [];
     }
   };
