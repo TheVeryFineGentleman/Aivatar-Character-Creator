@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Upload, Image as ImageIcon, Download } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import JSZip from "jszip";
+import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "White Background" },
@@ -26,6 +27,58 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
+
+  // Load saved data on mount
+  useEffect(() => {
+    const savedApiKey = getCookie("gemini_api_key");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+
+    const savedImages = getFromLocalStorage("reference_images");
+    if (savedImages && Array.isArray(savedImages)) {
+      // Convert base64 back to File objects
+      Promise.all(
+        savedImages.map(async (imageData: { name: string; type: string; data: string }) => {
+          const response = await fetch(imageData.data);
+          const blob = await response.blob();
+          return new File([blob], imageData.name, { type: imageData.type });
+        })
+      ).then((files) => {
+        setReferenceImages(files);
+      });
+    }
+  }, []);
+
+  // Save API key when it changes
+  useEffect(() => {
+    if (apiKey) {
+      setCookie("gemini_api_key", apiKey, 30);
+    }
+  }, [apiKey]);
+
+  // Save reference images when they change
+  useEffect(() => {
+    if (referenceImages.length > 0) {
+      Promise.all(
+        referenceImages.map((file) => {
+          return new Promise<{ name: string; type: string; data: string }>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              resolve({
+                name: file.name,
+                type: file.type,
+                data: reader.result as string,
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        })
+      ).then((imageData) => {
+        saveToLocalStorage("reference_images", imageData);
+      });
+    }
+  }, [referenceImages]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
