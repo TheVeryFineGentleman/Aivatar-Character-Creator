@@ -201,11 +201,30 @@ const Index = () => {
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
           const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
+          const fullDataUrl = `data:${mimeType};base64,${imageData}`;
+          
           console.log(`✅ Image ${index + 1} generated successfully`);
           console.log("🔍 MIME Type:", mimeType);
           console.log("🔍 Base64 data length:", imageData.length);
-          console.log("🔍 First 50 chars:", imageData.substring(0, 50));
-          return `data:${mimeType};base64,${imageData}`;
+          console.log("🔍 First 100 chars:", imageData.substring(0, 100));
+          console.log("🔍 Last 100 chars:", imageData.substring(imageData.length - 100));
+          console.log("📸 COMPLETE DATA URL (klicke um zu kopieren):", fullDataUrl);
+          console.log("📸 Preview: Du kannst diese Data-URL in die Browser-Adresszeile einfügen um das Bild zu sehen");
+          
+          // Validiere Base64-Format
+          try {
+            const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+            const isValidBase64 = base64Regex.test(imageData);
+            console.log("✓ Base64 FormatValid:", isValidBase64);
+            
+            // Teste Dekodierung
+            const decoded = atob(imageData.substring(0, 100));
+            console.log("✓ Dekodierung erfolgreich, erste Bytes:", decoded.substring(0, 20));
+          } catch (e) {
+            console.error("❌ Base64 Validierung fehlgeschlagen:", e);
+          }
+          
+          return fullDataUrl;
         }
       }
       
