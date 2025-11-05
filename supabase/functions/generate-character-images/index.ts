@@ -75,18 +75,21 @@ serve(async (req) => {
       
       console.log(`Generating image ${i + 1} with prompt: ${prompt}`);
       
-      // Call Google Imagen API for image generation
+      // Call Google Gemini API for image generation
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-image-001:generateImage?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            prompt: prompt,
-            sampleCount: 1,
-            aspectRatio: "1:1"
+            contents: [{
+              parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"]
+            }
           })
         }
       );
@@ -106,19 +109,22 @@ serve(async (req) => {
       console.log("=========================");
       
       // Extract the generated image from the response
-      // Google Imagen API returns: { generations: [{ bytesBase64Encoded: "..." }] }
-      if (data.generations && data.generations.length > 0 && data.generations[0].bytesBase64Encoded) {
-        const imageData = data.generations[0].bytesBase64Encoded;
-        generatedImages.push(`data:image/png;base64,${imageData}`);
-        console.log(`✅ Image ${i + 1} generated successfully`);
-      } else if (data.images && data.images.length > 0) {
-        // Fallback: try alternative response structure
-        const imageData = data.images[0].image || data.images[0].bytesBase64Encoded || data.images[0];
-        generatedImages.push(`data:image/png;base64,${imageData}`);
-        console.log(`✅ Image ${i + 1} generated successfully (fallback structure)`);
+      // Google Gemini API returns: { candidates: [{ content: { parts: [{ inlineData: { data: "base64" } }] } }] }
+      if (data.candidates && data.candidates[0]?.content?.parts) {
+        const imagePart = data.candidates[0].content.parts.find(
+          (part: any) => part.inlineData
+        );
+        if (imagePart?.inlineData?.data) {
+          const imageData = imagePart.inlineData.data;
+          generatedImages.push(`data:image/png;base64,${imageData}`);
+          console.log(`✅ Image ${i + 1} generated successfully`);
+        } else {
+          console.error("❌ No inlineData in parts. Full response:", data);
+          throw new Error(`No image data in response parts`);
+        }
       } else {
-        console.error("❌ No image in response. Full response:", data);
-        throw new Error(`No image generated in response. Structure: ${JSON.stringify(Object.keys(data))}`);
+        console.error("❌ No candidates in response. Full response:", data);
+        throw new Error(`No candidates in response. Structure: ${JSON.stringify(Object.keys(data))}`);
       }
     }
 
