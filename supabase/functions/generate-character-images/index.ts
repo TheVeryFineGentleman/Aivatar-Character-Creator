@@ -93,20 +93,32 @@ serve(async (req) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Google API error: ${response.status} - ${errorText}`);
+        console.error(`❌ Google API error: ${response.status}`);
+        console.error(`Error details: ${errorText}`);
         throw new Error(`Image generation failed: ${response.status} - ${errorText}`);
       }
+      
+      console.log(`✅ API Response received for image ${i + 1}`);
 
       const data = await response.json();
-      console.log("API Response:", JSON.stringify(data));
+      console.log("=== FULL API Response ===");
+      console.log(JSON.stringify(data, null, 2));
+      console.log("=========================");
       
       // Extract the generated image from the response
-      if (data.images && data.images.length > 0) {
-        const imageData = data.images[0].image;
+      // Google Imagen API returns: { generations: [{ bytesBase64Encoded: "..." }] }
+      if (data.generations && data.generations.length > 0 && data.generations[0].bytesBase64Encoded) {
+        const imageData = data.generations[0].bytesBase64Encoded;
         generatedImages.push(`data:image/png;base64,${imageData}`);
+        console.log(`✅ Image ${i + 1} generated successfully`);
+      } else if (data.images && data.images.length > 0) {
+        // Fallback: try alternative response structure
+        const imageData = data.images[0].image || data.images[0].bytesBase64Encoded || data.images[0];
+        generatedImages.push(`data:image/png;base64,${imageData}`);
+        console.log(`✅ Image ${i + 1} generated successfully (fallback structure)`);
       } else {
-        console.error("No image in response:", data);
-        throw new Error("No image generated in response");
+        console.error("❌ No image in response. Full response:", data);
+        throw new Error(`No image generated in response. Structure: ${JSON.stringify(Object.keys(data))}`);
       }
     }
 
