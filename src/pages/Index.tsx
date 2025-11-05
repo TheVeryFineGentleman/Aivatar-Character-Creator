@@ -169,31 +169,58 @@ const Index = () => {
         }
       );
 
+      console.log("🔍 API Request sent to:", response.url);
+      console.log("🔍 Response status:", response.status);
+      console.log("🔍 Response headers:", Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Google API error: ${response.status}`, errorText);
+        console.error("❌ Full response:", response);
         throw new Error(`Image generation failed: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log("API Response received for image", index + 1);
+      console.log("📦 Full API Response for image", index + 1, ":");
+      console.log(JSON.stringify(data, null, 2));
+      
+      console.log("🔍 Checking response structure:");
+      console.log("  - data.candidates exists?", !!data.candidates);
+      console.log("  - candidates length:", data.candidates?.length);
+      console.log("  - candidates[0]:", data.candidates?.[0]);
+      console.log("  - candidates[0].content:", data.candidates?.[0]?.content);
+      console.log("  - candidates[0].content.parts:", data.candidates?.[0]?.content?.parts);
       
       // Extract the generated image from the response
       if (data.candidates && data.candidates[0]?.content?.parts) {
         const imagePart = data.candidates[0].content.parts.find(
           (part: any) => part.inlineData
         );
+        console.log("🔍 Found imagePart:", imagePart);
+        
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
           console.log(`✅ Image ${index + 1} generated successfully`);
+          console.log("🔍 Base64 data length:", imageData.length);
+          console.log("🔍 First 50 chars:", imageData.substring(0, 50));
           return `data:image/png;base64,${imageData}`;
         }
       }
       
       console.error("❌ No image in response for image", index + 1);
+      console.error("❌ Response structure did not match expected format");
       return null;
     } catch (error) {
-      console.error(`Error generating image ${index}:`, error);
+      console.error(`❌ Error generating image ${index}:`, error);
+      console.error("❌ Error type:", error instanceof Error ? error.constructor.name : typeof error);
+      console.error("❌ Error message:", error instanceof Error ? error.message : String(error));
+      console.error("❌ Full error object:", error);
+      
+      // Check for CORS errors
+      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+        console.error("⚠️ POSSIBLE CORS ERROR - Direct API call from browser may be blocked!");
+      }
+      
       return null;
     }
   };
@@ -331,6 +358,11 @@ const Index = () => {
       return;
     }
 
+    console.log("🎨 Starting custom prompt generation");
+    console.log("🎨 Prompt:", customPrompt);
+    console.log("🎨 API Key length:", apiKey.length);
+    console.log("🎨 API Key prefix:", apiKey.substring(0, 10) + "...");
+
     const newIndex = imageSlots.length;
     setImageSlots((prev) => [...prev, { status: "loading", progress: 0 }]);
 
@@ -345,7 +377,7 @@ const Index = () => {
         });
       }, 500);
 
-      console.log(`Generating custom image with prompt: ${customPrompt}`);
+      console.log(`🌐 Sending custom prompt request...`);
 
       // Call Google Gemini API directly
       const response = await fetch(
@@ -366,23 +398,41 @@ const Index = () => {
         }
       );
 
+      console.log("🔍 Custom prompt response status:", response.status);
+      console.log("🔍 Custom prompt response headers:", Object.fromEntries(response.headers.entries()));
+
       clearInterval(progressInterval);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Google API error: ${response.status}`, errorText);
+        console.error("❌ Full error response:", response);
         throw new Error(`Image generation failed: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("📦 Full custom prompt API response:");
+      console.log(JSON.stringify(data, null, 2));
+      
+      console.log("🔍 Checking custom prompt response structure:");
+      console.log("  - data.candidates exists?", !!data.candidates);
+      console.log("  - candidates length:", data.candidates?.length);
+      console.log("  - candidates[0]:", data.candidates?.[0]);
+      console.log("  - candidates[0].content.parts:", data.candidates?.[0]?.content?.parts);
       
       // Extract the generated image from the response
       if (data.candidates && data.candidates[0]?.content?.parts) {
         const imagePart = data.candidates[0].content.parts.find(
           (part: any) => part.inlineData
         );
+        console.log("🔍 Found imagePart in custom prompt:", imagePart);
+        
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
+          console.log("✅ Custom prompt image generated successfully");
+          console.log("🔍 Base64 data length:", imageData.length);
+          console.log("🔍 First 50 chars:", imageData.substring(0, 50));
+          
           const imageUrl = `data:image/png;base64,${imageData}`;
           
           setImageSlots((prev) => {
@@ -400,9 +450,20 @@ const Index = () => {
         }
       }
 
+      console.error("❌ No image in custom prompt response");
+      console.error("❌ Response structure did not match expected format");
       throw new Error("No image in response");
     } catch (error) {
-      console.error("Generation error:", error);
+      console.error("❌ Error with custom prompt:", error);
+      console.error("❌ Error type:", error instanceof Error ? error.constructor.name : typeof error);
+      console.error("❌ Error message:", error instanceof Error ? error.message : String(error));
+      console.error("❌ Full error object:", error);
+      
+      // Check for CORS errors
+      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+        console.error("⚠️ POSSIBLE CORS ERROR - Direct API call from browser may be blocked!");
+      }
+      
       setImageSlots((prev) => {
         const updated = [...prev];
         updated[newIndex] = { status: "error", progress: 0 };
