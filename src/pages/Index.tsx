@@ -252,14 +252,24 @@ const Index = () => {
     background: string,
     totalCount: number
   ) => {
+    console.log("🔄 processQueue gestartet!");
+    console.log("🔄 Queue Länge:", generationQueueRef.current.length);
+    console.log("🔄 isGenerating:", isGenerating);
+    console.log("🔄 totalCount:", totalCount);
+    console.log("🔄 base64Images Länge:", base64Images.length);
+    
     const CONCURRENT_REQUESTS = 2;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
+    console.log("🔄 Starte while-Schleife...");
     while (generationQueueRef.current.length > 0 && isGenerating) {
+      console.log("🔄 While-Iteration startet, Queue:", generationQueueRef.current.length);
       const batch = generationQueueRef.current.splice(0, CONCURRENT_REQUESTS);
+      console.log("🔄 Batch erstellt:", batch);
       
       await Promise.all(
         batch.map(async (index) => {
+          console.log(`🎨 Starte Generierung für Index ${index}`);
           // Update to loading
           setImageSlots((prev) => {
             const updated = [...prev];
