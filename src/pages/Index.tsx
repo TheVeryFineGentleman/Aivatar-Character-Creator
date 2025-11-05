@@ -308,7 +308,15 @@ const Index = () => {
   };
 
   const handleGenerate = async () => {
+    console.log("🚀 handleGenerate aufgerufen!");
+    console.log("🔑 API Key vorhanden?", !!apiKey);
+    console.log("🔑 API Key Länge:", apiKey?.length || 0);
+    console.log("🖼️ Anzahl Reference Images:", referenceImages.length);
+    console.log("🎯 Hintergrund:", selectedBackground);
+    console.log("🔢 Anzahl zu generierende Bilder:", imageCount[0]);
+    
     if (!apiKey) {
+      console.log("❌ Fehler: Kein API Key");
       toast({
         title: "API Key required",
         description: "Please enter your Google Gemini API key",
@@ -318,6 +326,7 @@ const Index = () => {
     }
 
     if (referenceImages.length === 0) {
+      console.log("❌ Fehler: Keine Reference Images");
       toast({
         title: "Reference images required",
         description: "Please upload at least one reference image",
@@ -326,6 +335,7 @@ const Index = () => {
       return;
     }
 
+    console.log("✅ Validierung erfolgreich, starte Generierung...");
     setIsGenerating(true);
     
     // Initialize slots
