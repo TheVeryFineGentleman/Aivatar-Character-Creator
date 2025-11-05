@@ -1,0 +1,34 @@
+import { ImageSlot, ImageSlotStatus } from "./ImageSlot";
+
+export interface ImageSlotData {
+  status: ImageSlotStatus;
+  imageUrl?: string;
+  progress?: number;
+}
+
+interface ImageGalleryProps {
+  slots: ImageSlotData[];
+  onDownload: (index: number) => void;
+}
+
+export const ImageGallery = ({ slots, onDownload }: ImageGalleryProps) => {
+  if (slots.length === 0) return null;
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Generated Images</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {slots.map((slot, index) => (
+          <ImageSlot
+            key={index}
+            index={index}
+            status={slot.status}
+            imageUrl={slot.imageUrl}
+            progress={slot.progress}
+            onDownload={() => onDownload(index)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};

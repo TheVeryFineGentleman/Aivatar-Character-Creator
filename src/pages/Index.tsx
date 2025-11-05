@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download } from "lucide-react";
+import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
+import JSZip from "jszip";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "White Background" },
@@ -20,9 +22,10 @@ const Index = () => {
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [imageCount, setImageCount] = useState([20]);
   const [customPrompt, setCustomPrompt] = useState("");
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [imageSlots, setImageSlots] = useState<ImageSlotData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const generationQueueRef = useRef<number[]>([]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -39,6 +42,107 @@ const Index = () => {
 
   const removeImage = (index: number) => {
     setReferenceImages(referenceImages.filter((_, i) => i !== index));
+  };
+
+  const generateSingleImage = async (
+    index: number,
+    apiKey: string,
+    base64Images: string[],
+    background: string,
+    isFirstEight: boolean,
+    angle?: string
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-character-images`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            apiKey,
+            referenceImages: base64Images,
+            background,
+            count: 1,
+            isFirstEight,
+            angle,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate image");
+      }
+
+      const data = await response.json();
+      return data.images[0] || null;
+    } catch (error) {
+      console.error(`Error generating image ${index}:`, error);
+      return null;
+    }
+  };
+
+  const processQueue = async (
+    apiKey: string,
+    base64Images: string[],
+    background: string,
+    totalCount: number
+  ) => {
+    const CONCURRENT_REQUESTS = 2;
+    const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
+
+    while (generationQueueRef.current.length > 0 && isGenerating) {
+      const batch = generationQueueRef.current.splice(0, CONCURRENT_REQUESTS);
+      
+      await Promise.all(
+        batch.map(async (index) => {
+          // Update to loading
+          setImageSlots((prev) => {
+            const updated = [...prev];
+            updated[index] = { status: "loading", progress: 0 };
+            return updated;
+          });
+
+          // Simulate progress
+          const progressInterval = setInterval(() => {
+            setImageSlots((prev) => {
+              const updated = [...prev];
+              if (updated[index].status === "loading") {
+                updated[index].progress = Math.min((updated[index].progress || 0) + 10, 90);
+              }
+              return updated;
+            });
+          }, 500);
+
+          const isFirstEight = index < 8;
+          const angle = isFirstEight ? angles[index] : undefined;
+          
+          const imageUrl = await generateSingleImage(
+            index,
+            apiKey,
+            base64Images,
+            background,
+            isFirstEight,
+            angle
+          );
+
+          clearInterval(progressInterval);
+
+          // Update with result
+          setImageSlots((prev) => {
+            const updated = [...prev];
+            if (imageUrl) {
+              updated[index] = { status: "completed", imageUrl, progress: 100 };
+            } else {
+              updated[index] = { status: "error", progress: 0 };
+            }
+            return updated;
+          });
+        })
+      );
+    }
   };
 
   const handleGenerate = async () => {
@@ -61,6 +165,17 @@ const Index = () => {
     }
 
     setIsGenerating(true);
+    
+    // Initialize slots
+    const slots: ImageSlotData[] = Array(imageCount[0]).fill(null).map(() => ({
+      status: "pending" as const,
+      progress: 0,
+    }));
+    setImageSlots(slots);
+    
+    // Fill queue
+    generationQueueRef.current = Array.from({ length: imageCount[0] }, (_, i) => i);
+
     try {
       // Convert images to base64
       const imagePromises = referenceImages.map((file) => {
@@ -73,33 +188,11 @@ const Index = () => {
 
       const base64Images = await Promise.all(imagePromises);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-character-images`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            apiKey,
-            referenceImages: base64Images,
-            background: selectedBackground,
-            count: imageCount[0],
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to generate images");
-      }
-
-      const data = await response.json();
-      setGeneratedImages(data.images);
+      await processQueue(apiKey, base64Images, selectedBackground, imageCount[0]);
       
       toast({
         title: "Success!",
-        description: `Generated ${data.images.length} images`,
+        description: `Generated ${imageCount[0]} images`,
       });
     } catch (error) {
       console.error("Generation error:", error);
@@ -110,6 +203,7 @@ const Index = () => {
       });
     } finally {
       setIsGenerating(false);
+      generationQueueRef.current = [];
     }
   };
 
@@ -123,7 +217,9 @@ const Index = () => {
       return;
     }
 
-    setIsGenerating(true);
+    const newIndex = imageSlots.length;
+    setImageSlots((prev) => [...prev, { status: "loading", progress: 0 }]);
+
     try {
       const imagePromises = referenceImages.map((file) => {
         return new Promise<string>((resolve) => {
@@ -135,13 +231,23 @@ const Index = () => {
 
       const base64Images = await Promise.all(imagePromises);
 
+      const progressInterval = setInterval(() => {
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          if (updated[newIndex]?.status === "loading") {
+            updated[newIndex].progress = Math.min((updated[newIndex].progress || 0) + 10, 90);
+          }
+          return updated;
+        });
+      }, 500);
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-character-images`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
             apiKey,
@@ -152,12 +258,18 @@ const Index = () => {
         }
       );
 
+      clearInterval(progressInterval);
+
       if (!response.ok) {
         throw new Error("Failed to generate image");
       }
 
       const data = await response.json();
-      setGeneratedImages([...generatedImages, ...data.images]);
+      setImageSlots((prev) => {
+        const updated = [...prev];
+        updated[newIndex] = { status: "completed", imageUrl: data.images[0], progress: 100 };
+        return updated;
+      });
       setCustomPrompt("");
       
       toast({
@@ -166,13 +278,74 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Generation error:", error);
+      setImageSlots((prev) => {
+        const updated = [...prev];
+        updated[newIndex] = { status: "error", progress: 0 };
+        return updated;
+      });
       toast({
         title: "Generation failed",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadSingle = (index: number) => {
+    const slot = imageSlots[index];
+    if (slot.status === "completed" && slot.imageUrl) {
+      const link = document.createElement("a");
+      link.href = slot.imageUrl;
+      link.download = `character-${index + 1}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
+    
+    if (completedImages.length === 0) {
+      toast({
+        title: "No images to download",
+        description: "Generate some images first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const zip = new JSZip();
+      
+      for (let i = 0; i < imageSlots.length; i++) {
+        const slot = imageSlots[i];
+        if (slot.status === "completed" && slot.imageUrl) {
+          const response = await fetch(slot.imageUrl);
+          const blob = await response.blob();
+          zip.file(`character-${i + 1}.png`, blob);
+        }
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = "character-images.zip";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Success!",
+        description: `Downloaded ${completedImages.length} images`,
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download failed",
+        description: "Failed to create ZIP file",
+        variant: "destructive",
+      });
     }
   };
 
@@ -279,25 +452,37 @@ const Index = () => {
               />
             </div>
 
-            {/* Generate Button */}
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full h-12 text-lg"
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2" />
-                  Generate Images
-                </>
-              )}
-            </Button>
+            {/* Generate Buttons */}
+            <div className="flex gap-3">
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="flex-1 h-12 text-lg"
+                size="lg"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2" />
+                    Generate Images
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleDownloadAll}
+                disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
+                variant="secondary"
+                className="h-12"
+                size="lg"
+              >
+                <Download className="mr-2" />
+                Download All
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -325,24 +510,7 @@ const Index = () => {
         </Card>
 
         {/* Generated Images Gallery */}
-        {generatedImages.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Generated Images</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {generatedImages.map((image, index) => (
-                <Card key={index} className="overflow-hidden border-border/50">
-                  <CardContent className="p-0">
-                    <img
-                      src={image}
-                      alt={`Generated ${index + 1}`}
-                      className="w-full h-64 object-cover"
-                    />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+        <ImageGallery slots={imageSlots} onDownload={handleDownloadSingle} />
       </div>
     </div>
   );
