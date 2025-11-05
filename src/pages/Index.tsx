@@ -17,6 +17,24 @@ const BACKGROUND_OPTIONS = [
   { id: "scenery", label: "Custom Scenery" },
 ];
 
+const POSES = [
+  "standing straight", "sitting casually", "walking forward", "running", 
+  "jumping", "waving", "pointing", "crossing arms", "thinking pose",
+  "surprised expression", "laughing", "dynamic pose", "relaxed pose",
+  "action pose", "excited pose"
+];
+
+const CLOTHING = [
+  "casual t-shirt and jeans", "formal suit", "dress", "sportswear",
+  "hoodie and pants", "jacket and shirt", "uniform", "traditional outfit",
+  "winter coat", "summer clothes"
+];
+
+const EXPRESSIONS = [
+  "happy smile", "serious", "friendly", "excited", "calm", "determined",
+  "gentle", "energetic"
+];
+
 const Index = () => {
   const [apiKey, setApiKey] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
@@ -105,31 +123,75 @@ const Index = () => {
     angle?: string
   ): Promise<string | null> => {
     try {
+      const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
+      let prompt = "";
+      
+      if (isFirstEight && angle) {
+        // First 8 images: standing still from all angles
+        prompt = `Generate an image of a character. ${angle} view, standing still pose, white background, full body shot, clean composition`;
+      } else {
+        // Random poses with variations
+        const pose = POSES[Math.floor(Math.random() * POSES.length)];
+        const clothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)];
+        const expression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+        const viewAngle = angles[Math.floor(Math.random() * angles.length)];
+        
+        let bgText = "";
+        if (background === "white") {
+          bgText = "white background";
+        } else if (background === "greenscreen") {
+          bgText = "green screen background";
+        } else {
+          bgText = "detailed scenery background";
+        }
+        
+        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, full body shot, high quality`;
+      }
+      
+      console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
+      
+      // Call Google Gemini API directly
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-character-images`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            apiKey,
-            referenceImages: base64Images,
-            background,
-            count: 1,
-            isFirstEight,
-            angle,
-          }),
+            contents: [{
+              parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"]
+            }
+          })
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to generate image");
+        const errorText = await response.text();
+        console.error(`❌ Google API error: ${response.status}`, errorText);
+        throw new Error(`Image generation failed: ${response.status}`);
       }
-
+      
       const data = await response.json();
-      return data.images[0] || null;
+      console.log("API Response received for image", index + 1);
+      
+      // Extract the generated image from the response
+      if (data.candidates && data.candidates[0]?.content?.parts) {
+        const imagePart = data.candidates[0].content.parts.find(
+          (part: any) => part.inlineData
+        );
+        if (imagePart?.inlineData?.data) {
+          const imageData = imagePart.inlineData.data;
+          console.log(`✅ Image ${index + 1} generated successfully`);
+          return `data:image/png;base64,${imageData}`;
+        }
+      }
+      
+      console.error("❌ No image in response for image", index + 1);
+      return null;
     } catch (error) {
       console.error(`Error generating image ${index}:`, error);
       return null;
@@ -273,16 +335,6 @@ const Index = () => {
     setImageSlots((prev) => [...prev, { status: "loading", progress: 0 }]);
 
     try {
-      const imagePromises = referenceImages.map((file) => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-      });
-
-      const base64Images = await Promise.all(imagePromises);
-
       const progressInterval = setInterval(() => {
         setImageSlots((prev) => {
           const updated = [...prev];
@@ -293,41 +345,62 @@ const Index = () => {
         });
       }, 500);
 
+      console.log(`Generating custom image with prompt: ${customPrompt}`);
+
+      // Call Google Gemini API directly
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-character-images`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            apiKey,
-            referenceImages: base64Images,
-            customPrompt,
-            count: 1,
-          }),
+            contents: [{
+              parts: [{ text: customPrompt }]
+            }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"]
+            }
+          })
         }
       );
 
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error("Failed to generate image");
+        const errorText = await response.text();
+        console.error(`❌ Google API error: ${response.status}`, errorText);
+        throw new Error(`Image generation failed: ${response.status}`);
       }
 
       const data = await response.json();
-      setImageSlots((prev) => {
-        const updated = [...prev];
-        updated[newIndex] = { status: "completed", imageUrl: data.images[0], progress: 100 };
-        return updated;
-      });
-      setCustomPrompt("");
       
-      toast({
-        title: "Success!",
-        description: "Generated custom image",
-      });
+      // Extract the generated image from the response
+      if (data.candidates && data.candidates[0]?.content?.parts) {
+        const imagePart = data.candidates[0].content.parts.find(
+          (part: any) => part.inlineData
+        );
+        if (imagePart?.inlineData?.data) {
+          const imageData = imagePart.inlineData.data;
+          const imageUrl = `data:image/png;base64,${imageData}`;
+          
+          setImageSlots((prev) => {
+            const updated = [...prev];
+            updated[newIndex] = { status: "completed", imageUrl, progress: 100 };
+            return updated;
+          });
+          setCustomPrompt("");
+          
+          toast({
+            title: "Success!",
+            description: "Generated custom image",
+          });
+          return;
+        }
+      }
+
+      throw new Error("No image in response");
     } catch (error) {
       console.error("Generation error:", error);
       setImageSlots((prev) => {
