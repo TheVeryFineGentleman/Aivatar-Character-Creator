@@ -29,11 +29,10 @@ serve(async (req) => {
   }
 
   try {
-    const { referenceImages, background, count, customPrompt, isFirstEight, angle } = await req.json();
+    const { apiKey, referenceImages, background, count, customPrompt, isFirstEight, angle } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!apiKey) {
+      throw new Error("API key is required");
     }
 
     if (!referenceImages || referenceImages.length === 0) {
@@ -54,7 +53,7 @@ serve(async (req) => {
       } else if (isFirstEight && i < 8) {
         // First 8 images: standing still from all angles
         const viewAngle = angle || angles[i];
-        prompt = `Character from reference image, ${viewAngle} view, standing still, white background, full body, clean`;
+        prompt = `Generate an image of a character. ${viewAngle} view, standing still pose, white background, full body shot, clean composition`;
       } else {
         // Random poses with variations
         const pose = POSES[Math.floor(Math.random() * POSES.length)];
@@ -66,56 +65,45 @@ serve(async (req) => {
         if (background === "white") {
           bgText = "white background";
         } else if (background === "greenscreen") {
-          bgText = "green screen";
+          bgText = "green screen background";
         } else {
-          bgText = "detailed scenery";
+          bgText = "detailed scenery background";
         }
         
-        prompt = `Character ${viewAngle}, ${pose}, ${clothing}, ${expression}, ${bgText}, full body`;
+        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, full body shot, high quality`;
       }
       
       console.log(`Generating image ${i + 1} with prompt: ${prompt}`);
       
-      // Call Lovable AI with image generation model
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          modalities: ["image", "text"]
-        })
-      });
+      // Call Google Imagen API for image generation
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-image-001:generateImage?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: prompt,
+            sampleCount: 1,
+            aspectRatio: "1:1"
+          })
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`AI Gateway error: ${response.status} - ${errorText}`);
-        
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        }
-        if (response.status === 402) {
-          throw new Error("Payment required. Please add credits to your Lovable workspace.");
-        }
-        
-        throw new Error(`Image generation failed: ${response.status}`);
+        console.error(`Google API error: ${response.status} - ${errorText}`);
+        throw new Error(`Image generation failed: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
       console.log("API Response:", JSON.stringify(data));
       
       // Extract the generated image from the response
-      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      if (imageUrl) {
-        generatedImages.push(imageUrl);
+      if (data.images && data.images.length > 0) {
+        const imageData = data.images[0].image;
+        generatedImages.push(`data:image/png;base64,${imageData}`);
       } else {
         console.error("No image in response:", data);
         throw new Error("No image generated in response");
