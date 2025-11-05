@@ -34,11 +34,17 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload }:
         )}
         
         {status === "completed" && imageUrl && (
-          <div className="relative group">
+          <div className="relative group w-full h-full">
             <img
               src={imageUrl}
               alt={`Generated ${index + 1}`}
               className="w-full h-full object-cover"
+              onLoad={() => console.log(`✅ Image ${index + 1} loaded successfully`)}
+              onError={(e) => {
+                console.error(`❌ Image ${index + 1} failed to load`);
+                console.error("Image URL:", imageUrl.substring(0, 100));
+                console.error("Error:", e);
+              }}
             />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Button
