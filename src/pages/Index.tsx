@@ -200,10 +200,12 @@ const Index = () => {
         
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
+          const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
           console.log(`✅ Image ${index + 1} generated successfully`);
+          console.log("🔍 MIME Type:", mimeType);
           console.log("🔍 Base64 data length:", imageData.length);
           console.log("🔍 First 50 chars:", imageData.substring(0, 50));
-          return `data:image/png;base64,${imageData}`;
+          return `data:${mimeType};base64,${imageData}`;
         }
       }
       
@@ -429,11 +431,13 @@ const Index = () => {
         
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
+          const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
           console.log("✅ Custom prompt image generated successfully");
+          console.log("🔍 MIME Type:", mimeType);
           console.log("🔍 Base64 data length:", imageData.length);
           console.log("🔍 First 50 chars:", imageData.substring(0, 50));
           
-          const imageUrl = `data:image/png;base64,${imageData}`;
+          const imageUrl = `data:${mimeType};base64,${imageData}`;
           
           setImageSlots((prev) => {
             const updated = [...prev];
