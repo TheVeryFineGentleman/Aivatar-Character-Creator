@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -9,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Upload, Image as ImageIcon, Download } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import JSZip from "jszip";
-import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
+import { saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "White Background" },
@@ -18,7 +17,6 @@ const BACKGROUND_OPTIONS = [
 ];
 
 const Index = () => {
-  const [apiKey, setApiKey] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [imageCount, setImageCount] = useState([20]);
@@ -28,13 +26,8 @@ const Index = () => {
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
 
-  // Load saved data on mount
+  // Load saved reference images on mount
   useEffect(() => {
-    const savedApiKey = getCookie("gemini_api_key");
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-    }
-
     const savedImages = getFromLocalStorage("reference_images");
     if (savedImages && Array.isArray(savedImages)) {
       // Convert base64 back to File objects
@@ -49,13 +42,6 @@ const Index = () => {
       });
     }
   }, []);
-
-  // Save API key when it changes
-  useEffect(() => {
-    if (apiKey) {
-      setCookie("gemini_api_key", apiKey, 30);
-    }
-  }, [apiKey]);
 
   // Save reference images when they change
   useEffect(() => {
@@ -99,7 +85,6 @@ const Index = () => {
 
   const generateSingleImage = async (
     index: number,
-    apiKey: string,
     base64Images: string[],
     background: string,
     isFirstEight: boolean,
@@ -115,7 +100,6 @@ const Index = () => {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            apiKey,
             referenceImages: base64Images,
             background,
             count: 1,
@@ -138,7 +122,6 @@ const Index = () => {
   };
 
   const processQueue = async (
-    apiKey: string,
     base64Images: string[],
     background: string,
     totalCount: number
@@ -174,7 +157,6 @@ const Index = () => {
           
           const imageUrl = await generateSingleImage(
             index,
-            apiKey,
             base64Images,
             background,
             isFirstEight,
@@ -199,15 +181,6 @@ const Index = () => {
   };
 
   const handleGenerate = async () => {
-    if (!apiKey) {
-      toast({
-        title: "API Key required",
-        description: "Please enter your Google Gemini API key",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (referenceImages.length === 0) {
       toast({
         title: "Reference images required",
@@ -241,7 +214,7 @@ const Index = () => {
 
       const base64Images = await Promise.all(imagePromises);
 
-      await processQueue(apiKey, base64Images, selectedBackground, imageCount[0]);
+      await processQueue(base64Images, selectedBackground, imageCount[0]);
       
       toast({
         title: "Success!",
@@ -261,10 +234,10 @@ const Index = () => {
   };
 
   const handleCustomPrompt = async () => {
-    if (!apiKey || !customPrompt) {
+    if (!customPrompt) {
       toast({
         title: "Missing information",
-        description: "Please enter both API key and prompt",
+        description: "Please enter a prompt",
         variant: "destructive",
       });
       return;
@@ -303,7 +276,6 @@ const Index = () => {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            apiKey,
             referenceImages: base64Images,
             customPrompt,
             count: 1,
@@ -422,19 +394,6 @@ const Index = () => {
         {/* Main Controls */}
         <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="pt-6 space-y-6">
-            {/* API Key */}
-            <div className="space-y-2">
-              <Label htmlFor="api-key">Google Gemini API Key</Label>
-              <Input
-                id="api-key"
-                type="password"
-                placeholder="Enter your API key..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="font-mono"
-              />
-            </div>
-
             {/* Image Upload */}
             <div className="space-y-2">
               <Label>Reference Images (up to 3)</Label>

@@ -2,69 +2,25 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const POSES = [
-  "standing straight",
-  "sitting casually",
-  "walking forward",
-  "running",
-  "jumping",
-  "waving",
-  "pointing",
-  "crossing arms",
-  "hands on hips",
-  "thinking pose",
-  "excited pose",
-  "laughing",
-  "surprised expression",
-  "confident stance",
-  "relaxed pose",
-  "action pose",
-  "heroic pose",
-  "dynamic pose",
-  "leaning against wall",
-  "stretching",
-  // ... 80 more poses would go here
+  "standing straight", "sitting casually", "walking forward", "running", 
+  "jumping", "waving", "pointing", "crossing arms", "thinking pose",
+  "surprised expression", "laughing", "dynamic pose", "relaxed pose",
+  "action pose", "excited pose"
 ];
 
 const CLOTHING = [
-  "casual t-shirt and jeans",
-  "formal suit",
-  "sportswear",
-  "dress",
-  "hoodie and pants",
-  "jacket and shirt",
-  "uniform",
-  "traditional outfit",
-  "summer clothes",
-  "winter coat",
+  "casual t-shirt and jeans", "formal suit", "dress", "sportswear",
+  "hoodie and pants", "jacket and shirt", "uniform", "traditional outfit",
+  "winter coat", "summer clothes"
 ];
 
 const EXPRESSIONS = [
-  "happy smile",
-  "serious",
-  "friendly",
-  "excited",
-  "calm",
-  "confident",
-  "playful",
-  "determined",
-  "gentle",
-  "energetic",
-];
-
-const ANGLES = [
-  "front view",
-  "back view",
-  "left side view",
-  "right side view",
-  "front-left angle",
-  "front-right angle",
-  "back-left angle",
-  "back-right angle",
+  "happy smile", "serious", "friendly", "excited", "calm", "determined",
+  "gentle", "energetic"
 ];
 
 serve(async (req) => {
@@ -73,110 +29,112 @@ serve(async (req) => {
   }
 
   try {
-    const { apiKey, referenceImages, background, count, customPrompt } =
-      await req.json();
-
-    if (!apiKey) {
-      throw new Error("API key is required");
+    const { referenceImages, background, count, customPrompt, isFirstEight, angle } = await req.json();
+    
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    if (!referenceImages || referenceImages.length === 0) {
+      throw new Error("At least one reference image is required");
+    }
+
+    const generatedImages: string[] = [];
+    
     console.log(`Generating ${count} images with background: ${background}`);
 
-    const images: string[] = [];
-
-    // First 8 images: all angles on white background
-    const anglesToGenerate = Math.min(8, count);
-    for (let i = 0; i < anglesToGenerate; i++) {
-      const angle = ANGLES[i];
-      const prompt = customPrompt ||
-        `Create an image of the character from the reference images. ${angle}, standing still pose, white background, full body shot, character design, clean composition`;
-
-      console.log(`Generating image ${i + 1} with prompt: ${prompt}`);
-
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" +
-          apiKey,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: prompt },
-                  ...referenceImages.map((img: string) => ({
-                    inline_data: {
-                      mime_type: img.split(";")[0].split(":")[1],
-                      data: img.split(",")[1],
-                    },
-                  })),
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.9,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1024,
-            },
-          }),
+    const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
+    
+    for (let i = 0; i < count; i++) {
+      let prompt = "";
+      
+      if (customPrompt) {
+        prompt = customPrompt;
+      } else if (isFirstEight && i < 8) {
+        // First 8 images: standing still from all angles
+        const viewAngle = angle || angles[i];
+        prompt = `Character from reference image, ${viewAngle} view, standing still, white background, full body, clean`;
+      } else {
+        // Random poses with variations
+        const pose = POSES[Math.floor(Math.random() * POSES.length)];
+        const clothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)];
+        const expression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+        const viewAngle = angles[Math.floor(Math.random() * angles.length)];
+        
+        let bgText = "";
+        if (background === "white") {
+          bgText = "white background";
+        } else if (background === "greenscreen") {
+          bgText = "green screen";
+        } else {
+          bgText = "detailed scenery";
         }
-      );
+        
+        prompt = `Character ${viewAngle}, ${pose}, ${clothing}, ${expression}, ${bgText}, full body`;
+      }
+      
+      console.log(`Generating image ${i + 1} with prompt: ${prompt}`);
+      
+      // Call Lovable AI with image generation model
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          modalities: ["image", "text"]
+        })
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`API Error: ${errorText}`);
-        throw new Error(`Failed to generate image: ${errorText}`);
+        console.error(`AI Gateway error: ${response.status} - ${errorText}`);
+        
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        if (response.status === 402) {
+          throw new Error("Payment required. Please add credits to your Lovable workspace.");
+        }
+        
+        throw new Error(`Image generation failed: ${response.status}`);
       }
 
       const data = await response.json();
-
-      // Note: Gemini API doesn't directly generate images like DALL-E
-      // This is a placeholder - in reality, you'd need to use Imagen API
-      // or another image generation endpoint
-      console.log("API Response:", JSON.stringify(data, null, 2));
-
-      // For now, we'll return a placeholder
-      // In production, you'd integrate with Google's Imagen API
-      images.push("data:image/png;base64,placeholder");
-    }
-
-    // Remaining images: random poses and backgrounds
-    for (let i = anglesToGenerate; i < count; i++) {
-      const pose = POSES[Math.floor(Math.random() * POSES.length)];
-      const clothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)];
-      const expression =
-        EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
-      const angle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
-
-      let backgroundPrompt = "";
-      if (background === "white") {
-        backgroundPrompt = "white background";
-      } else if (background === "greenscreen") {
-        backgroundPrompt = "green screen background";
+      console.log("API Response:", JSON.stringify(data));
+      
+      // Extract the generated image from the response
+      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (imageUrl) {
+        generatedImages.push(imageUrl);
       } else {
-        backgroundPrompt =
-          "realistic environment background, detailed scenery";
+        console.error("No image in response:", data);
+        throw new Error("No image generated in response");
       }
-
-      const prompt = customPrompt ||
-        `Create an image of the character from the reference images. ${angle}, ${pose}, wearing ${clothing}, ${expression}, ${backgroundPrompt}, full body shot, character design, high quality`;
-
-      console.log(`Generating image ${i + 1} with prompt: ${prompt}`);
-
-      // Same API call structure as above
-      images.push("data:image/png;base64,placeholder");
     }
 
-    return new Response(JSON.stringify({ images }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ images: generatedImages }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error("Error in generate-character-images function:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "An error occurred" }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "An error occurred" 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
