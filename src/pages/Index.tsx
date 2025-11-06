@@ -203,6 +203,31 @@ const Index = () => {
       console.log("📦 Full API Response for image", index + 1, ":");
       console.log(JSON.stringify(data, null, 2));
       
+      // Check for IMAGE_OTHER error (model couldn't generate from reference)
+      if (data.candidates?.[0]?.finishReason === "IMAGE_OTHER") {
+        console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
+        
+        // Retry with fresh API call (not just recursive call)
+        if (retryCount < MAX_RETRIES) {
+          console.log(`🔄 Retrying image ${index + 1} with new API call (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+          
+          setImageSlots((prev) => {
+            const updated = [...prev];
+            updated[index] = { 
+              status: "loading", 
+              progress: 30,
+              retrying: true 
+            };
+            return updated;
+          });
+          
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+          return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
+        }
+        
+        return null;
+      }
+      
       console.log("🔍 Checking response structure:");
       console.log("  - data.candidates exists?", !!data.candidates);
       console.log("  - candidates length:", data.candidates?.length);
