@@ -151,7 +151,10 @@ const Index = () => {
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       
-      // Call Google Gemini API directly
+      // Prepare reference image data (remove data URL prefix if present)
+      const cleanBase64 = base64Images[0].replace(/^data:image\/[a-z]+;base64,/, '');
+      
+      // Call Google Gemini API directly with reference image
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
         {
@@ -160,13 +163,25 @@ const Index = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Generate an image of a character that looks EXACTLY like the character in the reference image provided. Keep the same appearance, style, features, and design. ${prompt}`,
+                  },
+                  {
+                    inlineData: {
+                      mimeType: "image/png",
+                      data: cleanBase64,
+                    },
+                  },
+                ],
+              },
+            ],
             generationConfig: {
-              responseModalities: ["TEXT", "IMAGE"]
-            }
-          })
+              responseModalities: ["TEXT", "IMAGE"],
+            },
+          }),
         }
       );
 
