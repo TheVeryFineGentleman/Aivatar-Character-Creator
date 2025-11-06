@@ -249,6 +249,18 @@ const Index = () => {
       // Retry if we haven't exceeded max retries
       if (retryCount < MAX_RETRIES) {
         console.log(`🔄 Retrying image ${index + 1} (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+        
+        // Update slot to show retry status
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          updated[index] = { 
+            status: "loading", 
+            progress: 30,
+            retrying: true 
+          };
+          return updated;
+        });
+        
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
         return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
       }
@@ -268,6 +280,18 @@ const Index = () => {
       // Retry if we haven't exceeded max retries
       if (retryCount < MAX_RETRIES) {
         console.log(`🔄 Retrying image ${index + 1} after error (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+        
+        // Update slot to show retry status
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          updated[index] = { 
+            status: "loading", 
+            progress: 30,
+            retrying: true 
+          };
+          return updated;
+        });
+        
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
         return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
       }

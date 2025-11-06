@@ -11,9 +11,10 @@ interface ImageSlotProps {
   progress?: number;
   index: number;
   onDownload?: () => void;
+  retrying?: boolean;
 }
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, retrying = false }: ImageSlotProps) => {
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-0 relative aspect-square">
@@ -28,7 +29,9 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload }:
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <div className="w-full space-y-2">
               <Progress value={progress} className="h-2" />
-              <p className="text-xs text-center text-muted-foreground">{Math.round(progress)}%</p>
+              <p className="text-xs text-center text-muted-foreground">
+                {retrying ? "Retrying..." : `${Math.round(progress)}%`}
+              </p>
             </div>
           </div>
         )}

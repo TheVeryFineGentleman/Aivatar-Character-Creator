@@ -4,6 +4,7 @@ export interface ImageSlotData {
   status: ImageSlotStatus;
   imageUrl?: string;
   progress?: number;
+  retrying?: boolean;
 }
 
 interface ImageGalleryProps {
@@ -25,6 +26,7 @@ export const ImageGallery = ({ slots, onDownload }: ImageGalleryProps) => {
             status={slot.status}
             imageUrl={slot.imageUrl}
             progress={slot.progress}
+            retrying={slot.retrying}
             onDownload={() => onDownload(index)}
           />
         ))}
