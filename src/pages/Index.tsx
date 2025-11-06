@@ -36,12 +36,19 @@ const SHOT_OPTIONS = [
   { id: "closeup", label: "Close-up Face", description: "close-up face shot" },
 ];
 
-const POSES = [
+const CASUAL_POSES = [
   "standing casually", "standing relaxed", "sitting casually", "leaning slightly",
   "hands in pockets", "one hand on hip", "arms crossed relaxed", "hands behind back",
   "looking to the side", "gentle wave", "slight smile", "resting pose",
   "natural standing pose", "comfortable sitting", "casual lean", "relaxed stance",
   "hands clasped", "one leg slightly bent", "weight on one leg", "natural posture"
+];
+
+const COOL_POSES = [
+  "dynamic fashion pose", "confident power stance", "stylish walking pose",
+  "energetic jump", "fashion runway walk", "cool leaning pose",
+  "dynamic movement", "striking pose", "confident standing", "model pose",
+  "stylish turn", "powerful stance", "dramatic pose", "fashion editorial pose"
 ];
 
 const CLOTHING = [
@@ -142,7 +149,7 @@ const Index = () => {
     apiKey: string,
     base64Images: string[],
     background: string,
-    isFirstEight: boolean,
+    numberOfImages: number,
     selectedFormat: string,
     selectedShot: string,
     angle?: string,
@@ -158,11 +165,16 @@ const Index = () => {
       const formatOption = FORMAT_OPTIONS.find(f => f.id === selectedFormat);
       const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
-      const shotText = shotOption ? shotOption.description : "full body shot";
       
-      // Always generate with casual poses - professional photoshoot style
-      const pose = POSES[Math.floor(Math.random() * POSES.length)];
+      // After 20% of images, switch to cool poses, different outfit, and full body
+      const twentyPercent = Math.ceil(numberOfImages * 0.2);
+      const isCoolPhase = index >= twentyPercent;
+      
+      const shotText = isCoolPhase ? "full body shot" : (shotOption ? shotOption.description : "full body shot");
+      const poses = isCoolPhase ? COOL_POSES : CASUAL_POSES;
+      const pose = poses[Math.floor(Math.random() * poses.length)];
       const viewAngle = angles[Math.floor(Math.random() * angles.length)];
+      const outfitText = isCoolPhase ? ", wearing different stylish outfit" : "";
       
       let bgText = "";
       if (background === "white") {
@@ -173,7 +185,7 @@ const Index = () => {
         bgText = "professional outdoor location";
       }
       
-      prompt = `Professional photoshoot, ${viewAngle} angle, ${pose}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}`;
+      prompt = `Professional photoshoot, ${viewAngle} angle, ${pose}${outfitText}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       
@@ -245,7 +257,7 @@ const Index = () => {
           });
           
           await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-          return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, selectedFormat, selectedShot, angle, retryCount + 1);
+          return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, angle, retryCount + 1);
         }
         
         return null;
@@ -310,7 +322,7 @@ const Index = () => {
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, selectedFormat, selectedShot, angle, retryCount + 1);
+        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, angle, retryCount + 1);
       }
       
       return null;
@@ -341,7 +353,7 @@ const Index = () => {
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, selectedFormat, selectedShot, angle, retryCount + 1);
+        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, angle, retryCount + 1);
       }
       
       return null;
@@ -392,18 +404,14 @@ const Index = () => {
             });
           }, 500);
 
-          const isFirstEight = false; // All images now use casual poses
-          const angle = undefined; // No fixed angles anymore
-          
           const imageUrl = await generateSingleImage(
             index,
             apiKey,
             base64Images,
             background,
-            isFirstEight,
+            totalCount,
             selectedFormat,
-            selectedShot,
-            angle
+            selectedShot
           );
 
           clearInterval(progressInterval);
