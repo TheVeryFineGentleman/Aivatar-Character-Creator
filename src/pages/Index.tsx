@@ -37,10 +37,11 @@ const SHOT_OPTIONS = [
 ];
 
 const POSES = [
-  "standing straight", "sitting casually", "walking forward", "running", 
-  "jumping", "waving", "pointing", "crossing arms", "thinking pose",
-  "surprised expression", "laughing", "dynamic pose", "relaxed pose",
-  "action pose", "excited pose"
+  "standing casually", "standing relaxed", "sitting casually", "leaning slightly",
+  "hands in pockets", "one hand on hip", "arms crossed relaxed", "hands behind back",
+  "looking to the side", "gentle wave", "slight smile", "resting pose",
+  "natural standing pose", "comfortable sitting", "casual lean", "relaxed stance",
+  "hands clasped", "one leg slightly bent", "weight on one leg", "natural posture"
 ];
 
 const CLOTHING = [
@@ -159,27 +160,22 @@ const Index = () => {
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
       const shotText = shotOption ? shotOption.description : "full body shot";
       
-      if (isFirstEight && angle) {
-        // First 8 images: standing still from all angles
-        prompt = `Generate an image of a character. ${angle} view, standing still pose, white background, ${shotText} with consistent camera distance, clean composition, ${formatText}`;
+      // Always generate with casual poses
+      const pose = POSES[Math.floor(Math.random() * POSES.length)];
+      const clothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)];
+      const expression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+      const viewAngle = angles[Math.floor(Math.random() * angles.length)];
+      
+      let bgText = "";
+      if (background === "white") {
+        bgText = "white background";
+      } else if (background === "greenscreen") {
+        bgText = "green screen background";
       } else {
-        // Random poses with variations
-        const pose = POSES[Math.floor(Math.random() * POSES.length)];
-        const clothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)];
-        const expression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
-        const viewAngle = angles[Math.floor(Math.random() * angles.length)];
-        
-        let bgText = "";
-        if (background === "white") {
-          bgText = "white background";
-        } else if (background === "greenscreen") {
-          bgText = "green screen background";
-        } else {
-          bgText = "detailed scenery background";
-        }
-        
-        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, ${shotText} with consistent camera distance (same zoom level), high quality, ${formatText}`;
+        bgText = "detailed scenery background";
       }
+      
+      prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, ${shotText} with consistent camera distance (same zoom level), casual and natural style, high quality, ${formatText}`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       
@@ -398,8 +394,8 @@ const Index = () => {
             });
           }, 500);
 
-          const isFirstEight = index < 8;
-          const angle = isFirstEight ? angles[index] : undefined;
+          const isFirstEight = false; // All images now use casual poses
+          const angle = undefined; // No fixed angles anymore
           
           const imageUrl = await generateSingleImage(
             index,
