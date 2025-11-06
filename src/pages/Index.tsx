@@ -132,7 +132,7 @@ const Index = () => {
       
       if (isFirstEight && angle) {
         // First 8 images: standing still from all angles
-        prompt = `Generate an image of a character. ${angle} view, standing still pose, white background, full body shot, clean composition`;
+        prompt = `Generate an image of a character. ${angle} view, standing still pose, white background, full body shot with consistent camera distance, clean composition`;
       } else {
         // Random poses with variations
         const pose = POSES[Math.floor(Math.random() * POSES.length)];
@@ -149,7 +149,7 @@ const Index = () => {
           bgText = "detailed scenery background";
         }
         
-        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, full body shot, high quality`;
+        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, full body shot with consistent camera distance (same zoom level), high quality`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
