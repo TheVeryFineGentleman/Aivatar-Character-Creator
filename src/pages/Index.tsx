@@ -160,22 +160,20 @@ const Index = () => {
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
       const shotText = shotOption ? shotOption.description : "full body shot";
       
-      // Always generate with casual poses
+      // Always generate with casual poses - simplified prompt
       const pose = POSES[Math.floor(Math.random() * POSES.length)];
-      const clothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)];
-      const expression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
       const viewAngle = angles[Math.floor(Math.random() * angles.length)];
       
       let bgText = "";
       if (background === "white") {
         bgText = "white background";
       } else if (background === "greenscreen") {
-        bgText = "green screen background";
+        bgText = "green screen";
       } else {
-        bgText = "detailed scenery background";
+        bgText = "outdoor scenery";
       }
       
-      prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, ${shotText} with consistent camera distance (same zoom level), casual and natural style, high quality, ${formatText}`;
+      prompt = `Character from reference image, ${viewAngle} view, ${pose}, ${bgText}, ${shotText}, ${formatText}`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       
@@ -195,7 +193,7 @@ const Index = () => {
               {
                 parts: [
                   {
-                    text: `Generate an image of a character that looks EXACTLY like the character in the reference image provided. Keep the SAME appearance, style, features, and design. IMPORTANT: Use the EXACT SAME art style as the reference image (if the reference is realistic, generate realistic; if it's cartoon/anime, generate cartoon/anime; if it's 3D, generate 3D, etc.). Match the artistic style perfectly. ${prompt}`,
+                    text: `Create an image matching the reference character. Keep EXACT same appearance and art style. ${prompt}`,
                   },
                   {
                     inlineData: {
