@@ -10,11 +10,30 @@ import { Sparkles, Upload, Image as ImageIcon, Download } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "White Background" },
   { id: "greenscreen", label: "Green Screen" },
   { id: "scenery", label: "Custom Scenery" },
+];
+
+const FORMAT_OPTIONS = [
+  { id: "square", label: "Square (1:1)", ratio: "1:1" },
+  { id: "portrait", label: "Portrait (9:16)", ratio: "9:16" },
+  { id: "landscape", label: "Landscape (16:9)", ratio: "16:9" },
+  { id: "wide", label: "Wide (21:9)", ratio: "21:9" },
+];
+
+const SHOT_OPTIONS = [
+  { id: "fullbody", label: "Full Body", description: "full body shot" },
+  { id: "upperbody", label: "Upper Body", description: "upper body shot from waist up" },
+  { id: "closeup", label: "Close-up Face", description: "close-up face shot" },
 ];
 
 const POSES = [
@@ -43,6 +62,8 @@ const Index = () => {
   const [customPrompt, setCustomPrompt] = useState("");
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState("square");
+  const [selectedShot, setSelectedShot] = useState("fullbody");
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -121,6 +142,8 @@ const Index = () => {
     base64Images: string[],
     background: string,
     isFirstEight: boolean,
+    selectedFormat: string,
+    selectedShot: string,
     angle?: string,
     retryCount: number = 0
   ): Promise<string | null> => {
@@ -130,9 +153,15 @@ const Index = () => {
       const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
       let prompt = "";
       
+      // Get format and shot descriptions
+      const formatOption = FORMAT_OPTIONS.find(f => f.id === selectedFormat);
+      const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
+      const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
+      const shotText = shotOption ? shotOption.description : "full body shot";
+      
       if (isFirstEight && angle) {
         // First 8 images: standing still from all angles
-        prompt = `Generate an image of a character. ${angle} view, standing still pose, white background, full body shot with consistent camera distance, clean composition`;
+        prompt = `Generate an image of a character. ${angle} view, standing still pose, white background, ${shotText} with consistent camera distance, clean composition, ${formatText}`;
       } else {
         // Random poses with variations
         const pose = POSES[Math.floor(Math.random() * POSES.length)];
@@ -149,7 +178,7 @@ const Index = () => {
           bgText = "detailed scenery background";
         }
         
-        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, full body shot with consistent camera distance (same zoom level), high quality`;
+        prompt = `Generate an image of a character. ${viewAngle} angle, ${pose}, wearing ${clothing}, ${expression}, ${bgText}, ${shotText} with consistent camera distance (same zoom level), high quality, ${formatText}`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
@@ -222,7 +251,7 @@ const Index = () => {
           });
           
           await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-          return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
+          return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, selectedFormat, selectedShot, angle, retryCount + 1);
         }
         
         return null;
@@ -287,7 +316,7 @@ const Index = () => {
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
+        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, selectedFormat, selectedShot, angle, retryCount + 1);
       }
       
       return null;
@@ -318,7 +347,7 @@ const Index = () => {
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
+        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, selectedFormat, selectedShot, angle, retryCount + 1);
       }
       
       return null;
@@ -329,6 +358,8 @@ const Index = () => {
     apiKey: string,
     base64Images: string[],
     background: string,
+    selectedFormat: string,
+    selectedShot: string,
     totalCount: number
   ) => {
     console.log("🔄 processQueue gestartet!");
@@ -376,6 +407,8 @@ const Index = () => {
             base64Images,
             background,
             isFirstEight,
+            selectedFormat,
+            selectedShot,
             angle
           );
 
@@ -450,7 +483,7 @@ const Index = () => {
 
       const base64Images = await Promise.all(imagePromises);
 
-      await processQueue(apiKey, base64Images, selectedBackground, imageCount[0]);
+      await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, imageCount[0]);
       
       toast({
         title: "Success!",
@@ -752,6 +785,55 @@ const Index = () => {
                     {option.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Format and Shot Type Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Image Format Dropdown */}
+              <div className="space-y-2">
+                <Label>Image Format</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Select Format"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full bg-popover">
+                    {FORMAT_OPTIONS.map((format) => (
+                      <DropdownMenuItem
+                        key={format.id}
+                        onClick={() => setSelectedFormat(format.id)}
+                        className={selectedFormat === format.id ? "bg-accent" : ""}
+                      >
+                        {format.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Shot Type Dropdown */}
+              <div className="space-y-2">
+                <Label>Shot Type</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Select Shot"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full bg-popover">
+                    {SHOT_OPTIONS.map((shot) => (
+                      <DropdownMenuItem
+                        key={shot.id}
+                        onClick={() => setSelectedShot(shot.id)}
+                        className={selectedShot === shot.id ? "bg-accent" : ""}
+                      >
+                        {shot.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
