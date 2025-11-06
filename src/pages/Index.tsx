@@ -121,8 +121,11 @@ const Index = () => {
     base64Images: string[],
     background: string,
     isFirstEight: boolean,
-    angle?: string
+    angle?: string,
+    retryCount: number = 0
   ): Promise<string | null> => {
+    const MAX_RETRIES = 3;
+    
     try {
       const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
       let prompt = "";
@@ -242,6 +245,14 @@ const Index = () => {
       
       console.error("❌ No image in response for image", index + 1);
       console.error("❌ Response structure did not match expected format");
+      
+      // Retry if we haven't exceeded max retries
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 Retrying image ${index + 1} (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
+      }
+      
       return null;
     } catch (error) {
       console.error(`❌ Error generating image ${index}:`, error);
@@ -252,6 +263,13 @@ const Index = () => {
       // Check for CORS errors
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
         console.error("⚠️ POSSIBLE CORS ERROR - Direct API call from browser may be blocked!");
+      }
+      
+      // Retry if we haven't exceeded max retries
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 Retrying image ${index + 1} after error (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        return generateSingleImage(index, apiKey, base64Images, background, isFirstEight, angle, retryCount + 1);
       }
       
       return null;
