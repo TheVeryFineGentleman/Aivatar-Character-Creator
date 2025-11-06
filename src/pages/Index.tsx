@@ -160,20 +160,20 @@ const Index = () => {
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
       const shotText = shotOption ? shotOption.description : "full body shot";
       
-      // Always generate with casual poses - simplified prompt
+      // Always generate with casual poses - professional photoshoot style
       const pose = POSES[Math.floor(Math.random() * POSES.length)];
       const viewAngle = angles[Math.floor(Math.random() * angles.length)];
       
       let bgText = "";
       if (background === "white") {
-        bgText = "white background";
+        bgText = "clean white studio background";
       } else if (background === "greenscreen") {
-        bgText = "green screen";
+        bgText = "green screen studio setup";
       } else {
-        bgText = "outdoor scenery";
+        bgText = "professional outdoor location";
       }
       
-      prompt = `Character from reference image, ${viewAngle} view, ${pose}, ${bgText}, ${shotText}, ${formatText}`;
+      prompt = `Professional photoshoot, ${viewAngle} angle, ${pose}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       
