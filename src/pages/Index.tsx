@@ -158,7 +158,8 @@ const Index = () => {
     const MAX_RETRIES = 3;
     
     try {
-      const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
+      // For first 20%: exactly 4 angles to show all sides (front, back, left, right)
+      const angles = ["front view", "right side view", "back view", "left side view"];
       let prompt = "";
       
       // Get format and shot descriptions
@@ -180,6 +181,11 @@ const Index = () => {
         ? angles[Math.floor(Math.random() * angles.length)]
         : angles[index % angles.length];
       
+      // For first 20%, character should look in the direction they're facing, not at camera
+      const gazeDirection = isCoolPhase 
+        ? "" 
+        : ", character looking in the direction they are facing, not looking at camera, natural gaze";
+      
       const outfitText = isCoolPhase ? ", wearing different stylish outfit" : "";
       
       let bgText = "";
@@ -191,7 +197,7 @@ const Index = () => {
         bgText = "professional outdoor location";
       }
       
-      prompt = `Professional photoshoot, ${viewAngle} angle, ${pose}${outfitText}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}`;
+      prompt = `Professional photoshoot, ${viewAngle}, ${pose}${outfitText}${gazeDirection}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       
