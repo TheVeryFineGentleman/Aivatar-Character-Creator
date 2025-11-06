@@ -166,14 +166,20 @@ const Index = () => {
       const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
       
-      // After 20% of images, switch to cool poses, different outfit, and full body
+      // First 20%: Upper body shots from all angles
+      // After 20%: Full body shots with cool poses and different outfit
       const twentyPercent = Math.ceil(numberOfImages * 0.2);
       const isCoolPhase = index >= twentyPercent;
       
-      const shotText = isCoolPhase ? "full body shot" : (shotOption ? shotOption.description : "full body shot");
+      const shotText = isCoolPhase ? "full body shot" : "upper body shot from waist up";
       const poses = isCoolPhase ? COOL_POSES : CASUAL_POSES;
       const pose = poses[Math.floor(Math.random() * poses.length)];
-      const viewAngle = angles[Math.floor(Math.random() * angles.length)];
+      
+      // For first 20%, cycle through all angles to show all sides
+      const viewAngle = isCoolPhase 
+        ? angles[Math.floor(Math.random() * angles.length)]
+        : angles[index % angles.length];
+      
       const outfitText = isCoolPhase ? ", wearing different stylish outfit" : "";
       
       let bgText = "";
