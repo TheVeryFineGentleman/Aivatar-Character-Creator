@@ -167,7 +167,7 @@ const Index = () => {
               {
                 parts: [
                   {
-                    text: `Generate an image of a character that looks EXACTLY like the character in the reference image provided. Keep the same appearance, style, features, and design. ${prompt}`,
+                    text: `Generate an image of a character that looks EXACTLY like the character in the reference image provided. Keep the SAME appearance, style, features, and design. IMPORTANT: Use the EXACT SAME art style as the reference image (if the reference is realistic, generate realistic; if it's cartoon/anime, generate cartoon/anime; if it's 3D, generate 3D, etc.). Match the artistic style perfectly. ${prompt}`,
                   },
                   {
                     inlineData: {
