@@ -200,11 +200,26 @@ const Index = () => {
       prompt = `Professional photoshoot, ${viewAngle}, ${pose}${outfitText}${gazeDirection}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
+      console.log(`Using ${base64Images.length} reference images for blending`);
       
-      // Prepare reference image data (remove data URL prefix if present)
-      const cleanBase64 = base64Images[0].replace(/^data:image\/[a-z]+;base64,/, '');
+      // Prepare ALL reference images (remove data URL prefix if present)
+      const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
       
-      // Call Google Gemini API directly with reference image
+      // Build parts array with text prompt and ALL reference images
+      const parts = [
+        {
+          text: `Create a character image by BLENDING AND MIXING features from ALL ${cleanBase64Images.length} reference images provided. Combine facial features, style, and characteristics from each image harmoniously. Keep consistent art style. ${prompt}`,
+        },
+        // Add ALL reference images as inline data
+        ...cleanBase64Images.map(base64Data => ({
+          inlineData: {
+            mimeType: "image/png",
+            data: base64Data,
+          },
+        })),
+      ];
+      
+      // Call Google Gemini API directly with ALL reference images
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
         {
@@ -215,17 +230,7 @@ const Index = () => {
           body: JSON.stringify({
             contents: [
               {
-                parts: [
-                  {
-                    text: `Create an image matching the reference character. Keep EXACT same appearance and art style. ${prompt}`,
-                  },
-                  {
-                    inlineData: {
-                      mimeType: "image/png",
-                      data: cleanBase64,
-                    },
-                  },
-                ],
+                parts: parts,
               },
             ],
             generationConfig: {
