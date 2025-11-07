@@ -521,16 +521,24 @@ const Index = () => {
     if (!apiKey || !customPrompt) {
       toast({
         title: "Missing information",
-        description: "Please enter both API key and prompt",
+        description: "Please enter both API key and custom prompt",
         variant: "destructive",
       });
       return;
     }
 
-    console.log("🎨 Starting custom prompt generation");
-    console.log("🎨 Prompt:", customPrompt);
-    console.log("🎨 API Key length:", apiKey.length);
-    console.log("🎨 API Key prefix:", apiKey.substring(0, 10) + "...");
+    if (referenceImages.length === 0) {
+      toast({
+        title: "Reference images required",
+        description: "Please upload at least one reference image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("🎨 Starting custom prompt generation with reference images");
+    console.log("🎨 Custom Prompt:", customPrompt);
+    console.log("🎨 Reference Images:", referenceImages.length);
 
     const newIndex = imageSlots.length;
     setImageSlots((prev) => [...prev, { status: "loading", progress: 0 }]);
@@ -546,64 +554,100 @@ const Index = () => {
         });
       }, 500);
 
-      console.log(`🌐 Sending custom prompt request...`);
+      // Convert reference images to base64
+      const imagePromises = referenceImages.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      });
 
-      // Call Google Gemini API directly
+      const base64Images = await Promise.all(imagePromises);
+      const cleanBase64 = base64Images[0].replace(/^data:image\/[a-z]+;base64,/, '');
+
+      // Build base prompt with all settings
+      const format = FORMAT_OPTIONS.find((f) => f.id === selectedFormat);
+      const formatText = format ? `aspect ratio ${format.ratio}` : "";
+      
+      const shot = SHOT_OPTIONS.find((s) => s.id === selectedShot);
+      const shotText = shot ? shot.description : "full body shot";
+
+      let bgText = "";
+      if (selectedBackground === "white") {
+        bgText = "plain white background";
+      } else if (selectedBackground === "greenscreen") {
+        bgText = "green screen background for easy removal";
+      } else {
+        bgText = "photorealistic background scenery";
+      }
+
+      // Generate random pose and attributes
+      const randomPose = CASUAL_POSES[Math.floor(Math.random() * CASUAL_POSES.length)];
+      const randomExpression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+      
+      // Build the main prompt
+      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
+      
+      // Combine base prompt with custom prompt
+      const fullPrompt = `${basePrompt}\n\nADDITIONAL REQUIREMENTS: ${customPrompt}`;
+
+      console.log("🎨 Full combined prompt:", fullPrompt);
+
+      // Call Google Gemini API with reference image
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            contents: [{
-              parts: [{ text: customPrompt }]
-            }],
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Create an image matching the reference character. Keep EXACT same appearance and art style. ${fullPrompt}`,
+                  },
+                  {
+                    inlineData: {
+                      mimeType: "image/png",
+                      data: cleanBase64,
+                    },
+                  },
+                ],
+              },
+            ],
             generationConfig: {
-              responseModalities: ["TEXT", "IMAGE"]
-            }
-          })
+              responseModalities: ["TEXT", "IMAGE"],
+            },
+          }),
         }
       );
-
-      console.log("🔍 Custom prompt response status:", response.status);
-      console.log("🔍 Custom prompt response headers:", Object.fromEntries(response.headers.entries()));
 
       clearInterval(progressInterval);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Google API error: ${response.status}`, errorText);
-        console.error("❌ Full error response:", response);
         throw new Error(`Image generation failed: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("📦 Full custom prompt API response:");
-      console.log(JSON.stringify(data, null, 2));
-      
-      console.log("🔍 Checking custom prompt response structure:");
-      console.log("  - data.candidates exists?", !!data.candidates);
-      console.log("  - candidates length:", data.candidates?.length);
-      console.log("  - candidates[0]:", data.candidates?.[0]);
-      console.log("  - candidates[0].content.parts:", data.candidates?.[0]?.content?.parts);
+      console.log("📦 Custom prompt API response received");
       
       // Extract the generated image from the response
       if (data.candidates && data.candidates[0]?.content?.parts) {
         const imagePart = data.candidates[0].content.parts.find(
           (part: any) => part.inlineData
         );
-        console.log("🔍 Found imagePart in custom prompt:", imagePart);
         
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
           const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
           console.log("✅ Custom prompt image generated successfully");
-          console.log("🔍 MIME Type:", mimeType);
-          console.log("🔍 Base64 data length:", imageData.length);
           
-          // Convert Base64 to Blob for better memory management
+          // Convert Base64 to Blob
           const byteCharacters = atob(imageData);
           const byteNumbers = new Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {
@@ -611,8 +655,6 @@ const Index = () => {
           }
           const byteArray = new Uint8Array(byteNumbers);
           const blob = new Blob([byteArray], { type: mimeType });
-          
-          // Create Blob URL instead of Data URL to save memory
           const imageUrl = URL.createObjectURL(blob);
           
           setImageSlots((prev) => {
@@ -624,25 +666,15 @@ const Index = () => {
           
           toast({
             title: "Success!",
-            description: "Generated custom image",
+            description: "Generated custom image with your requirements",
           });
           return;
         }
       }
 
-      console.error("❌ No image in custom prompt response");
-      console.error("❌ Response structure did not match expected format");
       throw new Error("No image in response");
     } catch (error) {
       console.error("❌ Error with custom prompt:", error);
-      console.error("❌ Error type:", error instanceof Error ? error.constructor.name : typeof error);
-      console.error("❌ Error message:", error instanceof Error ? error.message : String(error));
-      console.error("❌ Full error object:", error);
-      
-      // Check for CORS errors
-      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        console.error("⚠️ POSSIBLE CORS ERROR - Direct API call from browser may be blocked!");
-      }
       
       setImageSlots((prev) => {
         const updated = [...prev];
