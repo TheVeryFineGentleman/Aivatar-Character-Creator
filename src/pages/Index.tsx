@@ -725,7 +725,7 @@ const Index = () => {
             <span className="text-sm font-medium text-primary">AI Character Generator</span>
           </div>
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
-            Character Image Studio
+            Aivatar Academy Character Creator
           </h1>
           <p className="text-muted-foreground text-lg">
             Generate diverse character poses with AI
