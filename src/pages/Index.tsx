@@ -564,7 +564,8 @@ const Index = () => {
       });
 
       const base64Images = await Promise.all(imagePromises);
-      const cleanBase64 = base64Images[0].replace(/^data:image\/[a-z]+;base64,/, '');
+      // Clean all base64 images
+      const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
 
       // Build base prompt with all settings
       const format = FORMAT_OPTIONS.find((f) => f.id === selectedFormat);
@@ -593,8 +594,23 @@ const Index = () => {
       const fullPrompt = `${basePrompt}\n\nADDITIONAL REQUIREMENTS: ${customPrompt}`;
 
       console.log("🎨 Full combined prompt:", fullPrompt);
+      console.log("🎨 Using", cleanBase64Images.length, "reference images for blending");
 
-      // Call Google Gemini API with reference image
+      // Build parts array with text prompt and ALL reference images
+      const parts = [
+        {
+          text: `Create a character image by BLENDING AND MIXING features from ALL ${cleanBase64Images.length} reference images provided. Combine facial features, style, and characteristics from each image harmoniously. ${fullPrompt}`,
+        },
+        // Add ALL reference images
+        ...cleanBase64Images.map(base64Data => ({
+          inlineData: {
+            mimeType: "image/png",
+            data: base64Data,
+          },
+        })),
+      ];
+
+      // Call Google Gemini API with ALL reference images
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
         {
@@ -605,17 +621,7 @@ const Index = () => {
           body: JSON.stringify({
             contents: [
               {
-                parts: [
-                  {
-                    text: `Create an image matching the reference character. Keep EXACT same appearance and art style. ${fullPrompt}`,
-                  },
-                  {
-                    inlineData: {
-                      mimeType: "image/png",
-                      data: cleanBase64,
-                    },
-                  },
-                ],
+                parts: parts,
               },
             ],
             generationConfig: {
