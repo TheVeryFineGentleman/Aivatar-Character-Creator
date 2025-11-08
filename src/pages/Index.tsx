@@ -1031,7 +1031,7 @@ const Index = () => {
                   </Button>
 
                   {/* Main Image Display */}
-                  <div className="flex-1 flex items-center justify-center overflow-hidden p-4 pb-0">
+                  <div className="flex-1 flex items-center justify-center overflow-hidden px-4 pt-4">
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
@@ -1075,7 +1075,7 @@ const Index = () => {
                   )}
 
                   {/* Thumbnail Strip */}
-                  <div className="w-full bg-background/80 backdrop-blur-sm px-4 py-2 rounded-b-lg">
+                  <div className="w-full bg-background/80 backdrop-blur-sm px-4 pb-2 rounded-b-lg">
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-primary scrollbar-track-muted">
                       {imageSlots.map((slot, index) => (
                         <button
