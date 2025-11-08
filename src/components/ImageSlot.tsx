@@ -30,7 +30,7 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, r
             <div className="w-full space-y-2">
               <Progress value={progress} className="h-2" />
               <p className="text-xs text-center text-muted-foreground">
-                {retrying ? "Retrying..." : `${Math.round(progress)}%`}
+                {retrying ? "Wiederhole..." : `${Math.round(progress)}%`}
               </p>
             </div>
           </div>
@@ -40,7 +40,7 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, r
           <div className="relative group w-full h-full">
             <img
               src={imageUrl}
-              alt={`Generated ${index + 1}`}
+              alt={`Generiert ${index + 1}`}
               className="w-full h-full object-cover"
               onLoad={() => console.log(`✅ Image ${index + 1} loaded successfully`)}
               onError={(e) => {
@@ -64,7 +64,7 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, r
         
         {status === "error" && (
           <div className="w-full h-full flex items-center justify-center bg-destructive/10">
-            <p className="text-sm text-destructive">Error</p>
+            <p className="text-sm text-destructive">Fehler</p>
           </div>
         )}
         

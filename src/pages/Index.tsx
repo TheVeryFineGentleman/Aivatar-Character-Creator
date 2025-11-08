@@ -18,22 +18,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const BACKGROUND_OPTIONS = [
-  { id: "white", label: "White Background" },
+  { id: "white", label: "Weißer Hintergrund" },
   { id: "greenscreen", label: "Green Screen" },
-  { id: "scenery", label: "Custom Scenery" },
+  { id: "scenery", label: "Eigene Szenerie" },
 ];
 
 const FORMAT_OPTIONS = [
-  { id: "square", label: "Square (1:1)", ratio: "1:1" },
-  { id: "portrait", label: "Portrait (9:16)", ratio: "9:16" },
-  { id: "landscape", label: "Landscape (16:9)", ratio: "16:9" },
-  { id: "wide", label: "Wide (21:9)", ratio: "21:9" },
+  { id: "square", label: "Quadratisch (1:1)", ratio: "1:1" },
+  { id: "portrait", label: "Hochformat (9:16)", ratio: "9:16" },
+  { id: "landscape", label: "Querformat (16:9)", ratio: "16:9" },
+  { id: "wide", label: "Breit (21:9)", ratio: "21:9" },
 ];
 
 const SHOT_OPTIONS = [
-  { id: "fullbody", label: "Full Body", description: "full body shot" },
-  { id: "upperbody", label: "Upper Body", description: "upper body shot from waist up" },
-  { id: "closeup", label: "Close-up Face", description: "close-up face shot" },
+  { id: "fullbody", label: "Ganzkörper", description: "full body shot" },
+  { id: "upperbody", label: "Oberkörper", description: "upper body shot from waist up" },
+  { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
 const CASUAL_POSES = [
@@ -131,8 +131,8 @@ const Index = () => {
     const files = Array.from(e.target.files || []);
     if (referenceImages.length + files.length > 3) {
       toast({
-        title: "Too many images",
-        description: "You can only upload up to 3 reference images",
+        title: "Zu viele Bilder",
+        description: "Du kannst maximal 3 Referenzbilder hochladen",
         variant: "destructive",
       });
       return;
@@ -459,8 +459,8 @@ const Index = () => {
     if (!apiKey) {
       console.log("❌ Fehler: Kein API Key");
       toast({
-        title: "API Key required",
-        description: "Please enter your Google Gemini API key",
+        title: "API Key erforderlich",
+        description: "Bitte gib deinen Google Gemini API Key ein",
         variant: "destructive",
       });
       return;
@@ -469,8 +469,8 @@ const Index = () => {
     if (referenceImages.length === 0) {
       console.log("❌ Fehler: Keine Reference Images");
       toast({
-        title: "Reference images required",
-        description: "Please upload at least one reference image",
+        title: "Referenzbilder erforderlich",
+        description: "Bitte lade mindestens ein Referenzbild hoch",
         variant: "destructive",
       });
       return;
@@ -505,14 +505,14 @@ const Index = () => {
       await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, imageCount[0]);
       
       toast({
-        title: "Success!",
-        description: `Generated ${imageCount[0]} images`,
+        title: "Erfolg!",
+        description: `${imageCount[0]} Bilder wurden generiert`,
       });
     } catch (error) {
       console.error("Generation error:", error);
       toast({
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Generierung fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
         variant: "destructive",
       });
     } finally {
@@ -525,8 +525,8 @@ const Index = () => {
   const handleCustomPrompt = async () => {
     if (!apiKey || !customPrompt) {
       toast({
-        title: "Missing information",
-        description: "Please enter both API key and custom prompt",
+        title: "Fehlende Informationen",
+        description: "Bitte gib sowohl API Key als auch Custom Prompt ein",
         variant: "destructive",
       });
       return;
@@ -534,8 +534,8 @@ const Index = () => {
 
     if (referenceImages.length === 0) {
       toast({
-        title: "Reference images required",
-        description: "Please upload at least one reference image",
+        title: "Referenzbilder erforderlich",
+        description: "Bitte lade mindestens ein Referenzbild hoch",
         variant: "destructive",
       });
       return;
@@ -676,8 +676,8 @@ const Index = () => {
           setCustomPrompt("");
           
           toast({
-            title: "Success!",
-            description: "Generated custom image with your requirements",
+            title: "Erfolg!",
+            description: "Benutzerdefiniertes Bild wurde mit deinen Anforderungen generiert",
           });
           return;
         }
@@ -693,8 +693,8 @@ const Index = () => {
         return updated;
       });
       toast({
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Generierung fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
         variant: "destructive",
       });
     }
@@ -717,8 +717,8 @@ const Index = () => {
     
     if (completedImages.length === 0) {
       toast({
-        title: "No images to download",
-        description: "Generate some images first",
+        title: "Keine Bilder zum Herunterladen",
+        description: "Generiere zuerst einige Bilder",
         variant: "destructive",
       });
       return;
@@ -745,14 +745,14 @@ const Index = () => {
       document.body.removeChild(link);
       
       toast({
-        title: "Success!",
-        description: `Downloaded ${completedImages.length} images`,
+        title: "Erfolg!",
+        description: `${completedImages.length} Bilder wurden heruntergeladen`,
       });
     } catch (error) {
       console.error("Download error:", error);
       toast({
-        title: "Download failed",
-        description: "Failed to create ZIP file",
+        title: "Download fehlgeschlagen",
+        description: "ZIP-Datei konnte nicht erstellt werden",
         variant: "destructive",
       });
     }
@@ -765,13 +765,13 @@ const Index = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
             <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-primary">AI Character Generator</span>
+            <span className="text-sm font-medium text-primary">KI Character Generator</span>
           </div>
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
             Aivatar Academy Character Creator
           </h1>
           <p className="text-muted-foreground text-lg">
-            Generate diverse character poses with AI
+            Generiere vielfältige Character-Posen mit KI
           </p>
         </div>
 
@@ -784,7 +784,7 @@ const Index = () => {
               <Input
                 id="api-key"
                 type="password"
-                placeholder="Enter your API key..."
+                placeholder="Gib deinen API Key ein..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="font-mono"
@@ -793,7 +793,7 @@ const Index = () => {
 
             {/* Image Upload */}
             <div className="space-y-2">
-              <Label>Reference Images (up to 3)</Label>
+              <Label>Referenzbilder (maximal 3)</Label>
               <div className="flex flex-wrap gap-4">
                 {referenceImages.map((file, index) => (
                   <div key={index} className="relative group">
@@ -827,7 +827,7 @@ const Index = () => {
 
             {/* Background Selection */}
             <div className="space-y-2">
-              <Label>Background Type</Label>
+              <Label>Hintergrund-Typ</Label>
               <div className="grid grid-cols-3 gap-3">
                 {BACKGROUND_OPTIONS.map((option) => (
                   <button
@@ -849,11 +849,11 @@ const Index = () => {
             <div className="grid grid-cols-2 gap-4">
               {/* Image Format Dropdown */}
               <div className="space-y-2">
-                <Label>Image Format</Label>
+                <Label>Bildformat</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full justify-between">
-                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Select Format"}
+                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Format wählen"}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full bg-popover">
@@ -872,11 +872,11 @@ const Index = () => {
 
               {/* Shot Type Dropdown */}
               <div className="space-y-2">
-                <Label>Shot Type</Label>
+                <Label>Aufnahme-Typ</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full justify-between">
-                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Select Shot"}
+                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Aufnahme wählen"}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full bg-popover">
@@ -897,7 +897,7 @@ const Index = () => {
             {/* Image Count Slider */}
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>Number of Images</Label>
+                <Label>Anzahl Bilder</Label>
                 <span className="text-sm text-muted-foreground">{imageCount[0]}</span>
               </div>
               <Slider
@@ -921,12 +921,12 @@ const Index = () => {
                 {isGenerating ? (
                   <>
                     <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
-                    Generating...
+                    Generiere...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2" />
-                    Generate Images
+                    Bilder generieren
                   </>
                 )}
               </Button>
@@ -938,7 +938,7 @@ const Index = () => {
                 size="lg"
               >
                 <Download className="mr-2" />
-                Download All
+                Alle herunterladen
               </Button>
             </div>
           </CardContent>
@@ -947,10 +947,10 @@ const Index = () => {
         {/* Custom Prompt Chat */}
         <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="pt-6 space-y-4">
-            <Label>Custom Prompt (Optional)</Label>
+            <Label>Benutzerdefinierter Prompt (Optional)</Label>
             <div className="flex gap-2">
               <Textarea
-                placeholder="Describe a specific pose or scene..."
+                placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
                 className="flex-1"

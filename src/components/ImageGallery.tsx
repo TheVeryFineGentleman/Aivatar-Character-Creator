@@ -17,7 +17,7 @@ export const ImageGallery = ({ slots, onDownload }: ImageGalleryProps) => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Generated Images</h2>
+      <h2 className="text-2xl font-bold mb-4">Generierte Bilder</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {slots.map((slot, index) => (
           <ImageSlot
