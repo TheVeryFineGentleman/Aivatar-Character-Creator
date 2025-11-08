@@ -678,7 +678,6 @@ const Index = () => {
             updated[newIndex] = { status: "completed", imageUrl, progress: 100 };
             return updated;
           });
-          setCustomPrompt("");
           
           toast({
             title: "Erfolg!",
@@ -998,7 +997,7 @@ const Index = () => {
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
-          <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
+          <DialogContent className="max-w-6xl w-full h-[75vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
             <div className="relative w-full h-full flex flex-col">
               {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
                 <>
