@@ -1106,7 +1106,7 @@ const Index = () => {
                               <X className="w-4 h-4 text-destructive" />
                             </div>
                           )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm text-center h-[25px] flex items-center justify-center">
+                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm text-center h-[18px] flex items-center justify-center">
                             <span className="text-[10px] font-medium leading-none">#{index + 1}</span>
                           </div>
                         </button>
