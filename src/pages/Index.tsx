@@ -1075,7 +1075,7 @@ const Index = () => {
                   )}
 
                   {/* Thumbnail Strip */}
-                  <div className="w-full bg-background/80 backdrop-blur-sm p-2 rounded-b-lg">
+                  <div className="w-full bg-background/80 backdrop-blur-sm px-4 py-2 rounded-b-lg">
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-primary scrollbar-track-muted">
                       {imageSlots.map((slot, index) => (
                         <button
