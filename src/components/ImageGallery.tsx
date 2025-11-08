@@ -10,9 +10,10 @@ export interface ImageSlotData {
 interface ImageGalleryProps {
   slots: ImageSlotData[];
   onDownload: (index: number) => void;
+  onImageClick?: (index: number) => void;
 }
 
-export const ImageGallery = ({ slots, onDownload }: ImageGalleryProps) => {
+export const ImageGallery = ({ slots, onDownload, onImageClick }: ImageGalleryProps) => {
   if (slots.length === 0) return null;
 
   return (
@@ -28,6 +29,7 @@ export const ImageGallery = ({ slots, onDownload }: ImageGalleryProps) => {
             progress={slot.progress}
             retrying={slot.retrying}
             onDownload={() => onDownload(index)}
+            onImageClick={() => onImageClick?.(index)}
           />
         ))}
       </div>

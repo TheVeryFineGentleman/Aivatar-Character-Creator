@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
@@ -16,6 +16,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "Weißer Hintergrund" },
@@ -72,6 +76,7 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState("square");
   const [selectedShot, setSelectedShot] = useState("fullbody");
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -700,6 +705,13 @@ const Index = () => {
     }
   };
 
+  const handleImageClick = (index: number) => {
+    const slot = imageSlots[index];
+    if (slot.status === "completed" && slot.imageUrl) {
+      setSelectedImageIndex(index);
+    }
+  };
+
   const handleDownloadSingle = (index: number) => {
     const slot = imageSlots[index];
     if (slot.status === "completed" && slot.imageUrl) {
@@ -709,6 +721,22 @@ const Index = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    if (selectedImageIndex === null) return;
+    
+    const completedImages = imageSlots
+      .map((slot, index) => ({ slot, index }))
+      .filter(({ slot }) => slot.status === "completed");
+    
+    const currentPosition = completedImages.findIndex(({ index }) => index === selectedImageIndex);
+    
+    if (direction === 'prev' && currentPosition > 0) {
+      setSelectedImageIndex(completedImages[currentPosition - 1].index);
+    } else if (direction === 'next' && currentPosition < completedImages.length - 1) {
+      setSelectedImageIndex(completedImages[currentPosition + 1].index);
     }
   };
 
@@ -968,7 +996,72 @@ const Index = () => {
         </Card>
 
         {/* Generated Images Gallery */}
-        <ImageGallery slots={imageSlots} onDownload={handleDownloadSingle} />
+        <ImageGallery 
+          slots={imageSlots} 
+          onDownload={handleDownloadSingle}
+          onImageClick={handleImageClick}
+        />
+
+        {/* Image Viewer Dialog */}
+        <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
+          <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {selectedImageIndex !== null && imageSlots[selectedImageIndex]?.imageUrl && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4 z-50 rounded-full bg-background/80 hover:bg-background"
+                    onClick={() => setSelectedImageIndex(null)}
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    onClick={() => navigateImage('prev')}
+                    disabled={imageSlots.filter((s, i) => s.status === "completed" && i < selectedImageIndex).length === 0}
+                  >
+                    <ChevronLeft className="w-8 h-8" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    onClick={() => navigateImage('next')}
+                    disabled={imageSlots.filter((s, i) => s.status === "completed" && i > selectedImageIndex).length === 0}
+                  >
+                    <ChevronRight className="w-8 h-8" />
+                  </Button>
+
+                  <img
+                    src={imageSlots[selectedImageIndex].imageUrl}
+                    alt={`Bild ${selectedImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain p-8"
+                  />
+
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full">
+                    <span className="text-sm font-medium">
+                      Bild #{selectedImageIndex + 1} von {imageSlots.filter(s => s.status === "completed").length}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    className="absolute bottom-4 right-4 z-50"
+                    onClick={() => handleDownloadSingle(selectedImageIndex)}
+                  >
+                    <Download className="mr-2 w-4 h-4" />
+                    Herunterladen
+                  </Button>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

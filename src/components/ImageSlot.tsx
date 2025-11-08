@@ -11,10 +11,11 @@ interface ImageSlotProps {
   progress?: number;
   index: number;
   onDownload?: () => void;
+  onImageClick?: () => void;
   retrying?: boolean;
 }
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, retrying = false }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, retrying = false }: ImageSlotProps) => {
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-0 relative aspect-square">
@@ -37,7 +38,7 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, r
         )}
         
         {status === "completed" && imageUrl && (
-          <div className="relative group w-full h-full">
+          <div className="relative group w-full h-full cursor-pointer" onClick={onImageClick}>
             <img
               src={imageUrl}
               alt={`Generiert ${index + 1}`}
@@ -49,9 +50,12 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, r
                 console.error("Error:", e);
               }}
             />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <Button
-                onClick={onDownload}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDownload?.();
+                }}
                 variant="secondary"
                 size="icon"
                 className="rounded-full"
