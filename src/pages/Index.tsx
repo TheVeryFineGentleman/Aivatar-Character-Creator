@@ -997,68 +997,68 @@ const Index = () => {
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
-          <DialogContent className="max-w-6xl w-full h-[75vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
+          <DialogContent className="max-w-3xl w-[50vw] h-[50vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
             <div className="relative w-full h-full flex flex-col">
               {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-4 right-4 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute top-2 right-2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => setSelectedImageIndex(null)}
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                   </Button>
 
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('prev')}
                     disabled={selectedImageIndex === 0}
                   >
-                    <ChevronLeft className="w-8 h-8" />
+                    <ChevronLeft className="w-6 h-6" />
                   </Button>
 
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('next')}
                     disabled={selectedImageIndex === imageSlots.length - 1}
                   >
-                    <ChevronRight className="w-8 h-8" />
+                    <ChevronRight className="w-6 h-6" />
                   </Button>
 
                   {/* Main Image Display */}
-                  <div className="flex-1 flex items-center justify-center overflow-hidden">
+                  <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
                         alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-full object-contain p-8"
+                        className="max-w-full max-h-full object-contain"
                       />
                     ) : imageSlots[selectedImageIndex].status === "loading" ? (
                       <div className="flex flex-col items-center gap-4">
-                        <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full" />
-                        <p className="text-muted-foreground">Wird generiert...</p>
+                        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
+                        <p className="text-sm text-muted-foreground">Wird generiert...</p>
                       </div>
                     ) : imageSlots[selectedImageIndex].status === "pending" ? (
                       <div className="flex flex-col items-center gap-4">
-                        <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
-                        <p className="text-muted-foreground">Wartet auf Generierung...</p>
+                        <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                        <p className="text-sm text-muted-foreground">Wartet auf Generierung...</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-4">
-                        <p className="text-destructive">Fehler beim Generieren</p>
+                        <p className="text-sm text-destructive">Fehler beim Generieren</p>
                       </div>
                     )}
                   </div>
 
                   {/* Image Counter */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full">
-                    <span className="text-sm font-medium">
-                      Bild #{selectedImageIndex + 1} von {imageSlots.length}
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-xs font-medium">
+                      #{selectedImageIndex + 1} / {imageSlots.length}
                     </span>
                   </div>
 
@@ -1066,24 +1066,24 @@ const Index = () => {
                   {imageSlots[selectedImageIndex].status === "completed" && (
                     <Button
                       variant="secondary"
-                      className="absolute top-4 left-4 z-50"
+                      size="sm"
+                      className="absolute top-2 left-2 z-50"
                       onClick={() => handleDownloadSingle(selectedImageIndex)}
                     >
-                      <Download className="mr-2 w-4 h-4" />
-                      Herunterladen
+                      <Download className="w-4 h-4" />
                     </Button>
                   )}
 
                   {/* Thumbnail Strip */}
-                  <div className="w-full bg-background/80 backdrop-blur-sm border-t border-border/50 p-4">
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary scrollbar-track-muted">
+                  <div className="w-full bg-background/80 backdrop-blur-sm border-t border-border/50 p-2">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-primary scrollbar-track-muted">
                       {imageSlots.map((slot, index) => (
                         <button
                           key={index}
                           onClick={() => setSelectedImageIndex(index)}
-                          className={`relative flex-shrink-0 w-20 h-20 rounded-lg border-2 transition-all overflow-hidden ${
+                          className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all overflow-hidden ${
                             selectedImageIndex === index
-                              ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background scale-105"
+                              ? "border-primary ring-2 ring-primary ring-offset-1 ring-offset-background scale-105"
                               : "border-border hover:border-primary/50"
                           }`}
                         >
@@ -1095,19 +1095,19 @@ const Index = () => {
                             />
                           ) : slot.status === "loading" ? (
                             <div className="w-full h-full flex items-center justify-center bg-muted">
-                              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
                             </div>
                           ) : slot.status === "pending" ? (
                             <div className="w-full h-full flex items-center justify-center bg-muted/50">
-                              <ImageIcon className="w-8 h-8 text-muted-foreground/40" />
+                              <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
                             </div>
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-destructive/10">
-                              <X className="w-6 h-6 text-destructive" />
+                              <X className="w-4 h-4 text-destructive" />
                             </div>
                           )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm px-1 py-0.5 text-center">
-                            <span className="text-xs font-medium">#{index + 1}</span>
+                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm text-center">
+                            <span className="text-[10px] font-medium">#{index + 1}</span>
                           </div>
                         </button>
                       ))}
