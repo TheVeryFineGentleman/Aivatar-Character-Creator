@@ -1083,7 +1083,7 @@ const Index = () => {
                           onClick={() => setSelectedImageIndex(index)}
                           className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all overflow-hidden ${
                             selectedImageIndex === index
-                              ? "border-primary ring-2 ring-primary ring-offset-1 ring-offset-background scale-105"
+                              ? "border-primary scale-105"
                               : "border-border hover:border-primary/50"
                           }`}
                         >
