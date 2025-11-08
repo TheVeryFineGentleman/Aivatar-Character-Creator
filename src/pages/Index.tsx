@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
@@ -20,6 +20,14 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "Weißer Hintergrund" },
@@ -77,6 +85,7 @@ const Index = () => {
   const [selectedFormat, setSelectedFormat] = useState("square");
   const [selectedShot, setSelectedShot] = useState("fullbody");
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -852,6 +861,41 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Settings Button */}
+        <div className="absolute top-6 right-6">
+          <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full">
+                <Settings className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Einstellungen</SheetTitle>
+                <SheetDescription>
+                  Konfiguriere deinen API Key und andere Einstellungen
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="settings-api-key">Google Gemini API Key</Label>
+                  <Input
+                    id="settings-api-key"
+                    type="password"
+                    placeholder="Gib deinen API Key ein..."
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="font-mono"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Dein API Key wird sicher gespeichert und nur lokal verwendet.
+                  </p>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
@@ -869,19 +913,6 @@ const Index = () => {
         {/* Main Controls */}
         <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="pt-6 space-y-6">
-            {/* API Key */}
-            <div className="space-y-2">
-              <Label htmlFor="api-key">Google Gemini API Key</Label>
-              <Input
-                id="api-key"
-                type="password"
-                placeholder="Gib deinen API Key ein..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="font-mono"
-              />
-            </div>
-
             {/* Image Upload */}
             <div className="space-y-2">
               <Label>Referenzbilder (maximal 3)</Label>
