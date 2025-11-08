@@ -527,6 +527,76 @@ const Index = () => {
     }
   };
 
+  const handleGenerateMore = async () => {
+    console.log("🚀 handleGenerateMore aufgerufen!");
+    
+    if (!apiKey) {
+      toast({
+        title: "API Key erforderlich",
+        description: "Bitte gib deinen Google Gemini API Key ein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (referenceImages.length === 0) {
+      toast({
+        title: "Referenzbilder erforderlich",
+        description: "Bitte lade mindestens ein Referenzbild hoch",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("✅ Validierung erfolgreich, füge Bilder hinzu...");
+    setIsGenerating(true);
+    isGeneratingRef.current = true;
+    
+    const currentLength = imageSlots.length;
+    const newCount = imageCount[0];
+    
+    // Add new pending slots to existing ones
+    const newSlots: ImageSlotData[] = Array(newCount).fill(null).map(() => ({
+      status: "pending" as const,
+      progress: 0,
+    }));
+    setImageSlots(prev => [...prev, ...newSlots]);
+    
+    // Fill queue with indices starting after existing images
+    generationQueueRef.current = Array.from({ length: newCount }, (_, i) => currentLength + i);
+
+    try {
+      // Convert images to base64
+      const imagePromises = referenceImages.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const base64Images = await Promise.all(imagePromises);
+
+      await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, currentLength + newCount);
+      
+      toast({
+        title: "Erfolg!",
+        description: `${newCount} weitere Bilder wurden generiert`,
+      });
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast({
+        title: "Generierung fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+      isGeneratingRef.current = false;
+      generationQueueRef.current = [];
+    }
+  };
+
   const handleCustomPrompt = async () => {
     if (!apiKey || !customPrompt) {
       toast({
@@ -933,24 +1003,47 @@ const Index = () => {
 
             {/* Generate Buttons */}
             <div className="flex gap-3">
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="flex-1 h-12 text-lg"
-                size="lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
-                    Generiere...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2" />
-                    Bilder generieren
-                  </>
+              <div className={`flex gap-2 transition-all duration-500 ${imageSlots.length > 0 ? 'flex-1' : 'flex-1'}`}>
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className={`h-12 text-lg transition-all duration-500 ${imageSlots.length > 0 ? 'flex-1' : 'w-full'}`}
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+                      Generiere...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2" />
+                      Bilder generieren
+                    </>
+                  )}
+                </Button>
+                {imageSlots.length > 0 && (
+                  <Button
+                    onClick={handleGenerateMore}
+                    disabled={isGenerating}
+                    className="flex-1 h-12 text-lg animate-in slide-in-from-right-5 duration-500"
+                    size="lg"
+                    variant="outline"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+                        Generiere...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2" />
+                        Bilder dazu generieren
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
               <Button
                 onClick={handleDownloadAll}
                 disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
