@@ -727,16 +727,10 @@ const Index = () => {
   const navigateImage = (direction: 'prev' | 'next') => {
     if (selectedImageIndex === null) return;
     
-    const completedImages = imageSlots
-      .map((slot, index) => ({ slot, index }))
-      .filter(({ slot }) => slot.status === "completed");
-    
-    const currentPosition = completedImages.findIndex(({ index }) => index === selectedImageIndex);
-    
-    if (direction === 'prev' && currentPosition > 0) {
-      setSelectedImageIndex(completedImages[currentPosition - 1].index);
-    } else if (direction === 'next' && currentPosition < completedImages.length - 1) {
-      setSelectedImageIndex(completedImages[currentPosition + 1].index);
+    if (direction === 'prev' && selectedImageIndex > 0) {
+      setSelectedImageIndex(selectedImageIndex - 1);
+    } else if (direction === 'next' && selectedImageIndex < imageSlots.length - 1) {
+      setSelectedImageIndex(selectedImageIndex + 1);
     }
   };
 
@@ -1005,8 +999,8 @@ const Index = () => {
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
           <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
-            <div className="relative w-full h-full flex items-center justify-center">
-              {selectedImageIndex !== null && imageSlots[selectedImageIndex]?.imageUrl && (
+            <div className="relative w-full h-full flex flex-col">
+              {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
                 <>
                   <Button
                     variant="ghost"
@@ -1022,7 +1016,7 @@ const Index = () => {
                     size="icon"
                     className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('prev')}
-                    disabled={imageSlots.filter((s, i) => s.status === "completed" && i < selectedImageIndex).length === 0}
+                    disabled={selectedImageIndex === 0}
                   >
                     <ChevronLeft className="w-8 h-8" />
                   </Button>
@@ -1032,31 +1026,94 @@ const Index = () => {
                     size="icon"
                     className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('next')}
-                    disabled={imageSlots.filter((s, i) => s.status === "completed" && i > selectedImageIndex).length === 0}
+                    disabled={selectedImageIndex === imageSlots.length - 1}
                   >
                     <ChevronRight className="w-8 h-8" />
                   </Button>
 
-                  <img
-                    src={imageSlots[selectedImageIndex].imageUrl}
-                    alt={`Bild ${selectedImageIndex + 1}`}
-                    className="max-w-full max-h-full object-contain p-8"
-                  />
+                  {/* Main Image Display */}
+                  <div className="flex-1 flex items-center justify-center overflow-hidden">
+                    {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
+                      <img
+                        src={imageSlots[selectedImageIndex].imageUrl}
+                        alt={`Bild ${selectedImageIndex + 1}`}
+                        className="max-w-full max-h-full object-contain p-8"
+                      />
+                    ) : imageSlots[selectedImageIndex].status === "loading" ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full" />
+                        <p className="text-muted-foreground">Wird generiert...</p>
+                      </div>
+                    ) : imageSlots[selectedImageIndex].status === "pending" ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
+                        <p className="text-muted-foreground">Wartet auf Generierung...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-4">
+                        <p className="text-destructive">Fehler beim Generieren</p>
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full">
+                  {/* Image Counter */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full">
                     <span className="text-sm font-medium">
-                      Bild #{selectedImageIndex + 1} von {imageSlots.filter(s => s.status === "completed").length}
+                      Bild #{selectedImageIndex + 1} von {imageSlots.length}
                     </span>
                   </div>
 
-                  <Button
-                    variant="secondary"
-                    className="absolute bottom-4 right-4 z-50"
-                    onClick={() => handleDownloadSingle(selectedImageIndex)}
-                  >
-                    <Download className="mr-2 w-4 h-4" />
-                    Herunterladen
-                  </Button>
+                  {/* Download Button */}
+                  {imageSlots[selectedImageIndex].status === "completed" && (
+                    <Button
+                      variant="secondary"
+                      className="absolute top-4 left-4 z-50"
+                      onClick={() => handleDownloadSingle(selectedImageIndex)}
+                    >
+                      <Download className="mr-2 w-4 h-4" />
+                      Herunterladen
+                    </Button>
+                  )}
+
+                  {/* Thumbnail Strip */}
+                  <div className="w-full bg-background/80 backdrop-blur-sm border-t border-border/50 p-4">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary scrollbar-track-muted">
+                      {imageSlots.map((slot, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`relative flex-shrink-0 w-20 h-20 rounded-lg border-2 transition-all overflow-hidden ${
+                            selectedImageIndex === index
+                              ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background scale-105"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          {slot.status === "completed" && slot.imageUrl ? (
+                            <img
+                              src={slot.imageUrl}
+                              alt={`Thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : slot.status === "loading" ? (
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                            </div>
+                          ) : slot.status === "pending" ? (
+                            <div className="w-full h-full flex items-center justify-center bg-muted/50">
+                              <ImageIcon className="w-8 h-8 text-muted-foreground/40" />
+                            </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-destructive/10">
+                              <X className="w-6 h-6 text-destructive" />
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm px-1 py-0.5 text-center">
+                            <span className="text-xs font-medium">#{index + 1}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
             </div>
