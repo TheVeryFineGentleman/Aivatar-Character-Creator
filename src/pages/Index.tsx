@@ -1004,7 +1004,7 @@ const Index = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-2 right-2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute top-4 right-4 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => setSelectedImageIndex(null)}
                   >
                     <X className="w-5 h-5" />
@@ -1013,7 +1013,7 @@ const Index = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('prev')}
                     disabled={selectedImageIndex === 0}
                   >
@@ -1023,7 +1023,7 @@ const Index = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('next')}
                     disabled={selectedImageIndex === imageSlots.length - 1}
                   >
@@ -1056,7 +1056,7 @@ const Index = () => {
                   </div>
 
                   {/* Image Counter */}
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full">
                     <span className="text-xs font-medium">
                       #{selectedImageIndex + 1} / {imageSlots.length}
                     </span>
@@ -1067,7 +1067,7 @@ const Index = () => {
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="absolute top-2 left-2 z-50"
+                      className="absolute top-4 left-4 z-50"
                       onClick={() => handleDownloadSingle(selectedImageIndex)}
                     >
                       <Download className="w-4 h-4" />
