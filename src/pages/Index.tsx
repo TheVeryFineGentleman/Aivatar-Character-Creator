@@ -997,7 +997,7 @@ const Index = () => {
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
-          <DialogContent className="max-w-3xl w-[50vw] h-[50vh] p-0 bg-background/95 backdrop-blur-sm border-border/50">
+          <DialogContent className="max-w-3xl w-[50vw] h-[50vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 top-[15%] translate-y-0">
             <div className="relative w-full h-full flex flex-col">
               {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
                 <>
