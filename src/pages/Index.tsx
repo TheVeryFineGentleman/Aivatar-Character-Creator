@@ -1087,64 +1087,86 @@ const Index = () => {
 
             {/* Generate Buttons */}
             <div className="flex gap-3 justify-between">
-              {imageSlots.length > 0 && (
+              {imageSlots.length === 0 ? (
                 <Button
-                  onClick={handleGenerateMore}
+                  onClick={handleGenerate}
                   disabled={!apiKey || referenceImages.length === 0 || isGenerating}
-                  className="flex-[2] bg-primary hover:bg-primary/90"
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                 >
                   {isGenerating ? (
                     <>
                       <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                      Generiere mehr...
+                      Generiere...
                     </>
                   ) : (
                     <>
-                      <Plus className="w-5 h-5 mr-2" />
-                      Bilder dazu generieren
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Bilder generieren
                     </>
                   )}
                 </Button>
-              )}
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
+              ) : (
+                <>
                   <Button
+                    onClick={handleGenerateMore}
                     disabled={!apiKey || referenceImages.length === 0 || isGenerating}
-                    className={`${imageSlots.length > 0 ? 'flex-1' : 'w-full'} bg-destructive hover:bg-destructive/90 text-destructive-foreground`}
-                    size={imageSlots.length > 0 ? "default" : "lg"}
-                    variant="destructive"
+                    className="flex-[2] bg-primary hover:bg-primary/90 animate-in slide-in-from-left-5"
+                    size="lg"
                   >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Neu generieren
+                    {isGenerating ? (
+                      <>
+                        <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                        Generiere mehr...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5 mr-2" />
+                        Bilder dazu generieren
+                      </>
+                    )}
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Alle Bilder löschen?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Dies wird alle aktuell generierten Bilder löschen und neue generieren. Diese Aktion kann nicht rückgängig gemacht werden.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleGenerate}>
-                      Ja, neu generieren
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <Button
-                onClick={handleDownloadAll}
-                disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
-                variant="secondary"
-                className="h-12"
-                size="lg"
-              >
-                <Download className="mr-2" />
-                Alle herunterladen
-              </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        disabled={!apiKey || referenceImages.length === 0 || isGenerating}
+                        className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground animate-in slide-in-from-right-5"
+                        size="default"
+                        variant="destructive"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Neu generieren
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Alle Bilder löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Dies wird alle aktuell generierten Bilder löschen und neue generieren. Diese Aktion kann nicht rückgängig gemacht werden.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleGenerate}>
+                          Ja, neu generieren
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  
+                  <Button
+                    onClick={handleDownloadAll}
+                    disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
+                    variant="secondary"
+                    className="h-12"
+                    size="lg"
+                  >
+                    <Download className="mr-2" />
+                    Alle herunterladen
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
