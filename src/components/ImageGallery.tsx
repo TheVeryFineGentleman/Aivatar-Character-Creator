@@ -11,9 +11,10 @@ interface ImageGalleryProps {
   slots: ImageSlotData[];
   onDownload: (index: number) => void;
   onImageClick?: (index: number) => void;
+  onDelete?: (index: number) => void;
 }
 
-export const ImageGallery = ({ slots, onDownload, onImageClick }: ImageGalleryProps) => {
+export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete }: ImageGalleryProps) => {
   if (slots.length === 0) return null;
 
   return (
@@ -30,6 +31,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick }: ImageGalleryPr
             retrying={slot.retrying}
             onDownload={() => onDownload(index)}
             onImageClick={() => onImageClick?.(index)}
+            onDelete={() => onDelete?.(index)}
           />
         ))}
       </div>

@@ -824,6 +824,14 @@ const Index = () => {
     }
   };
 
+  const handleDeleteImage = (index: number) => {
+    setImageSlots((prev) => prev.filter((_, i) => i !== index));
+    toast({
+      title: "Bild gelöscht",
+      description: `Bild #${index + 1} wurde erfolgreich gelöscht`,
+    });
+  };
+
   const navigateImage = (direction: 'prev' | 'next') => {
     if (selectedImageIndex === null) return;
     
@@ -1224,6 +1232,7 @@ const Index = () => {
           slots={imageSlots} 
           onDownload={handleDownloadSingle}
           onImageClick={handleImageClick}
+          onDelete={handleDeleteImage}
         />
 
         {/* Image Viewer Dialog */}
