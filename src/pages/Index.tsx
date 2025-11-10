@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
@@ -28,6 +28,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const BACKGROUND_OPTIONS = [
   { id: "white", label: "Weißer Hintergrund" },
@@ -86,6 +97,7 @@ const Index = () => {
   const [selectedShot, setSelectedShot] = useState("fullbody");
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [additionalImageCount, setAdditionalImageCount] = useState(3);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -562,7 +574,7 @@ const Index = () => {
     isGeneratingRef.current = true;
     
     const currentLength = imageSlots.length;
-    const newCount = imageCount[0];
+    const newCount = additionalImageCount;
     
     // Add new pending slots to existing ones
     const newSlots: ImageSlotData[] = Array(newCount).fill(null).map(() => ({
@@ -876,7 +888,7 @@ const Index = () => {
                   Konfiguriere deinen API Key und andere Einstellungen
                 </SheetDescription>
               </SheetHeader>
-              <div className="mt-6 space-y-4">
+              <div className="mt-6 space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="settings-api-key">Google Gemini API Key</Label>
                   <Input
@@ -890,6 +902,29 @@ const Index = () => {
                   <p className="text-sm text-muted-foreground">
                     Dein API Key wird sicher gespeichert und nur lokal verwendet.
                   </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="settings-custom-prompt">Custom Image Prompt</Label>
+                  <Textarea
+                    id="settings-custom-prompt"
+                    placeholder="Optionaler eigener Prompt für die Bildgenerierung..."
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Anzahl zusätzlicher Bilder: {additionalImageCount}</Label>
+                  <Slider
+                    value={[additionalImageCount]}
+                    onValueChange={([value]) => setAdditionalImageCount(value)}
+                    min={1}
+                    max={20}
+                    step={1}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </SheetContent>
@@ -947,23 +982,41 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Background Selection */}
-            <div className="space-y-2">
-              <Label>Hintergrund-Typ</Label>
-              <div className="grid grid-cols-3 gap-3">
-                {BACKGROUND_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setSelectedBackground(option.id)}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      selectedBackground === option.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+            {/* Background Selection - Overlapping Style */}
+            <div className="absolute top-20 right-6 flex flex-col items-end gap-0">
+              <div className="relative w-[200px]">
+                {BACKGROUND_OPTIONS.map((option, index) => {
+                  const isSelected = selectedBackground === option.id;
+                  const zIndex = isSelected ? 30 : 20 - index;
+                  const translateY = isSelected ? 0 : index * 40;
+                  
+                  let bgClass = "bg-background border-border";
+                  if (option.id === "white") {
+                    bgClass = isSelected ? "bg-white text-black border-gray-300" : "bg-white/80 text-black border-gray-300";
+                  } else if (option.id === "greenscreen") {
+                    bgClass = isSelected ? "bg-green-500 text-white border-green-600" : "bg-green-500/80 text-white border-green-600";
+                  } else if (option.id === "scenery") {
+                    bgClass = isSelected ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white border-orange-700" : "bg-gradient-to-br from-amber-500/80 to-orange-600/80 text-white border-orange-700";
+                  }
+                  
+                  return (
+                    <Button
+                      key={option.id}
+                      variant="outline"
+                      onClick={() => setSelectedBackground(option.id)}
+                      className={`absolute right-0 transition-all duration-300 ease-in-out w-full border-2 ${bgClass} ${
+                        isSelected ? "shadow-lg hover:translate-y-0" : "hover:translate-y-[-4px]"
+                      }`}
+                      style={{
+                        zIndex,
+                        transform: `translateY(${translateY}px)`,
+                      }}
+                    >
+                      {option.label}
+                    </Button>
+                  );
+                })}
+                <div className="h-[120px]" />
               </div>
             </div>
 
@@ -1033,48 +1086,55 @@ const Index = () => {
             </div>
 
             {/* Generate Buttons */}
-            <div className="flex gap-3">
-              <div className={`flex gap-2 transition-all duration-500 ${imageSlots.length > 0 ? 'flex-1' : 'flex-1'}`}>
+            <div className="flex gap-3 justify-between">
+              {imageSlots.length > 0 && (
                 <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className={`h-12 text-lg transition-all duration-500 ${imageSlots.length > 0 ? 'flex-1' : 'w-full'}`}
+                  onClick={handleGenerateMore}
+                  disabled={!apiKey || referenceImages.length === 0 || isGenerating}
+                  className="flex-[2] bg-primary hover:bg-primary/90"
                   size="lg"
                 >
                   {isGenerating ? (
                     <>
-                      <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
-                      Generiere...
+                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                      Generiere mehr...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2" />
-                      Bilder generieren
+                      <Plus className="w-5 h-5 mr-2" />
+                      Bilder dazu generieren
                     </>
                   )}
                 </Button>
-                {imageSlots.length > 0 && (
+              )}
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
                   <Button
-                    onClick={handleGenerateMore}
-                    disabled={isGenerating}
-                    className="flex-1 h-12 text-lg animate-in slide-in-from-right-5 duration-500"
-                    size="lg"
-                    variant="outline"
+                    disabled={!apiKey || referenceImages.length === 0 || isGenerating}
+                    className={`${imageSlots.length > 0 ? 'flex-1' : 'w-full'} bg-destructive hover:bg-destructive/90 text-destructive-foreground`}
+                    size={imageSlots.length > 0 ? "default" : "lg"}
+                    variant="destructive"
                   >
-                    {isGenerating ? (
-                      <>
-                        <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
-                        Generiere...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2" />
-                        Bilder dazu generieren
-                      </>
-                    )}
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Neu generieren
                   </Button>
-                )}
-              </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Alle Bilder löschen?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Dies wird alle aktuell generierten Bilder löschen und neue generieren. Diese Aktion kann nicht rückgängig gemacht werden.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleGenerate}>
+                      Ja, neu generieren
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button
                 onClick={handleDownloadAll}
                 disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
