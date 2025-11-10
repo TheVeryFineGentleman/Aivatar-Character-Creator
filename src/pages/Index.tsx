@@ -200,27 +200,14 @@ const Index = () => {
       if (customPromptText && customPromptText.trim()) {
         prompt = `${customPromptText}. ${formatText}. Ultra high resolution.`;
       } else {
-        // First 20%: Upper body shots from all angles
-        // After 20%: Full body shots with cool poses and different outfit
-        const twentyPercent = Math.ceil(numberOfImages * 0.2);
-      const isCoolPhase = index >= twentyPercent;
-      
-      const shotText = isCoolPhase ? "full body shot" : "upper body shot from waist up";
-      const poses = isCoolPhase ? COOL_POSES : CASUAL_POSES;
-      const pose = poses[Math.floor(Math.random() * poses.length)];
-      
-      // For first 20%, cycle through all angles to show all sides
-      const viewAngle = isCoolPhase 
-        ? angles[Math.floor(Math.random() * angles.length)]
-        : angles[index % angles.length];
-      
-      // For first 20%, character should look in the direction they're facing, not at camera
-      const gazeDirection = isCoolPhase 
-        ? "" 
-        : ", character looking in the direction they are facing, not looking at camera, natural gaze";
-      
-        const outfitText = isCoolPhase ? ", wearing different stylish outfit" : "";
+        // Determine view angle - cycle through all 4 angles
+        const angles = ["front view", "right side view", "back view", "left side view"];
+        const viewAngle = angles[index % angles.length];
         
+        // Get shot type text
+        const shotText = shotOption?.label || "full body shot";
+        
+        // Get background text
         let bgText = "";
         if (background === "white") {
           bgText = "clean white studio background";
@@ -230,7 +217,8 @@ const Index = () => {
           bgText = "professional outdoor location";
         }
         
-        prompt = `Professional photoshoot, ${viewAngle}, ${pose}${outfitText}${gazeDirection}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
+        // Simplified prompt - only view angle and shot type
+        prompt = `Professional photoshoot, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Ultra high resolution.`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
