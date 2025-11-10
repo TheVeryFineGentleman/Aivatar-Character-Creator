@@ -547,10 +547,6 @@ const Index = () => {
   };
 
   const handleGenerateMore = async () => {
-    console.log("🚀 handleGenerateMore aufgerufen!");
-    console.log("🔍 additionalImageCount State:", additionalImageCount);
-    console.log("🔍 additionalImageCount[0]:", additionalImageCount[0]);
-    
     if (!apiKey) {
       toast({
         title: "API Key erforderlich",
@@ -569,15 +565,11 @@ const Index = () => {
       return;
     }
 
-    console.log("✅ Validierung erfolgreich, füge Bilder hinzu...");
-    console.log("🔍 BEFORE Generation - additionalImageCount:", additionalImageCount);
     setIsGenerating(true);
     isGeneratingRef.current = true;
     
     const currentLength = imageSlots.length;
     const newCount = additionalImageCount[0];
-    console.log("🔍 newCount to generate:", newCount);
-    console.log("🔍 currentLength:", currentLength);
     
     // Add new pending slots to existing ones
     const newSlots: ImageSlotData[] = Array(newCount).fill(null).map(() => ({
@@ -930,10 +922,7 @@ const Index = () => {
                   <Label>Anzahl zusätzlicher Bilder: {additionalImageCount[0]}</Label>
                   <Slider
                     value={additionalImageCount}
-                    onValueChange={(value) => {
-                      console.log("🎚️ Slider changed to:", value);
-                      setAdditionalImageCount(value);
-                    }}
+                    onValueChange={setAdditionalImageCount}
                     min={1}
                     max={20}
                     step={1}
