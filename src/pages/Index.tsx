@@ -906,29 +906,6 @@ const Index = () => {
                     Dein API Key wird sicher gespeichert und nur lokal verwendet.
                   </p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="settings-custom-prompt">Custom Image Prompt</Label>
-                  <Textarea
-                    id="settings-custom-prompt"
-                    placeholder="Optionaler eigener Prompt für die Bildgenerierung..."
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    className="min-h-[100px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Anzahl zusätzlicher Bilder: {additionalImageCount[0]}</Label>
-                  <Slider
-                    value={additionalImageCount}
-                    onValueChange={setAdditionalImageCount}
-                    min={1}
-                    max={20}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
               </div>
             </SheetContent>
           </Sheet>
