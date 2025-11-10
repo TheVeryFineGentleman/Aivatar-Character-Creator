@@ -218,7 +218,7 @@ const Index = () => {
         }
         
         // Simplified prompt - only view angle and shot type
-        prompt = `Professional photoshoot, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Ultra high resolution.`;
+        prompt = `Professional photoshoot, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
@@ -230,7 +230,7 @@ const Index = () => {
       // Build parts array with text prompt and ALL reference images
       const parts = [
         {
-          text: `Create a character image by BLENDING AND MIXING features from ALL ${cleanBase64Images.length} reference images provided. Combine facial features, style, and characteristics from each image harmoniously. Keep consistent art style. ${prompt}`,
+          text: `Create a character image by BLENDING AND MIXING features from ALL ${cleanBase64Images.length} reference images provided. Combine facial features, style, and characteristics from each image harmoniously. CRITICAL: Match the exact style, realism level, art quality, lighting, and visual aesthetic from the reference images - keep everything consistent with the reference style. ${prompt}`,
         },
         // Add ALL reference images as inline data
         ...cleanBase64Images.map(base64Data => ({
