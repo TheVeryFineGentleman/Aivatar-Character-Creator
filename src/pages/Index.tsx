@@ -1098,7 +1098,7 @@ const Index = () => {
 
             {/* Custom Prompt Toggle */}
             <Collapsible open={useCustomPrompt} onOpenChange={setUseCustomPrompt}>
-              <div className="flex items-center justify-between space-x-4">
+              <div className="flex items-center space-x-3">
                 <Label 
                   htmlFor="custom-prompt-toggle" 
                   className="text-sm font-medium leading-none cursor-pointer"
@@ -1110,7 +1110,7 @@ const Index = () => {
                     id="custom-prompt-toggle" 
                     checked={useCustomPrompt}
                     onCheckedChange={setUseCustomPrompt}
-                    className="data-[state=checked]:bg-primary w-16"
+                    className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted-foreground/30 border-2 border-border w-16"
                   />
                 </CollapsibleTrigger>
               </div>
