@@ -98,7 +98,6 @@ const Index = () => {
   const [selectedShot, setSelectedShot] = useState("fullbody");
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [additionalImageCount, setAdditionalImageCount] = useState([3]);
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
@@ -569,7 +568,7 @@ const Index = () => {
     isGeneratingRef.current = true;
     
     const currentLength = imageSlots.length;
-    const newCount = additionalImageCount[0];
+    const newCount = imageCount[0];
     
     // Add new pending slots to existing ones
     const newSlots: ImageSlotData[] = Array(newCount).fill(null).map(() => ({
