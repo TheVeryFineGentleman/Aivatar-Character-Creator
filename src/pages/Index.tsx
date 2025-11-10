@@ -1132,7 +1132,7 @@ const Index = () => {
                       <Button
                         disabled={!apiKey || referenceImages.length === 0 || isGenerating}
                         className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground animate-in slide-in-from-right-5"
-                        size="default"
+                        size="lg"
                         variant="destructive"
                       >
                         <RotateCcw className="w-4 h-4 mr-2" />
