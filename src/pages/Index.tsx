@@ -1108,7 +1108,7 @@ const Index = () => {
                   id="custom-prompt-toggle" 
                   checked={useCustomPrompt}
                   onCheckedChange={setUseCustomPrompt}
-                  className="w-16 h-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-7 [&>span]:w-7 [&>span]:data-[state=checked]:translate-x-8"
+                  className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
                 />
               </div>
 
