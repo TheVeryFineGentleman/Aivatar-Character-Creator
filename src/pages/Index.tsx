@@ -229,7 +229,14 @@ const Index = () => {
       // Build parts array with text prompt and ALL reference images
       const parts = [
         {
-          text: `Create a character image by BLENDING AND MIXING features from ALL ${cleanBase64Images.length} reference images provided. Combine facial features, style, and characteristics from each image harmoniously. CRITICAL: Match the exact style, realism level, art quality, lighting, and visual aesthetic from the reference images - keep everything consistent with the reference style. ${prompt}`,
+          text: `Use the ${cleanBase64Images.length} reference image(s) as style inspiration to create a NEW character. Important guidelines:
+- Match the VISUAL STYLE from the reference images (if reference is a drawing, make a drawing; if reference is realistic, make realistic; if anime style, make anime style)
+- Match the art quality, rendering technique, and aesthetic approach of the references
+- Use the references to understand the desired style, but create a NEW character - do NOT copy the exact person/character
+- Keep consistent style, lighting quality, and visual treatment across all generated images
+- The reference images show the TARGET STYLE, not the exact output
+
+Generate: ${prompt}`,
         },
         // Add ALL reference images as inline data
         ...cleanBase64Images.map(base64Data => ({
