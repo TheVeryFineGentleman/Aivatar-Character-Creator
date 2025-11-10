@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +99,7 @@ const Index = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [additionalImageCount, setAdditionalImageCount] = useState(3);
+  const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -178,6 +180,7 @@ const Index = () => {
     numberOfImages: number,
     selectedFormat: string,
     selectedShot: string,
+    customPromptText?: string,
     angle?: string,
     retryCount: number = 0
   ): Promise<string | null> => {
@@ -193,9 +196,13 @@ const Index = () => {
       const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
       
-      // First 20%: Upper body shots from all angles
-      // After 20%: Full body shots with cool poses and different outfit
-      const twentyPercent = Math.ceil(numberOfImages * 0.2);
+      // Use custom prompt if provided
+      if (customPromptText && customPromptText.trim()) {
+        prompt = `${customPromptText}. ${formatText}. Ultra high resolution.`;
+      } else {
+        // First 20%: Upper body shots from all angles
+        // After 20%: Full body shots with cool poses and different outfit
+        const twentyPercent = Math.ceil(numberOfImages * 0.2);
       const isCoolPhase = index >= twentyPercent;
       
       const shotText = isCoolPhase ? "full body shot" : "upper body shot from waist up";
@@ -212,18 +219,19 @@ const Index = () => {
         ? "" 
         : ", character looking in the direction they are facing, not looking at camera, natural gaze";
       
-      const outfitText = isCoolPhase ? ", wearing different stylish outfit" : "";
-      
-      let bgText = "";
-      if (background === "white") {
-        bgText = "clean white studio background";
-      } else if (background === "greenscreen") {
-        bgText = "green screen studio setup";
-      } else {
-        bgText = "professional outdoor location";
+        const outfitText = isCoolPhase ? ", wearing different stylish outfit" : "";
+        
+        let bgText = "";
+        if (background === "white") {
+          bgText = "clean white studio background";
+        } else if (background === "greenscreen") {
+          bgText = "green screen studio setup";
+        } else {
+          bgText = "professional outdoor location";
+        }
+        
+        prompt = `Professional photoshoot, ${viewAngle}, ${pose}${outfitText}${gazeDirection}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
       }
-      
-      prompt = `Professional photoshoot, ${viewAngle}, ${pose}${outfitText}${gazeDirection}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
       console.log(`Using ${base64Images.length} reference images for blending`);
@@ -300,7 +308,7 @@ const Index = () => {
           });
           
           await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-          return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, angle, retryCount + 1);
+          return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
         }
         
         return null;
@@ -365,7 +373,7 @@ const Index = () => {
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, angle, retryCount + 1);
+        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
       }
       
       return null;
@@ -396,7 +404,7 @@ const Index = () => {
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, angle, retryCount + 1);
+        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
       }
       
       return null;
@@ -409,7 +417,8 @@ const Index = () => {
     background: string,
     selectedFormat: string,
     selectedShot: string,
-    totalCount: number
+    totalCount: number,
+    customPromptText?: string
   ) => {
     console.log("🔄 processQueue gestartet!");
     console.log("🔄 Queue Länge:", generationQueueRef.current.length);
@@ -454,7 +463,8 @@ const Index = () => {
             background,
             totalCount,
             selectedFormat,
-            selectedShot
+            selectedShot,
+            customPromptText
           );
 
           clearInterval(progressInterval);
@@ -528,7 +538,7 @@ const Index = () => {
 
       const base64Images = await Promise.all(imagePromises);
 
-      await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, imageCount[0]);
+      await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, imageCount[0], useCustomPrompt ? customPrompt : undefined);
       
       toast({
         title: "Erfolg!",
@@ -598,7 +608,7 @@ const Index = () => {
 
       const base64Images = await Promise.all(imagePromises);
 
-      await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, currentLength + newCount);
+      await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, currentLength + newCount, useCustomPrompt ? customPrompt : undefined);
       
       toast({
         title: "Erfolg!",
@@ -1085,6 +1095,35 @@ const Index = () => {
               />
             </div>
 
+            {/* Custom Prompt Toggle */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="custom-prompt-toggle" 
+                checked={useCustomPrompt}
+                onCheckedChange={(checked) => setUseCustomPrompt(checked as boolean)}
+              />
+              <Label 
+                htmlFor="custom-prompt-toggle" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Custom Prompt verwenden
+              </Label>
+            </div>
+
+            {/* Custom Prompt Input - Collapsible */}
+            {useCustomPrompt && (
+              <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
+                <Textarea
+                  id="custom-prompt-input"
+                  placeholder="Beschreibe eine bestimmte Pose oder Szene..."
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+            )}
+
             {/* Generate Buttons */}
             <div className="flex gap-3 justify-between">
               {imageSlots.length === 0 ? (
@@ -1167,29 +1206,6 @@ const Index = () => {
                   </Button>
                 </>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Custom Prompt Chat */}
-        <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="pt-6 space-y-4">
-            <Label>Benutzerdefinierter Prompt (Optional)</Label>
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Beschreibe eine bestimmte Pose oder Szene..."
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                className="flex-1"
-                rows={3}
-              />
-              <Button
-                onClick={handleCustomPrompt}
-                disabled={isGenerating || !customPrompt}
-                size="lg"
-              >
-                <ImageIcon className="w-5 h-5" />
-              </Button>
             </div>
           </CardContent>
         </Card>
