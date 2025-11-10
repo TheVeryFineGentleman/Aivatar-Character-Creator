@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -1097,7 +1096,7 @@ const Index = () => {
             </div>
 
             {/* Custom Prompt Toggle */}
-            <Collapsible open={useCustomPrompt} onOpenChange={setUseCustomPrompt}>
+            <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Label 
                   htmlFor="custom-prompt-toggle" 
@@ -1105,28 +1104,34 @@ const Index = () => {
                 >
                   Custom Prompt verwenden
                 </Label>
-                <CollapsibleTrigger asChild>
-                  <Switch 
-                    id="custom-prompt-toggle" 
-                    checked={useCustomPrompt}
-                    onCheckedChange={setUseCustomPrompt}
-                    className="w-16 h-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-7 [&>span]:w-7 [&>span]:data-[state=checked]:translate-x-8"
-                  />
-                </CollapsibleTrigger>
+                <Switch 
+                  id="custom-prompt-toggle" 
+                  checked={useCustomPrompt}
+                  onCheckedChange={setUseCustomPrompt}
+                  className="w-16 h-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-7 [&>span]:w-7 [&>span]:data-[state=checked]:translate-x-8"
+                />
               </div>
 
-              {/* Custom Prompt Input - Collapsible */}
-              <CollapsibleContent className="space-y-2 pt-4 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
-                <Textarea
-                  id="custom-prompt-input"
-                  placeholder="Beschreibe eine bestimmte Pose oder Szene..."
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  className="min-h-[100px]"
-                />
-              </CollapsibleContent>
-            </Collapsible>
+              {/* Custom Prompt Input - Smooth Collapsible */}
+              <div 
+                className={`grid transition-all duration-300 ease-in-out ${
+                  useCustomPrompt ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
+                    <Textarea
+                      id="custom-prompt-input"
+                      placeholder="Beschreibe eine bestimmte Pose oder Szene..."
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Generate Buttons */}
             <div className="flex gap-3 justify-between">
