@@ -1110,13 +1110,13 @@ const Index = () => {
                     id="custom-prompt-toggle" 
                     checked={useCustomPrompt}
                     onCheckedChange={setUseCustomPrompt}
-                    className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted-foreground/30 border-2 border-border w-16"
+                    className="w-16 h-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-7 [&>span]:w-7 [&>span]:data-[state=checked]:translate-x-8"
                   />
                 </CollapsibleTrigger>
               </div>
 
               {/* Custom Prompt Input - Collapsible */}
-              <CollapsibleContent className="space-y-2 pt-4 transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+              <CollapsibleContent className="space-y-2 pt-4 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
                 <Textarea
                   id="custom-prompt-input"
