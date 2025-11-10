@@ -16,7 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -1096,23 +1097,26 @@ const Index = () => {
             </div>
 
             {/* Custom Prompt Toggle */}
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="custom-prompt-toggle" 
-                checked={useCustomPrompt}
-                onCheckedChange={(checked) => setUseCustomPrompt(checked as boolean)}
-              />
-              <Label 
-                htmlFor="custom-prompt-toggle" 
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                Custom Prompt verwenden
-              </Label>
-            </div>
+            <Collapsible open={useCustomPrompt} onOpenChange={setUseCustomPrompt}>
+              <div className="flex items-center justify-between space-x-4">
+                <Label 
+                  htmlFor="custom-prompt-toggle" 
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Custom Prompt verwenden
+                </Label>
+                <CollapsibleTrigger asChild>
+                  <Switch 
+                    id="custom-prompt-toggle" 
+                    checked={useCustomPrompt}
+                    onCheckedChange={setUseCustomPrompt}
+                    className="data-[state=checked]:bg-primary w-16"
+                  />
+                </CollapsibleTrigger>
+              </div>
 
-            {/* Custom Prompt Input - Collapsible */}
-            {useCustomPrompt && (
-              <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+              {/* Custom Prompt Input - Collapsible */}
+              <CollapsibleContent className="space-y-2 pt-4 transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
                 <Textarea
                   id="custom-prompt-input"
@@ -1121,8 +1125,8 @@ const Index = () => {
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   className="min-h-[100px]"
                 />
-              </div>
-            )}
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Generate Buttons */}
             <div className="flex gap-3 justify-between">
