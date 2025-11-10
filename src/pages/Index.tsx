@@ -1126,7 +1126,7 @@ const Index = () => {
                       placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                       value={customPrompt}
                       onChange={(e) => setCustomPrompt(e.target.value)}
-                      className="min-h-[100px]"
+                      className="min-h-[100px] focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
                 </div>
