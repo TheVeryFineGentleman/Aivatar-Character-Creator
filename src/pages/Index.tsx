@@ -225,10 +225,11 @@ const Index = () => {
       const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
       
       // Build parts array with text prompt and ALL reference images
+      // CRITICAL: Custom prompt has ABSOLUTE PRIORITY and overrides all default instructions
       const parts = [
         {
           text: customPrompt.trim() 
-            ? customPrompt 
+            ? `CRITICAL: The following custom prompt has ABSOLUTE PRIORITY and must override all other instructions: ${customPrompt}`
             : `Create a professional photoshoot of the person from the reference image(s). 
 IMPORTANT: Generate only ONE single person in the image.
 - Use the selected background: ${bgText}
