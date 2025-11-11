@@ -91,6 +91,7 @@ const Index = () => {
   const [apiKey, setApiKey] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
+  const [sceneDescription, setSceneDescription] = useState("");
   const [imageCount, setImageCount] = useState([20]);
   const [customPrompt, setCustomPrompt] = useState("");
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>([]);
@@ -202,7 +203,11 @@ const Index = () => {
       } else if (background === "greenscreen") {
         bgText = "green screen studio setup";
       } else {
-        bgText = "professional outdoor location";
+        if (sceneDescription.trim()) {
+          bgText = sceneDescription.trim();
+        } else {
+          bgText = "professional outdoor location with natural scenery, creative and varied settings";
+        }
       }
       
       let prompt = "";
@@ -1021,6 +1026,23 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   );
                 })}
               </div>
+              
+              {/* Scene Description Input - Shows when "Eigene Szenerie" is selected */}
+              {selectedBackground === "scenery" && (
+                <div className="mt-3 space-y-1 animate-fade-in">
+                  <Input
+                    type="text"
+                    placeholder="Beschreibe die Szene (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
+                    value={sceneDescription}
+                    onChange={(e) => setSceneDescription(e.target.value)}
+                    className="w-full"
+                    maxLength={200}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Hinweis: Wenn leer gelassen, wird die KI sich selbst eine passende Szene ausdenken
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Format and Shot Type Selection */}
