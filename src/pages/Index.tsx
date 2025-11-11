@@ -233,6 +233,7 @@ const Index = () => {
 IMPORTANT: Generate only ONE single person in the image.
 - Use the selected background: ${bgText}
 - Dress them in random clothing
+- Use random, varied poses (standing, sitting, leaning, walking, etc.)
 - Shoot from various angles
 - Format: ${formatText}
 - ${shotText}
