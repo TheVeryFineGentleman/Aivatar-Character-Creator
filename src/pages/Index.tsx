@@ -225,12 +225,7 @@ const Index = () => {
       const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
       
       // Build parts array with text prompt and ALL reference images
-      // CRITICAL: Custom prompt has ABSOLUTE PRIORITY and overrides all default instructions
-      const parts = [
-        {
-          text: customPrompt.trim() 
-            ? `CRITICAL: The following custom prompt has ABSOLUTE PRIORITY and must override all other instructions: ${customPrompt}`
-            : `Create a professional photoshoot of the person from the reference image(s). 
+      const basePrompt = `Create a professional photoshoot of the person from the reference image(s). 
 IMPORTANT: Generate only ONE single person in the image.
 - Use the selected background: ${bgText}
 - Dress them in random clothing
@@ -239,7 +234,13 @@ IMPORTANT: Generate only ONE single person in the image.
 - Format: ${formatText}
 - ${shotText}
 - ${viewAngle}
-Ultra high resolution, maintain style consistency with reference image(s).`,
+Ultra high resolution, maintain style consistency with reference image(s).`;
+
+      const parts = [
+        {
+          text: customPrompt.trim() 
+            ? `${basePrompt}\n\nCRITICAL: The following custom instructions have HIGHEST PRIORITY and must be followed above all else:\n${customPrompt}`
+            : basePrompt,
         },
         // Add ALL reference images as inline data
         ...cleanBase64Images.map(base64Data => ({
