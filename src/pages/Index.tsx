@@ -972,21 +972,26 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               </div>
             </div>
 
-            {/* Background Selection - Overlapping Style */}
-            <div className="absolute top-20 right-6 flex flex-col items-end gap-0">
-              <div className="relative w-[200px]">
-                {BACKGROUND_OPTIONS.map((option, index) => {
+            {/* Background Selection - Horizontal Layout */}
+            <div className="space-y-2">
+              <Label>Hintergrund</Label>
+              <div className="flex gap-3">
+                {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
-                  const zIndex = isSelected ? 30 : 20 - index;
-                  const translateY = isSelected ? 0 : index * 40;
                   
                   let bgClass = "bg-background border-border";
                   if (option.id === "white") {
-                    bgClass = isSelected ? "bg-white text-black border-gray-300" : "bg-white/80 text-black border-gray-300";
+                    bgClass = isSelected 
+                      ? "bg-white text-black border-gray-400 shadow-md" 
+                      : "bg-white/40 text-black/50 border-gray-300";
                   } else if (option.id === "greenscreen") {
-                    bgClass = isSelected ? "bg-green-500 text-white border-green-600" : "bg-green-500/80 text-white border-green-600";
+                    bgClass = isSelected 
+                      ? "bg-green-500 text-white border-green-700 shadow-md" 
+                      : "bg-green-500/40 text-white/50 border-green-600";
                   } else if (option.id === "scenery") {
-                    bgClass = isSelected ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white border-orange-700" : "bg-gradient-to-br from-amber-500/80 to-orange-600/80 text-white border-orange-700";
+                    bgClass = isSelected 
+                      ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white border-orange-700 shadow-md" 
+                      : "bg-gradient-to-br from-amber-500/40 to-orange-600/40 text-white/50 border-orange-700";
                   }
                   
                   return (
@@ -994,19 +999,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       key={option.id}
                       variant="outline"
                       onClick={() => setSelectedBackground(option.id)}
-                      className={`absolute right-0 transition-all duration-300 ease-in-out w-full border-2 ${bgClass} ${
-                        isSelected ? "shadow-lg hover:translate-y-0" : "hover:translate-y-[-4px]"
+                      className={`flex-1 transition-all duration-200 border-2 ${bgClass} ${
+                        isSelected 
+                          ? "scale-105 font-semibold" 
+                          : "hover:scale-[1.02] opacity-60 hover:opacity-80"
                       }`}
-                      style={{
-                        zIndex,
-                        transform: `translateY(${translateY}px)`,
-                      }}
                     >
                       {option.label}
                     </Button>
                   );
                 })}
-                <div className="h-[120px]" />
               </div>
             </div>
 
