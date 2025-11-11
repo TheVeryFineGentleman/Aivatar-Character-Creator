@@ -230,6 +230,7 @@ const Index = () => {
           text: customPrompt.trim() 
             ? customPrompt 
             : `Create a professional photoshoot of the person from the reference image(s). 
+IMPORTANT: Generate only ONE single person in the image.
 - Use the selected background: ${bgText}
 - Dress them in random clothing
 - Shoot from various angles
