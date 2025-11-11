@@ -188,34 +188,32 @@ const Index = () => {
     try {
       // For first 20%: exactly 4 angles to show all sides (front, back, left, right)
       const angles = ["front view", "right side view", "back view", "left side view"];
+      const viewAngle = angles[index % angles.length];
+      
+      // Get shot type text
+      const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
+      const shotText = shotOption?.label || "full body shot";
+      
+      // Get background text
+      let bgText = "";
+      if (background === "white") {
+        bgText = "clean white studio background";
+      } else if (background === "greenscreen") {
+        bgText = "green screen studio setup";
+      } else {
+        bgText = "professional outdoor location";
+      }
+      
       let prompt = "";
       
       // Get format and shot descriptions
       const formatOption = FORMAT_OPTIONS.find(f => f.id === selectedFormat);
-      const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
       const formatText = formatOption ? `${formatOption.ratio} aspect ratio` : "1:1 aspect ratio";
       
       // Use custom prompt if provided
       if (customPromptText && customPromptText.trim()) {
         prompt = `${customPromptText}. ${formatText}. Ultra high resolution.`;
       } else {
-        // Determine view angle - cycle through all 4 angles
-        const angles = ["front view", "right side view", "back view", "left side view"];
-        const viewAngle = angles[index % angles.length];
-        
-        // Get shot type text
-        const shotText = shotOption?.label || "full body shot";
-        
-        // Get background text
-        let bgText = "";
-        if (background === "white") {
-          bgText = "clean white studio background";
-        } else if (background === "greenscreen") {
-          bgText = "green screen studio setup";
-        } else {
-          bgText = "professional outdoor location";
-        }
-        
         // Simplified prompt - only view angle and shot type
         prompt = `Professional photoshoot, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
       }
@@ -229,14 +227,16 @@ const Index = () => {
       // Build parts array with text prompt and ALL reference images
       const parts = [
         {
-          text: `Use the ${cleanBase64Images.length} reference image(s) as style inspiration to create a NEW character. Important guidelines:
-- Match the VISUAL STYLE from the reference images (if reference is a drawing, make a drawing; if reference is realistic, make realistic; if anime style, make anime style)
-- Match the art quality, rendering technique, and aesthetic approach of the references
-- Use the references to understand the desired style, but create a NEW character - do NOT copy the exact person/character
-- Keep consistent style, lighting quality, and visual treatment across all generated images
-- The reference images show the TARGET STYLE, not the exact output
-
-Generate: ${prompt}`,
+          text: customPrompt.trim() 
+            ? customPrompt 
+            : `Create a professional photoshoot of the person from the reference image(s). 
+- Use the selected background: ${bgText}
+- Dress them in random clothing
+- Shoot from various angles
+- Format: ${formatText}
+- ${shotText}
+- ${viewAngle}
+Ultra high resolution, maintain style consistency with reference image(s).`,
         },
         // Add ALL reference images as inline data
         ...cleanBase64Images.map(base64Data => ({
