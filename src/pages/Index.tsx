@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
+import sceneryBg from "@/assets/scenery-background.jpg";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 import {
@@ -980,6 +981,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   const isSelected = selectedBackground === option.id;
                   
                   let bgClass = "bg-background border-border";
+                  let bgStyle: React.CSSProperties = {};
+                  
                   if (option.id === "white") {
                     bgClass = isSelected 
                       ? "bg-white text-black border-gray-400 shadow-md" 
@@ -990,8 +993,15 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       : "bg-green-500/70 text-white/70 border-green-600";
                   } else if (option.id === "scenery") {
                     bgClass = isSelected 
-                      ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white border-orange-700 shadow-md" 
-                      : "bg-gradient-to-br from-amber-500/70 to-orange-600/70 text-white/70 border-orange-700";
+                      ? "text-white border-gray-400 shadow-md" 
+                      : "text-white/90 border-gray-300";
+                    bgStyle = {
+                      backgroundImage: `url(${sceneryBg})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundColor: isSelected ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)',
+                      backgroundBlendMode: 'darken'
+                    };
                   }
                   
                   return (
@@ -1004,7 +1014,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           ? "scale-105" 
                           : "hover:scale-[1.02] hover:opacity-90"
                       }`}
-                      style={{ transformOrigin: 'center' }}
+                      style={{ transformOrigin: 'center', ...bgStyle }}
                     >
                       {option.label}
                     </Button>
