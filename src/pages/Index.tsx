@@ -999,11 +999,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       key={option.id}
                       variant="outline"
                       onClick={() => setSelectedBackground(option.id)}
-                      className={`px-4 py-2 transition-all duration-200 border-2 ${bgClass} ${
+                      className={`min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${bgClass} ${
                         isSelected 
-                          ? "scale-105 font-semibold" 
+                          ? "scale-105" 
                           : "hover:scale-[1.02] hover:opacity-90"
                       }`}
+                      style={{ transformOrigin: 'center' }}
                     >
                       {option.label}
                     </Button>
