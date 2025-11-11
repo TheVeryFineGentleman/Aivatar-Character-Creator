@@ -1028,8 +1028,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               </div>
               
               {/* Scene Description Input - Shows when "Eigene Szenerie" is selected */}
-              {selectedBackground === "scenery" && (
-                <div className="mt-3 space-y-1 animate-fade-in">
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                selectedBackground === "scenery" 
+                  ? "max-h-32 opacity-100 mt-3" 
+                  : "max-h-0 opacity-0 mt-0"
+              }`}>
+                <div className="space-y-1">
                   <Input
                     type="text"
                     placeholder="Beschreibe die Szene (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
@@ -1042,7 +1046,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     Hinweis: Wenn leer gelassen, wird die KI sich selbst eine passende Szene ausdenken
                   </p>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Format and Shot Type Selection */}
