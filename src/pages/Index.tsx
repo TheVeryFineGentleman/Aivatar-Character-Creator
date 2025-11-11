@@ -221,7 +221,7 @@ const Index = () => {
         prompt = `${customPromptText}. ${formatText}. Ultra high resolution.`;
       } else {
         // Simplified prompt - only view angle and shot type
-        prompt = `Professional photoshoot, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
+        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
@@ -231,8 +231,10 @@ const Index = () => {
       const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
       
       // Build parts array with text prompt and ALL reference images
-      const basePrompt = `Create a professional photoshoot of the person from the reference image(s). 
-IMPORTANT: Generate only ONE single person in the image.
+      const basePrompt = `CRITICAL CONSTRAINT: Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
+
+Create a professional photoshoot of the person from the reference image(s). 
+- ONLY ONE PERSON must appear in the entire image
 - Use the selected background: ${bgText}
 - Dress them in random clothing
 - Use random, varied poses (standing, sitting, leaning, walking, etc.)
