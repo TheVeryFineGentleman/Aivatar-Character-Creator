@@ -183,7 +183,8 @@ const Index = () => {
     selectedShot: string,
     customPromptText?: string,
     angle?: string,
-    retryCount: number = 0
+    retryCount: number = 0,
+    useSimplifiedPrompt: boolean = false
   ): Promise<string | null> => {
     const MAX_RETRIES = 3;
     
@@ -231,7 +232,13 @@ const Index = () => {
       const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
       
       // Build parts array with text prompt and ALL reference images
-      const basePrompt = `CRITICAL CONSTRAINTS: 
+      let basePrompt = "";
+      
+      if (useSimplifiedPrompt) {
+        // Simplified fallback prompt after 3 failed attempts
+        basePrompt = `Generate ONE person from the reference image. Simple ${bgText}. ${formatText}. High quality photo.`;
+      } else {
+        basePrompt = `CRITICAL CONSTRAINTS: 
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
@@ -247,6 +254,7 @@ Create a professional photoshoot of the person from the reference image(s).
 - ${shotText}
 - ${viewAngle}
 Ultra high resolution, maintain style consistency with reference image(s).`;
+      }
 
       const parts = [
         {
@@ -319,6 +327,22 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           
           await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
           return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
+        } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
+          // Final attempt with simplified prompt
+          console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
+          
+          setImageSlots((prev) => {
+            const updated = [...prev];
+            updated[index] = { 
+              status: "loading", 
+              progress: 40,
+              retrying: true 
+            };
+            return updated;
+          });
+          
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
         }
         
         return null;
@@ -384,6 +408,22 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
         return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
+      } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
+        // Final attempt with simplified prompt
+        console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
+        
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          updated[index] = { 
+            status: "loading", 
+            progress: 40,
+            retrying: true 
+          };
+          return updated;
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
       }
       
       return null;
@@ -415,6 +455,22 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
         return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
+      } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
+        // Final attempt with simplified prompt
+        console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt after error...`);
+        
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          updated[index] = { 
+            status: "loading", 
+            progress: 40,
+            retrying: true 
+          };
+          return updated;
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
       }
       
       return null;
