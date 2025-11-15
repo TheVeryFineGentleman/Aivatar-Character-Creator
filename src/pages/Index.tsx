@@ -231,10 +231,14 @@ const Index = () => {
       const cleanBase64Images = base64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
       
       // Build parts array with text prompt and ALL reference images
-      const basePrompt = `CRITICAL CONSTRAINT: Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
+      const basePrompt = `CRITICAL CONSTRAINTS: 
+- Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
+- Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
+- NO photo strips, NO side-by-side comparisons, NO split screens.
 
 Create a professional photoshoot of the person from the reference image(s). 
 - ONLY ONE PERSON must appear in the entire image
+- ONLY ONE COMPLETE IMAGE - not a collage or collection of images
 - Use the selected background: ${bgText}
 - Dress them in random clothing
 - Use random, varied poses (standing, sitting, leaning, walking, etc.)
