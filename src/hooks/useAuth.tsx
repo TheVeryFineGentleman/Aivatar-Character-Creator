@@ -43,26 +43,42 @@ export const useAuth = () => {
   }, []);
 
   const login = async (email: string, licenseKey: string): Promise<{ success: boolean; message?: string }> => {
+    console.log("🔐 Login attempt started");
+    console.log("📧 Email:", email);
+    console.log("🔑 License Key length:", licenseKey.length);
+    
     try {
+      const requestBody = {
+        toolApiKey: TOOL_API_KEY,
+        licenseKey: licenseKey,
+        email: email,
+      };
+      
+      console.log("📤 Sending request to:", "https://key-manager-wmmjk.ondigitalocean.app/api/license/check");
+      console.log("📦 Request body:", requestBody);
+      
       const response = await fetch("https://key-manager-wmmjk.ondigitalocean.app/api/license/check", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          toolApiKey: TOOL_API_KEY,
-          licenseKey: licenseKey,
-          email: email,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log("📥 Response status:", response.status);
+      console.log("📥 Response ok:", response.ok);
+
       if (!response.ok) {
-        return { success: false, message: "Netzwerkfehler. Bitte versuchen Sie es erneut." };
+        const errorText = await response.text();
+        console.error("❌ Response not OK. Status:", response.status, "Error:", errorText);
+        return { success: false, message: `Netzwerkfehler (${response.status}). Bitte versuchen Sie es erneut.` };
       }
 
       const data: ValidationResponse = await response.json();
+      console.log("📋 Response data:", data);
 
       if (data.valid) {
+        console.log("✅ Login successful!");
         const newAuthData: AuthData = {
           isAuthenticated: true,
           email: data.email || email,
@@ -77,10 +93,18 @@ export const useAuth = () => {
         
         return { success: true };
       } else {
+        console.log("❌ Invalid credentials");
         return { success: false, message: "Ungültige E-Mail oder License Key." };
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("💥 Login error caught:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error message:", error instanceof Error ? error.message : String(error));
+      
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        return { success: false, message: "Netzwerkfehler: Kann keine Verbindung zum Server herstellen. Prüfen Sie Ihre Internetverbindung." };
+      }
+      
       return { success: false, message: "Verbindungsfehler. Bitte versuchen Sie es später erneut." };
     }
   };
