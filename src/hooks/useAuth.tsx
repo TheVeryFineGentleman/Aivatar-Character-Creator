@@ -49,15 +49,17 @@ export const useAuth = () => {
     
     try {
       const requestBody = {
-        toolApiKey: TOOL_API_KEY,
-        licenseKey: licenseKey,
         email: email,
+        licenseKey: licenseKey,
       };
       
-      console.log("📤 Sending request to:", "https://key-manager-wmmjk.ondigitalocean.app/api/license/check");
+      // Use Edge Function as proxy to avoid CORS issues
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/license-check`;
+      
+      console.log("📤 Sending request to edge function:", apiUrl);
       console.log("📦 Request body:", requestBody);
       
-      const response = await fetch("https://key-manager-wmmjk.ondigitalocean.app/api/license/check", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,10 +102,6 @@ export const useAuth = () => {
       console.error("💥 Login error caught:", error);
       console.error("Error type:", typeof error);
       console.error("Error message:", error instanceof Error ? error.message : String(error));
-      
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        return { success: false, message: "Netzwerkfehler: Kann keine Verbindung zum Server herstellen. Prüfen Sie Ihre Internetverbindung." };
-      }
       
       return { success: false, message: "Verbindungsfehler. Bitte versuchen Sie es später erneut." };
     }

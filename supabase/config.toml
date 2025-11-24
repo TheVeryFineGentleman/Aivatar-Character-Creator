@@ -2,3 +2,6 @@ project_id = "wpewsxohwwvdrinowxjb"
 
 [functions.generate-character-images]
 verify_jwt = false
+
+[functions.license-check]
+verify_jwt = false
