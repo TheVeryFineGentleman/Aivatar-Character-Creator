@@ -6,11 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
+import { useAuth } from "@/hooks/useAuth";
+import { LoginDialog } from "@/components/LoginDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,6 +90,7 @@ const EXPRESSIONS = [
 ];
 
 const Index = () => {
+  const { authData, isLoading: authLoading, login, logout } = useAuth();
   const [apiKey, setApiKey] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
@@ -953,7 +956,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {authLoading ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      ) : !authData.isAuthenticated ? (
+        <LoginDialog onLogin={login} />
+      ) : (
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Settings Button */}
         <div className="absolute top-6 right-6">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -983,6 +993,33 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   <p className="text-sm text-muted-foreground">
                     Dein API Key wird sicher gespeichert und nur lokal verwendet.
                   </p>
+                </div>
+                
+                <div className="pt-6 border-t border-border">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <Label>Account</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Angemeldet als: {authData.email}
+                      </p>
+                      {authData.planName && (
+                        <p className="text-sm text-muted-foreground">
+                          Plan: {authData.planName}
+                        </p>
+                      )}
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={() => {
+                        logout();
+                        setSettingsOpen(false);
+                      }}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Abmelden
+                    </Button>
+                  </div>
                 </div>
               </div>
             </SheetContent>
@@ -1431,7 +1468,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
