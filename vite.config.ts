@@ -8,6 +8,7 @@ const allowedHosts = [
   "localhost",
   "127.0.0.1",
   "aivatar-character-creator-z5i9x.ondigitalocean.app",
+  "aivataracademy.online",
 ];
 
 export default defineConfig(({ mode }) => ({
