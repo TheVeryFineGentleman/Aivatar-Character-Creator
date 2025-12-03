@@ -1125,19 +1125,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   if (option.id === "white") {
                     bgClass = isSelected 
                       ? "bg-white text-black border-gray-400 shadow-md" 
-                      : "bg-white/70 text-black/70 border-gray-300";
+                      : "bg-white/70 text-black/70 border-gray-300 hover:bg-white/90 hover:border-gray-400";
                   } else if (option.id === "greenscreen") {
                     bgClass = isLocked
                       ? "bg-green-500/40 text-white/50 border-green-600/50"
                       : isSelected 
                         ? "bg-green-500 text-white border-green-700 shadow-md" 
-                        : "bg-green-500/70 text-white/70 border-green-600";
+                        : "bg-green-500/70 text-white/70 border-green-600 hover:bg-green-500/90 hover:border-green-700";
                   } else if (option.id === "scenery") {
                     bgClass = isLocked
                       ? "text-white/50 border-gray-300/50"
                       : isSelected 
                         ? "text-white border-gray-400 shadow-md" 
-                        : "text-white/90 border-gray-300";
+                        : "text-white/90 border-gray-300 hover:border-gray-400";
                     bgStyle = {
                       backgroundImage: `url(${sceneryBg})`,
                       backgroundSize: 'cover',
@@ -1160,7 +1160,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           setSelectedBackground(option.id);
                         }
                       }}
-                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold group ${
+                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold group hover:bg-transparent ${
                         isLocked && shakingElement === option.id
                           ? "animate-shake border-red-500 bg-red-500/30"
                           : bgClass
@@ -1169,7 +1169,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           ? "cursor-pointer opacity-60 hover:opacity-70"
                           : isSelected 
                             ? "scale-105" 
-                            : "hover:scale-[1.02] hover:opacity-90"
+                            : "hover:scale-[1.02]"
                       }`}
                       style={{ transformOrigin: 'center', ...(isLocked && shakingElement === option.id ? {} : bgStyle) }}
                     >
