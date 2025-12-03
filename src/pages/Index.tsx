@@ -1093,13 +1093,17 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                         setTimeout(() => setShakingElement(null), 500);
                         setShowUpgradePopup(true);
                       }}
-                      className={`relative w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+                      className={`relative w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 group ${
                         shakingElement === "upload" 
                           ? "animate-shake border-red-500 bg-red-500/20" 
-                          : "border-border/50 hover:border-primary/50"
+                          : "border-border/50 hover:border-border/70 hover:bg-muted/30"
                       }`}
                     >
-                      <Lock className={`w-10 h-10 ${shakingElement === "upload" ? "text-red-500" : "text-muted-foreground/70"} transition-colors`} />
+                      <Lock className={`w-10 h-10 transition-all duration-200 ${
+                        shakingElement === "upload" 
+                          ? "text-red-500" 
+                          : "text-muted-foreground/70 group-hover:text-muted-foreground group-hover:scale-110"
+                      }`} />
                     </div>
                   )
                 )}
@@ -1156,13 +1160,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           setSelectedBackground(option.id);
                         }
                       }}
-                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${
+                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold group ${
                         isLocked && shakingElement === option.id
                           ? "animate-shake border-red-500 bg-red-500/30"
                           : bgClass
                       } ${
                         isLocked
-                          ? `cursor-pointer opacity-70`
+                          ? "cursor-pointer opacity-60 hover:opacity-70"
                           : isSelected 
                             ? "scale-105" 
                             : "hover:scale-[1.02] hover:opacity-90"
@@ -1170,8 +1174,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       style={{ transformOrigin: 'center', ...(isLocked && shakingElement === option.id ? {} : bgStyle) }}
                     >
                       {isLocked && (
-                        <div className={`absolute inset-0 flex items-center justify-center rounded-md ${shakingElement === option.id ? "bg-red-500/30" : "bg-black/30"}`}>
-                          <Lock className={`w-8 h-8 ${shakingElement === option.id ? "text-red-500" : "text-white"} transition-colors`} />
+                        <div className={`absolute inset-0 flex items-center justify-center rounded-md transition-all duration-200 ${
+                          shakingElement === option.id 
+                            ? "bg-red-500/30" 
+                            : "bg-black/40 group-hover:bg-black/50"
+                        }`}>
+                          <Lock className={`w-8 h-8 transition-all duration-200 ${
+                            shakingElement === option.id 
+                              ? "text-red-500" 
+                              : "text-white/80 group-hover:text-white group-hover:scale-110"
+                          }`} />
                         </div>
                       )}
                       {option.label}
