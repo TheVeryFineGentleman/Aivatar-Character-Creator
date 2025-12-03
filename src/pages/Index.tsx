@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import JSZip from "jszip";
@@ -1092,6 +1092,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               <div className="flex gap-3">
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
+                  const isPremiumFeature = option.id === "greenscreen" || option.id === "scenery";
+                  const isLocked = isPremiumFeature && authData.planCode !== "PREMIUM";
                   
                   let bgClass = "bg-background border-border";
                   let bgStyle: React.CSSProperties = {};
@@ -1101,18 +1103,22 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       ? "bg-white text-black border-gray-400 shadow-md" 
                       : "bg-white/70 text-black/70 border-gray-300";
                   } else if (option.id === "greenscreen") {
-                    bgClass = isSelected 
-                      ? "bg-green-500 text-white border-green-700 shadow-md" 
-                      : "bg-green-500/70 text-white/70 border-green-600";
+                    bgClass = isLocked
+                      ? "bg-green-500/40 text-white/50 border-green-600/50"
+                      : isSelected 
+                        ? "bg-green-500 text-white border-green-700 shadow-md" 
+                        : "bg-green-500/70 text-white/70 border-green-600";
                   } else if (option.id === "scenery") {
-                    bgClass = isSelected 
-                      ? "text-white border-gray-400 shadow-md" 
-                      : "text-white/90 border-gray-300";
+                    bgClass = isLocked
+                      ? "text-white/50 border-gray-300/50"
+                      : isSelected 
+                        ? "text-white border-gray-400 shadow-md" 
+                        : "text-white/90 border-gray-300";
                     bgStyle = {
                       backgroundImage: `url(${sceneryBg})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
-                      backgroundColor: isSelected ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)',
+                      backgroundColor: isLocked ? 'rgba(0,0,0,0.7)' : isSelected ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)',
                       backgroundBlendMode: 'darken'
                     };
                   }
@@ -1121,14 +1127,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     <Button
                       key={option.id}
                       variant="outline"
-                      onClick={() => setSelectedBackground(option.id)}
-                      className={`min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${bgClass} ${
-                        isSelected 
-                          ? "scale-105" 
-                          : "hover:scale-[1.02] hover:opacity-90"
+                      onClick={() => !isLocked && setSelectedBackground(option.id)}
+                      disabled={isLocked}
+                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${bgClass} ${
+                        isLocked
+                          ? "cursor-not-allowed opacity-70"
+                          : isSelected 
+                            ? "scale-105" 
+                            : "hover:scale-[1.02] hover:opacity-90"
                       }`}
                       style={{ transformOrigin: 'center', ...bgStyle }}
                     >
+                      {isLocked && (
+                        <Lock className="absolute top-1 right-1 w-4 h-4 text-white/80" />
+                      )}
                       {option.label}
                     </Button>
                   );
@@ -1225,17 +1237,23 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             {/* Custom Prompt Toggle */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <Label 
-                  htmlFor="custom-prompt-toggle" 
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  Custom Prompt verwenden
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Label 
+                    htmlFor="custom-prompt-toggle" 
+                    className={`text-sm font-medium leading-none ${authData.planCode !== "PREMIUM" ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    Custom Prompt verwenden
+                  </Label>
+                  {authData.planCode !== "PREMIUM" && (
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
                 <Switch 
                   id="custom-prompt-toggle" 
                   checked={useCustomPrompt}
-                  onCheckedChange={setUseCustomPrompt}
-                  className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
+                  onCheckedChange={(checked) => authData.planCode === "PREMIUM" && setUseCustomPrompt(checked)}
+                  disabled={authData.planCode !== "PREMIUM"}
+                  className={`w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6 ${authData.planCode !== "PREMIUM" ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
               </div>
 
