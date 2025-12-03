@@ -85,11 +85,17 @@ export default {
           "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-2px)" },
           "20%, 40%, 60%, 80%": { transform: "translateX(2px)" },
         },
+        "switch-snap-back": {
+          "0%": { transform: "translateX(0)" },
+          "30%": { transform: "translateX(24px)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "shake": "shake 0.5s ease-in-out",
+        "switch-snap-back": "switch-snap-back 0.4s ease-out",
       },
     },
   },
