@@ -49,7 +49,8 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="text-center">
+          <div className="text-3xl font-bold text-primary mb-2">AvatarCreatorStudio</div>
           <CardTitle>Anmelden</CardTitle>
           <CardDescription>
             Bitte geben Sie Ihre E-Mail und Ihren License Key ein, um fortzufahren.
