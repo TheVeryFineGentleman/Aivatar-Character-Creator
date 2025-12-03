@@ -1093,7 +1093,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                         setTimeout(() => setShakingElement(null), 500);
                         setShowUpgradePopup(true);
                       }}
-                      className={`relative w-24 h-24 border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors ${shakingElement === "upload" ? "animate-shake" : ""}`}
+                      className={`relative w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+                        shakingElement === "upload" 
+                          ? "animate-shake border-red-500 bg-red-500/20" 
+                          : "border-border/50 hover:border-primary/50"
+                      }`}
                     >
                       <Lock className={`w-10 h-10 ${shakingElement === "upload" ? "text-red-500" : "text-muted-foreground/70"} transition-colors`} />
                     </div>
@@ -1152,17 +1156,21 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           setSelectedBackground(option.id);
                         }
                       }}
-                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${bgClass} ${
+                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${
+                        isLocked && shakingElement === option.id
+                          ? "animate-shake border-red-500 bg-red-500/30"
+                          : bgClass
+                      } ${
                         isLocked
-                          ? `cursor-pointer opacity-70 ${shakingElement === option.id ? "animate-shake" : ""}`
+                          ? `cursor-pointer opacity-70`
                           : isSelected 
                             ? "scale-105" 
                             : "hover:scale-[1.02] hover:opacity-90"
                       }`}
-                      style={{ transformOrigin: 'center', ...bgStyle }}
+                      style={{ transformOrigin: 'center', ...(isLocked && shakingElement === option.id ? {} : bgStyle) }}
                     >
                       {isLocked && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-md">
+                        <div className={`absolute inset-0 flex items-center justify-center rounded-md ${shakingElement === option.id ? "bg-red-500/30" : "bg-black/30"}`}>
                           <Lock className={`w-8 h-8 ${shakingElement === option.id ? "text-red-500" : "text-white"} transition-colors`} />
                         </div>
                       )}
