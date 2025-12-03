@@ -104,6 +104,7 @@ const Index = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
+  const [shakingElement, setShakingElement] = useState<string | null>(null);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -1085,11 +1086,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     </label>
                   ) : (
                     <div 
-                      onClick={() => window.open("https://aivataracademy.online", "_blank")}
-                      className="relative w-24 h-24 border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors opacity-70"
+                      onClick={() => {
+                        setShakingElement("upload");
+                        setTimeout(() => setShakingElement(null), 500);
+                        window.open("https://aivataracademy.online", "_blank");
+                      }}
+                      className={`relative w-24 h-24 border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors ${shakingElement === "upload" ? "animate-shake" : ""}`}
                     >
-                      <Upload className="w-8 h-8 text-muted-foreground/50" />
-                      <Lock className="absolute top-1 right-1 w-4 h-4 text-muted-foreground" />
+                      <Lock className={`w-10 h-10 ${shakingElement === "upload" ? "text-red-500" : "text-muted-foreground/70"} transition-colors`} />
                     </div>
                   )
                 )}
@@ -1139,6 +1143,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       variant="outline"
                       onClick={() => {
                         if (isLocked) {
+                          setShakingElement(option.id);
+                          setTimeout(() => setShakingElement(null), 500);
                           window.open("https://aivataracademy.online", "_blank");
                         } else {
                           setSelectedBackground(option.id);
@@ -1146,7 +1152,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       }}
                       className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${bgClass} ${
                         isLocked
-                          ? "cursor-pointer opacity-70"
+                          ? `cursor-pointer opacity-70 ${shakingElement === option.id ? "animate-shake" : ""}`
                           : isSelected 
                             ? "scale-105" 
                             : "hover:scale-[1.02] hover:opacity-90"
@@ -1154,7 +1160,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       style={{ transformOrigin: 'center', ...bgStyle }}
                     >
                       {isLocked && (
-                        <Lock className="absolute top-1 right-1 w-4 h-4 text-white/80" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-md">
+                          <Lock className={`w-8 h-8 ${shakingElement === option.id ? "text-red-500" : "text-white"} transition-colors`} />
+                        </div>
                       )}
                       {option.label}
                     </Button>
@@ -1252,29 +1260,34 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             {/* Custom Prompt Toggle */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="flex items-center gap-2">
+                <div 
+                  className={`flex items-center gap-2 ${authData.planCode !== "PREMIUM" ? "cursor-pointer" : ""} ${shakingElement === "customPrompt" ? "animate-shake" : ""}`}
+                  onClick={() => {
+                    if (authData.planCode !== "PREMIUM") {
+                      setShakingElement("customPrompt");
+                      setTimeout(() => setShakingElement(null), 500);
+                      window.open("https://aivataracademy.online", "_blank");
+                    }
+                  }}
+                >
                   <Label 
                     htmlFor="custom-prompt-toggle" 
-                    className={`text-sm font-medium leading-none ${authData.planCode !== "PREMIUM" ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`text-sm font-medium leading-none ${authData.planCode !== "PREMIUM" ? "text-muted-foreground cursor-pointer" : "cursor-pointer"}`}
                   >
                     Custom Prompt verwenden
                   </Label>
                   {authData.planCode !== "PREMIUM" && (
-                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    <Lock className={`w-5 h-5 ${shakingElement === "customPrompt" ? "text-red-500" : "text-muted-foreground"} transition-colors`} />
                   )}
                 </div>
-                <Switch 
-                  id="custom-prompt-toggle" 
-                  checked={useCustomPrompt}
-                  onCheckedChange={(checked) => {
-                    if (authData.planCode === "PREMIUM") {
-                      setUseCustomPrompt(checked);
-                    } else {
-                      window.open("https://aivataracademy.online", "_blank");
-                    }
-                  }}
-                  className={`w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6 ${authData.planCode !== "PREMIUM" ? "opacity-50 cursor-pointer" : ""}`}
-                />
+                {authData.planCode === "PREMIUM" && (
+                  <Switch 
+                    id="custom-prompt-toggle" 
+                    checked={useCustomPrompt}
+                    onCheckedChange={setUseCustomPrompt}
+                    className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
+                  />
+                )}
               </div>
 
               {/* Custom Prompt Input - Smooth Collapsible */}
