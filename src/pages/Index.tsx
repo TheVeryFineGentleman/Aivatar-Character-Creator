@@ -1072,16 +1072,26 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   </div>
                 ))}
                 {referenceImages.length < 3 && (
-                  <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <Upload className="w-8 h-8 text-muted-foreground" />
-                  </label>
+                  authData.planCode === "PREMIUM" ? (
+                    <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                    </label>
+                  ) : (
+                    <div 
+                      onClick={() => window.open("https://aivataracademy.online", "_blank")}
+                      className="relative w-24 h-24 border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors opacity-70"
+                    >
+                      <Upload className="w-8 h-8 text-muted-foreground/50" />
+                      <Lock className="absolute top-1 right-1 w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )
                 )}
               </div>
             </div>
@@ -1127,11 +1137,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     <Button
                       key={option.id}
                       variant="outline"
-                      onClick={() => !isLocked && setSelectedBackground(option.id)}
-                      disabled={isLocked}
+                      onClick={() => {
+                        if (isLocked) {
+                          window.open("https://aivataracademy.online", "_blank");
+                        } else {
+                          setSelectedBackground(option.id);
+                        }
+                      }}
                       className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold ${bgClass} ${
                         isLocked
-                          ? "cursor-not-allowed opacity-70"
+                          ? "cursor-pointer opacity-70"
                           : isSelected 
                             ? "scale-105" 
                             : "hover:scale-[1.02] hover:opacity-90"
@@ -1251,9 +1266,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 <Switch 
                   id="custom-prompt-toggle" 
                   checked={useCustomPrompt}
-                  onCheckedChange={(checked) => authData.planCode === "PREMIUM" && setUseCustomPrompt(checked)}
-                  disabled={authData.planCode !== "PREMIUM"}
-                  className={`w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6 ${authData.planCode !== "PREMIUM" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  onCheckedChange={(checked) => {
+                    if (authData.planCode === "PREMIUM") {
+                      setUseCustomPrompt(checked);
+                    } else {
+                      window.open("https://aivataracademy.online", "_blank");
+                    }
+                  }}
+                  className={`w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6 ${authData.planCode !== "PREMIUM" ? "opacity-50 cursor-pointer" : ""}`}
                 />
               </div>
 
