@@ -1033,7 +1033,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <span className="text-sm font-medium text-primary">KI Character Generator</span>
           </div>
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
-            Aivatar Academy Character Creator
+            AvatarCreatorStudio
           </h1>
           <p className="text-muted-foreground text-lg">
             Generiere vielfältige Character-Posen mit KI
