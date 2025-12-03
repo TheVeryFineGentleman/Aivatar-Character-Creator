@@ -105,6 +105,8 @@ const Index = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const [shakingElement, setShakingElement] = useState<string | null>(null);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [switchSnapping, setSwitchSnapping] = useState(false);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -1089,7 +1091,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       onClick={() => {
                         setShakingElement("upload");
                         setTimeout(() => setShakingElement(null), 500);
-                        window.open("https://aivataracademy.online", "_blank");
+                        setShowUpgradePopup(true);
                       }}
                       className={`relative w-24 h-24 border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors ${shakingElement === "upload" ? "animate-shake" : ""}`}
                     >
@@ -1145,7 +1147,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                         if (isLocked) {
                           setShakingElement(option.id);
                           setTimeout(() => setShakingElement(null), 500);
-                          window.open("https://aivataracademy.online", "_blank");
+                          setShowUpgradePopup(true);
                         } else {
                           setSelectedBackground(option.id);
                         }
@@ -1261,18 +1263,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div 
-                  className={`flex items-center gap-2 ${authData.planCode !== "PREMIUM" ? "cursor-pointer" : ""} ${shakingElement === "customPrompt" ? "animate-shake" : ""}`}
-                  onClick={() => {
-                    if (authData.planCode !== "PREMIUM") {
-                      setShakingElement("customPrompt");
-                      setTimeout(() => setShakingElement(null), 500);
-                      window.open("https://aivataracademy.online", "_blank");
-                    }
-                  }}
+                  className={`flex items-center gap-2 ${shakingElement === "customPrompt" ? "animate-shake" : ""}`}
                 >
                   <Label 
                     htmlFor="custom-prompt-toggle" 
-                    className={`text-sm font-medium leading-none ${authData.planCode !== "PREMIUM" ? "text-muted-foreground cursor-pointer" : "cursor-pointer"}`}
+                    className={`text-sm font-medium leading-none ${authData.planCode !== "PREMIUM" ? "text-muted-foreground" : "cursor-pointer"}`}
                   >
                     Custom Prompt verwenden
                   </Label>
@@ -1280,14 +1275,33 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     <Lock className={`w-5 h-5 ${shakingElement === "customPrompt" ? "text-red-500" : "text-muted-foreground"} transition-colors`} />
                   )}
                 </div>
-                {authData.planCode === "PREMIUM" && (
-                  <Switch 
-                    id="custom-prompt-toggle" 
-                    checked={useCustomPrompt}
-                    onCheckedChange={setUseCustomPrompt}
-                    className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
-                  />
-                )}
+                <div 
+                  className="relative w-12 h-6 cursor-pointer"
+                  onClick={() => {
+                    if (authData.planCode !== "PREMIUM") {
+                      setSwitchSnapping(true);
+                      setShakingElement("customPrompt");
+                      setTimeout(() => {
+                        setSwitchSnapping(false);
+                        setShakingElement(null);
+                        setShowUpgradePopup(true);
+                      }, 400);
+                    }
+                  }}
+                >
+                  {authData.planCode === "PREMIUM" ? (
+                    <Switch 
+                      id="custom-prompt-toggle" 
+                      checked={useCustomPrompt}
+                      onCheckedChange={setUseCustomPrompt}
+                      className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
+                    />
+                  ) : (
+                    <div className="w-12 h-6 bg-muted rounded-full relative opacity-50">
+                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm ${switchSnapping ? "animate-switch-snap-back" : ""}`} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Custom Prompt Input - Smooth Collapsible */}
@@ -1528,6 +1542,38 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             </div>
           </DialogContent>
         </Dialog>
+        </div>
+      )}
+
+      {/* Upgrade to Pro Popup */}
+      {showUpgradePopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card border-2 border-red-500 rounded-lg p-6 max-w-md mx-4 relative shadow-2xl">
+            <button
+              onClick={() => setShowUpgradePopup(false)}
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+                <Lock className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
+              <p className="text-muted-foreground">
+                Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
+              </p>
+              <Button
+                onClick={() => {
+                  window.open("https://aivataracademy.online", "_blank");
+                  setShowUpgradePopup(false);
+                }}
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
+              >
+                Jetzt Pro Version kaufen
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
