@@ -1125,19 +1125,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   if (option.id === "white") {
                     bgClass = isSelected 
                       ? "bg-white text-black border-gray-400 shadow-md" 
-                      : "bg-white/70 text-black/70 border-gray-300 hover:bg-white/90 hover:border-gray-400";
+                      : "bg-white/70 text-black/70 border-gray-300 hover:bg-white hover:text-black hover:border-gray-400 hover:shadow-sm";
                   } else if (option.id === "greenscreen") {
                     bgClass = isLocked
                       ? "bg-green-500/40 text-white/50 border-green-600/50"
                       : isSelected 
                         ? "bg-green-500 text-white border-green-700 shadow-md" 
-                        : "bg-green-500/70 text-white/70 border-green-600 hover:bg-green-500/90 hover:border-green-700";
+                        : "bg-green-500/70 text-white/70 border-green-600 hover:bg-green-500 hover:text-white hover:border-green-700 hover:shadow-sm";
                   } else if (option.id === "scenery") {
                     bgClass = isLocked
                       ? "text-white/50 border-gray-300/50"
                       : isSelected 
                         ? "text-white border-gray-400 shadow-md" 
-                        : "text-white/90 border-gray-300 hover:border-gray-400";
+                        : "text-white/90 border-gray-300 hover:text-white hover:border-gray-400 hover:shadow-sm";
                     bgStyle = {
                       backgroundImage: `url(${sceneryBg})`,
                       backgroundSize: 'cover',
