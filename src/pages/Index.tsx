@@ -1032,9 +1032,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <Sparkles className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-primary">KI Character Generator</span>
           </div>
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
-            AvatarCreatorStudio
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
+              AvatarCreatorStudio
+            </h1>
+            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+              authData.planCode === "PREMIUM" 
+                ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black" 
+                : "bg-muted text-muted-foreground"
+            }`}>
+              {authData.planCode === "PREMIUM" ? "Pro" : "Basic"}
+            </span>
+          </div>
           <p className="text-muted-foreground text-lg">
             Generiere vielfältige Character-Posen mit KI
           </p>
