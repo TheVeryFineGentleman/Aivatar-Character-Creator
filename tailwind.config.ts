@@ -87,7 +87,7 @@ export default {
         },
         "switch-snap-back": {
           "0%": { transform: "translateX(0)" },
-          "30%": { transform: "translateX(24px)" },
+          "30%": { transform: "translateX(12px)" },
           "100%": { transform: "translateX(0)" },
         },
       },
