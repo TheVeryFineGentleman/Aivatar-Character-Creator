@@ -1009,7 +1009,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                         <Lock className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-5 gap-2">
                       {THEME_OPTIONS.map((option) => {
                         const isLocked = authData.planCode !== "PREMIUM" && option.id !== "neon";
                         const isSelected = theme === option.id;
@@ -1027,7 +1027,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                               }
                             }}
                             className={`
-                              relative p-3 rounded-lg border text-center transition-all
+                              relative p-2 rounded-lg border text-center transition-all
                               ${isSelected 
                                 ? "border-primary bg-primary/10 shadow-md" 
                                 : isLocked
@@ -1045,16 +1045,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                               />
                             )}
                             <div 
-                              className={`w-6 h-6 mx-auto rounded-full mb-1 ${
-                                option.id === "neon" 
-                                  ? "bg-gradient-to-br from-purple-500 to-cyan-400" 
-                                  : option.id === "sunset"
-                                    ? "bg-gradient-to-br from-orange-500 to-yellow-400"
-                                    : "bg-gradient-to-br from-blue-500 to-teal-400"
-                              }`}
+                              className={`w-5 h-5 mx-auto rounded-full mb-1 bg-gradient-to-br ${option.gradient}`}
                             />
-                            <span className="text-xs font-medium">{option.label}</span>
-                            <span className="text-[10px] text-muted-foreground block">{option.description}</span>
+                            <span className="text-[10px] font-medium block">{option.label}</span>
+                            <span className="text-[8px] text-muted-foreground block">{option.description}</span>
                           </button>
                         );
                       })}
