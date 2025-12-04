@@ -1511,15 +1511,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-6 right-6 z-50 rounded-full bg-background/80 hover:bg-background"
-                    onClick={() => setSelectedImageIndex(null)}
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
                     className="absolute left-6 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
                     onClick={() => navigateImage('prev')}
                     disabled={selectedImageIndex === 0}
