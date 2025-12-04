@@ -1099,7 +1099,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <span className="text-sm font-medium text-primary">KI Character Generator</span>
           </div>
           <div className="flex items-center justify-center gap-3 mb-4 flex-wrap overflow-visible">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent pr-1">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               AvatarCreatorStudio
             </h1>
             <span className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 ${
