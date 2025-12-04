@@ -12,6 +12,7 @@ import sceneryBg from "@/assets/scenery-background.jpg";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
 import {
   DropdownMenu,
@@ -91,6 +92,7 @@ const EXPRESSIONS = [
 
 const Index = () => {
   const { authData, isLoading: authLoading, login, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [apiKey, setApiKey] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
@@ -998,6 +1000,73 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   </p>
                 </div>
                 
+                {/* Theme Selector - Pro Only */}
+                <div className="pt-6 border-t border-border">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Farbschema</Label>
+                      {authData.planCode !== "PREMIUM" && (
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {THEME_OPTIONS.map((option) => {
+                        const isLocked = authData.planCode !== "PREMIUM" && option.id !== "neon";
+                        const isSelected = theme === option.id;
+                        
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => {
+                              if (isLocked) {
+                                setShakingElement(`theme-${option.id}`);
+                                setTimeout(() => setShakingElement(null), 500);
+                                setShowUpgradePopup(true);
+                              } else {
+                                setTheme(option.id);
+                              }
+                            }}
+                            className={`
+                              relative p-3 rounded-lg border text-center transition-all
+                              ${isSelected 
+                                ? "border-primary bg-primary/10 shadow-md" 
+                                : isLocked
+                                  ? "border-border/50 bg-muted/30 opacity-60"
+                                  : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
+                              }
+                              ${shakingElement === `theme-${option.id}` ? "animate-shake" : ""}
+                            `}
+                          >
+                            {isLocked && (
+                              <Lock 
+                                className={`absolute top-1 right-1 w-3 h-3 text-muted-foreground transition-all
+                                  ${shakingElement === `theme-${option.id}` ? "text-destructive scale-125" : ""}
+                                `} 
+                              />
+                            )}
+                            <div 
+                              className={`w-6 h-6 mx-auto rounded-full mb-1 ${
+                                option.id === "neon" 
+                                  ? "bg-gradient-to-br from-purple-500 to-cyan-400" 
+                                  : option.id === "sunset"
+                                    ? "bg-gradient-to-br from-orange-500 to-yellow-400"
+                                    : "bg-gradient-to-br from-blue-500 to-teal-400"
+                              }`}
+                            />
+                            <span className="text-xs font-medium">{option.label}</span>
+                            <span className="text-[10px] text-muted-foreground block">{option.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {authData.planCode !== "PREMIUM" && (
+                      <p className="text-xs text-muted-foreground">
+                        Weitere Themes sind nur mit Pro verfügbar.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="pt-6 border-t border-border">
                   <div className="space-y-4">
                     <div className="space-y-1">
