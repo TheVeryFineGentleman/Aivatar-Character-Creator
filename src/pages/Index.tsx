@@ -1120,8 +1120,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           <CardContent className="pt-6 space-y-6">
             {/* Image Upload */}
             <div className="space-y-2">
-              <Label>
-                Referenzbilder {authData.planCode === "PREMIUM" ? "(maximal 3)" : "(max 1 für Basic)"}
+              <Label className="flex items-center gap-2">
+                Referenzbilder
+                <span className="flex items-center gap-1 ml-1">
+                  {[1, 2, 3].map((num) => (
+                    <span
+                      key={num}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        authData.planCode === "PREMIUM" || num === 1
+                          ? "bg-primary"
+                          : "bg-muted-foreground/20"
+                      }`}
+                    />
+                  ))}
+                </span>
               </Label>
               <div className="flex flex-wrap gap-4">
                 {referenceImages.map((file, index) => (
