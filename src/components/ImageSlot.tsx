@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -15,9 +15,10 @@ interface ImageSlotProps {
   onDelete?: () => void;
   retrying?: boolean;
   isWaitingForPro?: boolean;
+  isInQueue?: boolean;
 }
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false, isWaitingForPro = false }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false, isWaitingForPro = false, isInQueue = false }: ImageSlotProps) => {
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-0 relative aspect-square">
@@ -39,6 +40,15 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                     2 Bilder gleichzeitig generieren
                   </p>
                 </div>
+              </div>
+            ) : isInQueue ? (
+              <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-muted-foreground/60" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  In Warteschlange
+                </p>
               </div>
             ) : (
               <ImageIcon className="w-12 h-12 text-muted-foreground/40" />

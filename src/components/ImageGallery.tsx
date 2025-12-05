@@ -30,6 +30,14 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, isBasi
   };
   const waitingIndex = getWaitingIndex();
 
+  // Get indices of slots that are in queue (pending but not the "waiting for pro" slot)
+  const isSlotInQueue = (index: number, status: ImageSlotStatus) => {
+    if (!isGenerating || status !== "pending") return false;
+    if (isBasicPlan && index === waitingIndex) return false; // This one shows the Pro message
+    // Check if there's at least one loading slot - if so, other pending slots are in queue
+    return firstLoadingIndex !== -1 && index > firstLoadingIndex;
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Generierte Bilder</h2>
@@ -46,6 +54,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, isBasi
             onImageClick={() => onImageClick?.(index)}
             onDelete={() => onDelete?.(index)}
             isWaitingForPro={index === waitingIndex}
+            isInQueue={isSlotInQueue(index, slot.status)}
           />
         ))}
       </div>
