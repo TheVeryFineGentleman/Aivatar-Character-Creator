@@ -500,7 +500,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🔄 totalCount:", totalCount);
     console.log("🔄 base64Images Länge:", base64Images.length);
     
-    const CONCURRENT_REQUESTS = 3;
+    const CONCURRENT_REQUESTS = 2;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
     console.log("🔄 Starte while-Schleife...");
