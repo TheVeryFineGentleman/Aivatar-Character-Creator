@@ -97,7 +97,7 @@ const Index = () => {
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [sceneDescription, setSceneDescription] = useState("");
-  const [imageCount, setImageCount] = useState([20]);
+  const [imageCount, setImageCount] = useState([3]);
   const [customPrompt, setCustomPrompt] = useState("");
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
