@@ -1120,7 +1120,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           <CardContent className="pt-6 space-y-6">
             {/* Image Upload */}
             <div className="space-y-2">
-              <Label>Referenzbilder (maximal 3)</Label>
+              <Label>
+                Referenzbilder {authData.planCode === "PREMIUM" ? "(maximal 3)" : "(max 1 für Basic)"}
+              </Label>
               <div className="flex flex-wrap gap-4">
                 {referenceImages.map((file, index) => (
                   <div key={index} className="relative group">
@@ -1137,39 +1139,56 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     </button>
                   </div>
                 ))}
-                {referenceImages.length < 3 && (
-                  authData.planCode === "PREMIUM" ? (
-                    <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                      <Upload className="w-8 h-8 text-muted-foreground" />
-                    </label>
-                  ) : (
-                    <div 
-                      onClick={() => {
-                        setShakingElement("upload");
-                        setTimeout(() => setShakingElement(null), 500);
-                        setShowUpgradePopup(true);
-                      }}
-                      className={`relative w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 group ${
-                        shakingElement === "upload" 
-                          ? "animate-shake border-red-500 bg-red-500/20" 
-                          : "border-border/50 hover:border-border/70 hover:bg-muted/30"
-                      }`}
-                    >
-                      <Lock className={`w-10 h-10 transition-all duration-200 ${
-                        shakingElement === "upload" 
-                          ? "text-red-500" 
-                          : "text-muted-foreground/70 group-hover:text-muted-foreground group-hover:scale-110"
-                      }`} />
-                    </div>
-                  )
-                )}
+                {/* Show upload button based on plan limits */}
+                {(() => {
+                  const maxImages = authData.planCode === "PREMIUM" ? 3 : 1;
+                  const canUpload = referenceImages.length < maxImages;
+                  const isLockedSlot = referenceImages.length >= maxImages && referenceImages.length < 3 && authData.planCode !== "PREMIUM";
+                  
+                  if (canUpload) {
+                    return (
+                      <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (authData.planCode !== "PREMIUM" && e.target.files && e.target.files.length > 1) {
+                              // Basic users can only upload 1 file
+                              const dt = new DataTransfer();
+                              dt.items.add(e.target.files[0]);
+                              e.target.files = dt.files;
+                            }
+                            handleImageUpload(e);
+                          }}
+                          className="hidden"
+                        />
+                        <Upload className="w-8 h-8 text-muted-foreground" />
+                      </label>
+                    );
+                  } else if (isLockedSlot) {
+                    return (
+                      <div 
+                        onClick={() => {
+                          setShakingElement("upload");
+                          setTimeout(() => setShakingElement(null), 500);
+                          setShowUpgradePopup(true);
+                        }}
+                        className={`relative w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 group ${
+                          shakingElement === "upload" 
+                            ? "animate-shake border-red-500 bg-red-500/20" 
+                            : "border-border/50 hover:border-border/70 hover:bg-muted/30"
+                        }`}
+                      >
+                        <Lock className={`w-10 h-10 transition-all duration-200 ${
+                          shakingElement === "upload" 
+                            ? "text-red-500" 
+                            : "text-muted-foreground/70 group-hover:text-muted-foreground group-hover:scale-110"
+                        }`} />
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </div>
 
