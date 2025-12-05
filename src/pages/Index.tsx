@@ -1122,17 +1122,29 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 Referenzbilder
-                <span className="flex items-center gap-1 ml-1">
-                  {[1, 2, 3].map((num) => (
-                    <span
-                      key={num}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        authData.planCode === "PREMIUM" || num === 1
-                          ? "bg-primary"
-                          : "bg-muted-foreground/20"
-                      }`}
-                    />
-                  ))}
+                <span className="flex items-center gap-1.5 ml-1">
+                  {[1, 2, 3].map((num) => {
+                    const maxAllowed = authData.planCode === "PREMIUM" ? 3 : 1;
+                    const isLocked = num > maxAllowed;
+                    const isFilled = num <= referenceImages.length;
+                    
+                    return (
+                      <span
+                        key={num}
+                        className={`relative flex items-center justify-center w-3 h-3 rounded-full transition-all ${
+                          isLocked
+                            ? "bg-muted-foreground/10 border border-muted-foreground/30"
+                            : isFilled
+                              ? "bg-primary"
+                              : "bg-muted-foreground/20 border border-muted-foreground/40"
+                        }`}
+                      >
+                        {isLocked && (
+                          <Lock className="w-2 h-2 text-muted-foreground/50" />
+                        )}
+                      </span>
+                    );
+                  })}
                 </span>
               </Label>
               <div className="flex flex-wrap gap-4">
