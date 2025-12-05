@@ -500,7 +500,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🔄 totalCount:", totalCount);
     console.log("🔄 base64Images Länge:", base64Images.length);
     
-    const CONCURRENT_REQUESTS = 2;
+    const CONCURRENT_REQUESTS = authData.planCode === "PREMIUM" ? 2 : 1;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
     console.log("🔄 Starte while-Schleife...");
@@ -1483,10 +1483,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   size="lg"
                 >
                   {isGenerating ? (
-                    <>
+                    <span className="flex items-center">
                       <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                      Generiere...
-                    </>
+                      Generiere{authData.planCode !== "PREMIUM" && <span className="ml-1 text-xs opacity-60">(1x)</span>}...
+                    </span>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5 mr-2" />
@@ -1503,10 +1503,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     size="lg"
                   >
                     {isGenerating ? (
-                      <>
+                      <span className="flex items-center">
                         <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                        Generiere mehr...
-                      </>
+                        Generiere{authData.planCode !== "PREMIUM" && <span className="ml-1 text-xs opacity-60">(1x)</span>}...
+                      </span>
                     ) : (
                       <>
                         <Plus className="w-5 h-5 mr-2" />
