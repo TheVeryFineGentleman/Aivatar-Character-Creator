@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -14,15 +14,28 @@ interface ImageSlotProps {
   onImageClick?: () => void;
   onDelete?: () => void;
   retrying?: boolean;
+  isWaitingForPro?: boolean;
 }
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false, isWaitingForPro = false }: ImageSlotProps) => {
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-0 relative aspect-square">
         {status === "pending" && (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
-            <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
+            {isWaitingForPro ? (
+              <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
+                <Lock className="w-8 h-8 text-muted-foreground/60" />
+                <p className="text-xs text-muted-foreground">
+                  Wartet...
+                </p>
+                <p className="text-[10px] text-primary/80">
+                  Pro: 2x parallel
+                </p>
+              </div>
+            ) : (
+              <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
+            )}
           </div>
         )}
         

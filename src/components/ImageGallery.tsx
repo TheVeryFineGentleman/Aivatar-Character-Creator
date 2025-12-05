@@ -12,10 +12,23 @@ interface ImageGalleryProps {
   onDownload: (index: number) => void;
   onImageClick?: (index: number) => void;
   onDelete?: (index: number) => void;
+  isBasicPlan?: boolean;
+  isGenerating?: boolean;
 }
 
-export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete }: ImageGalleryProps) => {
+export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, isBasicPlan = false, isGenerating = false }: ImageGalleryProps) => {
   if (slots.length === 0) return null;
+
+  // Find first loading slot index
+  const firstLoadingIndex = slots.findIndex(s => s.status === "loading");
+  // Find first pending slot that would be "waiting" (next in queue after loading)
+  const getWaitingIndex = () => {
+    if (!isBasicPlan || !isGenerating) return -1;
+    // For Basic: only 1 concurrent, so the next pending after first loading is waiting
+    if (firstLoadingIndex === -1) return -1;
+    return slots.findIndex((s, i) => i > firstLoadingIndex && s.status === "pending");
+  };
+  const waitingIndex = getWaitingIndex();
 
   return (
     <div>
@@ -32,6 +45,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete }: Imag
             onDownload={() => onDownload(index)}
             onImageClick={() => onImageClick?.(index)}
             onDelete={() => onDelete?.(index)}
+            isWaitingForPro={index === waitingIndex}
           />
         ))}
       </div>
