@@ -31,9 +31,14 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                 <p className="text-sm font-medium text-foreground/80">
                   Wartet...
                 </p>
-                <p className="text-xs text-primary font-medium">
-                  Pro: 2x parallel
-                </p>
+                <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mt-1">
+                  <p className="text-sm font-bold text-primary">
+                    ⚡ Pro: 2x schneller
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    2 Bilder gleichzeitig generieren
+                  </p>
+                </div>
               </div>
             ) : (
               <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
