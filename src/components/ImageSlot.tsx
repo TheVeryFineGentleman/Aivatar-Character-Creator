@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Pause } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -24,14 +24,27 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
         {status === "pending" && (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
             {isWaitingForPro ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-4 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                  <Lock className="w-10 h-10 text-primary" />
+              <div className="flex flex-col items-center justify-center gap-3 p-4 text-center relative">
+                {/* Pulsing rings animation */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full border-2 border-primary/30 animate-ping" style={{ animationDuration: '2s' }} />
                 </div>
-                <p className="text-sm font-medium text-foreground/80">
-                  Wartet...
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full border-2 border-primary/20 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
+                </div>
+                
+                {/* Lock with pause indicator */}
+                <div className="relative z-10 w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Lock className="w-8 h-8 text-primary" />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center">
+                    <Pause className="w-3 h-3 text-white" fill="white" />
+                  </div>
+                </div>
+                
+                <p className="relative z-10 text-sm font-medium text-foreground/80">
+                  Pausiert
                 </p>
-                <p className="text-xs text-primary font-medium">
+                <p className="relative z-10 text-xs text-primary font-medium">
                   Pro: 2x parallel
                 </p>
               </div>
