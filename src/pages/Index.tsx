@@ -1122,7 +1122,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 Referenzbilder
-                <span className="flex items-center gap-1.5 ml-1">
+                <span className="flex items-center gap-2 ml-1">
                   {[1, 2, 3].map((num) => {
                     const maxAllowed = authData.planCode === "PREMIUM" ? 3 : 1;
                     const isLocked = num > maxAllowed;
@@ -1131,16 +1131,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     return (
                       <span
                         key={num}
-                        className={`relative flex items-center justify-center w-3 h-3 rounded-full transition-all ${
-                          isLocked
-                            ? "bg-muted-foreground/10 border border-muted-foreground/30"
-                            : isFilled
-                              ? "bg-primary"
-                              : "bg-muted-foreground/20 border border-muted-foreground/40"
-                        }`}
+                        className="relative"
                       >
+                        <span
+                          className={`block w-3 h-3 rounded-full transition-all ${
+                            isLocked
+                              ? "bg-muted-foreground/10 border border-muted-foreground/30"
+                              : isFilled
+                                ? "bg-primary"
+                                : "bg-muted-foreground/20 border border-muted-foreground/40"
+                          }`}
+                        />
                         {isLocked && (
-                          <Lock className="w-2 h-2 text-muted-foreground/50" />
+                          <Lock className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 text-muted-foreground/60" />
                         )}
                       </span>
                     );
