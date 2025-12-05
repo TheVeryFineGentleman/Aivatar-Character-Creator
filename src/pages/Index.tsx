@@ -1380,20 +1380,17 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
                   )}
                 </Label>
-                <span className="text-sm text-muted-foreground">{imageCount[0]}</span>
+                <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
               </div>
               <div className="relative">
                 <Slider
                   value={imageCount}
                   onValueChange={(value) => {
-                    if (authData.planCode !== "PREMIUM") {
-                      setImageCount([Math.min(value[0], 6)]);
-                    } else {
-                      setImageCount(value);
-                    }
+                    const maxValue = authData.planCode !== "PREMIUM" ? 6 : 40;
+                    setImageCount([Math.min(value[0], maxValue)]);
                   }}
                   min={1}
-                  max={40}
+                  max={authData.planCode !== "PREMIUM" ? 6 : 40}
                   step={1}
                   className="w-full"
                 />
@@ -1402,8 +1399,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   <div 
                     className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/40 pointer-events-none"
                     style={{ 
-                      left: `calc(${(6 / 40) * 100}% - 2px)`,
-                      right: '0'
+                      left: `calc(100% + 2px)`,
+                      width: `calc(${((40 - 6) / 40) * 100}% * (40/6))`
                     }}
                   />
                 )}
