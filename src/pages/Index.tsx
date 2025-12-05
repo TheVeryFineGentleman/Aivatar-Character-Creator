@@ -1483,16 +1483,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   size="lg"
                 >
                   {isGenerating ? (
-                    <span className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 animate-spin" />
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
                       Generiere...
-                      <span className="flex gap-1 ml-1">
-                        <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" />
-                        {authData.planCode === "PREMIUM" && (
-                          <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" style={{ animationDelay: '0.2s' }} />
-                        )}
-                      </span>
-                    </span>
+                    </>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5 mr-2" />
@@ -1509,16 +1503,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     size="lg"
                   >
                     {isGenerating ? (
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 animate-spin" />
+                      <>
+                        <Sparkles className="w-5 h-5 mr-2 animate-spin" />
                         Generiere...
-                        <span className="flex gap-1 ml-1">
-                          <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" />
-                          {authData.planCode === "PREMIUM" && (
-                            <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" style={{ animationDelay: '0.2s' }} />
-                          )}
-                        </span>
-                      </span>
+                      </>
                     ) : (
                       <>
                         <Plus className="w-5 h-5 mr-2" />
@@ -1577,6 +1565,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           onDownload={handleDownloadSingle}
           onImageClick={handleImageClick}
           onDelete={handleDeleteImage}
+          isBasicPlan={authData.planCode !== "PREMIUM"}
+          isGenerating={isGenerating}
         />
 
         {/* Image Viewer Dialog */}
