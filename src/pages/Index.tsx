@@ -1329,17 +1329,40 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             {/* Image Count Slider */}
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>Anzahl Bilder</Label>
+                <Label className="flex items-center gap-2">
+                  Anzahl Bilder
+                  {authData.planCode !== "PREMIUM" && (
+                    <span className="text-xs text-muted-foreground">(max 3 für Basic)</span>
+                  )}
+                </Label>
                 <span className="text-sm text-muted-foreground">{imageCount[0]}</span>
               </div>
-              <Slider
-                value={imageCount}
-                onValueChange={setImageCount}
-                min={1}
-                max={40}
-                step={1}
-                className="w-full"
-              />
+              <div className="relative">
+                <Slider
+                  value={imageCount}
+                  onValueChange={(value) => {
+                    if (authData.planCode !== "PREMIUM") {
+                      setImageCount([Math.min(value[0], 3)]);
+                    } else {
+                      setImageCount(value);
+                    }
+                  }}
+                  min={1}
+                  max={40}
+                  step={1}
+                  className="w-full"
+                />
+                {/* Red overlay for locked portion (Basic users) */}
+                {authData.planCode !== "PREMIUM" && (
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/30 pointer-events-none"
+                    style={{ 
+                      left: `${(3 / 40) * 100}%`,
+                      right: '0'
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Custom Prompt Toggle */}
