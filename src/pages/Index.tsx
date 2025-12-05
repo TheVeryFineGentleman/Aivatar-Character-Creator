@@ -1377,7 +1377,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 <Label className="flex items-center gap-2">
                   Anzahl Bilder
                   {authData.planCode !== "PREMIUM" && (
-                    <span className="text-xs text-muted-foreground">(max 3 für Basic)</span>
+                    <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
                   )}
                 </Label>
                 <span className="text-sm text-muted-foreground">{imageCount[0]}</span>
@@ -1387,7 +1387,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   value={imageCount}
                   onValueChange={(value) => {
                     if (authData.planCode !== "PREMIUM") {
-                      setImageCount([Math.min(value[0], 3)]);
+                      setImageCount([Math.min(value[0], 6)]);
                     } else {
                       setImageCount(value);
                     }
@@ -1397,12 +1397,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   step={1}
                   className="w-full"
                 />
-                {/* Red overlay for locked portion (Basic users) */}
+                {/* Red overlay barrier for locked portion (Basic users) - visually blocks the thumb */}
                 {authData.planCode !== "PREMIUM" && (
                   <div 
-                    className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/30 pointer-events-none"
+                    className="absolute top-1/2 -translate-y-1/2 h-4 rounded-l-full bg-gradient-to-r from-red-500/60 to-red-500/20 pointer-events-none shadow-[-4px_0_8px_0_rgba(239,68,68,0.4)]"
                     style={{ 
-                      left: `${(3 / 40) * 100}%`,
+                      left: `${(6 / 40) * 100}%`,
                       right: '0'
                     }}
                   />
