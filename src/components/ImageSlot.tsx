@@ -32,14 +32,19 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                 <p className="text-sm font-medium text-foreground/80">
                   Wartet...
                 </p>
-                <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mt-1">
+                <a 
+                  href="https://aivataracademy.online" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mt-1 hover:bg-primary/20 hover:border-primary/50 transition-all cursor-pointer block"
+                >
                   <p className="text-sm font-bold text-primary">
                     ⚡ Pro: 2x schneller
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     2 Bilder gleichzeitig generieren
                   </p>
-                </div>
+                </a>
               </div>
             ) : isInQueue ? (
               <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
