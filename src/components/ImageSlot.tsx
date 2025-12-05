@@ -24,12 +24,14 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
         {status === "pending" && (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
             {isWaitingForPro ? (
-              <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
-                <Lock className="w-8 h-8 text-muted-foreground/60" />
-                <p className="text-xs text-muted-foreground">
+              <div className="flex flex-col items-center justify-center gap-3 p-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+                  <Lock className="w-10 h-10 text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground/80">
                   Wartet...
                 </p>
-                <p className="text-[10px] text-primary/80">
+                <p className="text-xs text-primary font-medium">
                   Pro: 2x parallel
                 </p>
               </div>
