@@ -1131,7 +1131,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     return (
                       <span
                         key={num}
-                        className="relative"
+                        className="relative flex items-center justify-center"
                       >
                         <span
                           className={`block w-3 h-3 rounded-full transition-all ${
@@ -1143,7 +1143,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           }`}
                         />
                         {isLocked && (
-                          <Lock className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 text-muted-foreground/60" />
+                          <Lock className="absolute w-4 h-4 text-muted-foreground/70" />
                         )}
                       </span>
                     );
