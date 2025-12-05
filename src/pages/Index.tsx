@@ -1483,9 +1483,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   size="lg"
                 >
                   {isGenerating ? (
-                    <span className="flex items-center">
-                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                      Generiere{authData.planCode !== "PREMIUM" && <span className="ml-1 text-xs opacity-60">(1x)</span>}...
+                    <span className="flex flex-col items-center gap-0.5">
+                      <span className="flex items-center">
+                        <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                        Generiere...
+                      </span>
+                      {authData.planCode !== "PREMIUM" && (
+                        <span className="text-[10px] opacity-70">Einzeln - Pro ist 2x schneller</span>
+                      )}
                     </span>
                   ) : (
                     <>
@@ -1503,9 +1508,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     size="lg"
                   >
                     {isGenerating ? (
-                      <span className="flex items-center">
-                        <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                        Generiere{authData.planCode !== "PREMIUM" && <span className="ml-1 text-xs opacity-60">(1x)</span>}...
+                      <span className="flex flex-col items-center gap-0.5">
+                        <span className="flex items-center">
+                          <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                          Generiere...
+                        </span>
+                        {authData.planCode !== "PREMIUM" && (
+                          <span className="text-[10px] opacity-70">Einzeln - Pro ist 2x schneller</span>
+                        )}
                       </span>
                     ) : (
                       <>
