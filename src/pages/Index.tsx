@@ -1397,12 +1397,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   step={1}
                   className="w-full"
                 />
-                {/* Red overlay barrier for locked portion (Basic users) - visually blocks the thumb */}
+                {/* Red overlay barrier for locked portion (Basic users) */}
                 {authData.planCode !== "PREMIUM" && (
                   <div 
-                    className="absolute top-1/2 -translate-y-1/2 h-4 rounded-l-full bg-gradient-to-r from-red-500/60 to-red-500/20 pointer-events-none shadow-[-4px_0_8px_0_rgba(239,68,68,0.4)]"
+                    className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/40 pointer-events-none"
                     style={{ 
-                      left: `${(6 / 40) * 100}%`,
+                      left: `calc(${(6 / 40) * 100}% - 2px)`,
                       right: '0'
                     }}
                   />
