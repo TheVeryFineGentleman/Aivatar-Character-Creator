@@ -3,48 +3,46 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/utils";
 
-interface SliderProps extends Omit<React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>, 'value' | 'onValueChange'> {
-  value?: number[];
-  onValueChange?: (value: number[]) => void;
+interface SliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
+  smoothSnap?: boolean;
 }
 
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   SliderProps
->(({ className, value, onValueChange, step = 1, min = 0, max = 100, ...props }, ref) => {
+>(({ className, smoothSnap = true, value, onValueChange, step = 1, min = 0, max = 100, ...props }, ref) => {
   const [isDragging, setIsDragging] = React.useState(false);
-  const [displayValue, setDisplayValue] = React.useState(value || [min]);
+  const [internalValue, setInternalValue] = React.useState(value || [min]);
 
   React.useEffect(() => {
-    if (!isDragging && value) {
-      setDisplayValue(value);
+    if (value !== undefined) {
+      setInternalValue(value);
     }
-  }, [value, isDragging]);
+  }, [value]);
 
   const handleValueChange = (newValue: number[]) => {
-    setDisplayValue(newValue);
+    setInternalValue(newValue);
+    if (!smoothSnap) {
+      onValueChange?.(newValue);
+    }
   };
 
-  const handlePointerUp = () => {
-    setIsDragging(false);
-    // Snap to nearest step
-    const snappedValue = displayValue.map(v => Math.round(v / step) * step);
-    setDisplayValue(snappedValue);
+  const handleValueCommit = (newValue: number[]) => {
+    const snappedValue = newValue.map(v => Math.round(v / step) * step);
+    setInternalValue(snappedValue);
     onValueChange?.(snappedValue);
+    setIsDragging(false);
   };
 
   return (
     <SliderPrimitive.Root
       ref={ref}
       className={cn("relative flex w-full touch-none select-none items-center", className)}
-      value={displayValue}
+      value={internalValue}
       onValueChange={handleValueChange}
+      onValueCommit={handleValueCommit}
       onPointerDown={() => setIsDragging(true)}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={() => {
-        if (isDragging) handlePointerUp();
-      }}
-      step={isDragging ? 0.1 : step}
+      step={smoothSnap && isDragging ? 0.1 : step}
       min={min}
       max={max}
       {...props}
@@ -53,14 +51,14 @@ const Slider = React.forwardRef<
         <SliderPrimitive.Range 
           className={cn(
             "absolute h-full bg-primary",
-            !isDragging && "transition-all duration-200 ease-out"
+            smoothSnap && !isDragging && "transition-all duration-200 ease-out"
           )} 
         />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb 
         className={cn(
-          "block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-          !isDragging && "transition-all duration-200 ease-out"
+          "block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing",
+          smoothSnap && !isDragging && "transition-all duration-200 ease-out"
         )} 
       />
     </SliderPrimitive.Root>
