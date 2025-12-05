@@ -1131,19 +1131,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     return (
                       <span
                         key={num}
-                        className="relative flex items-center justify-center"
+                        className="relative flex items-center justify-center w-4 h-4"
                       >
-                        <span
-                          className={`block w-3 h-3 rounded-full transition-all ${
-                            isLocked
-                              ? "bg-muted-foreground/10 border border-muted-foreground/30"
-                              : isFilled
+                        {isLocked ? (
+                          <Lock className="w-4 h-4 text-muted-foreground/70" />
+                        ) : (
+                          <span
+                            className={`block w-3 h-3 rounded-full transition-all ${
+                              isFilled
                                 ? "bg-primary"
                                 : "bg-muted-foreground/20 border border-muted-foreground/40"
-                          }`}
-                        />
-                        {isLocked && (
-                          <Lock className="absolute w-4 h-4 text-muted-foreground/70" />
+                            }`}
+                          />
                         )}
                       </span>
                     );
