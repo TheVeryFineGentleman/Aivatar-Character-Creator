@@ -1721,7 +1721,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       {/* Aivatar Academy Promotion Section */}
       <div className="w-full mt-12 mb-6 px-4">
-        <div className="max-w-xl mx-auto text-center space-y-3 bg-card/50 border border-border/50 rounded-xl p-5 backdrop-blur-sm">
+        <div className="max-w-2xl mx-auto text-center space-y-3 bg-card/50 border border-border/50 rounded-xl p-5 backdrop-blur-sm">
           <img 
             src={aivatarPromoImg} 
             alt="Aivatar Academy" 
