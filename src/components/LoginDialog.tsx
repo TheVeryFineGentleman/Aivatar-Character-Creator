@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { AnimatedTitle } from "@/components/AnimatedTitle";
 
 interface LoginDialogProps {
   onLogin: (email: string, licenseKey: string) => Promise<{ success: boolean; message?: string }>;
@@ -50,7 +51,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="text-3xl font-bold text-primary mb-2">AvatarCreatorStudio</div>
+          <AnimatedTitle text="AvatarCreatorStudio" className="text-3xl font-bold text-primary mb-2 block" />
           <CardTitle>Anmelden</CardTitle>
           <CardDescription>
             Bitte geben Sie Ihre E-Mail und Ihren License Key ein, um fortzufahren.

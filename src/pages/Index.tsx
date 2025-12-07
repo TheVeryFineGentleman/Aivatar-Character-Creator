@@ -15,6 +15,7 @@ import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
+import { AnimatedTitle } from "@/components/AnimatedTitle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1101,7 +1102,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           </div>
           <div className="flex items-center justify-center gap-3 mb-4 flex-wrap overflow-visible">
             <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              AvatarCreatorStudio
+              <AnimatedTitle text="AvatarCreatorStudio" />
             </h1>
             <span className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 ${
               authData.planCode === "PREMIUM" 
