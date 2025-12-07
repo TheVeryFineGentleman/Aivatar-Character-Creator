@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
+import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
@@ -1720,7 +1721,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       {/* Aivatar Academy Promotion Section */}
       <div className="w-full mt-16 mb-8 px-4">
-        <div className="max-w-3xl mx-auto text-center space-y-4 bg-card/50 border border-border/50 rounded-2xl p-8 backdrop-blur-sm">
+        <div className="max-w-3xl mx-auto text-center space-y-6 bg-card/50 border border-border/50 rounded-2xl p-8 backdrop-blur-sm">
+          <img 
+            src={aivatarPromoImg} 
+            alt="Aivatar Academy" 
+            className="w-48 h-48 md:w-64 md:h-64 object-cover rounded-full mx-auto border-4 border-primary/30 shadow-lg"
+          />
           <h3 className="text-xl md:text-2xl font-bold text-foreground">
             Willst du deinen Avatar richtig groß rausbringen?
           </h3>
