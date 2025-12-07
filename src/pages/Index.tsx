@@ -961,7 +961,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {authLoading ? (
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
