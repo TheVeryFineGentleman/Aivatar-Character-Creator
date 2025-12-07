@@ -1104,11 +1104,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               <AnimatedTitle text="AvatarCreatorStudio" />
             </h1>
-            <span className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 ${
-              authData.planCode === "PREMIUM" 
-                ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black" 
-                : "bg-muted text-muted-foreground"
-            }`}>
+            <span 
+              className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 transition-all duration-500 ${
+                authData.planCode === "PREMIUM" 
+                  ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black" 
+                  : "bg-muted text-muted-foreground"
+              }`}
+              style={{
+                opacity: 1,
+                transform: "translateY(0) scale(1)",
+                animation: "badge-appear 0.5s ease-out 0.8s both"
+              }}
+            >
               {authData.planCode === "PREMIUM" ? "Pro" : "Basic"}
             </span>
           </div>
