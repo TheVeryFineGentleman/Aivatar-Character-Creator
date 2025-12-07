@@ -1719,8 +1719,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         </div>
       )}
 
-      {/* Aivatar Academy Promotion Section */}
-      <div className="w-full mt-12 mb-6 px-4">
+      {/* Aivatar Academy Promotion Section - only show when authenticated */}
+      {authData.isAuthenticated && <div className="w-full mt-12 mb-6 px-4">
         <div className="max-w-2xl mx-auto text-center space-y-3 bg-card/50 border border-border/50 rounded-xl p-5 backdrop-blur-sm">
           <img 
             src={aivatarPromoImg} 
@@ -1747,7 +1747,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             Hier klicken
           </a>
         </div>
-      </div>
+      </div>}
     </div>
   );
 };
