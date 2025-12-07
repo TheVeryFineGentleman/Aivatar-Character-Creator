@@ -1720,20 +1720,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       )}
 
       {/* Aivatar Academy Promotion Section */}
-      <div className="w-full mt-16 mb-8 px-4">
-        <div className="max-w-3xl mx-auto text-center space-y-6 bg-card/50 border border-border/50 rounded-2xl p-8 backdrop-blur-sm">
+      <div className="w-full mt-12 mb-6 px-4">
+        <div className="max-w-xl mx-auto text-center space-y-3 bg-card/50 border border-border/50 rounded-xl p-5 backdrop-blur-sm">
           <img 
             src={aivatarPromoImg} 
             alt="Aivatar Academy" 
-            className="w-48 h-48 md:w-64 md:h-64 object-cover rounded-full mx-auto border-4 border-primary/30 shadow-lg"
+            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg mx-auto border-2 border-primary/30 shadow-md"
           />
-          <h3 className="text-xl md:text-2xl font-bold text-foreground">
+          <h3 className="text-lg md:text-xl font-bold text-foreground">
             Willst du deinen Avatar richtig groß rausbringen?
           </h3>
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Entdecke die Aivatar Academy und hebe dein KI-Game aufs nächste Level.
           </p>
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Mehr Reichweite, mehr Style, mehr Möglichkeiten – deine Avatar-Reise startet erst.
             <br />
             Klicke auf den Link und schau dir unser exklusives Webinar an. Die Aivatar Academy wartet auf dich.
@@ -1742,7 +1742,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             href="https://aivataracademy.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block mt-4 text-lg font-bold text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+            className="inline-block mt-2 text-base font-bold text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
           >
             Hier klicken
           </a>
