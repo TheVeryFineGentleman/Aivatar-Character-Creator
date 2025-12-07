@@ -1706,7 +1706,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               </p>
               <Button
                 onClick={() => {
-                  window.open("https://aivataracademy.online", "_blank");
+                  window.open("https://www.digistore24.com/product/653615", "_blank");
                   setShowUpgradePopup(false);
                 }}
                 className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
@@ -1717,6 +1717,31 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           </div>
         </div>
       )}
+
+      {/* Aivatar Academy Promotion Section */}
+      <div className="w-full mt-16 mb-8 px-4">
+        <div className="max-w-3xl mx-auto text-center space-y-4 bg-card/50 border border-border/50 rounded-2xl p-8 backdrop-blur-sm">
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">
+            Willst du deinen Avatar richtig groß rausbringen?
+          </h3>
+          <p className="text-muted-foreground leading-relaxed">
+            Entdecke die Aivatar Academy und hebe dein KI-Game aufs nächste Level.
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            Mehr Reichweite, mehr Style, mehr Möglichkeiten – deine Avatar-Reise startet erst.
+            <br />
+            Klicke auf den Link und schau dir unser exklusives Webinar an. Die Aivatar Academy wartet auf dich.
+          </p>
+          <a
+            href="https://aivataracademy.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-4 text-lg font-bold text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+          >
+            Hier klicken
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
