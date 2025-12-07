@@ -1725,7 +1725,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           <img 
             src={aivatarPromoImg} 
             alt="Aivatar Academy" 
-            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg mx-auto border-2 border-primary/30 shadow-md"
+            className="w-full max-w-md h-auto object-cover rounded-lg mx-auto border-2 border-primary/30 shadow-md"
           />
           <h3 className="text-lg md:text-xl font-bold text-foreground">
             Willst du deinen Avatar richtig groß rausbringen?
