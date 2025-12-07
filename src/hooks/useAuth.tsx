@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 
 const AUTH_STORAGE_KEY = "aivatar_auth";
-const TOOL_API_KEY = "1234";
+const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
 
 interface AuthData {
   isAuthenticated: boolean;
@@ -11,6 +11,11 @@ interface AuthData {
   planName: string;
   status: string;
   expiresAt: string | null;
+}
+
+interface CredentialsData {
+  email: string;
+  licenseKey: string;
 }
 
 interface ValidationResponse {
@@ -33,31 +38,16 @@ export const useAuth = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if user is already authenticated
-    const savedAuth = getFromLocalStorage(AUTH_STORAGE_KEY);
-    if (savedAuth && savedAuth.isAuthenticated) {
-      setAuthData(savedAuth);
-    }
-    setIsLoading(false);
-  }, []);
-
-  const login = async (email: string, licenseKey: string): Promise<{ success: boolean; message?: string }> => {
-    console.log("🔐 Login attempt started");
-    console.log("📧 Email:", email);
-    console.log("🔑 License Key length:", licenseKey.length);
-    
+  const validateLicense = useCallback(async (email: string, licenseKey: string): Promise<{ success: boolean; data?: ValidationResponse; message?: string }> => {
     try {
       const requestBody = {
         email: email,
         licenseKey: licenseKey,
       };
       
-      // Use Edge Function as proxy to avoid CORS issues
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/license-check`;
       
-      console.log("📤 Sending request to edge function:", apiUrl);
-      console.log("📦 Request body:", requestBody);
+      console.log("🔄 Validating license...");
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -67,43 +57,107 @@ export const useAuth = () => {
         body: JSON.stringify(requestBody),
       });
 
-      console.log("📥 Response status:", response.status);
-      console.log("📥 Response ok:", response.ok);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Response not OK. Status:", response.status, "Error:", errorText);
-        return { success: false, message: `Netzwerkfehler (${response.status}). Bitte versuchen Sie es erneut.` };
+        console.error("❌ Validation failed. Status:", response.status, "Error:", errorText);
+        return { success: false, message: `Netzwerkfehler (${response.status})` };
       }
 
       const data: ValidationResponse = await response.json();
-      console.log("📋 Response data:", data);
+      return { success: data.valid, data, message: data.valid ? undefined : "Lizenz ungültig" };
+    } catch (error) {
+      console.error("💥 Validation error:", error);
+      return { success: false, message: "Verbindungsfehler" };
+    }
+  }, []);
 
-      if (data.valid) {
-        console.log("✅ Login successful!");
+  const refreshAuth = useCallback(async () => {
+    console.log("🔄 Checking stored credentials on refresh...");
+    const savedCredentials: CredentialsData | null = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
+    const savedAuth = getFromLocalStorage(AUTH_STORAGE_KEY);
+    
+    if (savedCredentials && savedCredentials.email && savedCredentials.licenseKey) {
+      console.log("📧 Found stored credentials, validating...");
+      
+      const result = await validateLicense(savedCredentials.email, savedCredentials.licenseKey);
+      
+      if (result.success && result.data) {
+        console.log("✅ License still valid, plan:", result.data.planCode);
         const newAuthData: AuthData = {
           isAuthenticated: true,
-          email: data.email || email,
-          planCode: data.planCode || "",
-          planName: data.planName || "",
-          status: data.status || "",
-          expiresAt: data.expiresAt || null,
+          email: result.data.email || savedCredentials.email,
+          planCode: result.data.planCode || "",
+          planName: result.data.planName || "",
+          status: result.data.status || "",
+          expiresAt: result.data.expiresAt || null,
         };
+        
+        // Check if plan was upgraded
+        if (savedAuth && savedAuth.planCode !== newAuthData.planCode) {
+          console.log("🎉 Plan upgraded from", savedAuth.planCode, "to", newAuthData.planCode);
+        }
         
         setAuthData(newAuthData);
         saveToLocalStorage(AUTH_STORAGE_KEY, newAuthData);
-        
-        return { success: true };
       } else {
-        console.log("❌ Invalid credentials");
-        return { success: false, message: "Ungültige E-Mail oder License Key." };
+        console.log("❌ License no longer valid, logging out");
+        // License is no longer valid, clear auth
+        const emptyAuth: AuthData = {
+          isAuthenticated: false,
+          email: "",
+          planCode: "",
+          planName: "",
+          status: "",
+          expiresAt: null,
+        };
+        setAuthData(emptyAuth);
+        saveToLocalStorage(AUTH_STORAGE_KEY, emptyAuth);
+        saveToLocalStorage(CREDENTIALS_STORAGE_KEY, null);
       }
-    } catch (error) {
-      console.error("💥 Login error caught:", error);
-      console.error("Error type:", typeof error);
-      console.error("Error message:", error instanceof Error ? error.message : String(error));
+    } else if (savedAuth && savedAuth.isAuthenticated) {
+      // Fallback: use saved auth if no credentials stored (legacy)
+      setAuthData(savedAuth);
+    }
+    
+    setIsLoading(false);
+  }, [validateLicense]);
+
+  useEffect(() => {
+    refreshAuth();
+  }, [refreshAuth]);
+
+  const login = async (email: string, licenseKey: string): Promise<{ success: boolean; message?: string }> => {
+    console.log("🔐 Login attempt started");
+    console.log("📧 Email:", email);
+    console.log("🔑 License Key length:", licenseKey.length);
+    
+    const result = await validateLicense(email, licenseKey);
+
+    if (result.success && result.data) {
+      console.log("✅ Login successful!");
+      const newAuthData: AuthData = {
+        isAuthenticated: true,
+        email: result.data.email || email,
+        planCode: result.data.planCode || "",
+        planName: result.data.planName || "",
+        status: result.data.status || "",
+        expiresAt: result.data.expiresAt || null,
+      };
       
-      return { success: false, message: "Verbindungsfehler. Bitte versuchen Sie es später erneut." };
+      // Save credentials for future validation
+      const credentials: CredentialsData = {
+        email: email,
+        licenseKey: licenseKey,
+      };
+      
+      setAuthData(newAuthData);
+      saveToLocalStorage(AUTH_STORAGE_KEY, newAuthData);
+      saveToLocalStorage(CREDENTIALS_STORAGE_KEY, credentials);
+      
+      return { success: true };
+    } else {
+      console.log("❌ Invalid credentials");
+      return { success: false, message: result.message || "Ungültige E-Mail oder License Key." };
     }
   };
 
@@ -118,6 +172,7 @@ export const useAuth = () => {
     };
     setAuthData(emptyAuth);
     saveToLocalStorage(AUTH_STORAGE_KEY, emptyAuth);
+    saveToLocalStorage(CREDENTIALS_STORAGE_KEY, null);
   };
 
   return {
@@ -125,5 +180,6 @@ export const useAuth = () => {
     isLoading,
     login,
     logout,
+    refreshAuth,
   };
 };
