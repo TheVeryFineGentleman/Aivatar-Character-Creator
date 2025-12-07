@@ -288,55 +288,95 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     background-image: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.15), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(var(--accent) / 0.1), transparent),
-      radial-gradient(ellipse 40% 60% at 0% 80%, hsl(var(--primary) / 0.08), transparent);
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.2), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(var(--accent) / 0.15), transparent),
+      radial-gradient(ellipse 40% 60% at 0% 80%, hsl(var(--primary) / 0.12), transparent);
     background-attachment: fixed;
     min-height: 100vh;
   }
 }
 
-/* Animated floating orbs for extra visual interest */
+/* Animated floating orbs */
 @layer utilities {
+  .bg-animated-orbs {
+    position: relative;
+    overflow: hidden;
+  }
+  
   .bg-animated-orbs::before,
   .bg-animated-orbs::after {
     content: '';
     position: fixed;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.4;
+    filter: blur(100px);
+    opacity: 0.5;
     pointer-events: none;
-    z-index: -1;
+    z-index: 0;
   }
   
   .bg-animated-orbs::before {
-    width: 400px;
-    height: 400px;
-    background: hsl(var(--primary) / 0.3);
-    top: -100px;
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--accent) / 0.2));
+    top: -150px;
     right: -100px;
-    animation: float-orb-1 20s ease-in-out infinite;
+    animation: float-orb-1 15s ease-in-out infinite;
   }
   
   .bg-animated-orbs::after {
-    width: 300px;
-    height: 300px;
-    background: hsl(var(--accent) / 0.25);
-    bottom: -50px;
-    left: -50px;
-    animation: float-orb-2 25s ease-in-out infinite;
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(225deg, hsl(var(--accent) / 0.35), hsl(var(--primary) / 0.15));
+    bottom: -100px;
+    left: -100px;
+    animation: float-orb-2 18s ease-in-out infinite;
   }
 }
 
+/* Additional glow layer via extra element */
+.bg-animated-orbs > * {
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes float-orb-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-50px, 50px) scale(1.1); }
-  50% { transform: translate(-100px, 20px) scale(0.95); }
-  75% { transform: translate(-30px, -30px) scale(1.05); }
+  0%, 100% { 
+    transform: translate(0, 0) scale(1) rotate(0deg); 
+    opacity: 0.5;
+  }
+  25% { 
+    transform: translate(-80px, 80px) scale(1.15) rotate(45deg); 
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translate(-150px, 40px) scale(0.9) rotate(90deg); 
+    opacity: 0.45;
+  }
+  75% { 
+    transform: translate(-50px, -50px) scale(1.1) rotate(135deg); 
+    opacity: 0.55;
+  }
 }
 
 @keyframes float-orb-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(80px, -60px) scale(1.15); }
-  66% { transform: translate(40px, 40px) scale(0.9); }
+  0%, 100% { 
+    transform: translate(0, 0) scale(1) rotate(0deg); 
+    opacity: 0.45;
+  }
+  33% { 
+    transform: translate(100px, -80px) scale(1.2) rotate(-60deg); 
+    opacity: 0.55;
+  }
+  66% { 
+    transform: translate(60px, 60px) scale(0.85) rotate(-120deg); 
+    opacity: 0.4;
+  }
+}
+
+/* Subtle grid pattern overlay */
+.bg-animated-orbs::backdrop {
+  background-image: 
+    linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
