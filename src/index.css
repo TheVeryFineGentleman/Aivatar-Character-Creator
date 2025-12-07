@@ -413,3 +413,14 @@ All colors MUST be HSL.
     background-position: 200% 0;
   }
 }
+
+@keyframes badge-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
