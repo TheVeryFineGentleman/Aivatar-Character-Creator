@@ -1720,33 +1720,54 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       )}
 
       {/* Aivatar Academy Promotion Section - only show when authenticated */}
-      {authData.isAuthenticated && <div className="w-full mt-12 mb-6 px-4">
-        <div className="max-w-2xl mx-auto text-center space-y-3 bg-card/50 border border-border/50 rounded-xl p-5 backdrop-blur-sm">
-          <img 
-            src={aivatarPromoImg} 
-            alt="Aivatar Academy" 
-            className="w-full max-w-md h-auto object-cover rounded-lg mx-auto border-2 border-primary/30 shadow-md"
-          />
-          <h3 className="text-lg md:text-xl font-bold text-foreground">
-            Willst du deinen Avatar richtig groß rausbringen?
-          </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Entdecke die Aivatar Academy und hebe dein KI-Game aufs nächste Level.
-          </p>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Mehr Reichweite, mehr Style, mehr Möglichkeiten – deine Avatar-Reise startet erst.
-            <br />
-            Klicke auf den Link und schau dir unser exklusives Webinar an. Die Aivatar Academy wartet auf dich.
-          </p>
-          <a
-            href="https://aivataracademy.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block mt-2 text-base font-bold text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
-          >
-            Hier klicken
-          </a>
-        </div>
+      {authData.isAuthenticated && <div className="w-full mt-16 mb-8 px-4">
+        <a
+          href="https://aivataracademy.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block max-w-3xl mx-auto group cursor-pointer"
+        >
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-card/80 via-card/60 to-primary/10 backdrop-blur-md shadow-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02] hover:border-primary/50">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500 -z-10" />
+            
+            <div className="flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
+              {/* Image */}
+              <div className="relative flex-shrink-0 w-full md:w-64 overflow-hidden rounded-xl">
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
+                <img 
+                  src={aivatarPromoImg} 
+                  alt="Aivatar Academy" 
+                  className="w-full h-48 md:h-40 object-cover transform group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute bottom-2 left-2 z-20 px-2 py-1 bg-primary/90 rounded-md text-xs font-bold text-primary-foreground">
+                  EXKLUSIV
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 text-center md:text-left space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-xs font-semibold text-primary uppercase tracking-wide">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  Aivatar Academy
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                  Willst du deinen Avatar richtig groß rausbringen?
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Mehr Reichweite, mehr Style, mehr Möglichkeiten – entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
+                </p>
+                <div className="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all duration-300">
+                  Jetzt entdecken
+                  <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </a>
       </div>}
     </div>
   );
