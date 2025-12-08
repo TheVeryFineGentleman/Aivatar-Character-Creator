@@ -2,14 +2,14 @@ import { X } from "lucide-react";
 import { useState } from "react";
 
 interface PromoBannerProps {
-  productId?: string;
+  planCode?: string;
 }
 
-const PromoBanner = ({ productId }: PromoBannerProps) => {
+const PromoBanner = ({ planCode }: PromoBannerProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
-  // Only show for product ID 645699
-  if (productId !== "645699" || !isVisible) {
+  // Show for Basic users
+  if (planCode !== "BASIC" || !isVisible) {
     return null;
   }
 
