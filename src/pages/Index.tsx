@@ -1099,7 +1099,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         </div>
 
         {/* Header */}
-        <div className="text-center mb-12 pr-12">
+        <div 
+          className="text-center mb-12 pr-12 animate-fade-in"
+          style={{ animationDelay: '0ms', animationDuration: '600ms', animationFillMode: 'both' }}
+        >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
             <Sparkles className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-primary">KI Character Generator</span>
@@ -1129,7 +1132,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         </div>
 
         {/* Main Controls */}
-        <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
+        <Card 
+          className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+          style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
+        >
           <CardContent className="pt-6 space-y-6">
             {/* Image Upload */}
             <div className="space-y-2">
@@ -1564,14 +1570,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         </Card>
 
         {/* Generated Images Gallery */}
-        <ImageGallery 
-          slots={imageSlots} 
-          onDownload={handleDownloadSingle}
-          onImageClick={handleImageClick}
-          onDelete={handleDeleteImage}
-          isBasicPlan={authData.planCode !== "PREMIUM"}
-          isGenerating={isGenerating}
-        />
+        <div 
+          className="animate-fade-in"
+          style={{ animationDelay: '300ms', animationDuration: '600ms', animationFillMode: 'both' }}
+        >
+          <ImageGallery 
+            slots={imageSlots} 
+            onDownload={handleDownloadSingle}
+            onImageClick={handleImageClick}
+            onDelete={handleDeleteImage}
+            isBasicPlan={authData.planCode !== "PREMIUM"}
+            isGenerating={isGenerating}
+          />
+        </div>
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
