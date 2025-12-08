@@ -8,8 +8,8 @@ interface PromoBannerProps {
 const PromoBanner = ({ productId }: PromoBannerProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
-  // Only show for product ID 644591
-  if (productId !== "644591" || !isVisible) {
+  // Only show for product ID 645699
+  if (productId !== "645699" || !isVisible) {
     return null;
   }
 
