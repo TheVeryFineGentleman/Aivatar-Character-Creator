@@ -1399,7 +1399,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 {/* Red overlay barrier for locked portion (Basic users) - positioned on the track */}
                 {authData.planCode !== "PREMIUM" && (
                   <div 
-                    className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/40 pointer-events-none z-10"
+                    className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/40 pointer-events-none z-0"
                     style={{ 
                       left: `${((6 - 1) / (40 - 1)) * 100}%`,
                       right: '0'
