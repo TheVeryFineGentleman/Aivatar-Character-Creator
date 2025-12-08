@@ -18,6 +18,7 @@ import { LoginDialog } from "@/components/LoginDialog";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
+import PromoBanner from "@/components/PromoBanner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -973,6 +974,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         <LoginDialog onLogin={login} />
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <PromoBanner productId={authData.productId} />
         {/* Settings Button */}
         <div className="absolute top-6 right-6">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -1695,7 +1697,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           </DialogContent>
         </Dialog>
         </div>
-      )}
 
       {/* Upgrade to Pro Popup */}
       {showUpgradePopup && (
@@ -1777,11 +1778,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         </a>
       </div>}
 
-      {/* Disclaimer Footer - only show when authenticated */}
-      {authData.isAuthenticated && <DisclaimerFooter />}
-
-      {/* Disclaimer Popup - only show when authenticated */}
-      {authData.isAuthenticated && <DisclaimerPopup />}
+        <DisclaimerFooter />
+        <DisclaimerPopup />
+        </div>
+      )}
     </div>
   );
 };
