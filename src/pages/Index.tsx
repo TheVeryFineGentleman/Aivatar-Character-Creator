@@ -1396,16 +1396,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
               </div>
               <div className="relative">
-                {/* Red overlay barrier for locked portion (Basic users) - positioned on the track */}
-                {authData.planCode !== "PREMIUM" && (
-                  <div 
-                    className="absolute top-1/2 -translate-y-1/2 h-2 rounded-r-full bg-red-500/50 pointer-events-none z-10"
-                    style={{ 
-                      left: `${((6 - 1) / (40 - 1)) * 100}%`,
-                      right: '0'
-                    }}
-                  />
-                )}
                 <Slider
                   value={imageCount}
                   onValueChange={(value) => {
@@ -1415,7 +1405,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   min={1}
                   max={40}
                   step={1}
-                  className="w-full"
+                  className="w-full relative z-10"
+                  lockedStart={authData.planCode !== "PREMIUM" ? 6 : undefined}
                 />
               </div>
             </div>
