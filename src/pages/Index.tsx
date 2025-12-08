@@ -974,7 +974,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         <LoginDialog onLogin={login} />
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <PromoBanner productId={authData.productId} />
+        <PromoBanner planCode={authData.planCode} />
         {/* Settings Button */}
         <div className="absolute top-6 right-6">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
