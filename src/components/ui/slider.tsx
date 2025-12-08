@@ -19,15 +19,15 @@ const Slider = React.forwardRef<
     <SliderPrimitive.Root
       ref={ref}
       className={cn(
-        "relative flex w-full touch-none select-none items-center",
+        "relative flex w-full touch-none select-none items-center group",
         className
       )}
       min={min}
       max={max}
       {...props}
     >
-      <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
-        <SliderPrimitive.Range className="absolute h-full bg-primary" />
+      <SliderPrimitive.Track className="relative h-2.5 w-full grow overflow-hidden rounded-full bg-secondary/80 cursor-pointer">
+        <SliderPrimitive.Range className="absolute h-full bg-primary transition-all duration-75" />
         {/* Red locked area inside the track */}
         {lockedPercentage !== undefined && (
           <div 
@@ -40,8 +40,7 @@ const Slider = React.forwardRef<
         )}
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb 
-        style={{ backgroundColor: '#0a0a0a' }} 
-        className="block h-5 w-5 rounded-full border-2 border-primary shadow-lg focus:outline-none focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing" 
+        className="block h-6 w-6 rounded-full bg-[#0a0a0a] border-[3px] border-primary shadow-lg focus:outline-none focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing active:scale-110 transition-transform duration-100 hover:border-primary/80" 
       />
     </SliderPrimitive.Root>
   );
