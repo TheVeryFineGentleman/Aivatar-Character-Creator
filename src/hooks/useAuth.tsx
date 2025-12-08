@@ -11,6 +11,7 @@ interface AuthData {
   planName: string;
   status: string;
   expiresAt: string | null;
+  productId?: string;
 }
 
 interface CredentialsData {
@@ -25,6 +26,7 @@ interface ValidationResponse {
   planName?: string;
   status?: string;
   expiresAt?: string | null;
+  productId?: string;
 }
 
 export const useAuth = () => {
@@ -35,6 +37,7 @@ export const useAuth = () => {
     planName: "",
     status: "",
     expiresAt: null,
+    productId: undefined,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -90,6 +93,7 @@ export const useAuth = () => {
           planName: result.data.planName || "",
           status: result.data.status || "",
           expiresAt: result.data.expiresAt || null,
+          productId: result.data.productId,
         };
         
         // Check if plan was upgraded
@@ -109,6 +113,7 @@ export const useAuth = () => {
           planName: "",
           status: "",
           expiresAt: null,
+          productId: undefined,
         };
         setAuthData(emptyAuth);
         saveToLocalStorage(AUTH_STORAGE_KEY, emptyAuth);
@@ -142,6 +147,7 @@ export const useAuth = () => {
         planName: result.data.planName || "",
         status: result.data.status || "",
         expiresAt: result.data.expiresAt || null,
+        productId: result.data.productId,
       };
       
       // Save credentials for future validation
@@ -169,6 +175,7 @@ export const useAuth = () => {
       planName: "",
       status: "",
       expiresAt: null,
+      productId: undefined,
     };
     setAuthData(emptyAuth);
     saveToLocalStorage(AUTH_STORAGE_KEY, emptyAuth);
