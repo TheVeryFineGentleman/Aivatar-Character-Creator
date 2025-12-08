@@ -1696,90 +1696,89 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             </div>
           </DialogContent>
         </Dialog>
-        </div>
 
-      {/* Upgrade to Pro Popup */}
-      {showUpgradePopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card border-2 border-red-500 rounded-lg p-6 max-w-md mx-4 relative shadow-2xl">
-            <button
-              onClick={() => setShowUpgradePopup(false)}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+          {/* Upgrade to Pro Popup */}
+          {showUpgradePopup && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-card border-2 border-red-500 rounded-lg p-6 max-w-md mx-4 relative shadow-2xl">
+                <button
+                  onClick={() => setShowUpgradePopup(false)}
+                  className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+                    <Lock className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
+                  <p className="text-muted-foreground">
+                    Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      window.open("https://www.digistore24.com/product/644591", "_blank");
+                      setShowUpgradePopup(false);
+                    }}
+                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
+                  >
+                    Jetzt Pro Version kaufen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Aivatar Academy Promotion Section */}
+          <div className="w-full mt-16 mb-8 px-4">
+            <a
+              href="https://aivataracademy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block max-w-3xl mx-auto group cursor-pointer"
             >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
-                <Lock className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
-              <p className="text-muted-foreground">
-                Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
-              </p>
-              <Button
-                onClick={() => {
-                  window.open("https://www.digistore24.com/product/644591", "_blank");
-                  setShowUpgradePopup(false);
-                }}
-                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
-              >
-                Jetzt Pro Version kaufen
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Aivatar Academy Promotion Section - only show when authenticated */}
-      {authData.isAuthenticated && <div className="w-full mt-16 mb-8 px-4">
-        <a
-          href="https://aivataracademy.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block max-w-3xl mx-auto group cursor-pointer"
-        >
-          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-card/80 via-card/60 to-primary/10 backdrop-blur-md shadow-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02] hover:border-primary/50">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500 -z-10" />
-            
-            <div className="flex flex-col items-center gap-6 p-6 md:p-8">
-              {/* Image - centered on top */}
-              <div className="relative w-full max-w-lg overflow-hidden rounded-xl">
-                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent z-10" />
-                <img 
-                  src={aivatarPromoImg} 
-                  alt="Aivatar Academy" 
-                  className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-700"
-                />
-              </div>
-              
-              {/* Content */}
-              <div className="text-center space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-xs font-semibold text-primary uppercase tracking-wide">
-                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                  Aivatar Academy
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-                  Willst du deinen Avatar richtig groß rausbringen?
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-                  Mehr Reichweite, mehr Style, mehr Möglichkeiten – entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
-                </p>
-                <div className="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all duration-300 pt-2">
-                  Jetzt entdecken
-                  <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+              <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-card/80 via-card/60 to-primary/10 backdrop-blur-md shadow-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02] hover:border-primary/50">
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500 -z-10" />
+                
+                <div className="flex flex-col items-center gap-6 p-6 md:p-8">
+                  {/* Image - centered on top */}
+                  <div className="relative w-full max-w-lg overflow-hidden rounded-xl">
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent z-10" />
+                    <img 
+                      src={aivatarPromoImg} 
+                      alt="Aivatar Academy" 
+                      className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-700"
+                    />
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="text-center space-y-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-xs font-semibold text-primary uppercase tracking-wide">
+                      <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                      Aivatar Academy
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                      Willst du deinen Avatar richtig groß rausbringen?
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                      Mehr Reichweite, mehr Style, mehr Möglichkeiten – entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
+                    </p>
+                    <div className="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all duration-300 pt-2">
+                      Jetzt entdecken
+                      <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </a>
           </div>
-        </a>
-      </div>}
 
-        <DisclaimerFooter />
-        <DisclaimerPopup />
+          <DisclaimerFooter />
+          <DisclaimerPopup />
         </div>
       )}
     </div>
