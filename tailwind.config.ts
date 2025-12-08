@@ -94,6 +94,21 @@ export default {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
+        "float1": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)", opacity: "0.6" },
+          "25%": { transform: "translate(10px, -15px) scale(1.1)", opacity: "0.8" },
+          "50%": { transform: "translate(20px, 5px) scale(0.9)", opacity: "0.5" },
+          "75%": { transform: "translate(5px, 10px) scale(1.05)", opacity: "0.7" },
+        },
+        "float2": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)", opacity: "0.5" },
+          "33%": { transform: "translate(-15px, -10px) scale(1.15)", opacity: "0.7" },
+          "66%": { transform: "translate(10px, 15px) scale(0.85)", opacity: "0.6" },
+        },
+        "float3": {
+          "0%, 100%": { transform: "translate(0, 0) rotate(0deg)", opacity: "0.6" },
+          "50%": { transform: "translate(-10px, -20px) rotate(180deg)", opacity: "0.8" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

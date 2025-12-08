@@ -20,6 +20,25 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
         <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-rose-500 to-orange-500" />
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
         
+        {/* Floating particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Circle particles */}
+          <div className="absolute w-3 h-3 bg-white/20 rounded-full animate-[float1_8s_ease-in-out_infinite]" style={{ left: '5%', top: '20%' }} />
+          <div className="absolute w-2 h-2 bg-yellow-300/30 rounded-full animate-[float2_6s_ease-in-out_infinite]" style={{ left: '15%', top: '60%' }} />
+          <div className="absolute w-4 h-4 bg-white/15 rounded-full animate-[float3_10s_ease-in-out_infinite]" style={{ left: '25%', top: '30%' }} />
+          <div className="absolute w-2 h-2 bg-orange-200/25 rounded-full animate-[float1_7s_ease-in-out_infinite]" style={{ left: '35%', top: '70%' }} />
+          <div className="absolute w-3 h-3 bg-white/20 rounded-full animate-[float2_9s_ease-in-out_infinite]" style={{ left: '55%', top: '25%' }} />
+          <div className="absolute w-2 h-2 bg-yellow-200/30 rounded-full animate-[float3_5s_ease-in-out_infinite]" style={{ left: '65%', top: '65%' }} />
+          <div className="absolute w-4 h-4 bg-white/10 rounded-full animate-[float1_11s_ease-in-out_infinite]" style={{ left: '75%', top: '40%' }} />
+          <div className="absolute w-2 h-2 bg-white/25 rounded-full animate-[float2_8s_ease-in-out_infinite]" style={{ left: '85%', top: '55%' }} />
+          <div className="absolute w-3 h-3 bg-orange-100/20 rounded-full animate-[float3_7s_ease-in-out_infinite]" style={{ left: '92%', top: '20%' }} />
+          
+          {/* Star shapes */}
+          <div className="absolute text-yellow-300/40 animate-[float2_6s_ease-in-out_infinite] text-lg" style={{ left: '10%', top: '40%' }}>✦</div>
+          <div className="absolute text-white/30 animate-[float1_8s_ease-in-out_infinite] text-sm" style={{ left: '45%', top: '50%' }}>✦</div>
+          <div className="absolute text-yellow-200/35 animate-[float3_7s_ease-in-out_infinite] text-base" style={{ left: '80%', top: '30%' }}>✦</div>
+        </div>
+        
         <div className="relative py-4 px-6">
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 text-center">
             {/* Deal badge */}
