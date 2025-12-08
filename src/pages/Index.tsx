@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
+import { DisclaimerPopup } from "@/components/DisclaimerPopup";
+import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1774,6 +1776,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           </div>
         </a>
       </div>}
+
+      {/* Disclaimer Footer - only show when authenticated */}
+      {authData.isAuthenticated && <DisclaimerFooter />}
+
+      {/* Disclaimer Popup - only show when authenticated */}
+      {authData.isAuthenticated && <DisclaimerPopup />}
     </div>
   );
 };
