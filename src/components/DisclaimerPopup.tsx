@@ -10,15 +10,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
+import { getCookie, setCookie } from "@/lib/storage";
 
-const DISCLAIMER_STORAGE_KEY = "disclaimer_accepted";
+const DISCLAIMER_COOKIE_KEY = "disclaimer_accepted";
 
 export const DisclaimerPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   useEffect(() => {
-    const disclaimerAccepted = localStorage.getItem(DISCLAIMER_STORAGE_KEY);
+    const disclaimerAccepted = getCookie(DISCLAIMER_COOKIE_KEY);
     if (!disclaimerAccepted) {
       setIsOpen(true);
     }
@@ -26,7 +27,8 @@ export const DisclaimerPopup = () => {
 
   const handleAccept = () => {
     if (dontShowAgain) {
-      localStorage.setItem(DISCLAIMER_STORAGE_KEY, "true");
+      // Cookie speichern für 365 Tage
+      setCookie(DISCLAIMER_COOKIE_KEY, "true", 365);
     }
     setIsOpen(false);
   };
