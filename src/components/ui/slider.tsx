@@ -17,11 +17,11 @@ const Slider = React.forwardRef<
     : undefined;
 
   const handleValueChange = (newValue: number[]) => {
-    // Snap to integer when close enough (within 0.3 of an integer)
+    // Snap to integer when very close (within 0.15 of an integer)
     const snappedValue = newValue.map(v => {
       const nearestInt = Math.round(v);
       const distance = Math.abs(v - nearestInt);
-      if (distance < 0.3) {
+      if (distance < 0.15) {
         return nearestInt;
       }
       return v;
@@ -38,7 +38,7 @@ const Slider = React.forwardRef<
       )}
       min={min}
       max={max}
-      step={0.1}
+      step={0.05}
       value={value}
       onValueChange={handleValueChange}
       {...props}
