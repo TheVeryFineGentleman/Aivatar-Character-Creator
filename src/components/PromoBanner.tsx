@@ -42,12 +42,17 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
         <div className="relative py-4 px-6">
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 text-center">
             {/* Deal badge */}
-            <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20">
+            <a 
+              href="https://www.digistore24.com/product/653615"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20 hover:bg-white/25 hover:scale-105 transition-all duration-200 cursor-pointer"
+            >
               <Gift className="w-4 h-4 text-yellow-300" />
               <span className="font-bold text-sm text-white tracking-wide">
                 EXKLUSIV-DEAL
               </span>
-            </div>
+            </a>
             
             {/* Timer badge */}
             <div className="flex items-center gap-1.5 text-white/90">
@@ -68,9 +73,14 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
             </div>
             
             {/* Discount badge */}
-            <div className="bg-yellow-400 text-black font-black text-sm sm:text-base px-4 py-1 rounded-full shadow-lg">
+            <a 
+              href="https://www.digistore24.com/product/653615"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-yellow-400 text-black font-black text-sm sm:text-base px-4 py-1 rounded-full shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all duration-200 cursor-pointer"
+            >
               60% RABATT
-            </div>
+            </a>
           </div>
           
           <button
