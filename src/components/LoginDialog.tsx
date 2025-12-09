@@ -91,6 +91,16 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
                 "Anmelden"
               )}
             </Button>
+            <div className="text-center pt-2">
+              <a 
+                href="https://www.digistore24.com/product/653615"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Lizenzschlüssel vergessen?
+              </a>
+            </div>
           </form>
         </CardContent>
       </Card>
