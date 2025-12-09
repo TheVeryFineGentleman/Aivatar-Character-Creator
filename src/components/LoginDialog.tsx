@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginDialogProps {
   onLogin: (email: string, licenseKey: string) => Promise<{ success: boolean; message?: string }>;
@@ -15,7 +17,56 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
   const [email, setEmail] = useState("");
   const [licenseKey, setLicenseKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showRemindDialog, setShowRemindDialog] = useState(false);
+  const [remindEmail, setRemindEmail] = useState("");
+  const [isReminding, setIsReminding] = useState(false);
+  const [remindMessage, setRemindMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const { toast } = useToast();
+
+  const handleRemindSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!remindEmail) {
+      setRemindMessage({ type: 'error', text: 'Bitte geben Sie Ihre E-Mail-Adresse ein.' });
+      return;
+    }
+
+    setIsReminding(true);
+    setRemindMessage(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('license-remind', {
+        body: { email: remindEmail }
+      });
+
+      if (error) throw error;
+
+      if (data.sent) {
+        setRemindMessage({ type: 'success', text: 'Ihr Lizenzschlüssel wurde an Ihre E-Mail-Adresse gesendet.' });
+      } else {
+        let errorText = 'Ein Fehler ist aufgetreten.';
+        switch (data.reason) {
+          case 'USER_NOT_FOUND':
+            errorText = 'Kein Benutzer mit dieser E-Mail-Adresse gefunden.';
+            break;
+          case 'ACTIVE_LICENSE_NOT_FOUND':
+            errorText = 'Keine aktive Lizenz für diese E-Mail-Adresse gefunden.';
+            break;
+          case 'INVALID_TOOL_API_KEY':
+            errorText = 'Technischer Fehler. Bitte kontaktieren Sie den Support.';
+            break;
+          default:
+            errorText = data.reason || 'Ein unbekannter Fehler ist aufgetreten.';
+        }
+        setRemindMessage({ type: 'error', text: errorText });
+      }
+    } catch (error) {
+      console.error('Error reminding license:', error);
+      setRemindMessage({ type: 'error', text: 'Verbindungsfehler. Bitte versuchen Sie es erneut.' });
+    } finally {
+      setIsReminding(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,18 +143,60 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
               )}
             </Button>
             <div className="text-center pt-2">
-              <a 
-                href="https://www.digistore24.com/product/653615"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowRemindDialog(true);
+                  setRemindMessage(null);
+                  setRemindEmail(email);
+                }}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 Lizenzschlüssel vergessen?
-              </a>
+              </button>
             </div>
           </form>
         </CardContent>
       </Card>
+
+      <Dialog open={showRemindDialog} onOpenChange={setShowRemindDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lizenzschlüssel anfordern</DialogTitle>
+            <DialogDescription>
+              Geben Sie Ihre E-Mail-Adresse ein, um Ihren Lizenzschlüssel zu erhalten.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRemindSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="remindEmail">E-Mail</Label>
+              <Input
+                id="remindEmail"
+                type="email"
+                placeholder="ihre@email.de"
+                value={remindEmail}
+                onChange={(e) => setRemindEmail(e.target.value)}
+                disabled={isReminding}
+              />
+            </div>
+            {remindMessage && (
+              <p className={`text-sm ${remindMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                {remindMessage.text}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={isReminding}>
+              {isReminding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Wird gesendet...
+                </>
+              ) : (
+                "Lizenzschlüssel senden"
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
