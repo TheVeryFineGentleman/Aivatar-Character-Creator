@@ -14,9 +14,10 @@ interface ImageGalleryProps {
   onDelete?: (index: number) => void;
   isBasicPlan?: boolean;
   isGenerating?: boolean;
+  format?: string;
 }
 
-export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, isBasicPlan = false, isGenerating = false }: ImageGalleryProps) => {
+export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, isBasicPlan = false, isGenerating = false, format = "1:1" }: ImageGalleryProps) => {
   if (slots.length === 0) return null;
 
   // Find first loading slot index
@@ -55,6 +56,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, isBasi
             onDelete={() => onDelete?.(index)}
             isWaitingForPro={index === waitingIndex}
             isInQueue={isSlotInQueue(index, slot.status)}
+            format={format}
           />
         ))}
       </div>

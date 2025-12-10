@@ -16,12 +16,24 @@ interface ImageSlotProps {
   retrying?: boolean;
   isWaitingForPro?: boolean;
   isInQueue?: boolean;
+  format?: string;
 }
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false, isWaitingForPro = false, isInQueue = false }: ImageSlotProps) => {
+const getAspectClass = (format: string) => {
+  switch (format) {
+    case "9:16": return "aspect-[9/16]";
+    case "16:9": return "aspect-[16/9]";
+    case "4:3": return "aspect-[4/3]";
+    case "3:4": return "aspect-[3/4]";
+    default: return "aspect-square"; // 1:1
+  }
+};
+
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1" }: ImageSlotProps) => {
+  const aspectClass = getAspectClass(format);
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-      <CardContent className="p-0 relative aspect-square">
+      <CardContent className={`p-0 relative ${aspectClass}`}>
         {status === "pending" && (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
             {isWaitingForPro ? (
