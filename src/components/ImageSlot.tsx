@@ -25,6 +25,9 @@ const getAspectClass = (format: string) => {
     case "16:9": return "aspect-[16/9]";
     case "4:3": return "aspect-[4/3]";
     case "3:4": return "aspect-[3/4]";
+    case "4:5": return "aspect-[4/5]";
+    case "5:4": return "aspect-[5/4]";
+    case "21:9": return "aspect-[21/9]";
     default: return "aspect-square"; // 1:1
   }
 };
