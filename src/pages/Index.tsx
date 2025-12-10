@@ -58,9 +58,12 @@ const BACKGROUND_OPTIONS = [
 
 const FORMAT_OPTIONS = [
   { id: "square", label: "Quadratisch (1:1)", ratio: "1:1" },
-  { id: "portrait", label: "Hochformat (9:16)", ratio: "9:16" },
-  { id: "landscape", label: "Querformat (16:9)", ratio: "16:9" },
-  { id: "wide", label: "Breit (21:9)", ratio: "21:9" },
+  { id: "portrait-mobile", label: "Mobile (9:16)", ratio: "9:16" },
+  { id: "portrait-insta", label: "Instagram (4:5)", ratio: "4:5" },
+  { id: "portrait-photo", label: "Foto Hochformat (3:4)", ratio: "3:4" },
+  { id: "landscape-photo", label: "Foto Querformat (4:3)", ratio: "4:3" },
+  { id: "landscape-wide", label: "Widescreen (16:9)", ratio: "16:9" },
+  { id: "ultrawide", label: "Ultra-Breit (21:9)", ratio: "21:9" },
 ];
 
 const SHOT_OPTIONS = [
