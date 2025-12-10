@@ -1581,6 +1581,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             onDelete={handleDeleteImage}
             isBasicPlan={authData.planCode !== "PREMIUM"}
             isGenerating={isGenerating}
+            format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
           />
         </div>
 
