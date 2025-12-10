@@ -300,6 +300,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             ],
             generationConfig: {
               responseModalities: ["TEXT", "IMAGE"],
+              aspectRatio: formatOption?.ratio || "1:1",
             },
           }),
         }
@@ -813,6 +814,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             ],
             generationConfig: {
               responseModalities: ["TEXT", "IMAGE"],
+              aspectRatio: format?.ratio || "1:1",
             },
           }),
         }
