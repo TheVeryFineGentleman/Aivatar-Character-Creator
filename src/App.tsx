@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,34 +9,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const MouseGlow = () => {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  return (
-    <div
-      className="pointer-events-none fixed inset-0 z-50 transition-opacity duration-150"
-      style={{
-        background: `radial-gradient(350px circle at ${mousePos.x}px ${mousePos.y}px, hsl(var(--primary) / 0.25), transparent 60%)`
-      }}
-    />
-  );
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
         <div className="bg-animated-orbs min-h-screen relative">
-          <MouseGlow />
           <Toaster />
           <Sonner />
           <BrowserRouter>
