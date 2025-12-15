@@ -17,7 +17,7 @@ export const AnimatedTitle = ({ text, className = "" }: AnimatedTitleProps) => {
       {text.split("").map((char, index) => (
         <span
           key={index}
-          className="inline-block transition-all duration-500 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+          className="inline-block transition-all duration-500 text-primary"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.8)",
