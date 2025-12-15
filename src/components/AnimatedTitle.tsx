@@ -13,11 +13,11 @@ export const AnimatedTitle = ({ text, className = "" }: AnimatedTitleProps) => {
   }, []);
 
   return (
-    <span className={`inline-flex ${className}`}>
+    <span className={`inline-flex bg-gradient-to-r from-primary via-accent to-primary bg-clip-text ${className}`}>
       {text.split("").map((char, index) => (
         <span
           key={index}
-          className="inline-block transition-all duration-500 text-primary"
+          className="inline-block transition-all duration-500 text-transparent"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.8)",
