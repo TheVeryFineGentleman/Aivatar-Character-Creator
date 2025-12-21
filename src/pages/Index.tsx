@@ -897,11 +897,49 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
   };
 
-  const handleDownloadSingle = (index: number) => {
+  const resizeImageForBasic = async (imageUrl: string, maxWidth: number = 512): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas context not available"));
+          return;
+        }
+
+        // Calculate new dimensions maintaining aspect ratio
+        const scale = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = imageUrl;
+    });
+  };
+
+  const handleDownloadSingle = async (index: number) => {
     const slot = imageSlots[index];
     if (slot.status === "completed" && slot.imageUrl) {
       const link = document.createElement("a");
-      link.href = slot.imageUrl;
+      
+      // Basic users get lower resolution (512px width)
+      if (authData.planCode !== "PREMIUM") {
+        try {
+          const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
+          link.href = resizedUrl;
+        } catch (error) {
+          console.error("Resize failed, using original:", error);
+          link.href = slot.imageUrl;
+        }
+      } else {
+        link.href = slot.imageUrl;
+      }
+      
       link.download = `character-${index + 1}.png`;
       document.body.appendChild(link);
       link.click();
@@ -941,13 +979,30 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
     try {
       const zip = new JSZip();
+      const isBasic = authData.planCode !== "PREMIUM";
       
       for (let i = 0; i < imageSlots.length; i++) {
         const slot = imageSlots[i];
         if (slot.status === "completed" && slot.imageUrl) {
-          const response = await fetch(slot.imageUrl);
-          const blob = await response.blob();
-          zip.file(`character-${i + 1}.png`, blob);
+          let imageData: Blob;
+          
+          if (isBasic) {
+            // Basic users get lower resolution
+            try {
+              const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
+              const response = await fetch(resizedUrl);
+              imageData = await response.blob();
+            } catch (error) {
+              console.error("Resize failed, using original:", error);
+              const response = await fetch(slot.imageUrl);
+              imageData = await response.blob();
+            }
+          } else {
+            const response = await fetch(slot.imageUrl);
+            imageData = await response.blob();
+          }
+          
+          zip.file(`character-${i + 1}.png`, imageData);
         }
       }
 
