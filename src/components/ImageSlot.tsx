@@ -94,6 +94,10 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
               src={imageUrl}
               alt={`Generiert ${index + 1}`}
               className="w-full h-full object-cover"
+              style={{ imageRendering: 'auto' }}
+              loading="lazy"
+              decoding="async"
+              sizes="(max-width: 768px) 50vw, 25vw"
               onLoad={() => console.log(`✅ Image ${index + 1} loaded successfully`)}
               onError={(e) => {
                 console.error(`❌ Image ${index + 1} failed to load`);
