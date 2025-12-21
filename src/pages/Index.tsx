@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
+import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -762,12 +763,30 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🎨 Custom Prompt:", customPrompt);
     console.log("🎨 Reference Images:", referenceImages.length);
 
-    const newIndex = imageSlots.length;
-    setImageSlots((prev) => [...prev, { status: "loading", progress: 0 }]);
+    // Capture the index before state update and use ref to track it
+    let capturedIndex = -1;
+    
+    // Use promise to ensure we get the correct index
+    await new Promise<void>((resolve) => {
+      setImageSlots((prev) => {
+        capturedIndex = prev.length;
+        return [...prev, { status: "loading", progress: 0 }];
+      });
+      // Give React time to process the state update
+      setTimeout(resolve, 0);
+    });
+    
+    const newIndex = capturedIndex;
+    if (newIndex < 0) {
+      console.error("Failed to get valid index for custom prompt");
+      return;
+    }
 
     try {
       const progressInterval = setInterval(() => {
         setImageSlots((prev) => {
+          // Safety check: ensure index is valid
+          if (newIndex >= prev.length) return prev;
           const updated = [...prev];
           if (updated[newIndex]?.status === "loading") {
             updated[newIndex].progress = Math.min((updated[newIndex].progress || 0) + 10, 90);
@@ -1283,19 +1302,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               </Label>
               <div className="flex flex-wrap gap-4">
                 {referenceImages.map((file, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={`Reference ${index + 1}`}
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-border"
-                    />
-                    <button
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      ×
-                    </button>
-                  </div>
+                  <ReferenceImagePreview 
+                    key={`ref-${file.name}-${index}`}
+                    file={file}
+                    index={index}
+                    onRemove={removeImage}
+                  />
                 ))}
                 {/* Show upload button based on plan limits */}
                 {(() => {
