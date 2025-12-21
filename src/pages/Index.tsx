@@ -121,6 +121,23 @@ const Index = () => {
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
 
+  // Helper function to safely update image slots
+  const updateSlotSafe = (index: number, update: Partial<ImageSlotData> | ((slot: ImageSlotData) => ImageSlotData)) => {
+    setImageSlots((prev) => {
+      if (index >= prev.length) {
+        console.warn(`updateSlotSafe: Index ${index} out of bounds, length: ${prev.length}`);
+        return prev;
+      }
+      const updated = [...prev];
+      if (typeof update === 'function') {
+        updated[index] = update(updated[index]);
+      } else {
+        updated[index] = { ...updated[index], ...update };
+      }
+      return updated;
+    });
+  };
+
   // Load saved data on mount
   useEffect(() => {
     const savedApiKey = getCookie("gemini_api_key");
@@ -334,14 +351,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         if (retryCount < MAX_RETRIES) {
           console.log(`🔄 Retrying image ${index + 1} with new API call (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
           
-          setImageSlots((prev) => {
-            const updated = [...prev];
-            updated[index] = { 
-              status: "loading", 
-              progress: 30,
-              retrying: true 
-            };
-            return updated;
+          updateSlotSafe(index, { 
+            status: "loading", 
+            progress: 30,
+            retrying: true 
           });
           
           await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
@@ -350,14 +363,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           // Final attempt with simplified prompt
           console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
           
-          setImageSlots((prev) => {
-            const updated = [...prev];
-            updated[index] = { 
-              status: "loading", 
-              progress: 40,
-              retrying: true 
-            };
-            return updated;
+          updateSlotSafe(index, { 
+            status: "loading", 
+            progress: 40,
+            retrying: true 
           });
           
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -415,14 +424,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         console.log(`🔄 Retrying image ${index + 1} (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
         
         // Update slot to show retry status
-        setImageSlots((prev) => {
-          const updated = [...prev];
-          updated[index] = { 
-            status: "loading", 
-            progress: 30,
-            retrying: true 
-          };
-          return updated;
+        updateSlotSafe(index, { 
+          status: "loading", 
+          progress: 30,
+          retrying: true 
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
@@ -431,14 +436,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         // Final attempt with simplified prompt
         console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
         
-        setImageSlots((prev) => {
-          const updated = [...prev];
-          updated[index] = { 
-            status: "loading", 
-            progress: 40,
-            retrying: true 
-          };
-          return updated;
+        updateSlotSafe(index, { 
+          status: "loading", 
+          progress: 40,
+          retrying: true 
         });
         
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -462,14 +463,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         console.log(`🔄 Retrying image ${index + 1} after error (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
         
         // Update slot to show retry status
-        setImageSlots((prev) => {
-          const updated = [...prev];
-          updated[index] = { 
-            status: "loading", 
-            progress: 30,
-            retrying: true 
-          };
-          return updated;
+        updateSlotSafe(index, { 
+          status: "loading", 
+          progress: 30,
+          retrying: true 
         });
         
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
@@ -478,14 +475,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         // Final attempt with simplified prompt
         console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt after error...`);
         
-        setImageSlots((prev) => {
-          const updated = [...prev];
-          updated[index] = { 
-            status: "loading", 
-            progress: 40,
-            retrying: true 
-          };
-          return updated;
+        updateSlotSafe(index, { 
+          status: "loading", 
+          progress: 40,
+          retrying: true 
         });
         
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -523,9 +516,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       await Promise.all(
         batch.map(async (index) => {
           console.log(`🎨 Starte Generierung für Index ${index}`);
-          // Update to loading
+          // Update to loading - ensure index exists
           setImageSlots((prev) => {
             const updated = [...prev];
+            // Safety check: ensure index is valid
+            if (index >= updated.length) {
+              console.warn(`Index ${index} out of bounds, current length: ${updated.length}`);
+              return prev;
+            }
             updated[index] = { status: "loading", progress: 0 };
             return updated;
           });
@@ -534,9 +532,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const progressInterval = setInterval(() => {
             setImageSlots((prev) => {
               const updated = [...prev];
-              if (updated[index].status === "loading") {
-                updated[index].progress = Math.min((updated[index].progress || 0) + 10, 90);
+              // Safety check: ensure index is valid
+              if (index >= updated.length || updated[index]?.status !== "loading") {
+                return prev;
               }
+              updated[index] = { 
+                ...updated[index],
+                progress: Math.min((updated[index].progress || 0) + 10, 90) 
+              };
               return updated;
             });
           }, 500);
@@ -554,9 +557,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
           clearInterval(progressInterval);
 
-          // Update with result
+          // Update with result - ensure index exists
           setImageSlots((prev) => {
             const updated = [...prev];
+            // Safety check: ensure index is valid
+            if (index >= updated.length) {
+              console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
+              return prev;
+            }
             if (imageUrl) {
               updated[index] = { status: "completed", imageUrl, progress: 100 };
             } else {
@@ -662,18 +670,27 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
 
-    setIsGenerating(true);
-    isGeneratingRef.current = true;
-    
     const currentLength = imageSlots.length;
     const newCount = imageCount[0];
     
-    // Add new pending slots to existing ones
+    // Add new pending slots to existing ones FIRST and wait for state update
     const newSlots: ImageSlotData[] = Array(newCount).fill(null).map(() => ({
       status: "pending" as const,
       progress: 0,
     }));
-    setImageSlots(prev => [...prev, ...newSlots]);
+    
+    // Use a promise to ensure state is updated before continuing
+    await new Promise<void>((resolve) => {
+      setImageSlots(prev => {
+        const updated = [...prev, ...newSlots];
+        // Schedule resolve after state update
+        setTimeout(resolve, 0);
+        return updated;
+      });
+    });
+    
+    setIsGenerating(true);
+    isGeneratingRef.current = true;
     
     // Fill queue with indices starting after existing images
     generationQueueRef.current = Array.from({ length: newCount }, (_, i) => currentLength + i);
