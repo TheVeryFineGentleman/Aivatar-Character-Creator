@@ -189,6 +189,18 @@ const Index = () => {
     }
   }, [referenceImages]);
 
+  // Cleanup blob URLs when component unmounts or slots change
+  useEffect(() => {
+    return () => {
+      // Revoke all blob URLs on unmount to prevent memory leaks
+      imageSlots.forEach(slot => {
+        if (slot?.imageUrl?.startsWith('blob:')) {
+          URL.revokeObjectURL(slot.imageUrl);
+        }
+      });
+    };
+  }, []);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (referenceImages.length + files.length > 3) {
@@ -876,11 +888,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const blob = new Blob([byteArray], { type: mimeType });
           const imageUrl = URL.createObjectURL(blob);
           
-          setImageSlots((prev) => {
-            const updated = [...prev];
-            updated[newIndex] = { status: "completed", imageUrl, progress: 100 };
-            return updated;
-          });
+          updateSlotSafe(newIndex, { status: "completed", imageUrl, progress: 100 });
           
           toast({
             title: "Erfolg!",
@@ -894,11 +902,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     } catch (error) {
       console.error("❌ Error with custom prompt:", error);
       
-      setImageSlots((prev) => {
-        const updated = [...prev];
-        updated[newIndex] = { status: "error", progress: 0 };
-        return updated;
-      });
+      updateSlotSafe(newIndex, { status: "error", progress: 0 });
       toast({
         title: "Generierung fehlgeschlagen",
         description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
@@ -965,6 +969,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   const handleDeleteImage = (index: number) => {
+    // Close dialog if deleted image was selected
+    if (selectedImageIndex === index) {
+      setSelectedImageIndex(null);
+    } else if (selectedImageIndex !== null && selectedImageIndex > index) {
+      // Adjust selected index if it comes after deleted image
+      setSelectedImageIndex(selectedImageIndex - 1);
+    }
+    
+    // Revoke blob URL to prevent memory leak
+    const slot = imageSlots[index];
+    if (slot?.imageUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(slot.imageUrl);
+    }
+    
     setImageSlots((prev) => prev.filter((_, i) => i !== index));
     toast({
       title: "Bild gelöscht",
@@ -975,10 +993,24 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   const navigateImage = (direction: 'prev' | 'next') => {
     if (selectedImageIndex === null) return;
     
-    if (direction === 'prev' && selectedImageIndex > 0) {
-      setSelectedImageIndex(selectedImageIndex - 1);
-    } else if (direction === 'next' && selectedImageIndex < imageSlots.length - 1) {
-      setSelectedImageIndex(selectedImageIndex + 1);
+    // Find next/previous completed image
+    const findNextCompleted = (startIdx: number, dir: 1 | -1): number | null => {
+      let idx = startIdx + dir;
+      while (idx >= 0 && idx < imageSlots.length) {
+        if (imageSlots[idx]?.status === "completed" && imageSlots[idx]?.imageUrl) {
+          return idx;
+        }
+        idx += dir;
+      }
+      return null;
+    };
+    
+    if (direction === 'prev') {
+      const prevIdx = findNextCompleted(selectedImageIndex, -1);
+      if (prevIdx !== null) setSelectedImageIndex(prevIdx);
+    } else {
+      const nextIdx = findNextCompleted(selectedImageIndex, 1);
+      if (nextIdx !== null) setSelectedImageIndex(nextIdx);
     }
   };
 
