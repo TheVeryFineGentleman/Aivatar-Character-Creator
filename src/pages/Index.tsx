@@ -317,6 +317,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+      
       // Call Google Gemini API directly with ALL reference images
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
@@ -325,6 +329,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           headers: {
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
           body: JSON.stringify({
             contents: [
               {
@@ -340,6 +345,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           }),
         }
       );
+
+      clearTimeout(timeoutId);
 
       console.log("🔍 API Request sent to:", response.url);
       console.log("🔍 Response status:", response.status);
@@ -541,7 +548,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             return updated;
           });
 
-          // Simulate progress
+          // Simulate progress - declare outside try for cleanup in finally
           const progressInterval = setInterval(() => {
             setImageSlots((prev) => {
               const updated = [...prev];
@@ -557,34 +564,46 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             });
           }, 500);
 
-          const imageUrl = await generateSingleImage(
-            index,
-            apiKey,
-            base64Images,
-            background,
-            totalCount,
-            selectedFormat,
-            selectedShot,
-            customPromptText
-          );
+          try {
+            const imageUrl = await generateSingleImage(
+              index,
+              apiKey,
+              base64Images,
+              background,
+              totalCount,
+              selectedFormat,
+              selectedShot,
+              customPromptText
+            );
 
-          clearInterval(progressInterval);
-
-          // Update with result - ensure index exists
-          setImageSlots((prev) => {
-            const updated = [...prev];
-            // Safety check: ensure index is valid
-            if (index >= updated.length) {
-              console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
-              return prev;
-            }
-            if (imageUrl) {
-              updated[index] = { status: "completed", imageUrl, progress: 100 };
-            } else {
-              updated[index] = { status: "error", progress: 0 };
-            }
-            return updated;
-          });
+            // Update with result - ensure index exists
+            setImageSlots((prev) => {
+              const updated = [...prev];
+              // Safety check: ensure index is valid
+              if (index >= updated.length) {
+                console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
+                return prev;
+              }
+              if (imageUrl) {
+                updated[index] = { status: "completed", imageUrl, progress: 100 };
+              } else {
+                updated[index] = { status: "error", progress: 0 };
+              }
+              return updated;
+            });
+          } catch (error) {
+            console.error(`❌ Error in processQueue for index ${index}:`, error);
+            setImageSlots((prev) => {
+              const updated = [...prev];
+              if (index < updated.length) {
+                updated[index] = { status: "error", progress: 0 };
+              }
+              return updated;
+            });
+          } finally {
+            // CRITICAL: Always clear interval to prevent memory leaks and crashes
+            clearInterval(progressInterval);
+          }
         })
       );
     }
@@ -782,8 +801,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
 
+    // Declare progressInterval outside try so we can clean it up in finally
+    let progressInterval: ReturnType<typeof setInterval> | null = null;
+    
     try {
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setImageSlots((prev) => {
           // Safety check: ensure index is valid
           if (newIndex >= prev.length) return prev;
@@ -851,6 +873,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
 
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
       // Call Google Gemini API with ALL reference images
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
@@ -859,6 +885,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           headers: {
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
           body: JSON.stringify({
             contents: [
               {
@@ -875,7 +902,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         }
       );
 
-      clearInterval(progressInterval);
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -921,12 +948,22 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     } catch (error) {
       console.error("❌ Error with custom prompt:", error);
       
+      // Check if it was a timeout/abort error
+      const errorMessage = error instanceof Error 
+        ? (error.name === 'AbortError' ? 'Zeitüberschreitung - bitte versuche es erneut' : error.message)
+        : "Ein Fehler ist aufgetreten";
+      
       updateSlotSafe(newIndex, { status: "error", progress: 0 });
       toast({
         title: "Generierung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      // CRITICAL: Always clear the progress interval to prevent memory leaks and crashes
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
     }
   };
 
