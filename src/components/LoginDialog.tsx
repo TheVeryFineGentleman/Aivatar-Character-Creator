@@ -114,7 +114,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
               <Label htmlFor="email">E-Mail</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 placeholder="ihre@email.de"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
