@@ -54,11 +54,10 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
               </span>
             </a>
             
-            {/* Timer badge */}
+            {/* Pro badge */}
             <div className="flex items-center gap-1.5 text-white/90">
-              <Timer className="w-4 h-4" />
               <span className="text-sm font-medium">
-                Bis 26.12.2025
+                Avatar Creator Studio „PRO"
               </span>
             </div>
             
