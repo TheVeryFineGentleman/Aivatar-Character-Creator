@@ -29,6 +29,12 @@ interface ValidationResponse {
   productId?: string;
 }
 
+// Developer test accounts (hardcoded)
+const DEV_ACCOUNTS: Record<string, { password: string; planCode: string; planName: string }> = {
+  "1": { password: "1", planCode: "BASIC", planName: "Basic" },
+  "2": { password: "2", planCode: "PREMIUM", planName: "Pro" },
+};
+
 export const useAuth = () => {
   const [authData, setAuthData] = useState<AuthData>({
     isAuthenticated: false,
@@ -42,6 +48,24 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const validateLicense = useCallback(async (email: string, licenseKey: string): Promise<{ success: boolean; data?: ValidationResponse; message?: string }> => {
+    // Check for dev accounts first
+    const devAccount = DEV_ACCOUNTS[email];
+    if (devAccount && devAccount.password === licenseKey) {
+      console.log("🔧 Dev account login:", email);
+      return {
+        success: true,
+        data: {
+          valid: true,
+          email: email,
+          planCode: devAccount.planCode,
+          planName: devAccount.planName,
+          status: "active",
+          expiresAt: null,
+          productId: "dev",
+        },
+      };
+    }
+
     try {
       const requestBody = {
         email: email,
