@@ -78,7 +78,7 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
               rel="noopener noreferrer"
               className="bg-yellow-400 text-black font-black text-sm sm:text-base px-4 py-1 rounded-full shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all duration-200 cursor-pointer"
             >
-              zum Spezialangebot
+              &gt;&gt; zum Spezialangebot
             </a>
           </div>
           
