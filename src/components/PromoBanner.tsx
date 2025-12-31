@@ -71,14 +71,14 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
               </span>
             </div>
             
-            {/* Discount badge */}
+            {/* CTA badge */}
             <a 
               href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-yellow-400 text-black font-black text-sm sm:text-base px-4 py-1 rounded-full shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all duration-200 cursor-pointer"
             >
-              60% RABATT
+              zum Spezialangebot
             </a>
           </div>
           
