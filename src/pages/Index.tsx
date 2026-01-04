@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
@@ -20,6 +20,7 @@ import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
+import { LegalDialog } from "@/components/LegalDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,6 +119,7 @@ const Index = () => {
   const [shakingElement, setShakingElement] = useState<string | null>(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [switchSnapping, setSwitchSnapping] = useState(false);
+  const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -1262,7 +1264,27 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     </Button>
                   </div>
                 </div>
+
+                {/* Rechtliches */}
+                <div className="pt-6 border-t border-border">
+                  <div className="space-y-3">
+                    <Label>Rechtliches</Label>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start" 
+                      onClick={() => setLegalDialogOpen(true)}
+                    >
+                      <Scale className="w-4 h-4 mr-2" />
+                      Impressum, Datenschutz & AGB
+                    </Button>
+                  </div>
+                </div>
               </div>
+
+              <LegalDialog 
+                open={legalDialogOpen} 
+                onOpenChange={setLegalDialogOpen} 
+              />
             </SheetContent>
           </Sheet>
         </div>
