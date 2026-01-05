@@ -103,7 +103,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <AnimatedTitle text="AvatarCreatorStudio" className="text-3xl font-bold text-primary mb-2 block" />
-          <CardTitle>Anmelden</CardTitle>
+          <CardTitle className="text-center">Anmelden</CardTitle>
           <CardDescription>
             Bitte geben Sie Ihre E-Mail und Ihren License Key ein, um fortzufahren.
           </CardDescription>
