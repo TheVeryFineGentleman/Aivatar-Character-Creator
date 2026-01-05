@@ -74,6 +74,12 @@ const SHOT_OPTIONS = [
   { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
+const SKIN_OPTIONS = [
+  { id: "soft", label: "Weiche Haut", description: "soft, smooth, flawless skin with subtle glow" },
+  { id: "realistic", label: "Realistische Haut", description: "realistic natural skin with visible pores and natural texture" },
+  { id: "imperfect", label: "Unvollkommene Haut", description: "imperfect skin with visible blemishes, freckles, wrinkles, and natural imperfections" },
+];
+
 const CASUAL_POSES = [
   "standing casually", "standing relaxed", "sitting casually", "leaning slightly",
   "hands in pockets", "one hand on hip", "arms crossed relaxed", "hands behind back",
@@ -120,6 +126,7 @@ const Index = () => {
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [switchSnapping, setSwitchSnapping] = useState(false);
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
+  const [selectedSkinType, setSelectedSkinType] = useState("realistic");
   const isGeneratingRef = useRef(false);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
@@ -286,6 +293,10 @@ const Index = () => {
         // Simplified fallback prompt after 3 failed attempts
         basePrompt = `Generate ONE person from the reference image. Simple ${bgText}. ${formatText}. High quality photo.`;
       } else {
+        // Get skin type description for Premium users
+        const skinOption = authData.planCode === "PREMIUM" ? SKIN_OPTIONS.find(s => s.id === selectedSkinType) : null;
+        const skinText = skinOption ? `- Skin appearance: ${skinOption.description}` : "";
+        
         basePrompt = `CRITICAL CONSTRAINTS: 
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
@@ -301,6 +312,7 @@ Create a professional photoshoot of the person from the reference image(s).
 - Format: ${formatText}
 - ${shotText}
 - ${viewAngle}
+${skinText}
 Ultra high resolution, maintain style consistency with reference image(s).`;
       }
 
@@ -1525,8 +1537,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               </div>
             </div>
 
-            {/* Format and Shot Type Selection */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Format, Shot Type, and Skin Type Selection */}
+            <div className={`grid gap-4 ${authData.planCode === "PREMIUM" ? "grid-cols-3" : "grid-cols-2"}`}>
               {/* Image Format Dropdown */}
               <div className="space-y-2">
                 <Label>Bildformat</Label>
@@ -1572,6 +1584,31 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+
+              {/* Skin Type Dropdown - Pro Only */}
+              {authData.planCode === "PREMIUM" && (
+                <div className="space-y-2">
+                  <Label>Hauttyp</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "Hauttyp wählen"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full bg-popover">
+                      {SKIN_OPTIONS.map((skin) => (
+                        <DropdownMenuItem
+                          key={skin.id}
+                          onClick={() => setSelectedSkinType(skin.id)}
+                          className={selectedSkinType === skin.id ? "bg-accent" : ""}
+                        >
+                          {skin.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
 
             {/* Image Count Slider */}
