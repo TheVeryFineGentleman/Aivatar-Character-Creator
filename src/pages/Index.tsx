@@ -1253,6 +1253,21 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   </div>
                 </div>
 
+                {/* Rechtliches */}
+                <div className="pt-6 border-t border-border">
+                  <div className="space-y-3">
+                    <Label>Rechtliches</Label>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start" 
+                      onClick={() => setLegalDialogOpen(true)}
+                    >
+                      <Scale className="w-4 h-4 mr-2" />
+                      Impressum, Datenschutz & AGB
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="pt-6 border-t border-border">
                   <div className="space-y-4">
                     <div className="space-y-1">
@@ -1276,21 +1291,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Abmelden
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Rechtliches */}
-                <div className="pt-6 border-t border-border">
-                  <div className="space-y-3">
-                    <Label>Rechtliches</Label>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start" 
-                      onClick={() => setLegalDialogOpen(true)}
-                    >
-                      <Scale className="w-4 h-4 mr-2" />
-                      Impressum, Datenschutz & AGB
                     </Button>
                   </div>
                 </div>
