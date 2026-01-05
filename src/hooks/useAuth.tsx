@@ -33,6 +33,7 @@ interface ValidationResponse {
 const DEV_ACCOUNTS: Record<string, { password: string; planCode: string; planName: string }> = {
   "1": { password: "1", planCode: "BASIC", planName: "Basic" },
   "2": { password: "2", planCode: "PREMIUM", planName: "Pro" },
+  "3": { password: "3", planCode: "FULL", planName: "Full" },
 };
 
 export const useAuth = () => {
