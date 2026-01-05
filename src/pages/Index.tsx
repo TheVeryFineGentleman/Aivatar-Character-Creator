@@ -108,6 +108,9 @@ const EXPRESSIONS = [
 
 const Index = () => {
   const { authData, isLoading: authLoading, login, logout } = useAuth();
+  
+  // Helper: Check if user has Pro-level access (PREMIUM or FULL)
+  const isPro = authData.planCode === "PREMIUM" || authData.planCode === "FULL";
   const { theme, setTheme } = useTheme();
   const [apiKey, setApiKey] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
@@ -293,8 +296,8 @@ const Index = () => {
         // Simplified fallback prompt after 3 failed attempts
         basePrompt = `Generate ONE person from the reference image. Simple ${bgText}. ${formatText}. High quality photo.`;
       } else {
-        // Get skin type description for Premium users
-        const skinOption = authData.planCode === "PREMIUM" ? SKIN_OPTIONS.find(s => s.id === selectedSkinType) : null;
+        // Get skin type description for Pro users
+        const skinOption = isPro ? SKIN_OPTIONS.find(s => s.id === selectedSkinType) : null;
         const skinText = skinOption ? `- Skin appearance: ${skinOption.description}` : "";
         
         basePrompt = `CRITICAL CONSTRAINTS: 
@@ -538,7 +541,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🔄 totalCount:", totalCount);
     console.log("🔄 base64Images Länge:", base64Images.length);
     
-    const CONCURRENT_REQUESTS = authData.planCode === "PREMIUM" ? 2 : 1;
+    const CONCURRENT_REQUESTS = isPro ? 2 : 1;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
     console.log("🔄 Starte while-Schleife...");
@@ -1019,7 +1022,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const link = document.createElement("a");
       
       // Basic users get lower resolution (512px width)
-      if (authData.planCode !== "PREMIUM") {
+      if (!isPro) {
         try {
           const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
           link.href = resizedUrl;
@@ -1098,7 +1101,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
     try {
       const zip = new JSZip();
-      const isBasic = authData.planCode !== "PREMIUM";
+      const isBasic = !isPro;
       
       for (let i = 0; i < imageSlots.length; i++) {
         const slot = imageSlots[i];
@@ -1194,13 +1197,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label>Farbschema</Label>
-                      {authData.planCode !== "PREMIUM" && (
+                      {!isPro && (
                         <Lock className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                       {THEME_OPTIONS.map((option) => {
-                        const isLocked = authData.planCode !== "PREMIUM" && option.id !== "neon";
+                        const isLocked = !isPro && option.id !== "neon";
                         const isSelected = theme === option.id;
                         
                         return (
@@ -1242,7 +1245,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                         );
                       })}
                     </div>
-                    {authData.planCode !== "PREMIUM" && (
+                    {!isPro && (
                       <p className="text-xs text-muted-foreground">
                         Weitere Themes sind nur mit Pro verfügbar.
                       </p>
@@ -1314,20 +1317,22 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             <h1 className="text-4xl sm:text-5xl font-bold">
               <AnimatedTitle text="AvatarCreatorStudio" />
             </h1>
-            <span 
-              className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 transition-all duration-500 ${
-                authData.planCode === "PREMIUM" 
-                  ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black" 
-                  : "bg-muted text-muted-foreground"
-              }`}
-              style={{
-                opacity: 1,
-                transform: "translateY(0) scale(1)",
-                animation: "badge-appear 0.5s ease-out 0.8s both"
-              }}
-            >
-              {authData.planCode === "PREMIUM" ? "Pro" : "Basic"}
-            </span>
+            {authData.planCode !== "FULL" && (
+              <span 
+                className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 transition-all duration-500 ${
+                  authData.planCode === "PREMIUM" 
+                    ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black" 
+                    : "bg-muted text-muted-foreground"
+                }`}
+                style={{
+                  opacity: 1,
+                  transform: "translateY(0) scale(1)",
+                  animation: "badge-appear 0.5s ease-out 0.8s both"
+                }}
+              >
+                {authData.planCode === "PREMIUM" ? "Pro" : "Basic"}
+              </span>
+            )}
           </div>
           <p className="text-muted-foreground text-lg">
             Generiere vielfältige Character-Posen mit KI
@@ -1346,7 +1351,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 Referenzbilder
                 <span className="flex items-center gap-2 ml-1">
                   {[1, 2, 3].map((num) => {
-                    const maxAllowed = authData.planCode === "PREMIUM" ? 3 : 1;
+                    const maxAllowed = isPro ? 3 : 1;
                     const isLocked = num > maxAllowed;
                     const isFilled = num <= referenceImages.length;
                     
@@ -1382,9 +1387,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 ))}
                 {/* Show upload button based on plan limits */}
                 {(() => {
-                  const maxImages = authData.planCode === "PREMIUM" ? 3 : 1;
+                  const maxImages = isPro ? 3 : 1;
                   const canUpload = referenceImages.length < maxImages;
-                  const isLockedSlot = referenceImages.length >= maxImages && referenceImages.length < 3 && authData.planCode !== "PREMIUM";
+                  const isLockedSlot = referenceImages.length >= maxImages && referenceImages.length < 3 && !isPro;
                   
                   if (canUpload) {
                     return (
@@ -1393,7 +1398,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                           type="file"
                           accept="image/*"
                           onChange={(e) => {
-                            if (authData.planCode !== "PREMIUM" && e.target.files && e.target.files.length > 1) {
+                            if (!isPro && e.target.files && e.target.files.length > 1) {
                               // Basic users can only upload 1 file
                               const dt = new DataTransfer();
                               dt.items.add(e.target.files[0]);
@@ -1440,7 +1445,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
                   const isPremiumFeature = option.id === "greenscreen" || option.id === "scenery";
-                  const isLocked = isPremiumFeature && authData.planCode !== "PREMIUM";
+                  const isLocked = isPremiumFeature && !isPro;
                   
                   let bgClass = "bg-background border-border";
                   let bgStyle: React.CSSProperties = {};
@@ -1538,7 +1543,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             </div>
 
             {/* Format, Shot Type, and Skin Type Selection */}
-            <div className={`grid gap-4 ${authData.planCode === "PREMIUM" ? "grid-cols-3" : "grid-cols-2"}`}>
+            <div className={`grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
               {/* Image Format Dropdown */}
               <div className="space-y-2">
                 <Label>Bildformat</Label>
@@ -1586,7 +1591,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               </div>
 
               {/* Skin Type Dropdown - Pro Only */}
-              {authData.planCode === "PREMIUM" && (
+              {isPro && (
                 <div className="space-y-2">
                   <Label>Hauttyp</Label>
                   <DropdownMenu>
@@ -1616,7 +1621,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               <div className="flex justify-between">
                 <Label className="flex items-center gap-2">
                   Anzahl Bilder
-                  {authData.planCode !== "PREMIUM" && (
+                  {!isPro && (
                     <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
                   )}
                 </Label>
@@ -1626,14 +1631,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 <Slider
                   value={imageCount}
                   onValueChange={(value) => {
-                    const maxValue = authData.planCode !== "PREMIUM" ? 6 : 40;
+                    const maxValue = !isPro ? 6 : 40;
                     setImageCount([Math.min(value[0], maxValue)]);
                   }}
                   min={1}
                   max={40}
                   step={1}
                   className="w-full relative z-10"
-                  lockedStart={authData.planCode !== "PREMIUM" ? 6 : undefined}
+                  lockedStart={!isPro ? 6 : undefined}
                 />
               </div>
             </div>
@@ -1646,18 +1651,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 >
                   <Label 
                     htmlFor="custom-prompt-toggle" 
-                    className={`text-sm font-medium leading-none ${authData.planCode !== "PREMIUM" ? "text-muted-foreground" : "cursor-pointer"}`}
+                    className={`text-sm font-medium leading-none ${!isPro ? "text-muted-foreground" : "cursor-pointer"}`}
                   >
                     Custom Prompt verwenden
                   </Label>
-                  {authData.planCode !== "PREMIUM" && (
+                  {!isPro && (
                     <Lock className={`w-5 h-5 ${shakingElement === "customPrompt" ? "text-red-500" : "text-muted-foreground"} transition-colors`} />
                   )}
                 </div>
                 <div 
                   className="relative w-12 h-6 cursor-pointer"
                   onClick={() => {
-                    if (authData.planCode !== "PREMIUM") {
+                    if (!isPro) {
                       setSwitchSnapping(true);
                       setShakingElement("customPrompt");
                       setTimeout(() => {
@@ -1668,7 +1673,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     }
                   }}
                 >
-                  {authData.planCode === "PREMIUM" ? (
+                  {isPro ? (
                     <Switch 
                       id="custom-prompt-toggle" 
                       checked={useCustomPrompt}
@@ -1800,7 +1805,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             onDownload={handleDownloadSingle}
             onImageClick={handleImageClick}
             onDelete={handleDeleteImage}
-            isBasicPlan={authData.planCode !== "PREMIUM"}
+            isBasicPlan={!isPro}
             isGenerating={isGenerating}
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
           />
