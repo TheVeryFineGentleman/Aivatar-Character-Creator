@@ -1096,26 +1096,41 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     setImagePosition({ x: 0, y: 0 });
   };
 
-  const handleImageWheel = (e: React.WheelEvent) => {
+  const handleImageWheel = (e: React.WheelEvent<HTMLImageElement>) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setImageZoom(prev => Math.min(Math.max(prev + delta, 1), 4));
-  };
-
-  const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (imageZoom <= 1) {
-      setImagePosition({ x: 0, y: 0 });
-      return;
-    }
+    e.stopPropagation();
     
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    const mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 100;
+    const mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 100;
     
-    const maxOffset = (imageZoom - 1) * 25;
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    const newZoom = Math.min(Math.max(imageZoom + delta, 1), 4);
+    
+    if (newZoom === 1) {
+      setImagePosition({ x: 0, y: 0 });
+    } else {
+      const zoomFactor = (newZoom - 1) / 3;
+      setImagePosition({
+        x: -mouseX * zoomFactor,
+        y: -mouseY * zoomFactor
+      });
+    }
+    
+    setImageZoom(newZoom);
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (imageZoom <= 1) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 100;
+    const mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 100;
+    
+    const zoomFactor = (imageZoom - 1) / 3;
     setImagePosition({
-      x: -x * maxOffset,
-      y: -y * maxOffset
+      x: -mouseX * zoomFactor,
+      y: -mouseY * zoomFactor
     });
   };
 
@@ -1900,21 +1915,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   </Button>
 
                   {/* Image Display */}
-                  <div 
-                    className="w-full h-full flex items-center justify-center px-12 overflow-hidden cursor-zoom-in"
-                    onWheel={handleImageWheel}
-                    onMouseMove={handleImageMouseMove}
-                    onMouseLeave={handleImageMouseLeave}
-                  >
+                  <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden">
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
                         alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg transition-transform duration-150 ease-out"
+                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg transition-transform duration-100 ease-out select-none"
                         style={{
                           transform: `scale(${imageZoom}) translate(${imagePosition.x}%, ${imagePosition.y}%)`,
+                          cursor: imageZoom > 1 ? 'grab' : 'zoom-in',
                         }}
                         draggable={false}
+                        onWheel={handleImageWheel}
+                        onMouseMove={handleImageMouseMove}
+                        onMouseLeave={handleImageMouseLeave}
                       />
                     ) : imageSlots[selectedImageIndex].status === "loading" ? (
                       <div className="flex flex-col items-center gap-4">
