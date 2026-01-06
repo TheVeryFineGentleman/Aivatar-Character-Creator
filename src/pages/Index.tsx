@@ -1138,8 +1138,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     if (imageZoom <= 1 || !isDraggingImage) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
-    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100;
-    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
+    // Scale drag speed with zoom level so it feels consistent
+    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100 * imageZoom;
+    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100 * imageZoom;
     
     const maxOffset = (imageZoom - 1) * 50;
     setImagePosition(prev => ({
