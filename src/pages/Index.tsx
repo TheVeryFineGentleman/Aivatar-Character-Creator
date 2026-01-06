@@ -1132,10 +1132,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   const handleImageMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
     if (imageZoom <= 1 || !isDraggingImage) return;
     
-    const deltaX = (e.clientX - dragStart.x) / 5;
-    const deltaY = (e.clientY - dragStart.y) / 5;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100;
+    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
     
-    const maxOffset = (imageZoom - 1) * 30;
+    const maxOffset = (imageZoom - 1) * 50;
     setImagePosition(prev => ({
       x: Math.max(-maxOffset, Math.min(maxOffset, prev.x + deltaX)),
       y: Math.max(-maxOffset, Math.min(maxOffset, prev.y + deltaY))
@@ -1150,8 +1151,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
   const handleImageMouseLeave = () => {
     setIsDraggingImage(false);
-    setImageZoom(1);
-    setImagePosition({ x: 0, y: 0 });
   };
 
   const handleDownloadAll = async () => {
