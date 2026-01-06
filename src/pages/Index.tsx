@@ -123,6 +123,8 @@ const Index = () => {
   const [selectedFormat, setSelectedFormat] = useState("square");
   const [selectedShot, setSelectedShot] = useState("fullbody");
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const [shakingElement, setShakingElement] = useState<string | null>(null);
@@ -1087,6 +1089,41 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
   };
 
+  // Reset zoom when changing images
+  const handleSelectImage = (index: number) => {
+    setSelectedImageIndex(index);
+    setImageZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  };
+
+  const handleImageWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setImageZoom(prev => Math.min(Math.max(prev + delta, 1), 4));
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (imageZoom <= 1) {
+      setImagePosition({ x: 0, y: 0 });
+      return;
+    }
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    
+    const maxOffset = (imageZoom - 1) * 25;
+    setImagePosition({
+      x: -x * maxOffset,
+      y: -y * maxOffset
+    });
+  };
+
+  const handleImageMouseLeave = () => {
+    setImageZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  };
+
   const handleDownloadAll = async () => {
     const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
     
@@ -1812,7 +1849,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         </div>
 
         {/* Image Viewer Dialog */}
-        <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
+        <Dialog open={selectedImageIndex !== null} onOpenChange={() => { setSelectedImageIndex(null); setImageZoom(1); setImagePosition({ x: 0, y: 0 }); }}>
           <DialogContent className="max-w-4xl w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col">
             {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
               <>
@@ -1863,12 +1900,21 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   </Button>
 
                   {/* Image Display */}
-                  <div className="w-full h-full flex items-center justify-center px-12">
+                  <div 
+                    className="w-full h-full flex items-center justify-center px-12 overflow-hidden cursor-zoom-in"
+                    onWheel={handleImageWheel}
+                    onMouseMove={handleImageMouseMove}
+                    onMouseLeave={handleImageMouseLeave}
+                  >
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
                         alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg"
+                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg transition-transform duration-150 ease-out"
+                        style={{
+                          transform: `scale(${imageZoom}) translate(${imagePosition.x}%, ${imagePosition.y}%)`,
+                        }}
+                        draggable={false}
                       />
                     ) : imageSlots[selectedImageIndex].status === "loading" ? (
                       <div className="flex flex-col items-center gap-4">
@@ -1894,7 +1940,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     {imageSlots.map((slot, index) => (
                       <button
                         key={index}
-                        onClick={() => setSelectedImageIndex(index)}
+                        onClick={() => handleSelectImage(index)}
                         className={`relative flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all overflow-hidden ${
                           selectedImageIndex === index
                             ? "border-primary ring-2 ring-primary/30"
