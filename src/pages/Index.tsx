@@ -1103,19 +1103,31 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     e.stopPropagation();
     
     const rect = e.currentTarget.getBoundingClientRect();
+    // Mouse position relative to image center (-50 to 50 range)
     const mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 100;
     const mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 100;
     
-    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    const delta = e.deltaY > 0 ? -0.2 : 0.2;
     const newZoom = Math.min(Math.max(imageZoom + delta, 1), 4);
     
     if (newZoom === 1) {
       setImagePosition({ x: 0, y: 0 });
     } else {
-      const zoomFactor = (newZoom - 1) / 3;
+      // Calculate new position to keep point under cursor stationary
+      // The point under cursor in current view: (mouseX - imagePosition.x) / imageZoom
+      // After zoom, we want this same point to be at mouseX, so:
+      // newPosition = mouseX - (pointInImage * newZoom)
+      const pointInImageX = (mouseX - imagePosition.x) / imageZoom;
+      const pointInImageY = (mouseY - imagePosition.y) / imageZoom;
+      
+      const newPosX = mouseX - pointInImageX * newZoom;
+      const newPosY = mouseY - pointInImageY * newZoom;
+      
+      // Limit position to prevent image from going too far off-screen
+      const maxOffset = (newZoom - 1) * 50;
       setImagePosition({
-        x: -mouseX * zoomFactor,
-        y: -mouseY * zoomFactor
+        x: Math.max(-maxOffset, Math.min(maxOffset, newPosX)),
+        y: Math.max(-maxOffset, Math.min(maxOffset, newPosY))
       });
     }
     
