@@ -1813,37 +1813,62 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
-          <DialogContent className="max-w-3xl w-[50vw] h-[calc(50vh+310px)] p-0 bg-background/95 backdrop-blur-sm border-border/50 top-[50px] translate-y-0">
-            <div className="relative w-full h-full flex flex-col">
-              {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
-                <>
+          <DialogContent className="max-w-4xl w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col">
+            {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
+              <>
+                {/* Header with counter and download */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                  <div className="flex items-center gap-2">
+                    {imageSlots[selectedImageIndex].status === "completed" && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDownloadSingle(selectedImageIndex)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    )}
+                  </div>
+                  <div className="bg-muted px-3 py-1 rounded-full">
+                    <span className="text-sm font-medium">
+                      {selectedImageIndex + 1} / {imageSlots.length}
+                    </span>
+                  </div>
+                  <div className="w-[100px]" /> {/* Spacer for balance */}
+                </div>
+
+                {/* Main Image Area with Navigation */}
+                <div className="flex-1 relative flex items-center justify-center min-h-0 p-4">
+                  {/* Left Navigation */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute left-6 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
                     onClick={() => navigateImage('prev')}
                     disabled={selectedImageIndex === 0}
                   >
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronLeft className="w-5 h-5" />
                   </Button>
 
+                  {/* Right Navigation */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-6 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/80 hover:bg-background"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
                     onClick={() => navigateImage('next')}
                     disabled={selectedImageIndex === imageSlots.length - 1}
                   >
-                    <ChevronRight className="w-6 h-6" />
+                    <ChevronRight className="w-5 h-5" />
                   </Button>
 
-                  {/* Main Image Display */}
-                  <div className="flex-1 flex items-center justify-center overflow-hidden p-4 pb-0">
+                  {/* Image Display */}
+                  <div className="w-full h-full flex items-center justify-center px-12">
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
                         alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-full object-contain"
+                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg"
                       />
                     ) : imageSlots[selectedImageIndex].status === "loading" ? (
                       <div className="flex flex-col items-center gap-4">
@@ -1861,68 +1886,49 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Image Counter */}
-                  <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <span className="text-xs font-medium">
-                      #{selectedImageIndex + 1} / {imageSlots.length}
-                    </span>
-                  </div>
-
-                  {/* Download Button */}
-                  {imageSlots[selectedImageIndex].status === "completed" && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="absolute top-6 left-6 z-50"
-                      onClick={() => handleDownloadSingle(selectedImageIndex)}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  )}
-
-                  {/* Thumbnail Strip */}
-                  <div className="w-full bg-background/80 backdrop-blur-sm px-4 py-2 rounded-b-lg">
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-primary scrollbar-track-muted">
-                      {imageSlots.map((slot, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedImageIndex(index)}
-                          className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all overflow-hidden ${
-                            selectedImageIndex === index
-                              ? "border-primary scale-105"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          {slot.status === "completed" && slot.imageUrl ? (
-                            <img
-                              src={slot.imageUrl}
-                              alt={`Thumbnail ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : slot.status === "loading" ? (
-                            <div className="w-full h-full flex items-center justify-center bg-muted">
-                              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                            </div>
-                          ) : slot.status === "pending" ? (
-                            <div className="w-full h-full flex items-center justify-center bg-muted/50">
-                              <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
-                            </div>
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-destructive/10">
-                              <X className="w-4 h-4 text-destructive" />
-                            </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm text-center h-[18px] flex items-center justify-center">
-                            <span className="text-[10px] font-medium leading-none">#{index + 1}</span>
+                {/* Thumbnail Strip */}
+                <div className="border-t border-border/50 bg-muted/30 px-4 py-3">
+                  <div className="flex gap-2 overflow-x-auto pb-1 justify-center">
+                    {imageSlots.map((slot, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`relative flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all overflow-hidden ${
+                          selectedImageIndex === index
+                            ? "border-primary ring-2 ring-primary/30"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        {slot.status === "completed" && slot.imageUrl ? (
+                          <img
+                            src={slot.imageUrl}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : slot.status === "loading" ? (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
                           </div>
-                        </button>
-                      ))}
-                    </div>
+                        ) : slot.status === "pending" ? (
+                          <div className="w-full h-full flex items-center justify-center bg-muted/50">
+                            <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-destructive/10">
+                            <X className="w-4 h-4 text-destructive" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-background/90 text-center py-0.5">
+                          <span className="text-[10px] font-medium">#{index + 1}</span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
 
