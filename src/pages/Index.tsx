@@ -1103,32 +1103,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     e.stopPropagation();
     
     const rect = e.currentTarget.getBoundingClientRect();
-    // Mouse position relative to image center (-50 to 50 range)
-    const mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 100;
-    const mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 100;
+    // Mouse position relative to image center in pixels
+    const mouseXPx = e.clientX - (rect.left + rect.width / 2);
+    const mouseYPx = e.clientY - (rect.top + rect.height / 2);
     
-    const delta = e.deltaY > 0 ? -0.2 : 0.2;
+    const delta = e.deltaY > 0 ? -0.25 : 0.25;
     const newZoom = Math.min(Math.max(imageZoom + delta, 1), 4);
     
     if (newZoom === 1) {
       setImagePosition({ x: 0, y: 0 });
     } else {
-      // Calculate new position to keep point under cursor stationary
-      // The point under cursor in current view: (mouseX - imagePosition.x) / imageZoom
-      // After zoom, we want this same point to be at mouseX, so:
-      // newPosition = mouseX - (pointInImage * newZoom)
-      const pointInImageX = (mouseX - imagePosition.x) / imageZoom;
-      const pointInImageY = (mouseY - imagePosition.y) / imageZoom;
+      // To keep the point under cursor fixed:
+      // newPos = oldPos + mousePos * (1/newZoom - 1/oldZoom) * zoom
+      // Simplified: scale the difference based on zoom change
+      const zoomRatio = newZoom / imageZoom;
       
-      const newPosX = mouseX - pointInImageX * newZoom;
-      const newPosY = mouseY - pointInImageY * newZoom;
-      
-      // Limit position to prevent image from going too far off-screen
-      const maxOffset = (newZoom - 1) * 50;
-      setImagePosition({
-        x: Math.max(-maxOffset, Math.min(maxOffset, newPosX)),
-        y: Math.max(-maxOffset, Math.min(maxOffset, newPosY))
-      });
+      setImagePosition(prev => ({
+        x: prev.x * zoomRatio + (mouseXPx / rect.width * 100) * (1 - zoomRatio),
+        y: prev.y * zoomRatio + (mouseYPx / rect.height * 100) * (1 - zoomRatio)
+      }));
     }
     
     setImageZoom(newZoom);
@@ -1946,9 +1939,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
                         alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg transition-transform duration-100 ease-out select-none"
+                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg select-none"
                         style={{
-                          transform: `scale(${imageZoom}) translate(${imagePosition.x}%, ${imagePosition.y}%)`,
+                          transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
                           cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
                         }}
                         draggable={false}
