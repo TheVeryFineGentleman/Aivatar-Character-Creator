@@ -125,6 +125,8 @@ const Index = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const [shakingElement, setShakingElement] = useState<string | null>(null);
@@ -1120,21 +1122,34 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     setImageZoom(newZoom);
   };
 
-  const handleImageMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+  const handleImageMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
     if (imageZoom <= 1) return;
+    e.preventDefault();
+    setIsDraggingImage(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (imageZoom <= 1 || !isDraggingImage) return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 100;
-    const mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 100;
+    const deltaX = (e.clientX - dragStart.x) / 5;
+    const deltaY = (e.clientY - dragStart.y) / 5;
     
-    const zoomFactor = (imageZoom - 1) / 3;
-    setImagePosition({
-      x: -mouseX * zoomFactor,
-      y: -mouseY * zoomFactor
-    });
+    const maxOffset = (imageZoom - 1) * 30;
+    setImagePosition(prev => ({
+      x: Math.max(-maxOffset, Math.min(maxOffset, prev.x + deltaX)),
+      y: Math.max(-maxOffset, Math.min(maxOffset, prev.y + deltaY))
+    }));
+    
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseUp = () => {
+    setIsDraggingImage(false);
   };
 
   const handleImageMouseLeave = () => {
+    setIsDraggingImage(false);
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
   };
@@ -1923,11 +1938,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                         className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg transition-transform duration-100 ease-out select-none"
                         style={{
                           transform: `scale(${imageZoom}) translate(${imagePosition.x}%, ${imagePosition.y}%)`,
-                          cursor: imageZoom > 1 ? 'grab' : 'zoom-in',
+                          cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
                         }}
                         draggable={false}
                         onWheel={handleImageWheel}
+                        onMouseDown={handleImageMouseDown}
                         onMouseMove={handleImageMouseMove}
+                        onMouseUp={handleImageMouseUp}
                         onMouseLeave={handleImageMouseLeave}
                       />
                     ) : imageSlots[selectedImageIndex].status === "loading" ? (
