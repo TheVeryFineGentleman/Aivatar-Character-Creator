@@ -135,8 +135,14 @@ const Index = () => {
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const [selectedSkinType, setSelectedSkinType] = useState("realistic");
   const isGeneratingRef = useRef(false);
+  const referenceImagesRef = useRef<File[]>([]);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
+
+  // Keep ref in sync with state to avoid stale closures
+  useEffect(() => {
+    referenceImagesRef.current = referenceImages;
+  }, [referenceImages]);
 
   // Helper function to safely update image slots
   const updateSlotSafe = (index: number, update: Partial<ImageSlotData> | ((slot: ImageSlotData) => ImageSlotData)) => {
@@ -673,8 +679,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     generationQueueRef.current = Array.from({ length: imageCount[0] }, (_, i) => i);
 
     try {
+      // Use ref to get current images (avoids stale closure issues)
+      const currentImages = referenceImagesRef.current;
+      
       // Convert images to base64
-      const imagePromises = referenceImages.map((file) => {
+      const imagePromises = currentImages.map((file) => {
         return new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
@@ -749,8 +758,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     generationQueueRef.current = Array.from({ length: newCount }, (_, i) => currentLength + i);
 
     try {
+      // Use ref to get current images (avoids stale closure issues)
+      const currentImages = referenceImagesRef.current;
+      
       // Convert images to base64
-      const imagePromises = referenceImages.map((file) => {
+      const imagePromises = currentImages.map((file) => {
         return new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
@@ -838,8 +850,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         });
       }, 500);
 
+      // Use ref to get current images (avoids stale closure issues)
+      const currentImages = referenceImagesRef.current;
+      
       // Convert reference images to base64
-      const imagePromises = referenceImages.map((file) => {
+      const imagePromises = currentImages.map((file) => {
         return new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
