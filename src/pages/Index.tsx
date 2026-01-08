@@ -2319,11 +2319,11 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                 />
                                 
                                 {/* Action Buttons */}
-                                <div className="flex gap-1.5 justify-between">
+                                <div className="flex gap-1 justify-end">
                                   <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="text-xs h-7"
+                                    className="text-xs h-7 px-2"
                                     onClick={() => {
                                       navigator.clipboard.writeText(currentVideoPrompt);
                                       toast({
@@ -2336,14 +2336,14 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs h-7"
+                                    className="text-xs h-7 px-2"
                                     onClick={handleGenerateVideoPrompt}
                                     disabled={isGeneratingVideoPrompt}
                                   >
                                     {isGeneratingVideoPrompt ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
                                     ) : (
-                                      "+ Neuer Prompt"
+                                      "+ Neu"
                                     )}
                                   </Button>
                                 </div>
@@ -2386,18 +2386,18 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                               <Button
                                 onClick={handleGenerateVideoPrompt}
                                 disabled={isGeneratingVideoPrompt}
-                                className="w-full h-9"
+                                className="h-8"
                                 variant="secondary"
                               >
                                 {isGeneratingVideoPrompt ? (
                                   <div className="flex items-center gap-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span className="animate-pulse">KI analysiert Bild...</span>
+                                    <span className="animate-pulse">KI analysiert...</span>
                                   </div>
                                 ) : (
                                   <>
                                     <Sparkles className="w-4 h-4 mr-2" />
-                                    Video-Prompt generieren
+                                    Prompt erstellen
                                   </>
                                 )}
                               </Button>
