@@ -2352,36 +2352,42 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                     </div>
                                   )}
                                   {!isEditingPrompt && (
-                                    <div className="flex gap-1.5 items-center">
-                                      <Input
-                                        placeholder="z.B. 'Er soll etwas sagen'"
+                                    <div className="flex flex-col gap-1.5">
+                                      <Textarea
+                                        placeholder="Beschreibe was im Video passieren soll, z.B. 'Die Person lächelt und winkt in die Kamera'"
                                         value={promptChatInput}
                                         onChange={(e) => setPromptChatInput(e.target.value)}
-                                        className="flex-1 text-xs h-8"
+                                        className="flex-1 text-xs min-h-[80px] resize-none"
                                         onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && promptChatInput.trim()) {
+                                          if (e.key === 'Enter' && !e.shiftKey && promptChatInput.trim()) {
                                             e.preventDefault();
                                             handleEditPromptWithAI();
                                           }
                                         }}
                                       />
                                       <Button
-                                        size="icon"
-                                        className="h-8 w-8"
+                                        className="h-8 w-full"
                                         onClick={handleEditPromptWithAI}
                                         disabled={!promptChatInput.trim()}
                                       >
-                                        <Send className="w-3.5 h-3.5" />
+                                        <Send className="w-3.5 h-3.5 mr-2" />
+                                        Prompt generieren
                                       </Button>
                                     </div>
                                   )}
                                 </div>
 
-                                {/* Suggestion Buttons */}
+                                {/* Suggestion Buttons for AI prompt generation */}
                                 <div className="space-y-1.5 pt-2 border-t border-border/30">
-                                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Vorschläge</Label>
+                                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Schnell-Vorschläge</Label>
                                   <div className="flex flex-wrap gap-1">
-                                    {["Lächeln", "Sprechen", "Winken", "Umdrehen", "Näher kommen"].map((suggestion) => (
+                                    {[
+                                      "Langsam lächeln und in die Kamera schauen",
+                                      "Sprechen und dabei gestikulieren",
+                                      "Zur Seite drehen und zurückblicken",
+                                      "Langsam näher kommen",
+                                      "Winken und grüßen"
+                                    ].map((suggestion) => (
                                       <button
                                         key={suggestion}
                                         onClick={() => {
@@ -2389,35 +2395,30 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                         }}
                                         className="px-2 py-1 text-[10px] rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/50 transition-all"
                                       >
-                                        {suggestion}
+                                        {suggestion.length > 25 ? suggestion.substring(0, 25) + "..." : suggestion}
                                       </button>
                                     ))}
                                   </div>
                                 </div>
 
-                                {/* Camera & Film Settings */}
-                                <div className="space-y-2 pt-2 border-t border-border/30">
-                                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Kamera</Label>
+                                {/* Camera Style Suggestions */}
+                                <div className="space-y-1.5 pt-2 border-t border-border/30">
+                                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Kamera-Stil</Label>
                                   <div className="flex flex-wrap gap-1">
-                                    {VIDEO_STYLE_TEMPLATES.map((style) => (
+                                    {[
+                                      { label: "Cinematic", prompt: "Cinematische Aufnahme mit langsamer Kamerabewegung" },
+                                      { label: "Slow Motion", prompt: "Ultra Zeitlupe mit dramatischem Effekt" },
+                                      { label: "Zoom-In", prompt: "Langsamer Zoom auf das Gesicht" },
+                                      { label: "Orbit", prompt: "Kamera umkreist die Person langsam" },
+                                      { label: "Dolly", prompt: "Kamera fährt langsam nach vorne" },
+                                      { label: "Statisch", prompt: "Statische Kamera, nur Person bewegt sich" }
+                                    ].map((style) => (
                                       <button
-                                        key={style.id}
+                                        key={style.label}
                                         onClick={() => {
-                                          if (selectedVideoStyle === style.id) {
-                                            setSelectedVideoStyle(null);
-                                          } else {
-                                            setSelectedVideoStyle(style.id);
-                                            if (allVideoPrompts.length > 0 && currentVideoPrompt) {
-                                              const cleanedPrompt = currentVideoPrompt.replace(/^(Cinematic slow motion shot, |Ultra slow motion capture, |Dramatic zoom-in shot, |Smooth orbiting camera movement around subject, |Cinematic dolly shot moving forward, |Static camera shot, subtle movements, )/i, '');
-                                              updateCurrentPrompt(style.prefix + cleanedPrompt);
-                                            }
-                                          }
+                                          setPromptChatInput(prev => prev ? `${prev}, ${style.prompt}` : style.prompt);
                                         }}
-                                        className={`px-2 py-1 text-[10px] rounded-full border transition-all ${
-                                          selectedVideoStyle === style.id
-                                            ? 'bg-primary text-primary-foreground border-primary'
-                                            : 'bg-muted/50 border-border hover:bg-muted hover:border-primary/50'
-                                        }`}
+                                        className="px-2 py-1 text-[10px] rounded-full bg-secondary/50 border border-border hover:bg-secondary hover:border-primary/50 transition-all"
                                       >
                                         {style.label}
                                       </button>
@@ -2425,50 +2426,27 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                   </div>
                                 </div>
 
-                                {/* Duration & Speed */}
-                                <div className="space-y-2 pt-2 border-t border-border/30">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                      <Clock className="w-3 h-3" />
-                                      <span>Dauer</span>
-                                    </div>
-                                    <div className="flex gap-1">
-                                      {VIDEO_DURATION_OPTIONS.map((duration) => (
-                                        <button
-                                          key={duration.id}
-                                          onClick={() => setSelectedVideoDuration(duration.id)}
-                                          className={`px-2 py-1 text-[10px] rounded transition-all ${
-                                            selectedVideoDuration === duration.id
-                                              ? 'bg-primary text-primary-foreground'
-                                              : 'bg-muted/50 hover:bg-muted'
-                                          }`}
-                                        >
-                                          {duration.label}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                      <Zap className="w-3 h-3" />
-                                      <span>Tempo</span>
-                                    </div>
-                                    <div className="flex gap-1">
-                                      {VIDEO_SPEED_OPTIONS.map((speed) => (
-                                        <button
-                                          key={speed.id}
-                                          onClick={() => setSelectedVideoSpeed(speed.id)}
-                                          className={`px-2 py-1 text-[10px] rounded transition-all ${
-                                            selectedVideoSpeed === speed.id
-                                              ? 'bg-primary text-primary-foreground'
-                                              : 'bg-muted/50 hover:bg-muted'
-                                          }`}
-                                        >
-                                          {speed.label}
-                                        </button>
-                                      ))}
-                                    </div>
+                                {/* Film Effect Suggestions */}
+                                <div className="space-y-1.5 pt-2 border-t border-border/30">
+                                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Film-Effekte</Label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {[
+                                      { label: "Dramatisch", prompt: "Dramatische Beleuchtung mit Schatten" },
+                                      { label: "Weich", prompt: "Weiches, schmeichelhaftes Licht" },
+                                      { label: "Golden Hour", prompt: "Warmes goldenes Sonnenlicht" },
+                                      { label: "Noir", prompt: "Film Noir Stil mit hartem Kontrast" },
+                                      { label: "Verträumt", prompt: "Verträumte, leicht unscharfe Atmosphäre" }
+                                    ].map((effect) => (
+                                      <button
+                                        key={effect.label}
+                                        onClick={() => {
+                                          setPromptChatInput(prev => prev ? `${prev}, ${effect.prompt}` : effect.prompt);
+                                        }}
+                                        className="px-2 py-1 text-[10px] rounded-full bg-accent/50 border border-border hover:bg-accent hover:border-primary/50 transition-all"
+                                      >
+                                        {effect.label}
+                                      </button>
+                                    ))}
                                   </div>
                                 </div>
                               </>
