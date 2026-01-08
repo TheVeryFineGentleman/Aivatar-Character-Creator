@@ -2132,11 +2132,11 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => { setSelectedImageIndex(null); setImageZoom(1); setImagePosition({ x: 0, y: 0 }); }}>
-          <DialogContent className="max-w-4xl w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col">
+          <DialogContent className="max-w-5xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[75vw] h-[90vh] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col overflow-hidden">
             {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
               <>
                 {/* Header with counter and download */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/50">
                   <div className="flex items-center gap-2">
                     {imageSlots[selectedImageIndex].status === "completed" && (
                       <Button
@@ -2158,7 +2158,7 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                 </div>
 
                 {/* Main Image Area with Navigation */}
-                <div className="flex-1 relative flex items-center justify-center min-h-0 p-4">
+                <div className="flex-1 relative flex items-center justify-center min-h-0 p-4 overflow-hidden">
                   {/* Left Navigation */}
                   <Button
                     variant="ghost"
@@ -2182,12 +2182,12 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                   </Button>
 
                   {/* Image Display */}
-                  <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden relative z-0">
+                  <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden">
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
                         alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg select-none"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-lg select-none"
                         style={{
                           transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
                           cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
