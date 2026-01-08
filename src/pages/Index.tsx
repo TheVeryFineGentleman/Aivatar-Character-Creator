@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2 } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
@@ -111,6 +111,27 @@ const EXPRESSIONS = [
   "gentle", "energetic"
 ];
 
+// Video Prompt Templates
+const VIDEO_STYLE_TEMPLATES = [
+  { id: "cinematic", label: "Cinematic", prefix: "Cinematic slow motion shot, " },
+  { id: "slowmo", label: "Slow Motion", prefix: "Ultra slow motion capture, " },
+  { id: "zoomin", label: "Zoom-In", prefix: "Dramatic zoom-in shot, " },
+  { id: "orbit", label: "Orbit", prefix: "Smooth orbiting camera movement around subject, " },
+  { id: "dolly", label: "Dolly", prefix: "Cinematic dolly shot moving forward, " },
+  { id: "static", label: "Statisch", prefix: "Static camera shot, subtle movements, " },
+];
+
+const VIDEO_DURATION_OPTIONS = [
+  { id: "5s", label: "5 Sek", value: 5 },
+  { id: "10s", label: "10 Sek", value: 10 },
+];
+
+const VIDEO_SPEED_OPTIONS = [
+  { id: "slow", label: "Langsam", description: "slow, smooth movements" },
+  { id: "normal", label: "Normal", description: "natural speed" },
+  { id: "fast", label: "Schnell", description: "dynamic, fast-paced" },
+];
+
 const Index = () => {
   const { authData, isLoading: authLoading, login, logout } = useAuth();
   
@@ -151,6 +172,9 @@ const Index = () => {
   const [promptChatInput, setPromptChatInput] = useState("");
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [videoPromptOpen, setVideoPromptOpen] = useState(false);
+  const [selectedVideoStyle, setSelectedVideoStyle] = useState<string | null>(null);
+  const [selectedVideoDuration, setSelectedVideoDuration] = useState("5s");
+  const [selectedVideoSpeed, setSelectedVideoSpeed] = useState("normal");
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -2249,9 +2273,89 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                         
                         <div className="flex-1 overflow-y-auto p-3">
                           <div className="flex flex-col gap-3">
+                            {/* Style Templates */}
+                            <div className="space-y-1.5">
+                              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Stil-Vorlagen</Label>
+                              <div className="grid grid-cols-2 gap-1">
+                                {VIDEO_STYLE_TEMPLATES.map((style) => (
+                                  <button
+                                    key={style.id}
+                                    onClick={() => {
+                                      if (selectedVideoStyle === style.id) {
+                                        setSelectedVideoStyle(null);
+                                      } else {
+                                        setSelectedVideoStyle(style.id);
+                                        // If there's already a prompt, prepend the style
+                                        if (allVideoPrompts.length > 0 && currentVideoPrompt) {
+                                          const cleanedPrompt = currentVideoPrompt.replace(/^(Cinematic slow motion shot, |Ultra slow motion capture, |Dramatic zoom-in shot, |Smooth orbiting camera movement around subject, |Cinematic dolly shot moving forward, |Static camera shot, subtle movements, )/i, '');
+                                          updateCurrentPrompt(style.prefix + cleanedPrompt);
+                                        }
+                                      }
+                                    }}
+                                    className={`px-2 py-1.5 text-[10px] rounded-md border transition-all ${
+                                      selectedVideoStyle === style.id
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-muted/50 border-border hover:bg-muted hover:border-primary/50'
+                                    }`}
+                                  >
+                                    {style.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Video Settings */}
+                            <div className="space-y-2 pt-1 border-t border-border/30">
+                              {/* Duration */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Dauer</span>
+                                </div>
+                                <div className="flex gap-1">
+                                  {VIDEO_DURATION_OPTIONS.map((duration) => (
+                                    <button
+                                      key={duration.id}
+                                      onClick={() => setSelectedVideoDuration(duration.id)}
+                                      className={`px-2 py-1 text-[10px] rounded transition-all ${
+                                        selectedVideoDuration === duration.id
+                                          ? 'bg-primary text-primary-foreground'
+                                          : 'bg-muted/50 hover:bg-muted'
+                                      }`}
+                                    >
+                                      {duration.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Speed */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                  <Zap className="w-3 h-3" />
+                                  <span>Tempo</span>
+                                </div>
+                                <div className="flex gap-1">
+                                  {VIDEO_SPEED_OPTIONS.map((speed) => (
+                                    <button
+                                      key={speed.id}
+                                      onClick={() => setSelectedVideoSpeed(speed.id)}
+                                      className={`px-2 py-1 text-[10px] rounded transition-all ${
+                                        selectedVideoSpeed === speed.id
+                                          ? 'bg-primary text-primary-foreground'
+                                          : 'bg-muted/50 hover:bg-muted'
+                                      }`}
+                                    >
+                                      {speed.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
                             {/* Navigation */}
                             {allVideoPrompts.length > 0 && (
-                              <div className="flex items-center justify-center">
+                              <div className="flex items-center justify-center pt-1 border-t border-border/30">
                                 <div className="flex items-center gap-1">
                                   <Button
                                     variant="ghost"
@@ -2285,7 +2389,7 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                 <Textarea
                                   value={currentVideoPrompt}
                                   onChange={(e) => updateCurrentPrompt(e.target.value)}
-                                  className="min-h-[120px] text-sm resize-none flex-1"
+                                  className="min-h-[80px] text-xs resize-none flex-1"
                                   placeholder="Video-Prompt..."
                                 />
                                 
@@ -2320,7 +2424,7 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                 </div>
                                 
                                 {/* AI Edit Chat */}
-                                <div className="flex flex-col gap-2 pt-2">
+                                <div className="flex flex-col gap-2">
                                   {isEditingPrompt && (
                                     <div className="flex items-center justify-center gap-1.5 text-xs text-primary animate-pulse">
                                       <Loader2 className="w-3 h-3 animate-spin" />
