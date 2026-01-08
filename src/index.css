@@ -439,3 +439,8 @@ All colors MUST be HSL.
 .animate-fade-in {
   animation: fade-in 0.6s ease-out forwards;
 }
+
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}

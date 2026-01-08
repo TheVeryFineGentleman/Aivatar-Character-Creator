@@ -2132,7 +2132,7 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => { setSelectedImageIndex(null); setImageZoom(1); setImagePosition({ x: 0, y: 0 }); }}>
-          <DialogContent className="max-w-5xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[75vw] h-[90vh] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col overflow-hidden">
+          <DialogContent className="max-w-6xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] h-[90vh] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col overflow-hidden">
             {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
               <>
                 {/* Header with counter and download */}
@@ -2157,64 +2157,221 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                   <div className="w-[100px]" /> {/* Spacer for balance */}
                 </div>
 
-                {/* Main Image Area with Navigation */}
-                <div className="flex-1 relative flex items-center justify-center min-h-0 p-4 overflow-hidden">
-                  {/* Left Navigation */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
-                    onClick={() => navigateImage('prev')}
-                    disabled={selectedImageIndex === 0}
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </Button>
+                {/* Main Image Area with Navigation and Side Panel */}
+                <div className="flex-1 relative flex min-h-0 overflow-hidden">
+                  {/* Image Area */}
+                  <div className={`flex-1 relative flex items-center justify-center p-4 overflow-hidden transition-all duration-300 ${videoPromptOpen ? 'pr-0' : ''}`}>
+                    {/* Left Navigation */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
+                      onClick={() => navigateImage('prev')}
+                      disabled={selectedImageIndex === 0}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </Button>
 
-                  {/* Right Navigation */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
-                    onClick={() => navigateImage('next')}
-                    disabled={selectedImageIndex === imageSlots.length - 1}
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
+                    {/* Right Navigation */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`absolute top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md transition-all duration-300 ${videoPromptOpen ? 'right-2' : 'right-2'}`}
+                      onClick={() => navigateImage('next')}
+                      disabled={selectedImageIndex === imageSlots.length - 1}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </Button>
 
-                  {/* Image Display */}
-                  <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden">
-                    {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
-                      <img
-                        src={imageSlots[selectedImageIndex].imageUrl}
-                        alt={`Bild ${selectedImageIndex + 1}`}
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-lg select-none"
-                        style={{
-                          transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
-                          cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
-                        }}
-                        draggable={false}
-                        onWheel={handleImageWheel}
-                        onMouseDown={handleImageMouseDown}
-                        onMouseMove={handleImageMouseMove}
-                        onMouseUp={handleImageMouseUp}
-                        onMouseLeave={handleImageMouseLeave}
-                      />
-                    ) : imageSlots[selectedImageIndex].status === "loading" ? (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
-                        <p className="text-sm text-muted-foreground">Wird generiert...</p>
-                      </div>
-                    ) : imageSlots[selectedImageIndex].status === "pending" ? (
-                      <div className="flex flex-col items-center gap-4">
-                        <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
-                        <p className="text-sm text-muted-foreground">Wartet auf Generierung...</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-4">
-                        <p className="text-sm text-destructive">Fehler beim Generieren</p>
-                      </div>
-                    )}
+                    {/* Image Display */}
+                    <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden">
+                      {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
+                        <img
+                          src={imageSlots[selectedImageIndex].imageUrl}
+                          alt={`Bild ${selectedImageIndex + 1}`}
+                          className="max-w-full max-h-full object-contain rounded-lg shadow-lg select-none"
+                          style={{
+                            transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
+                            cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
+                          }}
+                          draggable={false}
+                          onWheel={handleImageWheel}
+                          onMouseDown={handleImageMouseDown}
+                          onMouseMove={handleImageMouseMove}
+                          onMouseUp={handleImageMouseUp}
+                          onMouseLeave={handleImageMouseLeave}
+                        />
+                      ) : imageSlots[selectedImageIndex].status === "loading" ? (
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
+                          <p className="text-sm text-muted-foreground">Wird generiert...</p>
+                        </div>
+                      ) : imageSlots[selectedImageIndex].status === "pending" ? (
+                        <div className="flex flex-col items-center gap-4">
+                          <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                          <p className="text-sm text-muted-foreground">Wartet auf Generierung...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-4">
+                          <p className="text-sm text-destructive">Fehler beim Generieren</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Video Prompt Side Panel */}
+                  {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && videoPromptOpen && (
+                    <div className="w-64 flex-shrink-0 border-l border-border/50 bg-gradient-to-b from-card/80 to-card/50 flex flex-col overflow-hidden">
+                      <div className="p-3 border-b border-border/30 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Video-Prompt</span>
+                          {allVideoPrompts.length > 0 && (
+                            <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                              {allVideoPrompts.length}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setVideoPromptOpen(false)}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-3">
+                        <div className="flex flex-col gap-3">
+                          {/* Navigation */}
+                          {allVideoPrompts.length > 0 && (
+                            <div className="flex items-center justify-center">
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => navigatePrompt('prev')}
+                                  disabled={currentPromptIndex === 0}
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </Button>
+                                <span className="text-xs font-medium text-muted-foreground min-w-[40px] text-center">
+                                  {currentPromptIndex + 1}/{allVideoPrompts.length}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => navigatePrompt('next')}
+                                  disabled={currentPromptIndex === allVideoPrompts.length - 1}
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Content */}
+                          {allVideoPrompts.length > 0 ? (
+                            <>
+                              {/* Editable Prompt Field */}
+                              <Textarea
+                                value={currentVideoPrompt}
+                                onChange={(e) => updateCurrentPrompt(e.target.value)}
+                                className="min-h-[120px] text-sm resize-none flex-1"
+                                placeholder="Video-Prompt..."
+                              />
+                              
+                              {/* Action Buttons */}
+                              <div className="flex gap-2 justify-center">
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="text-xs h-8 px-4"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(currentVideoPrompt);
+                                    toast({
+                                      title: "Kopiert!",
+                                    });
+                                  }}
+                                >
+                                  Kopieren
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-8 px-4"
+                                  onClick={handleGenerateVideoPrompt}
+                                  disabled={isGeneratingVideoPrompt}
+                                >
+                                  {isGeneratingVideoPrompt ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    "+ Neu"
+                                  )}
+                                </Button>
+                              </div>
+                              
+                              {/* AI Edit Chat */}
+                              <div className="flex flex-col gap-2 pt-2">
+                                {isEditingPrompt && (
+                                  <div className="flex items-center justify-center gap-1.5 text-xs text-primary animate-pulse">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    <span>KI schreibt...</span>
+                                  </div>
+                                )}
+                                {!isEditingPrompt && (
+                                  <div className="flex gap-1.5 items-center">
+                                    <Input
+                                      placeholder="z.B. 'Er soll etwas sagen'"
+                                      value={promptChatInput}
+                                      onChange={(e) => setPromptChatInput(e.target.value)}
+                                      className="flex-1 text-xs h-8"
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && promptChatInput.trim()) {
+                                          e.preventDefault();
+                                          handleEditPromptWithAI();
+                                        }
+                                      }}
+                                    />
+                                    <Button
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={handleEditPromptWithAI}
+                                      disabled={!promptChatInput.trim()}
+                                    >
+                                      <Send className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <Button
+                              onClick={handleGenerateVideoPrompt}
+                              disabled={isGeneratingVideoPrompt}
+                              className="h-10 w-full"
+                              variant="secondary"
+                            >
+                              {isGeneratingVideoPrompt ? (
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span className="animate-pulse text-xs">KI analysiert...</span>
+                                </div>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-4 h-4 mr-2" />
+                                  Prompt erstellen
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Thumbnail Strip */}
@@ -2257,156 +2414,19 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                   </div>
                 </div>
 
-                {/* Video Prompt Section - Collapsible */}
-                {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && (
-                  <Collapsible open={videoPromptOpen} onOpenChange={setVideoPromptOpen}>
-                    <CollapsibleTrigger asChild>
-                      <button className="w-full border-t border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors px-4 py-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <Video className="w-3.5 h-3.5" />
-                          <span>Video-Prompt</span>
-                          {allVideoPrompts.length > 0 && (
-                            <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
-                              {allVideoPrompts.length}
-                            </span>
-                          )}
-                        </div>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${videoPromptOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="border-t border-border/30 relative z-10">
-                      <div className="bg-gradient-to-b from-card/80 to-card/50 px-4 py-3">
-                        <div className="flex flex-col gap-2">
-                          {/* Header with navigation */}
-                          {allVideoPrompts.length > 0 && (
-                            <div className="flex items-center justify-end">
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => navigatePrompt('prev')}
-                                  disabled={currentPromptIndex === 0}
-                                >
-                                  <ChevronLeft className="w-3.5 h-3.5" />
-                                </Button>
-                                <span className="text-xs font-medium text-muted-foreground min-w-[40px] text-center">
-                                  {currentPromptIndex + 1}/{allVideoPrompts.length}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => navigatePrompt('next')}
-                                  disabled={currentPromptIndex === allVideoPrompts.length - 1}
-                                >
-                                  <ChevronRight className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Content */}
-                          <div className="w-full space-y-2">
-                            {allVideoPrompts.length > 0 ? (
-                              <>
-                                {/* Editable Prompt Field */}
-                                <Textarea
-                                  value={currentVideoPrompt}
-                                  onChange={(e) => updateCurrentPrompt(e.target.value)}
-                                  className="min-h-[60px] text-sm resize-none"
-                                  placeholder="Video-Prompt..."
-                                />
-                                
-                                {/* Action Buttons */}
-                                <div className="flex gap-1 justify-end">
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="text-xs h-7 px-2"
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(currentVideoPrompt);
-                                      toast({
-                                        title: "Kopiert!",
-                                      });
-                                    }}
-                                  >
-                                    Kopieren
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs h-7 px-2"
-                                    onClick={handleGenerateVideoPrompt}
-                                    disabled={isGeneratingVideoPrompt}
-                                  >
-                                    {isGeneratingVideoPrompt ? (
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                      "+ Neu"
-                                    )}
-                                  </Button>
-                                </div>
-                                
-                                {/* AI Edit Chat */}
-                                <div className="flex gap-1.5 items-center pt-1">
-                                  {isEditingPrompt && (
-                                    <div className="flex items-center gap-1.5 text-xs text-primary animate-pulse">
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                      <span>KI schreibt...</span>
-                                    </div>
-                                  )}
-                                  {!isEditingPrompt && (
-                                    <>
-                                      <Input
-                                        placeholder="z.B. 'Er soll etwas sagen'"
-                                        value={promptChatInput}
-                                        onChange={(e) => setPromptChatInput(e.target.value)}
-                                        className="flex-1 text-xs h-7"
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && promptChatInput.trim()) {
-                                            e.preventDefault();
-                                            handleEditPromptWithAI();
-                                          }
-                                        }}
-                                      />
-                                      <Button
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={handleEditPromptWithAI}
-                                        disabled={!promptChatInput.trim()}
-                                      >
-                                        <Send className="w-3.5 h-3.5" />
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
-                              </>
-                            ) : (
-                              <Button
-                                onClick={handleGenerateVideoPrompt}
-                                disabled={isGeneratingVideoPrompt}
-                                className="h-8"
-                                variant="secondary"
-                              >
-                                {isGeneratingVideoPrompt ? (
-                                  <div className="flex items-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span className="animate-pulse">KI analysiert...</span>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <Sparkles className="w-4 h-4 mr-2" />
-                                    Prompt erstellen
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                {/* Video Prompt Toggle Button */}
+                {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && !videoPromptOpen && (
+                  <div className="absolute top-1/2 -translate-y-1/2 right-2 z-20">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-auto py-3 px-2 flex flex-col items-center gap-1 rounded-full shadow-lg"
+                      onClick={() => setVideoPromptOpen(true)}
+                    >
+                      <Video className="w-4 h-4" />
+                      <span className="text-[10px] writing-mode-vertical">Prompt</span>
+                    </Button>
+                  </div>
                 )}
               </>
             )}
