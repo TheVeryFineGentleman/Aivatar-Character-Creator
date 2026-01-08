@@ -8,8 +8,12 @@ interface ReferenceImagePreviewProps {
 
 export const ReferenceImagePreview = ({ file, index, onRemove }: ReferenceImagePreviewProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    // Reset error state when file changes
+    setHasError(false);
+    
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
@@ -18,6 +22,14 @@ export const ReferenceImagePreview = ({ file, index, onRemove }: ReferenceImageP
       URL.revokeObjectURL(url);
     };
   }, [file]);
+
+  // If there's an error loading, auto-remove the problematic image
+  useEffect(() => {
+    if (hasError) {
+      console.warn(`Removing corrupted reference image at index ${index}`);
+      onRemove(index);
+    }
+  }, [hasError, index, onRemove]);
 
   if (!previewUrl) {
     return (
@@ -31,9 +43,9 @@ export const ReferenceImagePreview = ({ file, index, onRemove }: ReferenceImageP
         src={previewUrl}
         alt={`Reference ${index + 1}`}
         className="w-24 h-24 object-cover rounded-lg border-2 border-border"
-        onError={(e) => {
-          console.warn("Failed to load preview image");
-          e.currentTarget.style.display = 'none';
+        onError={() => {
+          console.warn("Failed to load preview image, marking for removal");
+          setHasError(true);
         }}
       />
       <button
