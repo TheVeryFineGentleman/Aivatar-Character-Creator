@@ -1304,14 +1304,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               {
                 parts: [
                   {
-                    text: `Analysiere dieses Bild und erstelle einen kurzen, kreativen Prompt für eine Video-Animation. 
-Der Prompt soll beschreiben, wie die Person/der Charakter im Bild sich bewegen oder animiert werden könnte.
-Beispiele für gute Prompts:
-- "Die Person dreht langsam den Kopf und lächelt in die Kamera"
-- "Sanfte Haarbewegung im Wind, die Person blinzelt natürlich"
-- "Die Person winkt freundlich und nickt leicht"
+                    text: `Analysiere dieses Bild sehr genau und erstelle einen DETAILLIERTEN, kreativen Prompt für eine Video-Animation. 
 
-Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte auf Deutsch sein und 1-2 Sätze lang sein.`
+Beschreibe AUSFÜHRLICH:
+1. Die genaue Bewegung der Person (Kopf, Arme, Körper, Mimik)
+2. Die Geschwindigkeit und Art der Bewegung (langsam, fließend, dynamisch)
+3. Details wie Haarbewegung, Kleidungsbewegung, Lichtveränderungen
+4. Die Stimmung und Atmosphäre der Animation
+5. Kamerabewegung oder -perspektive wenn passend
+
+Beispiele für gute, detaillierte Prompts:
+- "Die Person dreht langsam und elegant den Kopf nach links, während ein sanftes Lächeln über ihr Gesicht gleitet. Die Haare bewegen sich weich im Wind, einzelne Strähnen fallen natürlich ins Gesicht. Die Augen blinzeln langsam und verträumt, während das warme Licht über die Haut wandert."
+- "Sanfte, fließende Bewegung: Die Person hebt langsam die Hand zur Begrüßung, die Finger spreizen sich elegant. Der Kopf neigt sich leicht zur Seite mit einem warmen, einladenden Lächeln. Die Kleidung bewegt sich subtil, als würde ein leichter Wind wehen."
+
+Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte auf Deutsch sein und 3-5 Sätze lang sein mit vielen Details.`
                   },
                   {
                     inlineData: {
@@ -1456,21 +1462,23 @@ Antworte NUR mit den 5 Vorschlägen, einer pro Zeile, ohne Nummerierung oder zus
               {
                 parts: [
                   {
-                    text: `Du bist ein Assistent, der Video-Prompts bearbeitet.
+                    text: `Du bist ein Experte für detaillierte Video-Animation-Prompts.
 
 Aktueller Video-Prompt:
 "${currentVideoPrompt}"
 
-Der Nutzer möchte folgende Änderung:
+Der Nutzer möchte folgende Änderung/Ergänzung:
 "${promptChatInput}"
 
-Bearbeite den Video-Prompt entsprechend der Anweisung des Nutzers. Der neue Prompt soll:
-- Die gewünschten Änderungen enthalten
-- Weiterhin als Video-Animation-Prompt geeignet sein
-- 1-3 Sätze lang sein
+Bearbeite den Video-Prompt entsprechend und mache ihn SEHR DETAILLIERT. Der neue Prompt soll:
+- Die gewünschten Änderungen vollständig integrieren
+- DETAILLIERT beschreiben: Bewegungen, Geschwindigkeit, Mimik, Atmosphäre
+- Spezifische Details zu Körperbewegung, Haaren, Kleidung, Licht enthalten
+- Als professioneller Video-Animation-Prompt geeignet sein
+- 3-5 Sätze lang sein mit vielen konkreten Details
 - Auf Deutsch sein
 
-Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
+Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen.`
                   }
                 ]
               }
