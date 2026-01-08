@@ -139,11 +139,9 @@ const Index = () => {
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
   
-  // Video generation state
+  // Video prompt generation state
   const [videoPrompt, setVideoPrompt] = useState("");
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
-  const [videoProgress, setVideoProgress] = useState("");
+  const [isGeneratingVideoPrompt, setIsGeneratingVideoPrompt] = useState(false);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -1180,27 +1178,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     setIsDraggingImage(false);
   };
 
-  // Reset video state when changing images
+  // Reset video prompt when changing images
   useEffect(() => {
     setVideoPrompt("");
-    setGeneratedVideoUrl(null);
-    setVideoProgress("");
   }, [selectedImageIndex]);
 
-  const handleGenerateVideo = async () => {
+  const handleGenerateVideoPrompt = async () => {
     if (!apiKey) {
       toast({
         title: "API Key erforderlich",
         description: "Bitte gib deinen Google Gemini API Key ein",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!videoPrompt.trim()) {
-      toast({
-        title: "Prompt erforderlich",
-        description: "Bitte gib einen Prompt für das Video ein",
         variant: "destructive",
       });
       return;
@@ -1215,9 +1202,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
 
-    setIsGeneratingVideo(true);
-    setGeneratedVideoUrl(null);
-    setVideoProgress("Starte Video-Generierung...");
+    setIsGeneratingVideoPrompt(true);
 
     try {
       // Get the image as base64
@@ -1228,137 +1213,73 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         const reader = new FileReader();
         reader.onloadend = () => {
           const result = reader.result as string;
-          // Remove data URL prefix
-          const base64Data = result.split(",")[1];
-          resolve(base64Data);
+          resolve(result);
         };
         reader.readAsDataURL(blob);
       });
 
-      // Determine MIME type
-      const mimeType = blob.type || "image/png";
-
-      // Start video generation
-      setVideoProgress("Sende Anfrage an API...");
+      // Call Gemini to analyze the image and generate a video prompt
       const generateResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            instances: [
+            contents: [
               {
-                prompt: videoPrompt,
-                image: {
-                  bytesBase64Encoded: base64,
-                  mimeType: mimeType,
-                },
-              },
-            ],
+                parts: [
+                  {
+                    text: `Analysiere dieses Bild und erstelle einen kurzen, kreativen Prompt für eine Video-Animation. 
+Der Prompt soll beschreiben, wie die Person/der Charakter im Bild sich bewegen oder animiert werden könnte.
+Beispiele für gute Prompts:
+- "Die Person dreht langsam den Kopf und lächelt in die Kamera"
+- "Sanfte Haarbewegung im Wind, die Person blinzelt natürlich"
+- "Die Person winkt freundlich und nickt leicht"
+
+Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte auf Deutsch sein und 1-2 Sätze lang sein.`
+                  },
+                  {
+                    inlineData: {
+                      mimeType: blob.type || "image/png",
+                      data: base64.split(",")[1]
+                    }
+                  }
+                ]
+              }
+            ]
           }),
         }
       );
 
       if (!generateResponse.ok) {
         const errorData = await generateResponse.json();
-        throw new Error(errorData.error?.message || "Video-Generierung fehlgeschlagen");
+        throw new Error(errorData.error?.message || "Prompt-Generierung fehlgeschlagen");
       }
 
       const generateData = await generateResponse.json();
-      const operationName = generateData.name;
+      const generatedPrompt = generateData.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      if (!operationName) {
-        throw new Error("Keine Operation-ID erhalten");
+      if (!generatedPrompt) {
+        throw new Error("Kein Prompt generiert");
       }
 
-      // Poll for completion
-      let attempts = 0;
-      const maxAttempts = 60; // 10 minutes max (10s intervals)
-
-      while (attempts < maxAttempts) {
-        setVideoProgress(`Video wird generiert... (${attempts * 10}s)`);
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-
-        const statusResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!statusResponse.ok) {
-          const errorData = await statusResponse.json();
-          throw new Error(errorData.error?.message || "Status-Abfrage fehlgeschlagen");
-        }
-
-        const statusData = await statusResponse.json();
-
-        if (statusData.done) {
-          // Get the video URL
-          const videoUri = statusData.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
-          
-          if (!videoUri) {
-            throw new Error("Keine Video-URL erhalten");
-          }
-
-          // Download the video
-          setVideoProgress("Video wird heruntergeladen...");
-          const videoResponse = await fetch(`${videoUri}&key=${apiKey}`);
-          
-          if (!videoResponse.ok) {
-            throw new Error("Video-Download fehlgeschlagen");
-          }
-
-          const videoBlob = await videoResponse.blob();
-          const videoUrl = URL.createObjectURL(videoBlob);
-          
-          setGeneratedVideoUrl(videoUrl);
-          setVideoProgress("");
-          toast({
-            title: "Video erfolgreich generiert!",
-            description: "Dein Video ist bereit zum Abspielen und Herunterladen",
-          });
-          break;
-        }
-
-        attempts++;
-      }
-
-      if (attempts >= maxAttempts) {
-        throw new Error("Zeitüberschreitung bei der Video-Generierung");
-      }
-    } catch (error) {
-      console.error("Video generation error:", error);
-      setVideoProgress("");
+      setVideoPrompt(generatedPrompt.trim());
       toast({
-        title: "Video-Generierung fehlgeschlagen",
+        title: "Video-Prompt generiert!",
+        description: "Du kannst den Prompt jetzt bearbeiten oder kopieren",
+      });
+    } catch (error) {
+      console.error("Video prompt generation error:", error);
+      toast({
+        title: "Prompt-Generierung fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingVideo(false);
+      setIsGeneratingVideoPrompt(false);
     }
-  };
-
-  const handleDownloadVideo = () => {
-    if (!generatedVideoUrl) return;
-    
-    const link = document.createElement("a");
-    link.href = generatedVideoUrl;
-    link.download = `video-${Date.now()}.mp4`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Video heruntergeladen!",
-      description: "Das Video wurde erfolgreich gespeichert",
-    });
   };
 
   const handleDownloadAll = async () => {
@@ -2218,70 +2139,67 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     <div className="flex flex-col items-center gap-3">
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                         <Video className="w-4 h-4" />
-                        <span>Video aus Bild generieren</span>
+                        <span>Video-Prompt generieren</span>
                       </div>
                       
-                      {generatedVideoUrl ? (
-                        <div className="w-full max-w-md space-y-3">
-                          <video 
-                            src={generatedVideoUrl} 
-                            controls 
-                            className="w-full rounded-lg border border-border"
-                          />
-                          <div className="flex gap-2 justify-center">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={handleDownloadVideo}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Video herunterladen
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setGeneratedVideoUrl(null)}
-                            >
-                              Neues Video
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-full max-w-md space-y-3">
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Beschreibe die Bewegung... z.B. 'Die Person winkt freundlich'"
+                      <div className="w-full max-w-md space-y-3">
+                        {videoPrompt ? (
+                          <div className="space-y-2">
+                            <Textarea
                               value={videoPrompt}
                               onChange={(e) => setVideoPrompt(e.target.value)}
-                              disabled={isGeneratingVideo}
-                              className="flex-1"
+                              className="min-h-[80px] text-sm"
+                              placeholder="Video-Prompt..."
                             />
-                            <Button
-                              onClick={handleGenerateVideo}
-                              disabled={isGeneratingVideo || !videoPrompt.trim()}
-                              className="shrink-0"
-                            >
-                              {isGeneratingVideo ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Generieren...
-                                </>
-                              ) : (
-                                <>
-                                  <Video className="w-4 h-4 mr-2" />
-                                  Video generieren
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                          {videoProgress && (
-                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>{videoProgress}</span>
+                            <div className="flex gap-2 justify-center">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(videoPrompt);
+                                  toast({
+                                    title: "Kopiert!",
+                                    description: "Video-Prompt wurde in die Zwischenablage kopiert",
+                                  });
+                                }}
+                              >
+                                Prompt kopieren
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleGenerateVideoPrompt}
+                                disabled={isGeneratingVideoPrompt}
+                              >
+                                {isGeneratingVideoPrompt ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  "Neuer Prompt"
+                                )}
+                              </Button>
                             </div>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={handleGenerateVideoPrompt}
+                            disabled={isGeneratingVideoPrompt}
+                            className="w-full"
+                            variant="secondary"
+                          >
+                            {isGeneratingVideoPrompt ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generiere Prompt...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Video-Prompt generieren
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
