@@ -1229,8 +1229,24 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     try {
       // Get the image as base64
       const imageUrl = imageSlots[selectedImageIndex].imageUrl;
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+      
+      let blob: Blob;
+      try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error("Bild nicht mehr verfügbar");
+        }
+        blob = await response.blob();
+      } catch (fetchError) {
+        toast({
+          title: "Bild nicht verfügbar",
+          description: "Das Bild ist nicht mehr verfügbar. Bitte generiere es erneut oder wähle ein anderes Bild.",
+          variant: "destructive",
+        });
+        setIsGeneratingVideoPrompt(false);
+        return;
+      }
+      
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => {
