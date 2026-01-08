@@ -2166,7 +2166,7 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                   </Button>
 
                   {/* Image Display */}
-                  <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden">
+                  <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden relative z-0">
                     {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl ? (
                       <img
                         src={imageSlots[selectedImageIndex].imageUrl}
@@ -2258,8 +2258,8 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${videoPromptOpen ? 'rotate-180' : ''}`} />
                       </button>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="border-t border-border/30">
-                      <div className="bg-gradient-to-b from-card/80 to-card/50 px-4 py-3 max-h-[180px] overflow-y-auto">
+                    <CollapsibleContent className="border-t border-border/30 relative z-10">
+                      <div className="bg-gradient-to-b from-card/80 to-card/50 px-4 py-3">
                         <div className="flex flex-col gap-2">
                           {/* Header with navigation */}
                           {allVideoPrompts.length > 0 && (
