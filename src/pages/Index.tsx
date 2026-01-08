@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2 } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
@@ -138,6 +138,12 @@ const Index = () => {
   const referenceImagesRef = useRef<File[]>([]);
   const { toast } = useToast();
   const generationQueueRef = useRef<number[]>([]);
+  
+  // Video generation state
+  const [videoPrompt, setVideoPrompt] = useState("");
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [videoProgress, setVideoProgress] = useState("");
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -1174,6 +1180,187 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     setIsDraggingImage(false);
   };
 
+  // Reset video state when changing images
+  useEffect(() => {
+    setVideoPrompt("");
+    setGeneratedVideoUrl(null);
+    setVideoProgress("");
+  }, [selectedImageIndex]);
+
+  const handleGenerateVideo = async () => {
+    if (!apiKey) {
+      toast({
+        title: "API Key erforderlich",
+        description: "Bitte gib deinen Google Gemini API Key ein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!videoPrompt.trim()) {
+      toast({
+        title: "Prompt erforderlich",
+        description: "Bitte gib einen Prompt für das Video ein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedImageIndex === null || !imageSlots[selectedImageIndex]?.imageUrl) {
+      toast({
+        title: "Kein Bild ausgewählt",
+        description: "Bitte wähle ein Bild aus",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingVideo(true);
+    setGeneratedVideoUrl(null);
+    setVideoProgress("Starte Video-Generierung...");
+
+    try {
+      // Get the image as base64
+      const imageUrl = imageSlots[selectedImageIndex].imageUrl;
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          // Remove data URL prefix
+          const base64Data = result.split(",")[1];
+          resolve(base64Data);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      // Determine MIME type
+      const mimeType = blob.type || "image/png";
+
+      // Start video generation
+      setVideoProgress("Sende Anfrage an API...");
+      const generateResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            instances: [
+              {
+                prompt: videoPrompt,
+                image: {
+                  bytesBase64Encoded: base64,
+                  mimeType: mimeType,
+                },
+              },
+            ],
+          }),
+        }
+      );
+
+      if (!generateResponse.ok) {
+        const errorData = await generateResponse.json();
+        throw new Error(errorData.error?.message || "Video-Generierung fehlgeschlagen");
+      }
+
+      const generateData = await generateResponse.json();
+      const operationName = generateData.name;
+
+      if (!operationName) {
+        throw new Error("Keine Operation-ID erhalten");
+      }
+
+      // Poll for completion
+      let attempts = 0;
+      const maxAttempts = 60; // 10 minutes max (10s intervals)
+
+      while (attempts < maxAttempts) {
+        setVideoProgress(`Video wird generiert... (${attempts * 10}s)`);
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+
+        const statusResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!statusResponse.ok) {
+          const errorData = await statusResponse.json();
+          throw new Error(errorData.error?.message || "Status-Abfrage fehlgeschlagen");
+        }
+
+        const statusData = await statusResponse.json();
+
+        if (statusData.done) {
+          // Get the video URL
+          const videoUri = statusData.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
+          
+          if (!videoUri) {
+            throw new Error("Keine Video-URL erhalten");
+          }
+
+          // Download the video
+          setVideoProgress("Video wird heruntergeladen...");
+          const videoResponse = await fetch(`${videoUri}&key=${apiKey}`);
+          
+          if (!videoResponse.ok) {
+            throw new Error("Video-Download fehlgeschlagen");
+          }
+
+          const videoBlob = await videoResponse.blob();
+          const videoUrl = URL.createObjectURL(videoBlob);
+          
+          setGeneratedVideoUrl(videoUrl);
+          setVideoProgress("");
+          toast({
+            title: "Video erfolgreich generiert!",
+            description: "Dein Video ist bereit zum Abspielen und Herunterladen",
+          });
+          break;
+        }
+
+        attempts++;
+      }
+
+      if (attempts >= maxAttempts) {
+        throw new Error("Zeitüberschreitung bei der Video-Generierung");
+      }
+    } catch (error) {
+      console.error("Video generation error:", error);
+      setVideoProgress("");
+      toast({
+        title: "Video-Generierung fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingVideo(false);
+    }
+  };
+
+  const handleDownloadVideo = () => {
+    if (!generatedVideoUrl) return;
+    
+    const link = document.createElement("a");
+    link.href = generatedVideoUrl;
+    link.download = `video-${Date.now()}.mp4`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Video heruntergeladen!",
+      description: "Das Video wurde erfolgreich gespeichert",
+    });
+  };
+
   const handleDownloadAll = async () => {
     const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
     
@@ -2024,6 +2211,80 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                     ))}
                   </div>
                 </div>
+
+                {/* Video Generation Section */}
+                {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && (
+                  <div className="border-t border-border/50 bg-card/50 px-4 py-4">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <Video className="w-4 h-4" />
+                        <span>Video aus Bild generieren</span>
+                      </div>
+                      
+                      {generatedVideoUrl ? (
+                        <div className="w-full max-w-md space-y-3">
+                          <video 
+                            src={generatedVideoUrl} 
+                            controls 
+                            className="w-full rounded-lg border border-border"
+                          />
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={handleDownloadVideo}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Video herunterladen
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setGeneratedVideoUrl(null)}
+                            >
+                              Neues Video
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full max-w-md space-y-3">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Beschreibe die Bewegung... z.B. 'Die Person winkt freundlich'"
+                              value={videoPrompt}
+                              onChange={(e) => setVideoPrompt(e.target.value)}
+                              disabled={isGeneratingVideo}
+                              className="flex-1"
+                            />
+                            <Button
+                              onClick={handleGenerateVideo}
+                              disabled={isGeneratingVideo || !videoPrompt.trim()}
+                              className="shrink-0"
+                            >
+                              {isGeneratingVideo ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generieren...
+                                </>
+                              ) : (
+                                <>
+                                  <Video className="w-4 h-4 mr-2" />
+                                  Video generieren
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                          {videoProgress && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>{videoProgress}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </DialogContent>
