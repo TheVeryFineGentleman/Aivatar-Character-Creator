@@ -175,6 +175,17 @@ const Index = () => {
   const [selectedVideoStyle, setSelectedVideoStyle] = useState<string | null>(null);
   const [selectedVideoDuration, setSelectedVideoDuration] = useState("5s");
   const [selectedVideoSpeed, setSelectedVideoSpeed] = useState("normal");
+  
+  // Dynamic AI suggestions state
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([
+    "Langsam lächeln und in die Kamera schauen",
+    "Sprechen und dabei gestikulieren",
+    "Zur Seite drehen und zurückblicken",
+    "Langsam näher kommen",
+    "Winken und grüßen"
+  ]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -1331,6 +1342,10 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
       // Add to array and navigate to it
       setAllVideoPrompts(prev => [...prev, newPrompt]);
       setCurrentPromptIndex(allVideoPrompts.length); // Will be the new last index
+      setSelectedSuggestions(new Set());
+      
+      // Generate new AI suggestions based on the generated prompt
+      generateNewAiSuggestions(newPrompt);
       
       toast({
         title: "Video-Prompt generiert!",
@@ -1346,6 +1361,81 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
     } finally {
       setIsGeneratingVideoPrompt(false);
     }
+  };
+
+  const generateNewAiSuggestions = async (contextPrompt: string) => {
+    if (!apiKey) return;
+    
+    setIsGeneratingSuggestions(true);
+    
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Basierend auf diesem Video-Prompt:
+"${contextPrompt}"
+
+Generiere 5 kurze, kreative Vorschläge für Variationen oder Erweiterungen dieses Video-Prompts.
+Jeder Vorschlag sollte eine andere Bewegung, Emotion oder Kamera-Aktion beschreiben.
+Die Vorschläge sollten kurz sein (max 6-8 Wörter) und auf Deutsch.
+
+Antworte NUR mit den 5 Vorschlägen, einer pro Zeile, ohne Nummerierung oder zusätzliche Erklärungen.`
+                  }
+                ]
+              }
+            ]
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const suggestionsText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        
+        if (suggestionsText) {
+          const newSuggestions = suggestionsText
+            .split('\n')
+            .map((s: string) => s.trim())
+            .filter((s: string) => s.length > 0 && s.length < 50)
+            .slice(0, 5);
+          
+          if (newSuggestions.length > 0) {
+            setAiSuggestions(newSuggestions);
+            setSelectedSuggestions(new Set());
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to generate suggestions:", error);
+    } finally {
+      setIsGeneratingSuggestions(false);
+    }
+  };
+
+  const toggleSuggestion = (suggestion: string) => {
+    setSelectedSuggestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(suggestion)) {
+        newSet.delete(suggestion);
+      } else {
+        newSet.add(suggestion);
+      }
+      
+      // Update promptChatInput based on selected suggestions
+      const allSelected = Array.from(newSet);
+      setPromptChatInput(allSelected.join(", "));
+      
+      return newSet;
+    });
   };
 
   const handleEditPromptWithAI = async () => {
@@ -1405,6 +1495,10 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
       setAllVideoPrompts(prev => [...prev, newPrompt]);
       setCurrentPromptIndex(allVideoPrompts.length);
       setPromptChatInput("");
+      setSelectedSuggestions(new Set());
+      
+      // Generate new AI suggestions based on the new prompt
+      generateNewAiSuggestions(newPrompt);
       
       toast({
         title: "Neuer Prompt erstellt!",
@@ -2377,27 +2471,33 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                   )}
                                 </div>
 
-                                {/* Suggestion Buttons for AI prompt generation */}
+                                {/* Dynamic AI Suggestion Buttons */}
                                 <div className="space-y-1.5 pt-2 border-t border-border/30">
-                                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Schnell-Vorschläge</Label>
+                                  <div className="flex items-center justify-between">
+                                    <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                      Vorschläge {isGeneratingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin inline ml-1" />}
+                                    </Label>
+                                    {selectedSuggestions.size > 0 && (
+                                      <span className="text-[9px] text-primary">{selectedSuggestions.size} ausgewählt</span>
+                                    )}
+                                  </div>
                                   <div className="flex flex-wrap gap-1">
-                                    {[
-                                      "Langsam lächeln und in die Kamera schauen",
-                                      "Sprechen und dabei gestikulieren",
-                                      "Zur Seite drehen und zurückblicken",
-                                      "Langsam näher kommen",
-                                      "Winken und grüßen"
-                                    ].map((suggestion) => (
-                                      <button
-                                        key={suggestion}
-                                        onClick={() => {
-                                          setPromptChatInput(suggestion);
-                                        }}
-                                        className="px-2 py-1 text-[10px] rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/50 transition-all"
-                                      >
-                                        {suggestion.length > 25 ? suggestion.substring(0, 25) + "..." : suggestion}
-                                      </button>
-                                    ))}
+                                    {aiSuggestions.map((suggestion) => {
+                                      const isSelected = selectedSuggestions.has(suggestion);
+                                      return (
+                                        <button
+                                          key={suggestion}
+                                          onClick={() => toggleSuggestion(suggestion)}
+                                          className={`px-2 py-1 text-[10px] rounded-full border transition-all ${
+                                            isSelected 
+                                              ? 'bg-primary text-primary-foreground border-primary' 
+                                              : 'bg-muted/50 border-border hover:bg-muted hover:border-primary/50'
+                                          }`}
+                                        >
+                                          {suggestion.length > 30 ? suggestion.substring(0, 30) + "..." : suggestion}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 </div>
 
