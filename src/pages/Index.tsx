@@ -2512,17 +2512,22 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                       { label: "Orbit", prompt: "Kamera umkreist die Person langsam" },
                                       { label: "Dolly", prompt: "Kamera fährt langsam nach vorne" },
                                       { label: "Statisch", prompt: "Statische Kamera, nur Person bewegt sich" }
-                                    ].map((style) => (
-                                      <button
-                                        key={style.label}
-                                        onClick={() => {
-                                          setPromptChatInput(prev => prev ? `${prev}, ${style.prompt}` : style.prompt);
-                                        }}
-                                        className="px-2 py-1 text-[10px] rounded-full bg-secondary/50 border border-border hover:bg-secondary hover:border-primary/50 transition-all"
-                                      >
-                                        {style.label}
-                                      </button>
-                                    ))}
+                                    ].map((style) => {
+                                      const isSelected = selectedSuggestions.has(style.prompt);
+                                      return (
+                                        <button
+                                          key={style.label}
+                                          onClick={() => toggleSuggestion(style.prompt)}
+                                          className={`px-2 py-1 text-[10px] rounded-full border transition-all ${
+                                            isSelected 
+                                              ? 'bg-primary text-primary-foreground border-primary' 
+                                              : 'bg-secondary/50 border-border hover:bg-secondary hover:border-primary/50'
+                                          }`}
+                                        >
+                                          {style.label}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 </div>
 
@@ -2536,17 +2541,22 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                                       { label: "Golden Hour", prompt: "Warmes goldenes Sonnenlicht" },
                                       { label: "Noir", prompt: "Film Noir Stil mit hartem Kontrast" },
                                       { label: "Verträumt", prompt: "Verträumte, leicht unscharfe Atmosphäre" }
-                                    ].map((effect) => (
-                                      <button
-                                        key={effect.label}
-                                        onClick={() => {
-                                          setPromptChatInput(prev => prev ? `${prev}, ${effect.prompt}` : effect.prompt);
-                                        }}
-                                        className="px-2 py-1 text-[10px] rounded-full bg-accent/50 border border-border hover:bg-accent hover:border-primary/50 transition-all"
-                                      >
-                                        {effect.label}
-                                      </button>
-                                    ))}
+                                    ].map((effect) => {
+                                      const isSelected = selectedSuggestions.has(effect.prompt);
+                                      return (
+                                        <button
+                                          key={effect.label}
+                                          onClick={() => toggleSuggestion(effect.prompt)}
+                                          className={`px-2 py-1 text-[10px] rounded-full border transition-all ${
+                                            isSelected 
+                                              ? 'bg-primary text-primary-foreground border-primary' 
+                                              : 'bg-accent/50 border-border hover:bg-accent hover:border-primary/50'
+                                          }`}
+                                        >
+                                          {effect.label}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               </>
