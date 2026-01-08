@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2 } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2 } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
@@ -40,6 +40,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -145,6 +150,7 @@ const Index = () => {
   const [isGeneratingVideoPrompt, setIsGeneratingVideoPrompt] = useState(false);
   const [promptChatInput, setPromptChatInput] = useState("");
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
+  const [videoPromptOpen, setVideoPromptOpen] = useState(false);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -2235,142 +2241,156 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                   </div>
                 </div>
 
-                {/* Video Prompt Section */}
+                {/* Video Prompt Section - Collapsible */}
                 {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && (
-                  <div className="border-t border-border/50 bg-gradient-to-b from-card/80 to-card/50 px-4 py-3 max-h-[200px] overflow-y-auto">
-                    <div className="flex flex-col gap-2">
-                      {/* Header */}
-                      <div className="flex items-center justify-between">
+                  <Collapsible open={videoPromptOpen} onOpenChange={setVideoPromptOpen}>
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full border-t border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors px-4 py-2 flex items-center justify-between">
                         <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                           <Video className="w-3.5 h-3.5" />
                           <span>Video-Prompt</span>
-                        </div>
-                        {allVideoPrompts.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => navigatePrompt('prev')}
-                              disabled={currentPromptIndex === 0}
-                            >
-                              <ChevronLeft className="w-3.5 h-3.5" />
-                            </Button>
-                            <span className="text-xs font-medium text-muted-foreground min-w-[40px] text-center">
-                              {currentPromptIndex + 1}/{allVideoPrompts.length}
+                          {allVideoPrompts.length > 0 && (
+                            <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                              {allVideoPrompts.length}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => navigatePrompt('next')}
-                              disabled={currentPromptIndex === allVideoPrompts.length - 1}
-                            >
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="w-full space-y-2">
-                        {allVideoPrompts.length > 0 ? (
-                          <>
-                            {/* Editable Prompt Field */}
-                            <Textarea
-                              value={currentVideoPrompt}
-                              onChange={(e) => updateCurrentPrompt(e.target.value)}
-                              className="min-h-[60px] text-sm resize-none"
-                              placeholder="Video-Prompt..."
-                            />
-                            
-                            {/* Action Buttons */}
-                            <div className="flex gap-1.5 justify-between">
+                          )}
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${videoPromptOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="border-t border-border/30">
+                      <div className="bg-gradient-to-b from-card/80 to-card/50 px-4 py-3 max-h-[180px] overflow-y-auto">
+                        <div className="flex flex-col gap-2">
+                          {/* Header with navigation */}
+                          {allVideoPrompts.length > 0 && (
+                            <div className="flex items-center justify-end">
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => navigatePrompt('prev')}
+                                  disabled={currentPromptIndex === 0}
+                                >
+                                  <ChevronLeft className="w-3.5 h-3.5" />
+                                </Button>
+                                <span className="text-xs font-medium text-muted-foreground min-w-[40px] text-center">
+                                  {currentPromptIndex + 1}/{allVideoPrompts.length}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => navigatePrompt('next')}
+                                  disabled={currentPromptIndex === allVideoPrompts.length - 1}
+                                >
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Content */}
+                          <div className="w-full space-y-2">
+                            {allVideoPrompts.length > 0 ? (
+                              <>
+                                {/* Editable Prompt Field */}
+                                <Textarea
+                                  value={currentVideoPrompt}
+                                  onChange={(e) => updateCurrentPrompt(e.target.value)}
+                                  className="min-h-[60px] text-sm resize-none"
+                                  placeholder="Video-Prompt..."
+                                />
+                                
+                                {/* Action Buttons */}
+                                <div className="flex gap-1.5 justify-between">
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="text-xs h-7"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(currentVideoPrompt);
+                                      toast({
+                                        title: "Kopiert!",
+                                      });
+                                    }}
+                                  >
+                                    Kopieren
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs h-7"
+                                    onClick={handleGenerateVideoPrompt}
+                                    disabled={isGeneratingVideoPrompt}
+                                  >
+                                    {isGeneratingVideoPrompt ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      "+ Neuer Prompt"
+                                    )}
+                                  </Button>
+                                </div>
+                                
+                                {/* AI Edit Chat */}
+                                <div className="flex gap-1.5 items-center pt-1">
+                                  {isEditingPrompt && (
+                                    <div className="flex items-center gap-1.5 text-xs text-primary animate-pulse">
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                      <span>KI schreibt...</span>
+                                    </div>
+                                  )}
+                                  {!isEditingPrompt && (
+                                    <>
+                                      <Input
+                                        placeholder="z.B. 'Er soll etwas sagen'"
+                                        value={promptChatInput}
+                                        onChange={(e) => setPromptChatInput(e.target.value)}
+                                        className="flex-1 text-xs h-7"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && promptChatInput.trim()) {
+                                            e.preventDefault();
+                                            handleEditPromptWithAI();
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={handleEditPromptWithAI}
+                                        disabled={!promptChatInput.trim()}
+                                      >
+                                        <Send className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
                               <Button
-                                variant="secondary"
-                                size="sm"
-                                className="text-xs h-7"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(currentVideoPrompt);
-                                  toast({
-                                    title: "Kopiert!",
-                                  });
-                                }}
-                              >
-                                Kopieren
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs h-7"
                                 onClick={handleGenerateVideoPrompt}
                                 disabled={isGeneratingVideoPrompt}
+                                className="w-full h-9"
+                                variant="secondary"
                               >
                                 {isGeneratingVideoPrompt ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <div className="flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span className="animate-pulse">KI analysiert Bild...</span>
+                                  </div>
                                 ) : (
-                                  "+ Neuer Prompt"
+                                  <>
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    Video-Prompt generieren
+                                  </>
                                 )}
                               </Button>
-                            </div>
-                            
-                            {/* AI Edit Chat */}
-                            <div className="flex gap-1.5 items-center pt-1">
-                              {isEditingPrompt && (
-                                <div className="flex items-center gap-1.5 text-xs text-primary animate-pulse">
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                  <span>KI schreibt...</span>
-                                </div>
-                              )}
-                              {!isEditingPrompt && (
-                                <>
-                                  <Input
-                                    placeholder="z.B. 'Er soll etwas sagen'"
-                                    value={promptChatInput}
-                                    onChange={(e) => setPromptChatInput(e.target.value)}
-                                    className="flex-1 text-xs h-7"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' && promptChatInput.trim()) {
-                                        e.preventDefault();
-                                        handleEditPromptWithAI();
-                                      }
-                                    }}
-                                  />
-                                  <Button
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={handleEditPromptWithAI}
-                                    disabled={!promptChatInput.trim()}
-                                  >
-                                    <Send className="w-3.5 h-3.5" />
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <Button
-                            onClick={handleGenerateVideoPrompt}
-                            disabled={isGeneratingVideoPrompt}
-                            className="w-full h-9"
-                            variant="secondary"
-                          >
-                            {isGeneratingVideoPrompt ? (
-                              <div className="flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span className="animate-pulse">KI analysiert Bild...</span>
-                              </div>
-                            ) : (
-                              <>
-                                <Sparkles className="w-4 h-4 mr-2" />
-                                Video-Prompt generieren
-                              </>
                             )}
-                          </Button>
-                        )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 )}
               </>
             )}
