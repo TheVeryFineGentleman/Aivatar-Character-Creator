@@ -2411,7 +2411,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
                                 <Textarea
                                   value={currentVideoPrompt}
                                   onChange={(e) => updateCurrentPrompt(e.target.value)}
-                                  className="min-h-[100px] text-xs resize-none flex-1"
+                                  className="min-h-[180px] text-xs resize-none flex-1"
                                   placeholder="Video-Prompt..."
                                 />
                                 
