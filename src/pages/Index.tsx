@@ -2337,8 +2337,8 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                     </div>
                   </div>
 
-                  {/* Video Prompt Side Panel - Always rendered, slides in/out */}
-                  {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && (
+                  {/* Video Prompt Side Panel - Only for Pro users */}
+                  {isPro && imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && (
                     <div 
                       className={`flex-shrink-0 border-l border-border/50 bg-gradient-to-b from-card to-card/80 flex flex-col overflow-hidden transition-all duration-300 ease-out ${
                         videoPromptOpen ? 'w-64' : 'w-0 border-l-0'
@@ -2586,8 +2586,8 @@ Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
                     </div>
                   )}
 
-                  {/* Video Prompt Toggle Tab - Edge of dialog */}
-                  {imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && !videoPromptOpen && (
+                  {/* Video Prompt Toggle Tab - Only for Pro users */}
+                  {isPro && imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && !videoPromptOpen && (
                     <button
                       onClick={() => setVideoPromptOpen(true)}
                       className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-primary/90 hover:bg-primary text-primary-foreground px-1.5 py-4 rounded-l-lg shadow-lg transition-all hover:px-2 flex items-center gap-1"
