@@ -2502,7 +2502,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
                                               : 'bg-muted/50 border-border hover:bg-muted hover:border-primary/50'
                                           }`}
                                         >
-                                          {suggestion.length > 30 ? suggestion.substring(0, 30) + "..." : suggestion}
+                                          {suggestion}
                                         </button>
                                       );
                                     })}
