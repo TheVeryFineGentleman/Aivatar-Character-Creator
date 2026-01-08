@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2 } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2 } from "lucide-react";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
@@ -142,6 +142,9 @@ const Index = () => {
   // Video prompt generation state
   const [videoPrompt, setVideoPrompt] = useState("");
   const [isGeneratingVideoPrompt, setIsGeneratingVideoPrompt] = useState(false);
+  const [videoPromptHistory, setVideoPromptHistory] = useState<string[]>([]);
+  const [promptChatInput, setPromptChatInput] = useState("");
+  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -1181,6 +1184,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   // Reset video prompt when changing images
   useEffect(() => {
     setVideoPrompt("");
+    setVideoPromptHistory([]);
+    setPromptChatInput("");
   }, [selectedImageIndex]);
 
   const handleGenerateVideoPrompt = async () => {
@@ -1265,7 +1270,9 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
         throw new Error("Kein Prompt generiert");
       }
 
-      setVideoPrompt(generatedPrompt.trim());
+      const newPrompt = generatedPrompt.trim();
+      setVideoPromptHistory([]);
+      setVideoPrompt(newPrompt);
       toast({
         title: "Video-Prompt generiert!",
         description: "Du kannst den Prompt jetzt bearbeiten oder kopieren",
@@ -1280,6 +1287,91 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
     } finally {
       setIsGeneratingVideoPrompt(false);
     }
+  };
+
+  const handleEditPromptWithAI = async () => {
+    if (!apiKey || !promptChatInput.trim() || !videoPrompt) return;
+
+    setIsEditingPrompt(true);
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Du bist ein Assistent, der Video-Prompts bearbeitet.
+
+Aktueller Video-Prompt:
+"${videoPrompt}"
+
+Der Nutzer möchte folgende Änderung:
+"${promptChatInput}"
+
+Bearbeite den Video-Prompt entsprechend der Anweisung des Nutzers. Der neue Prompt soll:
+- Die gewünschten Änderungen enthalten
+- Weiterhin als Video-Animation-Prompt geeignet sein
+- 1-3 Sätze lang sein
+- Auf Deutsch sein
+
+Antworte NUR mit dem neuen Prompt, ohne zusätzliche Erklärungen.`
+                  }
+                ]
+              }
+            ]
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Bearbeitung fehlgeschlagen");
+      }
+
+      const data = await response.json();
+      const newPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (!newPrompt) {
+        throw new Error("Keine Antwort erhalten");
+      }
+
+      // Save current prompt to history for undo
+      setVideoPromptHistory(prev => [...prev, videoPrompt]);
+      setVideoPrompt(newPrompt);
+      setPromptChatInput("");
+      
+      toast({
+        title: "Prompt bearbeitet!",
+      });
+    } catch (error) {
+      console.error("Edit prompt error:", error);
+      toast({
+        title: "Bearbeitung fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEditingPrompt(false);
+    }
+  };
+
+  const handleUndoPrompt = () => {
+    if (videoPromptHistory.length === 0) return;
+    
+    const previousPrompt = videoPromptHistory[videoPromptHistory.length - 1];
+    setVideoPromptHistory(prev => prev.slice(0, -1));
+    setVideoPrompt(previousPrompt);
+    
+    toast({
+      title: "Rückgängig gemacht",
+    });
   };
 
   const handleDownloadAll = async () => {
@@ -2144,14 +2236,20 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
                       
                       <div className="w-full max-w-md space-y-3">
                         {videoPrompt ? (
-                          <div className="space-y-2">
+                          <div className="space-y-3">
+                            {/* Generated Prompt */}
                             <Textarea
                               value={videoPrompt}
-                              onChange={(e) => setVideoPrompt(e.target.value)}
+                              onChange={(e) => {
+                                setVideoPromptHistory(prev => [...prev, videoPrompt]);
+                                setVideoPrompt(e.target.value);
+                              }}
                               className="min-h-[80px] text-sm"
                               placeholder="Video-Prompt..."
                             />
-                            <div className="flex gap-2 justify-center">
+                            
+                            {/* Action Buttons */}
+                            <div className="flex gap-2 justify-center flex-wrap">
                               <Button
                                 variant="secondary"
                                 size="sm"
@@ -2165,6 +2263,16 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
                               >
                                 Prompt kopieren
                               </Button>
+                              {videoPromptHistory.length > 0 && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleUndoPrompt}
+                                >
+                                  <Undo2 className="w-4 h-4 mr-1" />
+                                  Rückgängig
+                                </Button>
+                              )}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -2177,6 +2285,40 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
                                   "Neuer Prompt"
                                 )}
                               </Button>
+                            </div>
+                            
+                            {/* AI Chat Edit Section */}
+                            <div className="border-t border-border/30 pt-3 mt-3">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                                <Sparkles className="w-3 h-3" />
+                                <span>Prompt mit KI bearbeiten</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="z.B. 'Lass ihn etwas sagen' oder 'Füge Handbewegung hinzu'"
+                                  value={promptChatInput}
+                                  onChange={(e) => setPromptChatInput(e.target.value)}
+                                  disabled={isEditingPrompt}
+                                  className="flex-1 text-sm"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey && promptChatInput.trim()) {
+                                      e.preventDefault();
+                                      handleEditPromptWithAI();
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  size="icon"
+                                  onClick={handleEditPromptWithAI}
+                                  disabled={isEditingPrompt || !promptChatInput.trim()}
+                                >
+                                  {isEditingPrompt ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Send className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ) : (
