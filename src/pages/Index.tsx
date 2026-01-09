@@ -159,6 +159,7 @@ const Index = () => {
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [switchSnapping, setSwitchSnapping] = useState(false);
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
+  const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
   const [selectedSkinType, setSelectedSkinType] = useState("realistic");
   const isGeneratingRef = useRef(false);
   const referenceImagesRef = useRef<File[]>([]);
@@ -1606,8 +1607,8 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
         <PromoBanner planCode={authData.planCode} />
-        {/* Settings Button */}
-        <div className="absolute top-6 right-6">
+        {/* Settings & Tutorial Buttons */}
+        <div className="absolute top-6 right-6 flex flex-col gap-2">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="rounded-full">
@@ -1747,7 +1748,54 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
               />
             </SheetContent>
           </Sheet>
+          
+          {/* Tutorial Button - Only for FULL users */}
+          {authData.planCode === "FULL" && (
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full"
+              onClick={() => setTutorialDialogOpen(true)}
+            >
+              <Video className="w-5 h-5" />
+            </Button>
+          )}
         </div>
+        
+        {/* Tutorial Videos Dialog */}
+        <Dialog open={tutorialDialogOpen} onOpenChange={setTutorialDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold mb-4">Übersicht</h2>
+                <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+                  <iframe 
+                    src="https://player.vimeo.com/video/1152205989?badge=0&autopause=0&player_id=0&app_id=58479" 
+                    frameBorder="0" 
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" 
+                    referrerPolicy="strict-origin-when-cross-origin" 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
+                    title="ACS Uebersicht Kaufversion"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <h2 className="text-xl font-bold mb-4">Avatar Creator Studio - Alle Funktionen auf einen Blick</h2>
+                <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+                  <iframe 
+                    src="https://player.vimeo.com/video/1152205825?badge=0&autopause=0&player_id=0&app_id=58479" 
+                    frameBorder="0" 
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" 
+                    referrerPolicy="strict-origin-when-cross-origin" 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
+                    title="ACS komplette Anleitung Kaufversion"
+                  />
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Header */}
         <div 
