@@ -1766,35 +1766,31 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
         <Dialog open={tutorialDialogOpen} onOpenChange={setTutorialDialogOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-8">
             <div className="space-y-8 px-4">
-              <div>
+              <div className="w-[85%] mx-auto">
                 <h2 className="text-lg font-bold mb-3">Übersicht</h2>
-                <div className="w-[85%] mx-auto">
-                  <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
-                    <iframe 
-                      src="https://player.vimeo.com/video/1152205989?badge=0&autopause=0&player_id=0&app_id=58479" 
-                      frameBorder="0" 
-                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" 
-                      referrerPolicy="strict-origin-when-cross-origin" 
-                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
-                      title="ACS Uebersicht Kaufversion"
-                    />
-                  </div>
+                <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+                  <iframe 
+                    src="https://player.vimeo.com/video/1152205989?badge=0&autopause=0&player_id=0&app_id=58479" 
+                    frameBorder="0" 
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" 
+                    referrerPolicy="strict-origin-when-cross-origin" 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
+                    title="ACS Uebersicht Kaufversion"
+                  />
                 </div>
               </div>
               
-              <div>
+              <div className="w-[85%] mx-auto">
                 <h2 className="text-lg font-bold mb-3">Avatar Creator Studio - Alle Funktionen auf einen Blick</h2>
-                <div className="w-[85%] mx-auto">
-                  <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
-                    <iframe 
-                      src="https://player.vimeo.com/video/1152205825?badge=0&autopause=0&player_id=0&app_id=58479" 
-                      frameBorder="0" 
-                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" 
-                      referrerPolicy="strict-origin-when-cross-origin" 
-                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
-                      title="ACS komplette Anleitung Kaufversion"
-                    />
-                  </div>
+                <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+                  <iframe 
+                    src="https://player.vimeo.com/video/1152205825?badge=0&autopause=0&player_id=0&app_id=58479" 
+                    frameBorder="0" 
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" 
+                    referrerPolicy="strict-origin-when-cross-origin" 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
+                    title="ACS komplette Anleitung Kaufversion"
+                  />
                 </div>
               </div>
             </div>
