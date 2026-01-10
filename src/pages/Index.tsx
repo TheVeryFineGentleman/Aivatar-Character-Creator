@@ -1615,7 +1615,7 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
       setCustomPromptVersions(prev => [...prev, newPrompt]);
       setCurrentCustomPromptIndex(customPromptVersions.length);
       setCustomPrompt(newPrompt);
-      setCustomPromptChatInput("");
+      // Don't clear the chat input so user can iterate
       
       toast({
         title: "Prompt generiert!",
@@ -1643,6 +1643,13 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
       setCurrentCustomPromptIndex(newIndex);
       setCustomPrompt(customPromptVersions[newIndex] || "");
     }
+  };
+
+  // Add a new empty prompt version
+  const handleNewEmptyPrompt = () => {
+    setCustomPromptVersions(prev => [...prev, ""]);
+    setCurrentCustomPromptIndex(customPromptVersions.length);
+    setCustomPrompt("");
   };
 
   // Sync customPrompt changes to versions array
@@ -2370,19 +2377,14 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                             <ChevronLeft className="w-6 h-6" />
                           )}
                         </Button>
-                        {/* Secondary button - regenerate/new version */}
+                        {/* Secondary button - new empty version */}
                         <Button
-                          onClick={handleGenerateCustomPromptWithAI}
-                          disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
+                          onClick={handleNewEmptyPrompt}
                           variant="secondary"
                           className="w-10 h-10 rounded-lg flex-shrink-0"
-                          title="Neuen Prompt generieren"
+                          title="Neuen leeren Prompt erstellen"
                         >
-                          {isGeneratingCustomPrompt ? (
-                            <Sparkles className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RotateCcw className="w-4 h-4" />
-                          )}
+                          <Plus className="w-4 h-4" />
                         </Button>
                       </div>
                       
