@@ -1562,8 +1562,34 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
     setIsGeneratingCustomPrompt(true);
 
     try {
-      const contextInfo = customPromptVersions.length > 0 
-        ? `\n\nAktueller Prompt zur Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"`
+      // Build context from selected options
+      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "Weißer Hintergrund";
+      const shotLabel = SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Ganzkörper";
+      const formatLabel = FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Quadratisch";
+      const skinLabel = isPro ? (SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "") : "";
+      
+      let backgroundContext = "";
+      if (selectedBackground === "white") {
+        backgroundContext = "WICHTIG: Der Hintergrund ist WEISS/neutral - erwähne KEINE Umgebung, Stadt, Natur oder Szenerien. Fokussiere nur auf die Person, Pose und Ausdruck.";
+      } else if (selectedBackground === "greenscreen") {
+        backgroundContext = "WICHTIG: Der Hintergrund ist ein GREEN SCREEN - erwähne KEINE spezifische Umgebung. Fokussiere nur auf die Person, Pose und Ausdruck.";
+      } else if (selectedBackground === "scenery") {
+        backgroundContext = sceneDescription 
+          ? `Der Hintergrund soll "${sceneDescription}" sein. Integriere diese Umgebung passend in den Prompt.`
+          : "Der Hintergrund kann eine passende Szene sein, die die KI wählt.";
+      }
+
+      const settingsContext = `
+AKTUELLE EINSTELLUNGEN (berücksichtige diese!):
+- Hintergrund: ${backgroundLabel}
+- Aufnahme-Typ: ${shotLabel}
+- Bildformat: ${formatLabel}
+${skinLabel ? `- Hauttyp: ${skinLabel}` : ""}
+
+${backgroundContext}`;
+
+      const existingPromptContext = customPromptVersions.length > 0 
+        ? `\n\nAktueller Prompt zur Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"\n\nVerbessere oder ergänze diesen basierend auf der Nutzer-Anfrage.`
         : "";
 
       const response = await fetch(
@@ -1582,12 +1608,12 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
 
 WICHTIG: Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
 "${customPromptChatInput}"
-
-${customPromptVersions.length > 0 ? `Der Nutzer hat bereits folgenden Prompt als Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"\n\nVerbessere oder ergänze diesen basierend auf der Nutzer-Anfrage.` : ""}
+${settingsContext}${existingPromptContext}
 
 Regeln für den Prompt:
 - Fokussiere dich GENAU auf das, was der Nutzer beschrieben hat
-- Beschreibe Pose, Ausdruck, Kleidung und Atmosphäre passend zur Anfrage
+- Berücksichtige die oben genannten Einstellungen
+- Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
 - 2-4 Sätze auf Deutsch
 - Nur der Prompt, keine Erklärungen`
                   }
