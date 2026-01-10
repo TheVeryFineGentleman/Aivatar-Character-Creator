@@ -2347,30 +2347,30 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                     )}
                     
                     {/* Two Column Layout: Prompt + AI Chat */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                       {/* Left: Textarea */}
-                      <div>
+                      <div className="h-[160px]">
                         <Textarea
                           id="custom-prompt-input"
                           placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                           value={customPrompt}
                           onChange={(e) => handleCustomPromptChange(e.target.value)}
-                          className="min-h-[120px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="h-full focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                         />
                       </div>
                       
                       {/* Right: AI Chat */}
-                      <div className="flex flex-col gap-2 p-3 rounded-lg border border-border/50 bg-muted/30">
+                      <div className="h-[160px] flex flex-col gap-2 p-3 rounded-lg border border-border/50 bg-muted/30">
                         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                           <Sparkles className="w-4 h-4" />
                           KI-Assistent
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-h-0">
                           <Textarea
                             placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
                             value={customPromptChatInput}
                             onChange={(e) => setCustomPromptChatInput(e.target.value)}
-                            className="min-h-[60px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                            className="h-full text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -2383,7 +2383,7 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                           onClick={handleGenerateCustomPromptWithAI}
                           disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
                           size="sm"
-                          className="w-full"
+                          className="w-full flex-shrink-0"
                         >
                           {isGeneratingCustomPrompt ? (
                             <>
