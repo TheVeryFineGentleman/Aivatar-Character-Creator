@@ -1578,19 +1578,18 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
               {
                 parts: [
                   {
-                    text: `Du bist ein Experte für detaillierte Bild-Generierungs-Prompts.
+                    text: `Du bist ein Experte für Bild-Generierungs-Prompts.
 
-Der Nutzer möchte folgenden Prompt erstellen oder verbessern:
-"${customPromptChatInput}"${contextInfo}
+WICHTIG: Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
+"${customPromptChatInput}"
 
-Erstelle einen DETAILLIERTEN Prompt für KI-Bildgenerierung. Der Prompt soll:
-- Die gewünschten Elemente präzise beschreiben
-- Pose, Ausdruck, Kleidung, Beleuchtung und Atmosphäre enthalten
-- Professionell und klar formuliert sein
-- 2-4 Sätze lang sein
-- Auf Deutsch sein
+${customPromptVersions.length > 0 ? `Der Nutzer hat bereits folgenden Prompt als Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"\n\nVerbessere oder ergänze diesen basierend auf der Nutzer-Anfrage.` : ""}
 
-Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
+Regeln für den Prompt:
+- Fokussiere dich GENAU auf das, was der Nutzer beschrieben hat
+- Beschreibe Pose, Ausdruck, Kleidung und Atmosphäre passend zur Anfrage
+- 2-4 Sätze auf Deutsch
+- Nur der Prompt, keine Erklärungen`
                   }
                 ]
               }
@@ -2358,7 +2357,7 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                           placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                           value={customPrompt}
                           onChange={(e) => handleCustomPromptChange(e.target.value)}
-                          className="flex-1 min-h-[140px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                          className="flex-1 min-h-[120px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                         />
                       </div>
                       
@@ -2399,7 +2398,7 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                             placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
                             value={customPromptChatInput}
                             onChange={(e) => setCustomPromptChatInput(e.target.value)}
-                            className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                            className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
