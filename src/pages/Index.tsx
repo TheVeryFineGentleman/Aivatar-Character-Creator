@@ -2313,64 +2313,77 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
               >
                 <div className="overflow-hidden">
                   <div className="pt-2">
-                    {/* Version Navigation */}
-                    {customPromptVersions.length > 0 && (
-                      <div className="flex items-center justify-between mb-2">
-                        <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => navigateCustomPrompt('prev')}
-                            disabled={currentCustomPromptIndex === 0}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <span className="text-sm text-muted-foreground font-medium min-w-[40px] text-center">
-                            {currentCustomPromptIndex + 1}/{customPromptVersions.length}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => navigateCustomPrompt('next')}
-                            disabled={currentCustomPromptIndex === customPromptVersions.length - 1}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                    {/* Three Column Layout: Left Prompt | Button | Right AI Input */}
+                    <div className="flex gap-3 items-stretch">
+                      {/* Left: Prompt Output */}
+                      <div className="flex-1 flex flex-col">
+                        {/* Header with Version Navigation */}
+                        <div className="flex items-center justify-between mb-2">
+                          <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
+                          {customPromptVersions.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => navigateCustomPrompt('prev')}
+                                disabled={currentCustomPromptIndex === 0}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <span className="text-sm text-muted-foreground font-medium min-w-[40px] text-center">
+                                {currentCustomPromptIndex + 1}/{customPromptVersions.length}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => navigateCustomPrompt('next')}
+                                disabled={currentCustomPromptIndex === customPromptVersions.length - 1}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
-                    {customPromptVersions.length === 0 && (
-                      <Label htmlFor="custom-prompt-input" className="mb-2 block">Custom Image Prompt</Label>
-                    )}
-                    
-                    {/* Two Column Layout: Prompt + AI Chat */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-                      {/* Left: Textarea */}
-                      <div className="h-[160px]">
                         <Textarea
                           id="custom-prompt-input"
                           placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                           value={customPrompt}
                           onChange={(e) => handleCustomPromptChange(e.target.value)}
-                          className="h-full focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                          className="flex-1 min-h-[140px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                         />
                       </div>
                       
-                      {/* Right: AI Chat */}
-                      <div className="h-[160px] flex flex-col gap-2 p-3 rounded-lg border border-border/50 bg-muted/30">
-                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                          <Sparkles className="w-4 h-4" />
-                          KI-Assistent
+                      {/* Center: Generate Button */}
+                      <div className="flex flex-col justify-center">
+                        <Button
+                          onClick={handleGenerateCustomPromptWithAI}
+                          disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
+                          size="icon"
+                          className="h-12 w-12 rounded-full"
+                          title="Prompt generieren und links einfügen"
+                        >
+                          {isGeneratingCustomPrompt ? (
+                            <Sparkles className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <ChevronLeft className="w-6 h-6" />
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {/* Right: AI Chat Input */}
+                      <div className="flex-1 flex flex-col">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="w-4 h-4 text-muted-foreground" />
+                          <Label className="text-muted-foreground">KI-Assistent</Label>
                         </div>
-                        <div className="flex-1 min-h-0">
+                        <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                           <Textarea
                             placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
                             value={customPromptChatInput}
                             onChange={(e) => setCustomPromptChatInput(e.target.value)}
-                            className="h-full text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                            className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -2379,24 +2392,6 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                             }}
                           />
                         </div>
-                        <Button
-                          onClick={handleGenerateCustomPromptWithAI}
-                          disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
-                          size="sm"
-                          className="w-full flex-shrink-0"
-                        >
-                          {isGeneratingCustomPrompt ? (
-                            <>
-                              <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                              Generiert...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-4 h-4 mr-2" />
-                              Prompt generieren
-                            </>
-                          )}
-                        </Button>
                       </div>
                     </div>
                   </div>
