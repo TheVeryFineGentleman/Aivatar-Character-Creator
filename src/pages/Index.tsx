@@ -2355,18 +2355,33 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                         />
                       </div>
                       
-                      {/* Center: Generate Button */}
-                      <div className="flex flex-col pt-7">
+                      {/* Center: Generate Buttons */}
+                      <div className="flex flex-col gap-2 pt-7">
+                        {/* Main button - transfers prompt to left */}
                         <Button
                           onClick={handleGenerateCustomPromptWithAI}
                           disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
-                          className="w-10 h-full min-h-[140px] rounded-lg flex-shrink-0"
+                          className="w-10 flex-1 rounded-lg"
                           title="Prompt generieren und links einfügen"
                         >
                           {isGeneratingCustomPrompt ? (
                             <Sparkles className="w-5 h-5 animate-spin" />
                           ) : (
                             <ChevronLeft className="w-6 h-6" />
+                          )}
+                        </Button>
+                        {/* Secondary button - regenerate/new version */}
+                        <Button
+                          onClick={handleGenerateCustomPromptWithAI}
+                          disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
+                          variant="secondary"
+                          className="w-10 h-10 rounded-lg flex-shrink-0"
+                          title="Neuen Prompt generieren"
+                        >
+                          {isGeneratingCustomPrompt ? (
+                            <Sparkles className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-4 h-4" />
                           )}
                         </Button>
                       </div>
