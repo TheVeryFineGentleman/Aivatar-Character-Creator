@@ -806,11 +806,21 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       });
     });
     
+    // Add new indices to the queue
+    const newIndices = Array.from({ length: newCount }, (_, i) => currentLength + i);
+    generationQueueRef.current = [...generationQueueRef.current, ...newIndices];
+    
+    // If already generating, the existing processQueue loop will pick up new items
+    if (isGenerating) {
+      toast({
+        title: "Zur Warteschlange hinzugefügt",
+        description: `${newCount} ${newCount === 1 ? 'Bild wird' : 'Bilder werden'} generiert`,
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     isGeneratingRef.current = true;
-    
-    // Fill queue with indices starting after existing images
-    generationQueueRef.current = Array.from({ length: newCount }, (_, i) => currentLength + i);
 
     try {
       // Use ref to get current images (avoids stale closure issues)
@@ -1134,6 +1144,34 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     toast({
       title: "Bild gelöscht",
       description: `Bild #${index + 1} wurde erfolgreich gelöscht`,
+    });
+  };
+
+  // Remove image from queue (for pending images only)
+  const handleRemoveFromQueue = (index: number) => {
+    const slot = imageSlots[index];
+    if (slot?.status !== "pending") return;
+    
+    // Remove from generation queue
+    const queueIndex = generationQueueRef.current.indexOf(index);
+    if (queueIndex > -1) {
+      generationQueueRef.current.splice(queueIndex, 1);
+    }
+    
+    // Update queue indices after removal
+    generationQueueRef.current = generationQueueRef.current.map(i => i > index ? i - 1 : i);
+    
+    // Close viewer if viewing this image
+    if (selectedImageIndex === index) {
+      setSelectedImageIndex(null);
+    } else if (selectedImageIndex !== null && selectedImageIndex > index) {
+      setSelectedImageIndex(selectedImageIndex - 1);
+    }
+    
+    setImageSlots((prev) => prev.filter((_, i) => i !== index));
+    toast({
+      title: "Aus Warteschlange entfernt",
+      description: `Bild #${index + 1} wurde aus der Warteschlange entfernt`,
     });
   };
 
@@ -2445,47 +2483,29 @@ Regeln für den Prompt:
               {imageSlots.length === 0 ? (
                 <Button
                   onClick={handleGenerate}
-                  disabled={!apiKey || referenceImages.length === 0 || isGenerating}
+                  disabled={!apiKey || referenceImages.length === 0}
                   className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                 >
-                  {isGenerating ? (
-                    <>
-                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                      Generiere...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Bilder generieren
-                    </>
-                  )}
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Bilder generieren
                 </Button>
               ) : (
                 <>
                   <Button
                     onClick={handleGenerateMore}
-                    disabled={!apiKey || referenceImages.length === 0 || isGenerating}
+                    disabled={!apiKey || referenceImages.length === 0}
                     className="flex-[2] bg-primary hover:bg-primary/90 animate-in slide-in-from-left-5"
                     size="lg"
                   >
-                    {isGenerating ? (
-                      <>
-                        <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                        Generiere...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-5 h-5 mr-2" />
-                        Bilder dazu generieren
-                      </>
-                    )}
+                    <Plus className="w-5 h-5 mr-2" />
+                    {isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}
                   </Button>
                   
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
-                        disabled={!apiKey || referenceImages.length === 0 || isGenerating}
+                        disabled={!apiKey || referenceImages.length === 0}
                         className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground animate-in slide-in-from-right-5"
                         size="lg"
                         variant="destructive"
@@ -2536,6 +2556,7 @@ Regeln für den Prompt:
             onDownload={handleDownloadSingle}
             onImageClick={handleImageClick}
             onDelete={handleDeleteImage}
+            onRemoveFromQueue={handleRemoveFromQueue}
             isBasicPlan={!isPro}
             isGenerating={isGenerating}
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
