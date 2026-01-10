@@ -2356,12 +2356,11 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
                       </div>
                       
                       {/* Center: Generate Button */}
-                      <div className="flex flex-col justify-center">
+                      <div className="flex flex-col pt-7">
                         <Button
                           onClick={handleGenerateCustomPromptWithAI}
                           disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
-                          size="icon"
-                          className="h-12 w-12 rounded-full"
+                          className="w-10 h-full min-h-[140px] rounded-lg flex-shrink-0"
                           title="Prompt generieren und links einfügen"
                         >
                           {isGeneratingCustomPrompt ? (
