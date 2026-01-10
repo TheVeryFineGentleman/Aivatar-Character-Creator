@@ -188,6 +188,12 @@ const Index = () => {
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
+  // Custom Prompt AI Chat state
+  const [customPromptVersions, setCustomPromptVersions] = useState<string[]>([]);
+  const [currentCustomPromptIndex, setCurrentCustomPromptIndex] = useState(0);
+  const [customPromptChatInput, setCustomPromptChatInput] = useState("");
+  const [isGeneratingCustomPrompt, setIsGeneratingCustomPrompt] = useState(false);
+
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
     referenceImagesRef.current = referenceImages;
@@ -1533,6 +1539,124 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
     }
   };
 
+  // Custom Prompt AI Generation
+  const handleGenerateCustomPromptWithAI = async () => {
+    if (!apiKey) {
+      toast({
+        title: "API Key erforderlich",
+        description: "Bitte gib deinen Google Gemini API Key ein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!customPromptChatInput.trim()) {
+      toast({
+        title: "Eingabe erforderlich",
+        description: "Bitte beschreibe, was du generieren möchtest",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingCustomPrompt(true);
+
+    try {
+      const contextInfo = customPromptVersions.length > 0 
+        ? `\n\nAktueller Prompt zur Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"`
+        : "";
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Du bist ein Experte für detaillierte Bild-Generierungs-Prompts.
+
+Der Nutzer möchte folgenden Prompt erstellen oder verbessern:
+"${customPromptChatInput}"${contextInfo}
+
+Erstelle einen DETAILLIERTEN Prompt für KI-Bildgenerierung. Der Prompt soll:
+- Die gewünschten Elemente präzise beschreiben
+- Pose, Ausdruck, Kleidung, Beleuchtung und Atmosphäre enthalten
+- Professionell und klar formuliert sein
+- 2-4 Sätze lang sein
+- Auf Deutsch sein
+
+Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen.`
+                  }
+                ]
+              }
+            ]
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Generierung fehlgeschlagen");
+      }
+
+      const data = await response.json();
+      const newPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (!newPrompt) {
+        throw new Error("Keine Antwort erhalten");
+      }
+
+      // Add as new version and navigate to it
+      setCustomPromptVersions(prev => [...prev, newPrompt]);
+      setCurrentCustomPromptIndex(customPromptVersions.length);
+      setCustomPrompt(newPrompt);
+      setCustomPromptChatInput("");
+      
+      toast({
+        title: "Prompt generiert!",
+        description: `Version ${customPromptVersions.length + 1} erstellt`,
+      });
+    } catch (error) {
+      console.error("Custom prompt generation error:", error);
+      toast({
+        title: "Generierung fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCustomPrompt(false);
+    }
+  };
+
+  const navigateCustomPrompt = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentCustomPromptIndex > 0) {
+      const newIndex = currentCustomPromptIndex - 1;
+      setCurrentCustomPromptIndex(newIndex);
+      setCustomPrompt(customPromptVersions[newIndex] || "");
+    } else if (direction === 'next' && currentCustomPromptIndex < customPromptVersions.length - 1) {
+      const newIndex = currentCustomPromptIndex + 1;
+      setCurrentCustomPromptIndex(newIndex);
+      setCustomPrompt(customPromptVersions[newIndex] || "");
+    }
+  };
+
+  // Sync customPrompt changes to versions array
+  const handleCustomPromptChange = (value: string) => {
+    setCustomPrompt(value);
+    if (customPromptVersions.length > 0) {
+      setCustomPromptVersions(prev => {
+        const updated = [...prev];
+        updated[currentCustomPromptIndex] = value;
+        return updated;
+      });
+    }
+  };
+
   const handleDownloadAll = async () => {
     const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
     
@@ -2181,22 +2305,100 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
                 </div>
               </div>
 
-              {/* Custom Prompt Input - Smooth Collapsible */}
+              {/* Custom Prompt Input with AI Chat - Smooth Collapsible */}
               <div 
                 className={`grid transition-all duration-300 ease-in-out ${
                   useCustomPrompt ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
               >
                 <div className="overflow-hidden">
-                  <div className="space-y-2 pt-2">
-                    <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
-                    <Textarea
-                      id="custom-prompt-input"
-                      placeholder="Beschreibe eine bestimmte Pose oder Szene..."
-                      value={customPrompt}
-                      onChange={(e) => setCustomPrompt(e.target.value)}
-                      className="min-h-[100px] focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
+                  <div className="pt-2">
+                    {/* Version Navigation */}
+                    {customPromptVersions.length > 0 && (
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => navigateCustomPrompt('prev')}
+                            disabled={currentCustomPromptIndex === 0}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-sm text-muted-foreground font-medium min-w-[40px] text-center">
+                            {currentCustomPromptIndex + 1}/{customPromptVersions.length}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => navigateCustomPrompt('next')}
+                            disabled={currentCustomPromptIndex === customPromptVersions.length - 1}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {customPromptVersions.length === 0 && (
+                      <Label htmlFor="custom-prompt-input" className="mb-2 block">Custom Image Prompt</Label>
+                    )}
+                    
+                    {/* Two Column Layout: Prompt + AI Chat */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Left: Textarea */}
+                      <div>
+                        <Textarea
+                          id="custom-prompt-input"
+                          placeholder="Beschreibe eine bestimmte Pose oder Szene..."
+                          value={customPrompt}
+                          onChange={(e) => handleCustomPromptChange(e.target.value)}
+                          className="min-h-[120px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                      </div>
+                      
+                      {/* Right: AI Chat */}
+                      <div className="flex flex-col gap-2 p-3 rounded-lg border border-border/50 bg-muted/30">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Sparkles className="w-4 h-4" />
+                          KI-Assistent
+                        </div>
+                        <div className="flex-1">
+                          <Textarea
+                            placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
+                            value={customPromptChatInput}
+                            onChange={(e) => setCustomPromptChatInput(e.target.value)}
+                            className="min-h-[60px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleGenerateCustomPromptWithAI();
+                              }
+                            }}
+                          />
+                        </div>
+                        <Button
+                          onClick={handleGenerateCustomPromptWithAI}
+                          disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
+                          size="sm"
+                          className="w-full"
+                        >
+                          {isGeneratingCustomPrompt ? (
+                            <>
+                              <Sparkles className="w-4 h-4 mr-2 animate-spin" />
+                              Generiert...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4 mr-2" />
+                              Prompt generieren
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
