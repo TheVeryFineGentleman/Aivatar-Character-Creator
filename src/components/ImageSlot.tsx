@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -13,6 +13,7 @@ interface ImageSlotProps {
   onDownload?: () => void;
   onImageClick?: () => void;
   onDelete?: () => void;
+  onRemoveFromQueue?: () => void;
   retrying?: boolean;
   isWaitingForPro?: boolean;
   isInQueue?: boolean;
@@ -32,7 +33,7 @@ const getAspectClass = (format: string) => {
   }
 };
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1" }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1" }: ImageSlotProps) => {
   const aspectClass = getAspectClass(format);
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
@@ -60,6 +61,21 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                     2 Bilder gleichzeitig generieren
                   </p>
                 </a>
+                {/* Remove from queue button */}
+                {onRemoveFromQueue && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveFromQueue();
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Entfernen
+                  </Button>
+                )}
               </div>
             ) : isInQueue ? (
               <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
@@ -69,6 +85,21 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                 <p className="text-xs text-muted-foreground">
                   In Warteschlange
                 </p>
+                {/* Remove from queue button */}
+                {onRemoveFromQueue && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveFromQueue();
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="mt-1 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Entfernen
+                  </Button>
+                )}
               </div>
             ) : (
               <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
