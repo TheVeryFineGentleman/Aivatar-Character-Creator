@@ -2608,20 +2608,46 @@ Regeln für den Prompt:
             {/* Custom Prompt Toggle */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="flex items-center gap-2">
+                <div 
+                  className={`flex items-center gap-2 ${shakingElement === "customPrompt" ? "animate-shake" : ""}`}
+                >
                   <Label 
                     htmlFor="custom-prompt-toggle" 
-                    className="text-sm font-medium leading-none cursor-pointer"
+                    className={`text-sm font-medium leading-none ${!isPro ? "text-muted-foreground" : "cursor-pointer"}`}
                   >
                     Custom Prompt verwenden
                   </Label>
+                  {!isPro && (
+                    <Lock className={`w-5 h-5 ${shakingElement === "customPrompt" ? "text-red-500" : "text-muted-foreground"} transition-colors`} />
+                  )}
                 </div>
-                <Switch 
-                  id="custom-prompt-toggle" 
-                  checked={useCustomPrompt}
-                  onCheckedChange={setUseCustomPrompt}
-                  className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
-                />
+                <div 
+                  className="relative w-12 h-6 cursor-pointer"
+                  onClick={() => {
+                    if (!isPro) {
+                      setSwitchSnapping(true);
+                      setShakingElement("customPrompt");
+                      setTimeout(() => {
+                        setSwitchSnapping(false);
+                        setShakingElement(null);
+                        setShowUpgradePopup(true);
+                      }, 400);
+                    }
+                  }}
+                >
+                  {isPro ? (
+                    <Switch 
+                      id="custom-prompt-toggle" 
+                      checked={useCustomPrompt}
+                      onCheckedChange={setUseCustomPrompt}
+                      className="w-12 h-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&>span]:h-5 [&>span]:w-5 [&>span]:data-[state=checked]:translate-x-6"
+                    />
+                  ) : (
+                    <div className="w-12 h-6 bg-muted rounded-full relative opacity-50">
+                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm ${switchSnapping ? "animate-switch-snap-back" : ""}`} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Custom Prompt Input with AI Chat - Smooth Collapsible */}
