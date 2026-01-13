@@ -203,10 +203,7 @@ const Index = () => {
   const storySuggestions = [
     "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt.",
     "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
-    "Ein verlorener Brief führt zu einer unerwarteten Freundschaft.",
-    "Der letzte Mensch auf der Welt hört ein Klopfen an der Tür.",
-    "Eine Zeitreisende versucht, ihren größten Fehler zu korrigieren.",
-    "Ein Straßenmusiker spielt ein Lied, das Erinnerungen weckt."
+    "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
   ];
 
   // Keep ref in sync with state to avoid stale closures
