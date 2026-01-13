@@ -208,7 +208,10 @@ const Index = () => {
     "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
   ]);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
-  const [storyReferenceImages, setStoryReferenceImages] = useState<File[]>([]);
+  const [storyReferenceImages, setStoryReferenceImages] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('storyReferenceImages');
+    return saved || [];
+  });
   
   // Storyboard state
   const [storyPointCount, setStoryPointCount] = useState(4);
@@ -219,18 +222,37 @@ const Index = () => {
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
 
-  const handleStoryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const maxImages = 3;
-      const newFiles = Array.from(files).slice(0, maxImages - storyReferenceImages.length);
-      setStoryReferenceImages(prev => [...prev, ...newFiles].slice(0, maxImages));
+      const filesToProcess = Array.from(files).slice(0, maxImages - storyReferenceImages.length);
+      
+      const newImages: string[] = [];
+      for (const file of filesToProcess) {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        newImages.push(base64);
+      }
+      
+      setStoryReferenceImages(prev => {
+        const updated = [...prev, ...newImages].slice(0, maxImages);
+        saveToLocalStorage('storyReferenceImages', updated);
+        return updated;
+      });
     }
     e.target.value = "";
   };
 
   const removeStoryImage = (index: number) => {
-    setStoryReferenceImages(prev => prev.filter((_, i) => i !== index));
+    setStoryReferenceImages(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('storyReferenceImages', updated);
+      return updated;
+    });
   };
 
   const generateStoryboard = async () => {
@@ -2906,13 +2928,21 @@ Regeln für den Prompt:
                   </span>
                 </Label>
                 <div className="flex flex-wrap gap-4">
-                  {storyReferenceImages.map((file, index) => (
-                    <ReferenceImagePreview 
-                      key={`story-ref-${file.name}-${index}`}
-                      file={file}
-                      index={index}
-                      onRemove={removeStoryImage}
-                    />
+                  {storyReferenceImages.map((imageUrl, index) => (
+                    <div key={`story-ref-${index}`} className="relative w-24 h-24">
+                      <img 
+                        src={imageUrl} 
+                        alt={`Referenz ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeStoryImage(index)}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   ))}
                   {storyReferenceImages.length < 3 && (
                     <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
