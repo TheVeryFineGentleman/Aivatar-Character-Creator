@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -209,6 +209,15 @@ const Index = () => {
   ]);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
   const [storyReferenceImages, setStoryReferenceImages] = useState<File[]>([]);
+  
+  // Storyboard state
+  const [storyPointCount, setStoryPointCount] = useState(4);
+  const [storyPoints, setStoryPoints] = useState<Array<{
+    versions: string[];
+    currentVersion: number;
+  }>>([]);
+  const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
+  const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
 
   const handleStoryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -222,6 +231,128 @@ const Index = () => {
 
   const removeStoryImage = (index: number) => {
     setStoryReferenceImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const generateStoryboard = async () => {
+    if (!apiKey || !storyIdea.trim() || isGeneratingStoryboard) return;
+    
+    setIsGeneratingStoryboard(true);
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Basierend auf dieser Story-Idee: "${storyIdea}"
+
+Generiere genau ${storyPointCount} aufeinanderfolgende Story-Punkte für ein Storyboard. Jeder Punkt soll eine Szene beschreiben, die als Bild umgesetzt werden kann.
+
+Jeder Story-Punkt soll:
+- 1-2 Sätze lang sein
+- Eine klare visuelle Szene beschreiben
+- Logisch auf den vorherigen Punkt aufbauen
+
+Antworte NUR mit den ${storyPointCount} Story-Punkten, einer pro Zeile, ohne Nummerierung. Auf Deutsch.`
+              }]
+            }]
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          const points = text.split('\n')
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 5)
+            .slice(0, storyPointCount);
+          
+          setStoryPoints(points.map((point: string) => ({
+            versions: [point],
+            currentVersion: 0
+          })));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to generate storyboard:", error);
+    } finally {
+      setIsGeneratingStoryboard(false);
+    }
+  };
+
+  const regenerateStoryPoint = async (index: number) => {
+    if (!apiKey || regeneratingPointIndex !== null) return;
+    
+    setRegeneratingPointIndex(index);
+    try {
+      const currentPoint = storyPoints[index].versions[storyPoints[index].currentVersion];
+      const prevPoint = index > 0 ? storyPoints[index - 1].versions[storyPoints[index - 1].currentVersion] : null;
+      const nextPoint = index < storyPoints.length - 1 ? storyPoints[index + 1].versions[storyPoints[index + 1].currentVersion] : null;
+      
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Story-Idee: "${storyIdea}"
+
+Generiere eine NEUE Alternative für diesen Story-Punkt (Punkt ${index + 1} von ${storyPoints.length}):
+"${currentPoint}"
+
+${prevPoint ? `Vorheriger Punkt: "${prevPoint}"` : "Dies ist der erste Punkt."}
+${nextPoint ? `Nächster Punkt: "${nextPoint}"` : "Dies ist der letzte Punkt."}
+
+Die neue Version soll:
+- 1-2 Sätze lang sein
+- Eine andere Perspektive oder Variation der Szene zeigen
+- Trotzdem logisch in die Geschichte passen
+
+Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
+              }]
+            }]
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) {
+          setStoryPoints(prev => prev.map((point, i) => {
+            if (i === index) {
+              return {
+                versions: [...point.versions, text],
+                currentVersion: point.versions.length
+              };
+            }
+            return point;
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to regenerate story point:", error);
+    } finally {
+      setRegeneratingPointIndex(null);
+    }
+  };
+
+  const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
+    setStoryPoints(prev => prev.map((point, i) => {
+      if (i === pointIndex) {
+        const newVersion = direction === 'prev' 
+          ? Math.max(0, point.currentVersion - 1)
+          : Math.min(point.versions.length - 1, point.currentVersion + 1);
+        return { ...point, currentVersion: newVersion };
+      }
+      return point;
+    }));
   };
 
   const handleSuggestionClick = (suggestion: string, index: number) => {
@@ -2795,6 +2926,100 @@ Regeln für den Prompt:
                     </label>
                   )}
                 </div>
+              </div>
+
+              {/* Storyboard Generator */}
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <div className="flex items-center justify-between">
+                  <Label>Storyboard generieren</Label>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">{storyPointCount} Szenen</span>
+                    <Slider
+                      value={[storyPointCount]}
+                      onValueChange={(value) => setStoryPointCount(Math.round(value[0]))}
+                      min={2}
+                      max={8}
+                      step={1}
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={generateStoryboard}
+                  disabled={!storyIdea.trim() || isGeneratingStoryboard}
+                  className="w-full"
+                >
+                  {isGeneratingStoryboard ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generiere Storyboard...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Storyboard generieren
+                    </>
+                  )}
+                </Button>
+
+                {/* Story Points Display */}
+                {storyPoints.length > 0 && (
+                  <div className="space-y-3 mt-4">
+                    {storyPoints.map((point, index) => (
+                      <div 
+                        key={index}
+                        className="bg-muted/50 rounded-lg p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Szene {index + 1}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 bg-background/50 rounded px-2 py-0.5">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5"
+                                onClick={() => navigateStoryPointVersion(index, 'prev')}
+                                disabled={point.currentVersion === 0}
+                              >
+                                <ChevronLeft className="w-3 h-3" />
+                              </Button>
+                              <span className="text-xs font-medium min-w-[32px] text-center">
+                                {point.currentVersion + 1}/{point.versions.length}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5"
+                                onClick={() => navigateStoryPointVersion(index, 'next')}
+                                disabled={point.currentVersion === point.versions.length - 1}
+                              >
+                                <ChevronRight className="w-3 h-3" />
+                              </Button>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => regenerateStoryPoint(index)}
+                              disabled={regeneratingPointIndex !== null}
+                            >
+                              {regeneratingPointIndex === index ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-3 h-3" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-sm">
+                          {point.versions[point.currentVersion]}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
