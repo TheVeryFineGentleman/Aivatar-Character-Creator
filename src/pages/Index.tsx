@@ -3002,33 +3002,7 @@ Regeln für den Prompt:
                       <span className="text-sm">Generierte Szenen erscheinen hier...</span>
                     </div>
                   ) : (
-                    <div className="relative group/scroll">
-                      {/* Left scroll button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-200 hover:bg-background"
-                        onClick={() => {
-                          const container = document.getElementById('story-points-scroll');
-                          if (container) container.scrollBy({ left: -350, behavior: 'smooth' });
-                        }}
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </Button>
-                      
-                      {/* Right scroll button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-200 hover:bg-background"
-                        onClick={() => {
-                          const container = document.getElementById('story-points-scroll');
-                          if (container) container.scrollBy({ left: 350, behavior: 'smooth' });
-                        }}
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </Button>
-                      
+                    <div className="relative">
                       <div 
                         id="story-points-scroll" 
                         className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth"
