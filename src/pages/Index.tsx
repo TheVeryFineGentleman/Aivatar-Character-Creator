@@ -2658,8 +2658,8 @@ Regeln für den Prompt:
               >
                 <div className="overflow-hidden">
                   <div className="pt-2">
-                    {/* Three Column Layout: Left Prompt | Button | Right AI Input */}
-                    <div className="flex gap-3 items-stretch">
+                    {/* Layout: Full plan gets AI Chat, others get simple prompt */}
+                    <div className={`flex gap-3 items-stretch ${authData.planCode !== "FULL" ? "flex-col" : ""}`}>
                       {/* Left: Prompt Output */}
                       <div className="flex-1 flex flex-col">
                         {/* Header with Version Navigation */}
@@ -2700,53 +2700,57 @@ Regeln für den Prompt:
                         />
                       </div>
                       
-                      {/* Center: Generate Buttons */}
-                      <div className="flex flex-col gap-2 pt-7">
-                        {/* Main button - transfers prompt to left */}
-                        <Button
-                          onClick={handleGenerateCustomPromptWithAI}
-                          disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
-                          className="w-10 flex-1 rounded-lg"
-                          title="Prompt generieren und links einfügen"
-                        >
-                          {isGeneratingCustomPrompt ? (
-                            <Sparkles className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <ChevronLeft className="w-6 h-6" />
-                          )}
-                        </Button>
-                        {/* Secondary button - new empty version */}
-                        <Button
-                          onClick={handleNewEmptyPrompt}
-                          variant="secondary"
-                          className="w-10 h-10 rounded-lg flex-shrink-0"
-                          title="Neuen leeren Prompt erstellen"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {/* Center: Generate Buttons - Only for FULL plan */}
+                      {authData.planCode === "FULL" && (
+                        <div className="flex flex-col gap-2 pt-7">
+                          {/* Main button - transfers prompt to left */}
+                          <Button
+                            onClick={handleGenerateCustomPromptWithAI}
+                            disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
+                            className="w-10 flex-1 rounded-lg"
+                            title="Prompt generieren und links einfügen"
+                          >
+                            {isGeneratingCustomPrompt ? (
+                              <Sparkles className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <ChevronLeft className="w-6 h-6" />
+                            )}
+                          </Button>
+                          {/* Secondary button - new empty version */}
+                          <Button
+                            onClick={handleNewEmptyPrompt}
+                            variant="secondary"
+                            className="w-10 h-10 rounded-lg flex-shrink-0"
+                            title="Neuen leeren Prompt erstellen"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                       
-                      {/* Right: AI Chat Input */}
-                      <div className="flex-1 flex flex-col">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Sparkles className="w-4 h-4 text-muted-foreground" />
-                          <Label className="text-muted-foreground">KI-Assistent</Label>
+                      {/* Right: AI Chat Input - Only for FULL plan */}
+                      {authData.planCode === "FULL" && (
+                        <div className="flex-1 flex flex-col">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="w-4 h-4 text-muted-foreground" />
+                            <Label className="text-muted-foreground">KI-Assistent</Label>
+                          </div>
+                          <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
+                            <Textarea
+                              placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
+                              value={customPromptChatInput}
+                              onChange={(e) => setCustomPromptChatInput(e.target.value)}
+                              className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleGenerateCustomPromptWithAI();
+                                }
+                              }}
+                            />
+                          </div>
                         </div>
-                        <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
-                          <Textarea
-                            placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
-                            value={customPromptChatInput}
-                            onChange={(e) => setCustomPromptChatInput(e.target.value)}
-                            className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleGenerateCustomPromptWithAI();
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
