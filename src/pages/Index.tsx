@@ -3002,34 +3002,21 @@ Regeln für den Prompt:
                       <span className="text-sm">Generierte Szenen erscheinen hier...</span>
                     </div>
                   ) : (
-                    <div className="relative group/scroll">
-                      {/* Left scroll button */}
+                    <div className="flex items-center gap-3">
+                      {/* Left scroll button - outside */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-200 hover:bg-background"
+                        className="flex-shrink-0 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg hover:bg-primary/10 hover:border-primary/50 transition-all duration-200"
                         onClick={() => {
                           const container = document.getElementById('story-points-scroll');
                           if (container) container.scrollBy({ left: -350, behavior: 'smooth' });
                         }}
                       >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-6 h-6" />
                       </Button>
                       
-                      {/* Right scroll button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-200 hover:bg-background"
-                        onClick={() => {
-                          const container = document.getElementById('story-points-scroll');
-                          if (container) container.scrollBy({ left: 350, behavior: 'smooth' });
-                        }}
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </Button>
-                      
-                      <div id="story-points-scroll" className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth snap-x snap-mandatory">
+                      <div id="story-points-scroll" className="flex-1 flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:bg-muted/30 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-primary/60">
                         {storyPoints.map((point, index) => (
                           <div 
                             key={index}
@@ -3104,6 +3091,19 @@ Regeln für den Prompt:
                           </div>
                         ))}
                       </div>
+                      
+                      {/* Right scroll button - outside */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="flex-shrink-0 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg hover:bg-primary/10 hover:border-primary/50 transition-all duration-200"
+                        onClick={() => {
+                          const container = document.getElementById('story-points-scroll');
+                          if (container) container.scrollBy({ left: 350, behavior: 'smooth' });
+                        }}
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </Button>
                     </div>
                   )}
                 </div>
