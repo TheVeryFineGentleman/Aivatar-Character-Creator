@@ -200,11 +200,25 @@ const Index = () => {
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
+  const [isAnimatingSuggestion, setIsAnimatingSuggestion] = useState(false);
   const storySuggestions = [
     "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt.",
     "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
     "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
   ];
+
+  const handleSuggestionClick = (suggestion: string, index: number) => {
+    setSelectedSuggestionIndex(index);
+    setIsAnimatingSuggestion(true);
+    
+    // After animation completes, set the actual value
+    setTimeout(() => {
+      setStoryIdea(suggestion);
+      setSelectedSuggestionIndex(null);
+      setIsAnimatingSuggestion(false);
+    }, 400);
+  };
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -2616,20 +2630,36 @@ Regeln für den Prompt:
                     className="min-h-[200px] resize-none"
                   />
                   
-                  {/* Suggestions overlay - only when empty */}
-                  {!storyIdea && (
-                    <div className="absolute inset-0 p-3 pointer-events-none">
-                      <p className="text-sm text-muted-foreground/60 mb-4">Wähle eine Idee oder schreibe deine eigene...</p>
-                      <div className="space-y-1 pointer-events-auto">
-                        {storySuggestions.map((suggestion, index) => (
-                          <p
-                            key={index}
-                            onClick={() => setStoryIdea(suggestion)}
-                            className="text-sm text-muted-foreground/50 hover:text-primary cursor-pointer transition-colors duration-200 py-0.5"
-                          >
-                            • {suggestion}
-                          </p>
-                        ))}
+                  {/* Suggestions overlay - only when empty and not animating */}
+                  {(!storyIdea || isAnimatingSuggestion) && (
+                    <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
+                      <p className={`text-sm text-muted-foreground/60 mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
+                        Wähle eine Idee oder schreibe deine eigene...
+                      </p>
+                      <div className="space-y-1 pointer-events-auto relative">
+                        {storySuggestions.map((suggestion, index) => {
+                          const isSelected = selectedSuggestionIndex === index;
+                          const isOther = selectedSuggestionIndex !== null && !isSelected;
+                          
+                          return (
+                            <p
+                              key={index}
+                              onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
+                              className={`text-sm cursor-pointer py-0.5 transition-all duration-400 ease-out ${
+                                isSelected 
+                                  ? 'text-foreground -translate-y-[calc(100%+2.5rem)] translate-x-0 font-medium' 
+                                  : isOther
+                                    ? 'opacity-0 translate-y-2'
+                                    : 'text-muted-foreground/50 hover:text-primary'
+                              }`}
+                              style={{
+                                transitionDuration: isSelected ? '400ms' : '250ms',
+                              }}
+                            >
+                              {isSelected ? suggestion : `• ${suggestion}`}
+                            </p>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
