@@ -109,12 +109,25 @@ export default {
           "0%, 100%": { transform: "translate(0, 0) rotate(0deg)", opacity: "0.6" },
           "50%": { transform: "translate(-10px, -20px) rotate(180deg)", opacity: "0.8" },
         },
+        "expand-from-card": {
+          "0%": { 
+            transform: "scale(0.3)", 
+            opacity: "0",
+            borderRadius: "1rem"
+          },
+          "100%": { 
+            transform: "scale(1)", 
+            opacity: "1",
+            borderRadius: "0"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "shake": "shake 0.5s ease-in-out",
         "switch-snap-back": "switch-snap-back 0.4s ease-out",
+        "expand-from-card": "expand-from-card 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
     },
   },

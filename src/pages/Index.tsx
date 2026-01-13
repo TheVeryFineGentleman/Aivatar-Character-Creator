@@ -3104,9 +3104,14 @@ Regeln für den Prompt:
 
                 {/* Expanded Story Point Editor Overlay */}
                 {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/50 backdrop-blur-sm animate-fade-in">
+                  <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) setExpandedStoryPointIndex(null);
+                    }}
+                  >
                     <div 
-                      className="w-1/2 h-full bg-background border-l border-border shadow-2xl flex flex-col animate-slide-in-right"
+                      className="w-[90%] max-w-2xl h-[80vh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-expand-from-card origin-center"
                     >
                       {/* Header */}
                       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
