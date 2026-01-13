@@ -222,6 +222,9 @@ const Index = () => {
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
+  const [expandedCardRect, setExpandedCardRect] = useState<DOMRect | null>(null);
+  const [isAnimatingExpand, setIsAnimatingExpand] = useState(false);
+  const storyCardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -3017,77 +3020,127 @@ Regeln für den Prompt:
                       >
                         {storyPoints.map((point, index) => {
                           const isExpanded = expandedStoryPointIndex === index;
+                          
+                          // Calculate position styles for animation
+                          const getExpandedStyles = () => {
+                            if (!isExpanded || !expandedCardRect) return {};
+                            
+                            if (isAnimatingExpand) {
+                              // Start position - where the card was
+                              return {
+                                position: 'fixed' as const,
+                                top: expandedCardRect.top,
+                                left: expandedCardRect.left,
+                                width: expandedCardRect.width,
+                                height: expandedCardRect.height,
+                                zIndex: 50,
+                              };
+                            } else {
+                              // End position - centered
+                              return {
+                                position: 'fixed' as const,
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                width: '90%',
+                                maxWidth: '42rem',
+                                height: 'auto',
+                                maxHeight: '80vh',
+                                zIndex: 50,
+                              };
+                            }
+                          };
+                          
                           return (
                             <div 
                               key={index}
-                              className={`group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 shadow-lg overflow-hidden transition-all duration-500 ease-out ${
+                              ref={(el) => { storyCardRefs.current[index] = el; }}
+                              className={`group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 shadow-lg overflow-hidden ${
                                 isExpanded 
-                                  ? 'fixed inset-0 m-auto w-[90%] max-w-2xl h-fit max-h-[80vh] z-50 shadow-2xl' 
-                                  : 'relative min-w-[300px] max-w-[340px] flex-shrink-0 hover:shadow-xl hover:border-primary/30 animate-scale-in'
+                                  ? 'shadow-2xl transition-all duration-500 ease-out' 
+                                  : 'relative min-w-[300px] max-w-[340px] flex-shrink-0 hover:shadow-xl hover:border-primary/30 transition-all duration-300 animate-scale-in'
                               }`}
-                              style={{ 
-                                animationDelay: isExpanded ? '0ms' : `${index * 100}ms`, 
+                              style={isExpanded ? getExpandedStyles() : { 
+                                animationDelay: `${index * 100}ms`, 
                                 animationFillMode: 'both' 
                               }}
                             >
                               {/* Backdrop when expanded */}
-                              {isExpanded && (
+                              {isExpanded && !isAnimatingExpand && (
                                 <div 
-                                  className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"
+                                  className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10 animate-fade-in"
                                   onClick={() => setExpandedStoryPointIndex(null)}
                                 />
                               )}
                               
                               {/* Scene number header bar with controls */}
-                              <div className={`bg-muted/40 border-b border-border/30 flex items-center justify-between transition-all duration-500 ${isExpanded ? 'px-5 py-3' : 'px-4 py-2.5'}`}>
-                                <span className={`font-semibold text-foreground/80 transition-all duration-500 ${isExpanded ? 'text-base' : 'text-sm'}`}>Szene {index + 1}</span>
+                              <div className={`bg-muted/40 border-b border-border/30 flex items-center justify-between transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'px-5 py-3' : 'px-4 py-2.5'}`}>
+                                <span className={`font-semibold text-foreground/80 transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'text-base' : 'text-sm'}`}>Szene {index + 1}</span>
                                 
                                 <div className="flex items-center gap-1.5">
                                   <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className={`rounded-full hover:bg-muted transition-all duration-500 ${isExpanded ? 'h-6 w-6' : 'h-5 w-5'}`}
+                                      className={`rounded-full hover:bg-muted transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'h-6 w-6' : 'h-5 w-5'}`}
                                       onClick={() => navigateStoryPointVersion(index, 'prev')}
                                       disabled={point.currentVersion === 0}
                                     >
-                                      <ChevronLeft className={`transition-all duration-500 ${isExpanded ? 'w-4 h-4' : 'w-3 h-3'}`} />
+                                      <ChevronLeft className={`transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'w-4 h-4' : 'w-3 h-3'}`} />
                                     </Button>
-                                    <span className={`font-semibold min-w-[32px] text-center transition-all duration-500 ${isExpanded ? 'text-sm' : 'text-xs'}`}>
+                                    <span className={`font-semibold min-w-[32px] text-center transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'text-sm' : 'text-xs'}`}>
                                       {point.currentVersion + 1}/{point.versions.length}
                                     </span>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className={`rounded-full hover:bg-muted transition-all duration-500 ${isExpanded ? 'h-6 w-6' : 'h-5 w-5'}`}
+                                      className={`rounded-full hover:bg-muted transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'h-6 w-6' : 'h-5 w-5'}`}
                                       onClick={() => navigateStoryPointVersion(index, 'next')}
                                       disabled={point.currentVersion === point.versions.length - 1}
                                     >
-                                      <ChevronRight className={`transition-all duration-500 ${isExpanded ? 'w-4 h-4' : 'w-3 h-3'}`} />
+                                      <ChevronRight className={`transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'w-4 h-4' : 'w-3 h-3'}`} />
                                     </Button>
                                   </div>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className={`rounded-full hover:bg-primary/10 hover:text-primary transition-all duration-500 ${isExpanded ? 'h-7 w-7' : 'h-6 w-6'}`}
+                                    className={`rounded-full hover:bg-primary/10 hover:text-primary transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'h-7 w-7' : 'h-6 w-6'}`}
                                     onClick={() => regenerateStoryPoint(index)}
                                     disabled={regeneratingPointIndex !== null}
                                   >
                                     {regeneratingPointIndex === index ? (
-                                      <Loader2 className={`animate-spin transition-all duration-500 ${isExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
+                                      <Loader2 className={`animate-spin transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
                                     ) : (
-                                      <RefreshCw className={`transition-all duration-500 ${isExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
+                                      <RefreshCw className={`transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
                                     )}
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className={`rounded-full transition-all duration-500 ${
+                                    className={`rounded-full transition-all duration-300 ${
                                       isExpanded 
                                         ? 'h-7 w-7 hover:bg-destructive/10 hover:text-destructive' 
                                         : 'h-6 w-6 hover:bg-primary/10 hover:text-primary'
                                     }`}
-                                    onClick={() => setExpandedStoryPointIndex(isExpanded ? null : index)}
+                                    onClick={() => {
+                                      if (isExpanded) {
+                                        setExpandedStoryPointIndex(null);
+                                        setExpandedCardRect(null);
+                                      } else {
+                                        const rect = storyCardRefs.current[index]?.getBoundingClientRect();
+                                        if (rect) {
+                                          setExpandedCardRect(rect);
+                                          setIsAnimatingExpand(true);
+                                          setExpandedStoryPointIndex(index);
+                                          // Trigger animation to center after a frame
+                                          requestAnimationFrame(() => {
+                                            requestAnimationFrame(() => {
+                                              setIsAnimatingExpand(false);
+                                            });
+                                          });
+                                        }
+                                      }
+                                    }}
                                   >
                                     {isExpanded ? (
                                       <X className="w-4 h-4" />
@@ -3099,8 +3152,8 @@ Regeln für den Prompt:
                               </div>
                               
                               {/* Scene content - editable */}
-                              <div className={`transition-all duration-500 ${isExpanded ? 'p-4' : 'p-2'}`}>
-                                <div className={`bg-muted/30 rounded-lg transition-all duration-500 ${isExpanded ? 'p-3 min-h-[300px]' : 'p-2 min-h-[200px]'}`}>
+                              <div className={`transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'p-4' : 'p-2'}`}>
+                                <div className={`bg-muted/30 rounded-lg transition-all duration-300 ${isExpanded && !isAnimatingExpand ? 'p-3 min-h-[300px]' : 'p-2 min-h-[200px]'}`}>
                                   <Textarea
                                     value={point.versions[point.currentVersion]}
                                     onChange={(e) => {
@@ -3114,16 +3167,16 @@ Regeln für den Prompt:
                                         return p;
                                       }));
                                     }}
-                                    className={`leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-500 ${
-                                      isExpanded ? 'text-base min-h-[280px]' : 'text-[13px] min-h-[180px] overflow-hidden'
+                                    className={`leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-300 ${
+                                      isExpanded && !isAnimatingExpand ? 'text-base min-h-[280px]' : 'text-[13px] min-h-[180px] overflow-hidden'
                                     }`}
                                     placeholder="Szene beschreiben..."
-                                    style={!isExpanded ? { overflow: 'hidden' } : undefined}
+                                    style={!isExpanded || isAnimatingExpand ? { overflow: 'hidden' } : undefined}
                                   />
                                 </div>
                                 
                                 {/* Expanded options */}
-                                {isExpanded && (
+                                {isExpanded && !isAnimatingExpand && (
                                   <div className="mt-4 p-4 border border-dashed border-border rounded-lg bg-muted/20 animate-fade-in">
                                     <p className="text-sm text-muted-foreground text-center">
                                       Weitere Optionen werden hier hinzugefügt...
