@@ -3015,113 +3015,188 @@ Regeln für den Prompt:
                         }}
                         style={{ overscrollBehavior: 'contain' }}
                       >
-                        {storyPoints.map((point, index) => {
-                          const isExpanded = expandedStoryPointIndex === index;
-                          return (
-                            <div 
-                              key={index}
-                              className={`group relative bg-gradient-to-b from-background to-background/90 rounded-xl flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 overflow-hidden transition-all duration-500 ease-out ${
-                                isExpanded 
-                                  ? 'min-w-[600px] max-w-[700px] z-20' 
-                                  : 'min-w-[300px] max-w-[340px] animate-scale-in'
-                              }`}
-                              style={{ 
-                                animationDelay: isExpanded ? '0ms' : `${index * 100}ms`, 
-                                animationFillMode: 'both' 
-                              }}
-                            >
-                              {/* Scene number header bar with controls */}
-                              <div className="bg-muted/40 border-b border-border/30 px-4 py-2.5 flex items-center justify-between">
-                                <span className="text-sm font-semibold text-foreground/80">Szene {index + 1}</span>
-                                
-                                <div className="flex items-center gap-1.5">
-                                  <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-5 w-5 rounded-full hover:bg-muted"
-                                      onClick={() => navigateStoryPointVersion(index, 'prev')}
-                                      disabled={point.currentVersion === 0}
-                                    >
-                                      <ChevronLeft className="w-3 h-3" />
-                                    </Button>
-                                    <span className="text-xs font-semibold min-w-[32px] text-center">
-                                      {point.currentVersion + 1}/{point.versions.length}
-                                    </span>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-5 w-5 rounded-full hover:bg-muted"
-                                      onClick={() => navigateStoryPointVersion(index, 'next')}
-                                      disabled={point.currentVersion === point.versions.length - 1}
-                                    >
-                                      <ChevronRight className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
-                                    onClick={() => regenerateStoryPoint(index)}
-                                    disabled={regeneratingPointIndex !== null}
-                                  >
-                                    {regeneratingPointIndex === index ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                      <RefreshCw className="w-3.5 h-3.5" />
-                                    )}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={`h-6 w-6 rounded-full transition-colors ${isExpanded ? 'bg-primary/20 text-primary' : 'hover:bg-primary/10 hover:text-primary'}`}
-                                    onClick={() => setExpandedStoryPointIndex(isExpanded ? null : index)}
-                                  >
-                                    {isExpanded ? <X className="w-3.5 h-3.5" /> : <Scale className="w-3.5 h-3.5" />}
-                                  </Button>
-                                </div>
-                              </div>
+                        {storyPoints.map((point, index) => (
+                          <div 
+                            key={index}
+                            className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl min-w-[300px] max-w-[340px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 overflow-hidden transition-all duration-300 animate-scale-in"
+                            style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
+                          >
+                            {/* Scene number header bar with controls */}
+                            <div className="bg-muted/40 border-b border-border/30 px-4 py-2.5 flex items-center justify-between">
+                              <span className="text-sm font-semibold text-foreground/80">Szene {index + 1}</span>
                               
-                              {/* Scene content - editable */}
-                              <div className="p-2">
-                                <div className={`bg-muted/30 rounded-lg p-2 transition-all duration-500 ${isExpanded ? 'min-h-[350px]' : 'min-h-[200px]'}`}>
-                                  <Textarea
-                                    value={point.versions[point.currentVersion]}
-                                    onChange={(e) => {
-                                      const newText = e.target.value;
-                                      setStoryPoints(prev => prev.map((p, i) => {
-                                        if (i === index) {
-                                          const updatedVersions = [...p.versions];
-                                          updatedVersions[p.currentVersion] = newText;
-                                          return { ...p, versions: updatedVersions };
-                                        }
-                                        return p;
-                                      }));
-                                    }}
-                                    className={`leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 overflow-hidden transition-all duration-500 ${
-                                      isExpanded ? 'text-base min-h-[330px]' : 'text-[13px] min-h-[180px]'
-                                    }`}
-                                    placeholder="Szene beschreiben..."
-                                    style={{ overflow: 'hidden' }}
-                                  />
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5 rounded-full hover:bg-muted"
+                                    onClick={() => navigateStoryPointVersion(index, 'prev')}
+                                    disabled={point.currentVersion === 0}
+                                  >
+                                    <ChevronLeft className="w-3 h-3" />
+                                  </Button>
+                                  <span className="text-xs font-semibold min-w-[32px] text-center">
+                                    {point.currentVersion + 1}/{point.versions.length}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5 rounded-full hover:bg-muted"
+                                    onClick={() => navigateStoryPointVersion(index, 'next')}
+                                    disabled={point.currentVersion === point.versions.length - 1}
+                                  >
+                                    <ChevronRight className="w-3 h-3" />
+                                  </Button>
                                 </div>
-                                
-                                {/* Expanded options */}
-                                {isExpanded && (
-                                  <div className="mt-4 p-3 border border-dashed border-border rounded-lg bg-muted/20 animate-fade-in">
-                                    <p className="text-sm text-muted-foreground text-center">
-                                      Weitere Optionen werden hier hinzugefügt...
-                                    </p>
-                                  </div>
-                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => regenerateStoryPoint(index)}
+                                  disabled={regeneratingPointIndex !== null}
+                                >
+                                  {regeneratingPointIndex === index ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => setExpandedStoryPointIndex(index)}
+                                >
+                                  <Scale className="w-3.5 h-3.5" />
+                                </Button>
                               </div>
                             </div>
-                          );
-                        })}
+                            
+                            {/* Scene content - editable */}
+                            <div className="p-2">
+                              <div className="bg-muted/30 rounded-lg p-2 min-h-[200px]">
+                                <Textarea
+                                  value={point.versions[point.currentVersion]}
+                                  onChange={(e) => {
+                                    const newText = e.target.value;
+                                    setStoryPoints(prev => prev.map((p, i) => {
+                                      if (i === index) {
+                                        const updatedVersions = [...p.versions];
+                                        updatedVersions[p.currentVersion] = newText;
+                                        return { ...p, versions: updatedVersions };
+                                      }
+                                      return p;
+                                    }));
+                                  }}
+                                  className="text-[13px] leading-relaxed bg-transparent border-none resize-none min-h-[180px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0 overflow-hidden"
+                                  placeholder="Szene beschreiben..."
+                                  style={{ overflow: 'hidden' }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
                 </div>
+
+                {/* Expanded Story Point - Fixed Overlay */}
+                {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && (
+                  <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) setExpandedStoryPointIndex(null);
+                    }}
+                  >
+                    <div 
+                      className="w-[90%] max-w-2xl bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl overflow-hidden animate-expand-from-card"
+                    >
+                      {/* Scene number header bar with controls */}
+                      <div className="bg-muted/40 border-b border-border/30 px-4 py-3 flex items-center justify-between">
+                        <span className="text-base font-semibold text-foreground">Szene {expandedStoryPointIndex + 1}</span>
+                        
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 rounded-full hover:bg-muted"
+                              onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'prev')}
+                              disabled={storyPoints[expandedStoryPointIndex].currentVersion === 0}
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <span className="text-sm font-semibold min-w-[40px] text-center">
+                              {storyPoints[expandedStoryPointIndex].currentVersion + 1}/{storyPoints[expandedStoryPointIndex].versions.length}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 rounded-full hover:bg-muted"
+                              onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'next')}
+                              disabled={storyPoints[expandedStoryPointIndex].currentVersion === storyPoints[expandedStoryPointIndex].versions.length - 1}
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-full hover:bg-primary/10 hover:text-primary"
+                            onClick={() => regenerateStoryPoint(expandedStoryPointIndex)}
+                            disabled={regeneratingPointIndex !== null}
+                          >
+                            {regeneratingPointIndex === expandedStoryPointIndex ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setExpandedStoryPointIndex(null)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Scene content - editable */}
+                      <div className="p-4">
+                        <div className="bg-muted/30 rounded-lg p-3 min-h-[300px]">
+                          <Textarea
+                            value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
+                            onChange={(e) => {
+                              const newText = e.target.value;
+                              const idx = expandedStoryPointIndex;
+                              setStoryPoints(prev => prev.map((p, i) => {
+                                if (i === idx) {
+                                  const updatedVersions = [...p.versions];
+                                  updatedVersions[p.currentVersion] = newText;
+                                  return { ...p, versions: updatedVersions };
+                                }
+                                return p;
+                              }));
+                            }}
+                            className="text-base leading-relaxed bg-transparent border-none resize-none min-h-[280px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            placeholder="Szene beschreiben..."
+                          />
+                        </div>
+                        
+                        {/* Expanded options placeholder */}
+                        <div className="mt-4 p-4 border border-dashed border-border rounded-lg bg-muted/20">
+                          <p className="text-sm text-muted-foreground text-center">
+                            Weitere Optionen werden hier hinzugefügt...
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
