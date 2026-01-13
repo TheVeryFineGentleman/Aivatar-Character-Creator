@@ -3031,7 +3031,7 @@ Regeln für den Prompt:
                       
                       <div 
                         id="story-points-scroll" 
-                        className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth snap-x snap-mandatory"
+                        className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth"
                         onWheel={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -3043,7 +3043,7 @@ Regeln für den Prompt:
                         {storyPoints.map((point, index) => (
                           <div 
                             key={index}
-                            className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl min-w-[300px] max-w-[340px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 overflow-hidden snap-center animate-scale-in"
+                            className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl min-w-[300px] max-w-[340px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 overflow-hidden animate-scale-in"
                             style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
                           >
                             {/* Scene number header bar with controls */}
