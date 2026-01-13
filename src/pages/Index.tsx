@@ -208,6 +208,21 @@ const Index = () => {
     "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
   ]);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
+  const [storyReferenceImages, setStoryReferenceImages] = useState<File[]>([]);
+
+  const handleStoryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const maxImages = 3;
+      const newFiles = Array.from(files).slice(0, maxImages - storyReferenceImages.length);
+      setStoryReferenceImages(prev => [...prev, ...newFiles].slice(0, maxImages));
+    }
+    e.target.value = "";
+  };
+
+  const removeStoryImage = (index: number) => {
+    setStoryReferenceImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSuggestionClick = (suggestion: string, index: number) => {
     setSelectedSuggestionIndex(index);
@@ -2730,6 +2745,54 @@ Regeln für den Prompt:
                         )}
                       </div>
                     </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Character Reference Image Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  Charakter Referenzbild
+                  <span className="flex items-center gap-2 ml-1">
+                    {[1, 2, 3].map((num) => {
+                      const isFilled = num <= storyReferenceImages.length;
+                      
+                      return (
+                        <span
+                          key={num}
+                          className="relative flex items-center justify-center w-4 h-4"
+                        >
+                          <span
+                            className={`block w-3 h-3 rounded-full transition-all ${
+                              isFilled
+                                ? "bg-primary"
+                                : "bg-muted-foreground/20 border border-muted-foreground/40"
+                            }`}
+                          />
+                        </span>
+                      );
+                    })}
+                  </span>
+                </Label>
+                <div className="flex flex-wrap gap-4">
+                  {storyReferenceImages.map((file, index) => (
+                    <ReferenceImagePreview 
+                      key={`story-ref-${file.name}-${index}`}
+                      file={file}
+                      index={index}
+                      onRemove={removeStoryImage}
+                    />
+                  ))}
+                  {storyReferenceImages.length < 3 && (
+                    <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleStoryImageUpload}
+                        className="hidden"
+                      />
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                    </label>
                   )}
                 </div>
               </div>
