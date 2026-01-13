@@ -2704,14 +2704,14 @@ Regeln für den Prompt:
                             const isOther = selectedSuggestionIndex !== null && !isSelected;
                             
                             // Calculate how far up this item needs to move to reach position 0
-                            // Each item is ~28px tall (text-base + py-1), plus the header (~44px)
-                            const moveUpDistance = isSelected ? (index * 28 + 44) : 0;
+                            // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
+                            const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
                             
                             return (
                               <p
                                 key={index}
                                 onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
-                                className={`text-base cursor-pointer py-1 transition-all ease-out ${
+                                className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
                                   isSelected 
                                     ? 'text-foreground font-medium' 
                                     : isOther
