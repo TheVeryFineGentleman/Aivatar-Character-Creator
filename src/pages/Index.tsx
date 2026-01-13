@@ -202,11 +202,12 @@ const Index = () => {
   const [storyIdea, setStoryIdea] = useState("");
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
   const [isAnimatingSuggestion, setIsAnimatingSuggestion] = useState(false);
-  const storySuggestions = [
+  const [storySuggestions, setStorySuggestions] = useState<string[]>([
     "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt.",
     "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
     "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
-  ];
+  ]);
+  const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
 
   const handleSuggestionClick = (suggestion: string, index: number) => {
     setSelectedSuggestionIndex(index);
@@ -219,6 +220,61 @@ const Index = () => {
       setIsAnimatingSuggestion(false);
     }, 400);
   };
+
+  // Generate AI story suggestions on mount
+  const generateStorySuggestions = async (key: string) => {
+    if (!key || isLoadingStorySuggestions) return;
+    
+    setIsLoadingStorySuggestions(true);
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Generiere genau 3 kreative, kurze Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
+
+Beispiele für gute Ideen:
+- "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt."
+- "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln."
+
+Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+              }]
+            }]
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          const ideas = text.split('\n')
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 10)
+            .slice(0, 3);
+          
+          if (ideas.length === 3) {
+            setStorySuggestions(ideas);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to generate story suggestions:", error);
+    } finally {
+      setIsLoadingStorySuggestions(false);
+    }
+  };
+
+  // Generate suggestions when API key becomes available and we're on story tab
+  useEffect(() => {
+    if (apiKey && authData.planCode === "FULL" && activeMainTab === "story") {
+      generateStorySuggestions(apiKey);
+    }
+  }, [apiKey, authData.planCode, activeMainTab]);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -2637,34 +2693,41 @@ Regeln für den Prompt:
                         Wähle eine Idee oder schreibe deine eigene...
                       </p>
                       <div className="relative pointer-events-auto">
-                        {storySuggestions.map((suggestion, index) => {
-                          const isSelected = selectedSuggestionIndex === index;
-                          const isOther = selectedSuggestionIndex !== null && !isSelected;
-                          
-                          // Calculate how far up this item needs to move to reach position 0
-                          // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
-                          const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
-                          
-                          return (
-                            <p
-                              key={index}
-                              onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
-                              className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
-                                isSelected 
-                                  ? 'text-foreground font-medium' 
-                                  : isOther
-                                    ? 'opacity-0'
-                                    : 'text-muted-foreground/50 hover:text-primary'
-                              }`}
-                              style={{
-                                transitionDuration: isSelected ? '350ms' : '200ms',
-                                transform: isSelected ? `translateY(-${moveUpDistance}px)` : 'translateY(0)',
-                              }}
-                            >
-                              {isSelected ? suggestion : `• ${suggestion}`}
-                            </p>
-                          );
-                        })}
+                        {isLoadingStorySuggestions ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground/50">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generiere Ideen...</span>
+                          </div>
+                        ) : (
+                          storySuggestions.map((suggestion, index) => {
+                            const isSelected = selectedSuggestionIndex === index;
+                            const isOther = selectedSuggestionIndex !== null && !isSelected;
+                            
+                            // Calculate how far up this item needs to move to reach position 0
+                            // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
+                            const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
+                            
+                            return (
+                              <p
+                                key={index}
+                                onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
+                                className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
+                                  isSelected 
+                                    ? 'text-foreground font-medium' 
+                                    : isOther
+                                      ? 'opacity-0'
+                                      : 'text-muted-foreground/50 hover:text-primary'
+                                }`}
+                                style={{
+                                  transitionDuration: isSelected ? '350ms' : '200ms',
+                                  transform: isSelected ? `translateY(-${moveUpDistance}px)` : 'translateY(0)',
+                                }}
+                              >
+                                {isSelected ? suggestion : `• ${suggestion}`}
+                              </p>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   )}
