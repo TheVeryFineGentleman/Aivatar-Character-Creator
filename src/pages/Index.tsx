@@ -2992,64 +2992,70 @@ Regeln für den Prompt:
                   )}
                 </Button>
 
-                {/* Story Points Display */}
-                {storyPoints.length > 0 && (
-                  <div className="space-y-3 mt-4">
-                    {storyPoints.map((point, index) => (
-                      <div 
-                        key={index}
-                        className="bg-muted/50 rounded-lg p-3 space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Szene {index + 1}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1 bg-background/50 rounded px-2 py-0.5">
+                {/* Story Points Display - Always visible container */}
+                <div className="bg-muted/30 rounded-lg p-4 min-h-[120px] border border-border/50">
+                  {storyPoints.length === 0 ? (
+                    <div className="flex items-center justify-center h-full min-h-[100px] text-muted-foreground text-sm">
+                      Generierte Szenen erscheinen hier...
+                    </div>
+                  ) : (
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                      {storyPoints.map((point, index) => (
+                        <div 
+                          key={index}
+                          className="bg-background/80 rounded-lg p-3 space-y-2 min-w-[200px] max-w-[250px] flex-shrink-0 border border-border/30"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              Szene {index + 1}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <div className="flex items-center bg-muted/50 rounded px-1.5 py-0.5">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-4 w-4"
+                                  onClick={() => navigateStoryPointVersion(index, 'prev')}
+                                  disabled={point.currentVersion === 0}
+                                >
+                                  <ChevronLeft className="w-2.5 h-2.5" />
+                                </Button>
+                                <span className="text-xs font-medium min-w-[28px] text-center">
+                                  {point.currentVersion + 1}/{point.versions.length}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-4 w-4"
+                                  onClick={() => navigateStoryPointVersion(index, 'next')}
+                                  disabled={point.currentVersion === point.versions.length - 1}
+                                >
+                                  <ChevronRight className="w-2.5 h-2.5" />
+                                </Button>
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-5 w-5"
-                                onClick={() => navigateStoryPointVersion(index, 'prev')}
-                                disabled={point.currentVersion === 0}
+                                onClick={() => regenerateStoryPoint(index)}
+                                disabled={regeneratingPointIndex !== null}
                               >
-                                <ChevronLeft className="w-3 h-3" />
-                              </Button>
-                              <span className="text-xs font-medium min-w-[32px] text-center">
-                                {point.currentVersion + 1}/{point.versions.length}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5"
-                                onClick={() => navigateStoryPointVersion(index, 'next')}
-                                disabled={point.currentVersion === point.versions.length - 1}
-                              >
-                                <ChevronRight className="w-3 h-3" />
+                                {regeneratingPointIndex === index ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-3 h-3" />
+                                )}
                               </Button>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => regenerateStoryPoint(index)}
-                              disabled={regeneratingPointIndex !== null}
-                            >
-                              {regeneratingPointIndex === index ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <RefreshCw className="w-3 h-3" />
-                              )}
-                            </Button>
                           </div>
+                          <p className="text-xs leading-relaxed">
+                            {point.versions[point.currentVersion]}
+                          </p>
                         </div>
-                        <p className="text-sm">
-                          {point.versions[point.currentVersion]}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
