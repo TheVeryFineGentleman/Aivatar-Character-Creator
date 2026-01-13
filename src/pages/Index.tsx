@@ -3029,7 +3029,15 @@ Regeln für den Prompt:
                         <ChevronRight className="w-5 h-5" />
                       </Button>
                       
-                      <div id="story-points-scroll" className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth snap-x snap-mandatory">
+                      <div 
+                        id="story-points-scroll" 
+                        className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth snap-x snap-mandatory"
+                        onWheel={(e) => {
+                          e.preventDefault();
+                          const container = e.currentTarget;
+                          container.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' });
+                        }}
+                      >
                         {storyPoints.map((point, index) => (
                           <div 
                             key={index}
@@ -3096,8 +3104,9 @@ Regeln für den Prompt:
                                       return p;
                                     }));
                                   }}
-                                  className="text-[13px] leading-relaxed bg-transparent border-none resize-none min-h-[180px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                  className="text-[13px] leading-relaxed bg-transparent border-none resize-none min-h-[180px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0 overflow-hidden"
                                   placeholder="Szene beschreiben..."
+                                  style={{ overflow: 'hidden' }}
                                 />
                               </div>
                             </div>
