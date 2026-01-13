@@ -3006,12 +3006,14 @@ Regeln für den Prompt:
                       {storyPoints.map((point, index) => (
                         <div 
                           key={index}
-                          className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl p-4 min-w-[220px] max-w-[260px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
+                          className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl min-w-[280px] max-w-[320px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 overflow-hidden"
                         >
-                          {/* Scene number badge */}
-                          <div className="absolute -top-2 -left-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md">
-                            <span className="text-xs font-bold text-primary-foreground">{index + 1}</span>
+                          {/* Scene number header bar */}
+                          <div className="bg-muted/40 border-b border-border/30 px-4 py-2 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-foreground/80">Szene {index + 1}</span>
                           </div>
+                          
+                          <div className="p-4">
                           
                           {/* Header with controls */}
                           <div className="flex items-center justify-end mb-3 pt-1">
@@ -3073,6 +3075,7 @@ Regeln für den Prompt:
                               className="text-sm leading-relaxed bg-transparent border-none resize-none min-h-[60px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                               placeholder="Szene beschreiben..."
                             />
+                          </div>
                           </div>
                         </div>
                       ))}
