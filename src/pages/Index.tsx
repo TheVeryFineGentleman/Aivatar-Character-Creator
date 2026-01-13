@@ -2992,65 +2992,75 @@ Regeln für den Prompt:
                   )}
                 </Button>
 
-                {/* Story Points Display - Always visible container */}
-                <div className="bg-muted/30 rounded-lg p-4 min-h-[120px] border border-border/50">
+{/* Story Points Display - Always visible container */}
+                <div className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-5 min-h-[160px] border border-border/40 shadow-inner">
                   {storyPoints.length === 0 ? (
-                    <div className="flex items-center justify-center h-full min-h-[100px] text-muted-foreground text-sm">
-                      Generierte Szenen erscheinen hier...
+                    <div className="flex flex-col items-center justify-center h-full min-h-[130px] text-muted-foreground gap-2">
+                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                        <Sparkles className="w-6 h-6 opacity-50" />
+                      </div>
+                      <span className="text-sm">Generierte Szenen erscheinen hier...</span>
                     </div>
                   ) : (
-                    <div className="flex gap-3 overflow-x-auto pb-2">
+                    <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
                       {storyPoints.map((point, index) => (
                         <div 
                           key={index}
-                          className="bg-background/80 rounded-lg p-3 space-y-2 min-w-[200px] max-w-[250px] flex-shrink-0 border border-border/30"
+                          className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl p-4 min-w-[220px] max-w-[260px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-muted-foreground">
-                              Szene {index + 1}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <div className="flex items-center bg-muted/50 rounded px-1.5 py-0.5">
+                          {/* Scene number badge */}
+                          <div className="absolute -top-2 -left-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md">
+                            <span className="text-xs font-bold text-primary-foreground">{index + 1}</span>
+                          </div>
+                          
+                          {/* Header with controls */}
+                          <div className="flex items-center justify-end mb-3 pt-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex items-center bg-muted/60 rounded-full px-2 py-1">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-4 w-4"
+                                  className="h-5 w-5 rounded-full hover:bg-background/80"
                                   onClick={() => navigateStoryPointVersion(index, 'prev')}
                                   disabled={point.currentVersion === 0}
                                 >
-                                  <ChevronLeft className="w-2.5 h-2.5" />
+                                  <ChevronLeft className="w-3 h-3" />
                                 </Button>
-                                <span className="text-xs font-medium min-w-[28px] text-center">
+                                <span className="text-xs font-semibold min-w-[32px] text-center">
                                   {point.currentVersion + 1}/{point.versions.length}
                                 </span>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-4 w-4"
+                                  className="h-5 w-5 rounded-full hover:bg-background/80"
                                   onClick={() => navigateStoryPointVersion(index, 'next')}
                                   disabled={point.currentVersion === point.versions.length - 1}
                                 >
-                                  <ChevronRight className="w-2.5 h-2.5" />
+                                  <ChevronRight className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-5 w-5"
+                                className="h-7 w-7 rounded-full hover:bg-primary/10 hover:text-primary"
                                 onClick={() => regenerateStoryPoint(index)}
                                 disabled={regeneratingPointIndex !== null}
                               >
                                 {regeneratingPointIndex === index ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : (
-                                  <RefreshCw className="w-3 h-3" />
+                                  <RefreshCw className="w-3.5 h-3.5" />
                                 )}
                               </Button>
                             </div>
                           </div>
-                          <p className="text-xs leading-relaxed">
-                            {point.versions[point.currentVersion]}
-                          </p>
+                          
+                          {/* Scene content */}
+                          <div className="bg-muted/30 rounded-lg p-3 min-h-[80px]">
+                            <p className="text-sm leading-relaxed">
+                              {point.versions[point.currentVersion]}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
