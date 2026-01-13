@@ -3055,11 +3055,24 @@ Regeln für den Prompt:
                             </div>
                           </div>
                           
-                          {/* Scene content */}
+                          {/* Scene content - editable */}
                           <div className="bg-muted/30 rounded-lg p-3 min-h-[80px]">
-                            <p className="text-sm leading-relaxed">
-                              {point.versions[point.currentVersion]}
-                            </p>
+                            <Textarea
+                              value={point.versions[point.currentVersion]}
+                              onChange={(e) => {
+                                const newText = e.target.value;
+                                setStoryPoints(prev => prev.map((p, i) => {
+                                  if (i === index) {
+                                    const updatedVersions = [...p.versions];
+                                    updatedVersions[p.currentVersion] = newText;
+                                    return { ...p, versions: updatedVersions };
+                                  }
+                                  return p;
+                                }));
+                              }}
+                              className="text-sm leading-relaxed bg-transparent border-none resize-none min-h-[60px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              placeholder="Szene beschreiben..."
+                            />
                           </div>
                         </div>
                       ))}
