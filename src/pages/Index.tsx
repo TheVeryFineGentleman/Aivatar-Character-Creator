@@ -221,6 +221,7 @@ const Index = () => {
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
+  const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -3061,6 +3062,14 @@ Regeln für den Prompt:
                                     <RefreshCw className="w-3.5 h-3.5" />
                                   )}
                                 </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => setExpandedStoryPointIndex(index)}
+                                >
+                                  <Scale className="w-3.5 h-3.5" />
+                                </Button>
                               </div>
                             </div>
                             
@@ -3092,6 +3101,102 @@ Regeln für den Prompt:
                     </div>
                   )}
                 </div>
+
+                {/* Expanded Story Point Editor Overlay */}
+                {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/50 backdrop-blur-sm animate-fade-in">
+                    <div 
+                      className="w-1/2 h-full bg-background border-l border-border shadow-2xl flex flex-col animate-slide-in-right"
+                    >
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-semibold">Szene {expandedStoryPointIndex + 1} bearbeiten</span>
+                          <div className="flex items-center bg-muted rounded-full px-2 py-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 rounded-full hover:bg-background"
+                              onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'prev')}
+                              disabled={storyPoints[expandedStoryPointIndex].currentVersion === 0}
+                            >
+                              <ChevronLeft className="w-3 h-3" />
+                            </Button>
+                            <span className="text-xs font-semibold min-w-[32px] text-center">
+                              {storyPoints[expandedStoryPointIndex].currentVersion + 1}/{storyPoints[expandedStoryPointIndex].versions.length}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 rounded-full hover:bg-background"
+                              onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'next')}
+                              disabled={storyPoints[expandedStoryPointIndex].currentVersion === storyPoints[expandedStoryPointIndex].versions.length - 1}
+                            >
+                              <ChevronRight className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setExpandedStoryPointIndex(null)}
+                        >
+                          <X className="w-5 h-5" />
+                        </Button>
+                      </div>
+
+                      {/* Content Area */}
+                      <div className="flex-1 p-6 overflow-y-auto">
+                        <div className="space-y-4">
+                          <Label className="text-sm font-medium">Szenen-Beschreibung</Label>
+                          <Textarea
+                            value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
+                            onChange={(e) => {
+                              const newText = e.target.value;
+                              const idx = expandedStoryPointIndex;
+                              setStoryPoints(prev => prev.map((p, i) => {
+                                if (i === idx) {
+                                  const updatedVersions = [...p.versions];
+                                  updatedVersions[p.currentVersion] = newText;
+                                  return { ...p, versions: updatedVersions };
+                                }
+                                return p;
+                              }));
+                            }}
+                            className="min-h-[200px] text-base leading-relaxed"
+                            placeholder="Szene beschreiben..."
+                          />
+
+                          {/* Placeholder for future options */}
+                          <div className="mt-8 p-4 border border-dashed border-border rounded-lg bg-muted/20">
+                            <p className="text-sm text-muted-foreground text-center">
+                              Weitere Optionen werden hier hinzugefügt...
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                        <Button
+                          variant="outline"
+                          onClick={() => regenerateStoryPoint(expandedStoryPointIndex)}
+                          disabled={regeneratingPointIndex !== null}
+                        >
+                          {regeneratingPointIndex === expandedStoryPointIndex ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                          )}
+                          Neu generieren
+                        </Button>
+                        <Button onClick={() => setExpandedStoryPointIndex(null)}>
+                          Fertig
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
