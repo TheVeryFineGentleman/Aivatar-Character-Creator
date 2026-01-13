@@ -2608,36 +2608,37 @@ Regeln für den Prompt:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
-              <div className="flex gap-6">
-                {/* Left: Story Idea Input */}
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="story-idea">Deine Story-Idee</Label>
+              <div className="space-y-2">
+                <Label htmlFor="story-idea">Deine Story-Idee</Label>
+                <div className="relative">
                   <Textarea
                     id="story-idea"
-                    placeholder="Beschreibe deine Story-Idee hier... z.B. 'Eine Influencerin entdeckt ein geheimes Portal in ihrem Kleiderschrank'"
+                    placeholder=""
                     value={storyIdea}
                     onChange={(e) => setStoryIdea(e.target.value)}
-                    className="min-h-[150px] resize-none"
+                    className="min-h-[200px] resize-none"
                   />
-                </div>
-                
-                {/* Right: AI Suggestions */}
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <Label>Story-Vorschläge</Label>
-                  </div>
-                  <div className="space-y-2">
-                    {storySuggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setStoryIdea(suggestion)}
-                        className="w-full text-left p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-all text-sm text-muted-foreground hover:text-foreground"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {/* Suggestions overlay - only when empty */}
+                  {!storyIdea && (
+                    <div className="absolute inset-0 p-3 pointer-events-none">
+                      <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+                        <Sparkles className="w-4 h-4" />
+                        <span className="text-sm">Klicke auf einen Vorschlag oder schreibe deine eigene Idee...</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pointer-events-auto">
+                        {storySuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setStoryIdea(suggestion)}
+                            className="px-3 py-1.5 rounded-full border border-border/50 bg-muted/50 hover:bg-primary/20 hover:border-primary/50 transition-all text-sm text-muted-foreground hover:text-foreground"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
