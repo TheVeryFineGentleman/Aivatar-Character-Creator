@@ -2689,12 +2689,12 @@ Regeln für den Prompt:
                   {/* Suggestions overlay - only when empty and not animating */}
                   {(!storyIdea || isAnimatingSuggestion) && (
                     <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
-                      <p className={`text-sm text-muted-foreground/60 mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
+                      <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
                         Wähle eine Idee oder schreibe deine eigene...
                       </p>
                       <div className="relative pointer-events-auto">
                         {isLoadingStorySuggestions ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground/50">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="w-4 h-4 animate-spin" />
                             <span>Generiere Ideen...</span>
                           </div>
@@ -2704,19 +2704,19 @@ Regeln für den Prompt:
                             const isOther = selectedSuggestionIndex !== null && !isSelected;
                             
                             // Calculate how far up this item needs to move to reach position 0
-                            // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
-                            const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
+                            // Each item is ~28px tall (text-base + py-1), plus the header (~44px)
+                            const moveUpDistance = isSelected ? (index * 28 + 44) : 0;
                             
                             return (
                               <p
                                 key={index}
                                 onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
-                                className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
+                                className={`text-base cursor-pointer py-1 transition-all ease-out ${
                                   isSelected 
                                     ? 'text-foreground font-medium' 
                                     : isOther
                                       ? 'opacity-0'
-                                      : 'text-muted-foreground/50 hover:text-primary'
+                                      : 'text-foreground/70 hover:text-primary'
                                 }`}
                                 style={{
                                   transitionDuration: isSelected ? '350ms' : '200ms',
