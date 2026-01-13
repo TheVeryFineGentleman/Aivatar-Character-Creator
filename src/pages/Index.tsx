@@ -3006,23 +3006,18 @@ Regeln für den Prompt:
                       {storyPoints.map((point, index) => (
                         <div 
                           key={index}
-                          className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl min-w-[280px] max-w-[320px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 overflow-hidden"
+                          className="group relative bg-gradient-to-b from-background to-background/90 rounded-xl min-w-[300px] max-w-[340px] flex-shrink-0 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 overflow-hidden"
                         >
-                          {/* Scene number header bar */}
-                          <div className="bg-muted/40 border-b border-border/30 px-4 py-2 flex items-center justify-between">
+                          {/* Scene number header bar with controls */}
+                          <div className="bg-muted/40 border-b border-border/30 px-4 py-2.5 flex items-center justify-between">
                             <span className="text-sm font-semibold text-foreground/80">Szene {index + 1}</span>
-                          </div>
-                          
-                          <div className="p-4">
-                          
-                          {/* Header with controls */}
-                          <div className="flex items-center justify-end mb-3 pt-1">
+                            
                             <div className="flex items-center gap-1.5">
-                              <div className="flex items-center bg-muted/60 rounded-full px-2 py-1">
+                              <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-5 w-5 rounded-full hover:bg-background/80"
+                                  className="h-5 w-5 rounded-full hover:bg-muted"
                                   onClick={() => navigateStoryPointVersion(index, 'prev')}
                                   disabled={point.currentVersion === 0}
                                 >
@@ -3034,7 +3029,7 @@ Regeln für den Prompt:
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-5 w-5 rounded-full hover:bg-background/80"
+                                  className="h-5 w-5 rounded-full hover:bg-muted"
                                   onClick={() => navigateStoryPointVersion(index, 'next')}
                                   disabled={point.currentVersion === point.versions.length - 1}
                                 >
@@ -3044,7 +3039,7 @@ Regeln für den Prompt:
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 rounded-full hover:bg-primary/10 hover:text-primary"
+                                className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
                                 onClick={() => regenerateStoryPoint(index)}
                                 disabled={regeneratingPointIndex !== null}
                               >
@@ -3058,24 +3053,25 @@ Regeln für den Prompt:
                           </div>
                           
                           {/* Scene content - editable */}
-                          <div className="bg-muted/30 rounded-lg p-3 min-h-[80px]">
-                            <Textarea
-                              value={point.versions[point.currentVersion]}
-                              onChange={(e) => {
-                                const newText = e.target.value;
-                                setStoryPoints(prev => prev.map((p, i) => {
-                                  if (i === index) {
-                                    const updatedVersions = [...p.versions];
-                                    updatedVersions[p.currentVersion] = newText;
-                                    return { ...p, versions: updatedVersions };
-                                  }
-                                  return p;
-                                }));
-                              }}
-                              className="text-sm leading-relaxed bg-transparent border-none resize-none min-h-[60px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                              placeholder="Szene beschreiben..."
-                            />
-                          </div>
+                          <div className="p-4">
+                            <div className="bg-muted/30 rounded-lg p-3 min-h-[140px]">
+                              <Textarea
+                                value={point.versions[point.currentVersion]}
+                                onChange={(e) => {
+                                  const newText = e.target.value;
+                                  setStoryPoints(prev => prev.map((p, i) => {
+                                    if (i === index) {
+                                      const updatedVersions = [...p.versions];
+                                      updatedVersions[p.currentVersion] = newText;
+                                      return { ...p, versions: updatedVersions };
+                                    }
+                                    return p;
+                                  }));
+                                }}
+                                className="text-sm leading-relaxed bg-transparent border-none resize-none min-h-[120px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                placeholder="Szene beschreiben..."
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
