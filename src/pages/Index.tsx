@@ -198,6 +198,17 @@ const Index = () => {
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
 
+  // Story Builder state
+  const [storyIdea, setStoryIdea] = useState("");
+  const storySuggestions = [
+    "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt.",
+    "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
+    "Ein verlorener Brief führt zu einer unerwarteten Freundschaft.",
+    "Der letzte Mensch auf der Welt hört ein Klopfen an der Tür.",
+    "Eine Zeitreisende versucht, ihren größten Fehler zu korrigieren.",
+    "Ein Straßenmusiker spielt ein Lied, das Erinnerungen weckt."
+  ];
+
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
     referenceImagesRef.current = referenceImages;
@@ -2597,13 +2608,37 @@ Regeln für den Prompt:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
-              <div className="text-center py-12">
-                <BookOpen className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Story Bilder</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Erstelle zusammenhängende Bildsequenzen für deine Geschichten. 
-                  Dieses Feature wird bald verfügbar sein.
-                </p>
+              <div className="flex gap-6">
+                {/* Left: Story Idea Input */}
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="story-idea">Deine Story-Idee</Label>
+                  <Textarea
+                    id="story-idea"
+                    placeholder="Beschreibe deine Story-Idee hier... z.B. 'Eine Influencerin entdeckt ein geheimes Portal in ihrem Kleiderschrank'"
+                    value={storyIdea}
+                    onChange={(e) => setStoryIdea(e.target.value)}
+                    className="min-h-[150px] resize-none"
+                  />
+                </div>
+                
+                {/* Right: AI Suggestions */}
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <Label>Story-Vorschläge</Label>
+                  </div>
+                  <div className="space-y-2">
+                    {storySuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setStoryIdea(suggestion)}
+                        className="w-full text-left p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-all text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
