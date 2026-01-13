@@ -2034,7 +2034,7 @@ Regeln für den Prompt:
         {authData.planCode === "FULL" && (
           <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
             <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as "poses" | "story")} className="w-full">
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 bg-muted/50 backdrop-blur-sm">
+              <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
                 <TabsTrigger value="poses" className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
                   Posen
