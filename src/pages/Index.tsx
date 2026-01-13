@@ -3053,8 +3053,8 @@ Regeln für den Prompt:
                           </div>
                           
                           {/* Scene content - editable */}
-                          <div className="p-4">
-                            <div className="bg-muted/30 rounded-lg p-3 min-h-[200px]">
+                          <div className="p-2">
+                            <div className="bg-muted/30 rounded-lg p-2 min-h-[200px]">
                               <Textarea
                                 value={point.versions[point.currentVersion]}
                                 onChange={(e) => {
@@ -3068,7 +3068,7 @@ Regeln für den Prompt:
                                     return p;
                                   }));
                                 }}
-                                className="text-xs leading-relaxed bg-transparent border-none resize-none min-h-[180px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="text-[13px] leading-relaxed bg-transparent border-none resize-none min-h-[180px] p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                                 placeholder="Szene beschreiben..."
                               />
                             </div>
