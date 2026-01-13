@@ -269,12 +269,12 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     }
   };
 
-  // Generate suggestions when API key becomes available and we're on story tab
+  // Generate suggestions when API key becomes available (preload for story tab)
   useEffect(() => {
-    if (apiKey && authData.planCode === "FULL" && activeMainTab === "story") {
+    if (apiKey && authData.planCode === "FULL") {
       generateStorySuggestions(apiKey);
     }
-  }, [apiKey, authData.planCode, activeMainTab]);
+  }, [apiKey, authData.planCode]);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
