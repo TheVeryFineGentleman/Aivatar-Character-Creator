@@ -2636,24 +2636,29 @@ Regeln für den Prompt:
                       <p className={`text-sm text-muted-foreground/60 mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
                         Wähle eine Idee oder schreibe deine eigene...
                       </p>
-                      <div className="space-y-1 pointer-events-auto relative">
+                      <div className="relative pointer-events-auto">
                         {storySuggestions.map((suggestion, index) => {
                           const isSelected = selectedSuggestionIndex === index;
                           const isOther = selectedSuggestionIndex !== null && !isSelected;
+                          
+                          // Calculate how far up this item needs to move to reach position 0
+                          // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
+                          const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
                           
                           return (
                             <p
                               key={index}
                               onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
-                              className={`text-sm cursor-pointer py-0.5 transition-all duration-400 ease-out ${
+                              className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
                                 isSelected 
-                                  ? 'text-foreground -translate-y-[calc(100%+2.5rem)] translate-x-0 font-medium' 
+                                  ? 'text-foreground font-medium' 
                                   : isOther
-                                    ? 'opacity-0 translate-y-2'
+                                    ? 'opacity-0'
                                     : 'text-muted-foreground/50 hover:text-primary'
                               }`}
                               style={{
-                                transitionDuration: isSelected ? '400ms' : '250ms',
+                                transitionDuration: isSelected ? '350ms' : '200ms',
+                                transform: isSelected ? `translateY(-${moveUpDistance}px)` : 'translateY(0)',
                               }}
                             >
                               {isSelected ? suggestion : `• ${suggestion}`}
