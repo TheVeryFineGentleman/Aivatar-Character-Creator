@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
@@ -193,6 +194,9 @@ const Index = () => {
   const [currentCustomPromptIndex, setCurrentCustomPromptIndex] = useState(0);
   const [customPromptChatInput, setCustomPromptChatInput] = useState("");
   const [isGeneratingCustomPrompt, setIsGeneratingCustomPrompt] = useState(false);
+
+  // Main Tab state - only for FULL users
+  const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -2026,6 +2030,27 @@ Regeln für den Prompt:
           </p>
         </div>
 
+        {/* Main Tab Navigation - Only for FULL users */}
+        {authData.planCode === "FULL" && (
+          <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
+            <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as "poses" | "story")} className="w-full">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 bg-muted/50 backdrop-blur-sm">
+                <TabsTrigger value="poses" className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Posen
+                </TabsTrigger>
+                <TabsTrigger value="story" className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Story Bilder
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Poses Tab Content - Shows for non-FULL users or when poses tab is active */}
+        {(authData.planCode !== "FULL" || activeMainTab === "poses") && (
+          <>
         {/* Main Controls */}
         <Card 
           className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
@@ -2562,6 +2587,27 @@ Regeln für den Prompt:
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
           />
         </div>
+          </>
+        )}
+
+        {/* Story Tab Content - Only for FULL users when story tab is active */}
+        {authData.planCode === "FULL" && activeMainTab === "story" && (
+          <Card 
+            className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+            style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
+          >
+            <CardContent className="pt-6 space-y-6">
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Story Bilder</h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Erstelle zusammenhängende Bildsequenzen für deine Geschichten. 
+                  Dieses Feature wird bald verfügbar sein.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => { setSelectedImageIndex(null); setImageZoom(1); setImagePosition({ x: 0, y: 0 }); }}>
