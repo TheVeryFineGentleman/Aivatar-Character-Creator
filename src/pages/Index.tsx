@@ -3034,9 +3034,11 @@ Regeln für den Prompt:
                         className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth snap-x snap-mandatory"
                         onWheel={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           const container = e.currentTarget;
                           container.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' });
                         }}
+                        style={{ overscrollBehavior: 'contain' }}
                       >
                         {storyPoints.map((point, index) => (
                           <div 
