@@ -2622,19 +2622,16 @@ Regeln für den Prompt:
                   {/* Suggestions overlay - only when empty */}
                   {!storyIdea && (
                     <div className="absolute inset-0 p-3 pointer-events-none">
-                      <div className="flex items-center gap-2 mb-3 text-muted-foreground">
-                        <Sparkles className="w-4 h-4" />
-                        <span className="text-sm">Klicke auf einen Vorschlag oder schreibe deine eigene Idee...</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pointer-events-auto">
+                      <p className="text-sm text-muted-foreground/60 mb-4">Wähle eine Idee oder schreibe deine eigene...</p>
+                      <div className="space-y-1 pointer-events-auto">
                         {storySuggestions.map((suggestion, index) => (
-                          <button
+                          <p
                             key={index}
                             onClick={() => setStoryIdea(suggestion)}
-                            className="px-3 py-1.5 rounded-full border border-border/50 bg-muted/50 hover:bg-primary/20 hover:border-primary/50 transition-all text-sm text-muted-foreground hover:text-foreground"
+                            className="text-sm text-muted-foreground/50 hover:text-primary cursor-pointer transition-colors duration-200 py-0.5"
                           >
-                            {suggestion}
-                          </button>
+                            • {suggestion}
+                          </p>
                         ))}
                       </div>
                     </div>
