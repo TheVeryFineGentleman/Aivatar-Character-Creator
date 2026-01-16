@@ -201,6 +201,10 @@ const Index = () => {
   const [currentCustomPromptIndex, setCurrentCustomPromptIndex] = useState(0);
   const [customPromptChatInput, setCustomPromptChatInput] = useState("");
   const [isGeneratingCustomPrompt, setIsGeneratingCustomPrompt] = useState(false);
+  
+  // AI Background Suggestion state
+  const [aiBackgroundSuggestion, setAiBackgroundSuggestion] = useState("");
+  const [isGeneratingBackgroundSuggestion, setIsGeneratingBackgroundSuggestion] = useState(false);
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
@@ -2037,12 +2041,16 @@ WICHTIG: Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
 "${customPromptChatInput}"
 ${settingsContext}${existingPromptContext}
 
+Antworte im folgenden strukturierten Format:
+PROMPT: [Der generierte Bild-Prompt, 2-4 Sätze auf Deutsch]
+BACKGROUND: [white, greenscreen, oder scenery - was am besten zur Anfrage passt]
+SCENE: [Wenn BACKGROUND=scenery, beschreibe kurz die passende Szene in max 10 Worten, sonst leer lassen]
+
 Regeln für den Prompt:
 - Fokussiere dich GENAU auf das, was der Nutzer beschrieben hat
 - Berücksichtige die oben genannten Einstellungen
 - Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
-- 2-4 Sätze auf Deutsch
-- Nur der Prompt, keine Erklärungen`
+- 2-4 Sätze auf Deutsch`
                   }
                 ]
               }
@@ -2057,17 +2065,45 @@ Regeln für den Prompt:
       }
 
       const data = await response.json();
-      const newPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
-      if (!newPrompt) {
+      if (!responseText) {
         throw new Error("Keine Antwort erhalten");
+      }
+
+      // Parse structured response
+      let newPrompt = responseText;
+      let suggestedBackground = "";
+      let suggestedScene = "";
+      
+      const promptMatch = responseText.match(/PROMPT:\s*(.+?)(?=\nBACKGROUND:|$)/s);
+      const backgroundMatch = responseText.match(/BACKGROUND:\s*(\w+)/);
+      const sceneMatch = responseText.match(/SCENE:\s*(.+?)(?=\n|$)/);
+      
+      if (promptMatch) {
+        newPrompt = promptMatch[1].trim();
+      }
+      if (backgroundMatch) {
+        suggestedBackground = backgroundMatch[1].trim().toLowerCase();
+      }
+      if (sceneMatch && sceneMatch[1].trim()) {
+        suggestedScene = sceneMatch[1].trim();
       }
 
       // Add as new version and navigate to it
       setCustomPromptVersions(prev => [...prev, newPrompt]);
       setCurrentCustomPromptIndex(customPromptVersions.length);
       setCustomPrompt(newPrompt);
-      // Don't clear the chat input so user can iterate
+      
+      // If scenery is selected AND AI suggests a scene that differs from current, show suggestion button
+      if (selectedBackground === "scenery" && suggestedScene && suggestedScene !== sceneDescription) {
+        setAiBackgroundSuggestion(suggestedScene);
+      } else if (suggestedBackground === "scenery" && suggestedScene && selectedBackground !== "scenery") {
+        // AI suggests scenery but user hasn't selected it - still save the suggestion
+        setAiBackgroundSuggestion(suggestedScene);
+      } else {
+        setAiBackgroundSuggestion("");
+      }
       
       toast({
         title: "Prompt generiert!",
@@ -2082,6 +2118,74 @@ Regeln für den Prompt:
       });
     } finally {
       setIsGeneratingCustomPrompt(false);
+    }
+  };
+
+  // Generate AI background suggestion for scenery when prompt exists
+  const handleGenerateBackgroundSuggestion = async () => {
+    if (!apiKey || !customPrompt.trim() || isGeneratingBackgroundSuggestion) return;
+    
+    setIsGeneratingBackgroundSuggestion(true);
+    
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Basierend auf diesem Bild-Prompt:
+"${customPrompt}"
+
+Schlage eine passende Szene/Hintergrund vor, die zu diesem Prompt passt.
+
+Antworte NUR mit der Szenenbeschreibung in max 10 Worten auf Deutsch. Keine Erklärungen.
+Beispiele: "Strand bei Sonnenuntergang", "Urbaner Park im Herbst", "Modernes Loft mit großen Fenstern"`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 50
+            }
+          })
+        }
+      );
+
+      if (!response.ok) throw new Error("API request failed");
+
+      const data = await response.json();
+      const suggestion = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      
+      if (suggestion) {
+        setAiBackgroundSuggestion(suggestion);
+        toast({
+          title: "Hintergrund-Vorschlag generiert",
+          description: "Klicke auf 'Übernehmen' um den Vorschlag zu verwenden."
+        });
+      }
+    } catch (error) {
+      console.error("Background suggestion error:", error);
+      toast({
+        title: "Fehler",
+        description: "Hintergrund-Vorschlag konnte nicht generiert werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingBackgroundSuggestion(false);
+    }
+  };
+
+  // Apply AI background suggestion
+  const handleApplyBackgroundSuggestion = () => {
+    if (aiBackgroundSuggestion) {
+      setSceneDescription(aiBackgroundSuggestion);
+      setAiBackgroundSuggestion("");
+      toast({
+        title: "Hintergrund übernommen",
+        description: aiBackgroundSuggestion
+      });
     }
   };
 
@@ -2620,18 +2724,65 @@ Regeln für den Prompt:
               {/* Scene Description Input - Shows when "Eigene Szenerie" is selected */}
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
                 selectedBackground === "scenery" 
-                  ? "max-h-32 opacity-100 mt-3" 
+                  ? "max-h-48 opacity-100 mt-3" 
                   : "max-h-0 opacity-0 mt-0"
               }`}>
-                <div className="space-y-1">
-                  <Input
-                    type="text"
-                    placeholder="Beschreibe die Szene (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
-                    value={sceneDescription}
-                    onChange={(e) => setSceneDescription(e.target.value)}
-                    className="w-full"
-                    maxLength={200}
-                  />
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Beschreibe die Szene (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
+                      value={sceneDescription}
+                      onChange={(e) => setSceneDescription(e.target.value)}
+                      className="flex-1"
+                      maxLength={200}
+                    />
+                    {/* Button to ask AI for background suggestion - shows when prompt exists but no scene yet */}
+                    {customPrompt.trim() && !sceneDescription.trim() && !aiBackgroundSuggestion && authData.planCode === "FULL" && (
+                      <Button
+                        onClick={handleGenerateBackgroundSuggestion}
+                        disabled={isGeneratingBackgroundSuggestion}
+                        variant="secondary"
+                        size="sm"
+                        className="whitespace-nowrap"
+                        title="KI um Hintergrund-Vorschlag bitten"
+                      >
+                        {isGeneratingBackgroundSuggestion ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-1" />
+                            KI fragen
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {/* AI Background Suggestion Button - pulsing when suggestion available */}
+                  {aiBackgroundSuggestion && selectedBackground === "scenery" && (
+                    <div className="flex items-center gap-2 animate-fade-in">
+                      <Button
+                        onClick={handleApplyBackgroundSuggestion}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 border-primary/50 bg-primary/10 hover:bg-primary/20 animate-pulse"
+                      >
+                        <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                        Übernehmen: "{aiBackgroundSuggestion}"
+                      </Button>
+                      <Button
+                        onClick={() => setAiBackgroundSuggestion("")}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        title="Vorschlag verwerfen"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  
                   <p className="text-xs text-muted-foreground">
                     Hinweis: Wenn leer gelassen, wird die KI sich selbst eine passende Szene ausdenken
                   </p>
