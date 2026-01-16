@@ -2060,16 +2060,18 @@ Regeln für den Prompt:
 - Berücksichtige die oben genannten Einstellungen
 - Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
 - 2-4 Sätze auf Deutsch
-- Wenn die Nutzer-Anfrage eine bestimmte Umgebung/Szene impliziert (z.B. "am Strand", "im Wald", "in der Stadt"), dann setze background auf "scenery" und beschreibe die Szene in sceneDescription
 
-Antworte NUR mit einem validen JSON-Objekt in diesem Format:
-{
-  "prompt": "Der generierte Prompt hier (2-4 Sätze auf Deutsch)",
-  "background": "white" oder "greenscreen" oder "scenery",
-  "sceneDescription": "Nur wenn background=scenery, sonst leerer String"
-}
+Antworte in diesem EXAKTEN Format (3 Zeilen):
+PROMPT: [Dein generierter Prompt hier, 2-4 Sätze auf Deutsch]
+BACKGROUND: [white ODER greenscreen ODER scenery]
+SCENE: [Wenn BACKGROUND=scenery, beschreibe die Szene kurz. Sonst leer lassen]
 
-Keine zusätzlichen Erklärungen, nur das JSON.`
+Wähle BACKGROUND basierend auf der Nutzer-Anfrage:
+- "white" wenn neutraler/weißer Hintergrund gewünscht oder keine Umgebung erwähnt
+- "greenscreen" wenn Greenscreen erwähnt
+- "scenery" wenn eine bestimmte Umgebung/Szene impliziert wird (z.B. "am Strand", "im Wald", "in der Stadt")
+
+Keine zusätzlichen Erklärungen, nur diese 3 Zeilen.`
                   }
                 ]
               }
@@ -2094,34 +2096,27 @@ Keine zusätzlichen Erklärungen, nur das JSON.`
         throw new Error("Keine Antwort erhalten");
       }
 
-      // Parse JSON response - remove markdown code blocks first
-      let cleanedResponse = responseText
-        .replace(/```json\s*/gi, '')
-        .replace(/```\s*/g, '')
-        .trim();
-      
-      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      // Parse the structured response (PROMPT:, BACKGROUND:, SCENE:)
       let newPrompt = responseText;
       let suggestedBg: string | null = null;
       let suggestedScene: string | null = null;
 
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[0]);
-          // Extract the prompt from JSON
-          if (parsed.prompt && typeof parsed.prompt === 'string') {
-            newPrompt = parsed.prompt.trim();
-          }
-          // Extract background suggestion
-          if (parsed.background && ["white", "greenscreen", "scenery"].includes(parsed.background)) {
-            suggestedBg = parsed.background;
-            suggestedScene = parsed.sceneDescription || null;
-          }
-        } catch (e) {
-          console.warn("Failed to parse JSON response, using raw text");
-          // If JSON parsing fails, try to extract just the prompt text
-          newPrompt = responseText.replace(/```json[\s\S]*```/gi, '').trim();
-        }
+      // Extract PROMPT line
+      const promptMatch = responseText.match(/PROMPT:\s*(.+?)(?=\nBACKGROUND:|$)/is);
+      if (promptMatch && promptMatch[1]) {
+        newPrompt = promptMatch[1].trim();
+      }
+
+      // Extract BACKGROUND line
+      const bgMatch = responseText.match(/BACKGROUND:\s*(white|greenscreen|scenery)/i);
+      if (bgMatch && bgMatch[1]) {
+        suggestedBg = bgMatch[1].toLowerCase();
+      }
+
+      // Extract SCENE line
+      const sceneMatch = responseText.match(/SCENE:\s*(.+?)$/is);
+      if (sceneMatch && sceneMatch[1] && sceneMatch[1].trim()) {
+        suggestedScene = sceneMatch[1].trim();
       }
       
       // Add as new version and navigate to it
