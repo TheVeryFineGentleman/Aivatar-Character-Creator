@@ -232,6 +232,125 @@ const Index = () => {
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
   const [isClosingPopup, setIsClosingPopup] = useState(false);
+  
+  // AI Scene Assistant state
+  const [sceneAssistantInput, setSceneAssistantInput] = useState("");
+  const [isGeneratingSceneAssistant, setIsGeneratingSceneAssistant] = useState(false);
+
+  // Camera angle and shot type options for AI
+  const CAMERA_ANGLE_OPTIONS = [
+    { value: "frontal", label: "Frontal" },
+    { value: "seitlich", label: "Seitlich" },
+    { value: "von-oben", label: "Von oben" },
+    { value: "von-unten", label: "Von unten" },
+    { value: "ueber-schulter", label: "Über die Schulter" },
+    { value: "dutch-angle", label: "Dutch Angle" },
+    { value: "vogelperspektive", label: "Vogelperspektive" },
+    { value: "froschperspektive", label: "Froschperspektive" }
+  ];
+
+  const SHOT_TYPE_OPTIONS = [
+    { value: "extreme-close-up", label: "Extreme Close-Up" },
+    { value: "close-up", label: "Close-Up" },
+    { value: "medium-close-up", label: "Medium Close-Up" },
+    { value: "medium-shot", label: "Medium Shot" },
+    { value: "medium-long-shot", label: "Medium Long Shot" },
+    { value: "full-shot", label: "Full Shot" },
+    { value: "long-shot", label: "Long Shot" },
+    { value: "extreme-long-shot", label: "Extreme Long Shot" }
+  ];
+
+  const handleSceneAssistant = async () => {
+    if (!apiKey || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
+    
+    const currentPoint = storyPoints[expandedStoryPointIndex];
+    const currentStory = currentPoint.versions[currentPoint.currentVersion];
+    
+    setIsGeneratingSceneAssistant(true);
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Du bist ein Experte für Film und Storyboard-Erstellung. Basierend auf der Nutzeranweisung, optimiere die folgende Szene.
+
+AKTUELLE SZENE:
+"${currentStory}"
+
+NUTZERANWEISUNG:
+"${sceneAssistantInput.trim() || 'Optimiere die Szene für maximale visuelle Wirkung'}"
+
+VERFÜGBARE KAMERAWINKEL (wähle genau einen value):
+${CAMERA_ANGLE_OPTIONS.map(o => `- "${o.value}": ${o.label}`).join('\n')}
+
+VERFÜGBARE SHOT-TYPEN (wähle genau einen value):
+${SHOT_TYPE_OPTIONS.map(o => `- "${o.value}": ${o.label}`).join('\n')}
+
+Antworte NUR mit einem validen JSON-Objekt in diesem Format:
+{
+  "story": "Die optimierte Szenen-Beschreibung (1-2 Sätze, auf Deutsch)",
+  "cameraAngle": "einer der verfügbaren Kamerawinkel-values",
+  "shotType": "einer der verfügbaren Shot-Typ-values"
+}
+
+Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine zusätzlichen Erklärungen, nur das JSON.`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 500
+            }
+          })
+        }
+      );
+
+      if (!response.ok) throw new Error("API request failed");
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      
+      // Extract JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        
+        // Update the story point with all fields
+        const idx = expandedStoryPointIndex;
+        setStoryPoints(prev => prev.map((p, i) => {
+          if (i !== idx) return p;
+          
+          // Add new version for story
+          const newVersions = [...p.versions, parsed.story];
+          return {
+            ...p,
+            versions: newVersions,
+            currentVersion: newVersions.length - 1,
+            cameraAngle: parsed.cameraAngle,
+            shotType: parsed.shotType
+          };
+        }));
+        
+        setSceneAssistantInput("");
+        toast({
+          title: "Szene optimiert",
+          description: "Story, Kamerawinkel und Shot-Typ wurden aktualisiert."
+        });
+      }
+    } catch (error) {
+      console.error("Scene assistant error:", error);
+      toast({
+        title: "Fehler",
+        description: "Die Szene konnte nicht optimiert werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingSceneAssistant(false);
+    }
+  };
 
   const handleCloseExpandedCard = () => {
     if (isClosingPopup) return;
@@ -3274,21 +3393,45 @@ Regeln für den Prompt:
                                     <div className="bg-muted/40 px-4 py-2 border-b border-border/30 flex items-center gap-2">
                                       <MessageSquare className="w-4 h-4 text-primary" />
                                       <span className="text-sm font-medium">KI-Assistent</span>
+                                      {isGeneratingSceneAssistant && (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary ml-auto" />
+                                      )}
                                     </div>
                                     <div className="p-3 space-y-3">
                                       <p className="text-xs text-muted-foreground">
                                         Beschreibe, wie die Szene angepasst werden soll. Die KI wird Story, Kamerawinkel und Shot-Typ optimieren.
                                       </p>
-                                      <div className="flex gap-2">
-                                        <Textarea
-                                          placeholder="z.B. 'Mache es dramatischer mit Nahaufnahme' oder 'Zeige die Szene von oben'..."
-                                          className="text-sm min-h-[80px] bg-background/50 resize-none"
-                                        />
-                                      </div>
+                                      <Textarea
+                                        value={sceneAssistantInput}
+                                        onChange={(e) => setSceneAssistantInput(e.target.value)}
+                                        placeholder="z.B. 'Mache es dramatischer' oder 'Zeige die Szene romantischer von oben'..."
+                                        className="text-sm min-h-[80px] bg-background/50 resize-none"
+                                        disabled={isGeneratingSceneAssistant}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSceneAssistant();
+                                          }
+                                        }}
+                                      />
                                       <div className="flex justify-end">
-                                        <Button size="sm" className="gap-1.5">
-                                          <Sparkles className="w-3.5 h-3.5" />
-                                          Anpassen
+                                        <Button 
+                                          size="sm" 
+                                          className="gap-1.5"
+                                          onClick={handleSceneAssistant}
+                                          disabled={isGeneratingSceneAssistant}
+                                        >
+                                          {isGeneratingSceneAssistant ? (
+                                            <>
+                                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                              Optimiere...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Sparkles className="w-3.5 h-3.5" />
+                                              Anpassen
+                                            </>
+                                          )}
                                         </Button>
                                       </div>
                                     </div>
