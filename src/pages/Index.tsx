@@ -2101,10 +2101,16 @@ Keine zusätzlichen Erklärungen, nur diese 3 Zeilen.`
       let suggestedBg: string | null = null;
       let suggestedScene: string | null = null;
 
-      // Extract PROMPT line
-      const promptMatch = responseText.match(/PROMPT:\s*(.+?)(?=\nBACKGROUND:|$)/is);
+      // Extract PROMPT - everything between PROMPT: and BACKGROUND:
+      const promptMatch = responseText.match(/PROMPT:\s*([\s\S]*?)(?=\nBACKGROUND:)/i);
       if (promptMatch && promptMatch[1]) {
         newPrompt = promptMatch[1].trim();
+      } else {
+        // Fallback: if no BACKGROUND: found, take everything after PROMPT:
+        const fallbackMatch = responseText.match(/PROMPT:\s*([\s\S]*)/i);
+        if (fallbackMatch && fallbackMatch[1]) {
+          newPrompt = fallbackMatch[1].trim();
+        }
       }
 
       // Extract BACKGROUND line
