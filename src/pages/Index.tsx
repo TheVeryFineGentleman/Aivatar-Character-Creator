@@ -2037,25 +2037,25 @@ ${backgroundContext}`;
                   {
                     text: `Du bist ein Experte für Bild-Generierungs-Prompts.
 
-WICHTIG: Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
+Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
 "${customPromptChatInput}"
 ${settingsContext}${existingPromptContext}
 
 Antworte im folgenden strukturierten Format:
-PROMPT: [Der generierte Bild-Prompt, 2-4 Sätze auf Deutsch]
-BACKGROUND: [white, greenscreen, oder scenery - was am besten zur Anfrage passt]
-SCENE: [Wenn BACKGROUND=scenery, beschreibe die Szene DETAILLIERT in 2-3 Sätzen: Ort, Lichtstimmung, Atmosphäre, Details wie Pflanzen/Architektur/Wetter. Sonst leer lassen]
+PROMPT: [Dein generierter Prompt]
+BACKGROUND: [white, greenscreen, oder scenery]
+SCENE: [Nur wenn BACKGROUND=scenery: Detaillierte Szenenbeschreibung, sonst leer]
 
-Regeln für den Prompt:
-- Fokussiere dich GENAU auf das, was der Nutzer beschrieben hat
-- Berücksichtige die oben genannten Einstellungen
-- Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
+WICHTIGE REGELN FÜR DEN PROMPT:
+- Beschreibe NUR die Person: Pose, Körperhaltung, Gesichtsausdruck, Blickrichtung, Kleidung
+- KEINE Kameraeinstellungen erwähnen (kein "Close-Up", "Ganzkörper", etc.)
+- KEINE Hintergrundbeschreibungen im Prompt
 - 2-4 Sätze auf Deutsch
 
-Regeln für SCENE (wenn scenery):
-- Beschreibe Lichtverhältnisse (goldene Stunde, diffuses Licht, dramatische Schatten)
-- Nenne konkrete Details (alte Backsteinmauern, üppige Vegetation, moderne Glasfassaden)
-- Erwähne Atmosphäre und Stimmung (ruhig, urban, mystisch, lebendig)`
+REGELN FÜR SCENE (nur wenn scenery):
+- Beschreibe den Ort detailliert (z.B. "Ein verlassener Industriehof mit rostigen Metallstrukturen")
+- Lichtstimmung (goldene Stunde, weiches Morgenlicht, dramatische Schatten)
+- Atmosphärische Details (Nebel, Regen, Sonnenstrahlen)`
                   }
                 ]
               }
@@ -2141,12 +2141,20 @@ Regeln für SCENE (wenn scenery):
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Basierend auf diesem Bild-Prompt:
+                text: `Der Nutzer hat folgenden Bild-Prompt erstellt:
 "${customPrompt}"
 
-Beschreibe einen passenden Hintergrund/Szene für dieses Bild. Sei kreativ und detailliert - beschreibe Ort, Licht, Atmosphäre und visuelle Details in 2-3 Sätzen auf Deutsch.
+Beschreibe einen passenden Hintergrund für dieses Bild.
 
-Antworte NUR mit der Szenenbeschreibung, keine Einleitung oder Erklärungen.`
+REGELN:
+- Antworte NUR mit der Szenenbeschreibung selbst
+- KEINE Einleitungen wie "Passend wäre..." oder "Statt..."
+- KEINE Erklärungen oder Kommentare
+- Beschreibe den Ort, Lichtstimmung und atmosphärische Details
+- 2-3 Sätze auf Deutsch
+
+Beispiel einer korrekten Antwort:
+"Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fällt. Efeu rankt an den alten Backsteinwänden empor, während Staub in den Lichtstrahlen tanzt."`
               }]
             }],
             generationConfig: {
