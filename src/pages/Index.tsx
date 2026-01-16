@@ -228,7 +228,14 @@ const Index = () => {
   const storyCardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleCloseExpandedCard = () => {
-    if (isAnimatingClose) return;
+    if (isAnimatingClose || expandedStoryPointIndex === null) return;
+    
+    // Get the current position of the original card (in case user scrolled)
+    const currentRect = storyCardRefs.current[expandedStoryPointIndex]?.getBoundingClientRect();
+    if (currentRect) {
+      setExpandedCardRect(currentRect);
+    }
+    
     setIsAnimatingClose(true);
     setTimeout(() => {
       setExpandedStoryPointIndex(null);
@@ -3041,7 +3048,7 @@ Regeln für den Prompt:
                             style={{ 
                               animationDelay: `${index * 100}ms`, 
                               animationFillMode: 'both',
-                              visibility: expandedStoryPointIndex === index ? 'hidden' : 'visible'
+                              visibility: (expandedStoryPointIndex === index && !isAnimatingClose) ? 'hidden' : 'visible'
                             }}
                           >
                             {/* Scene number header bar with controls */}
