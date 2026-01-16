@@ -3164,6 +3164,7 @@ Regeln für den Prompt:
                         maxWidth: (isAnimatingExpand || isAnimatingClose) ? 'none' : '42rem',
                         height: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.height}px` : 'auto',
                         maxHeight: (isAnimatingExpand || isAnimatingClose) ? 'none' : '80vh',
+                        transformOrigin: 'top left',
                         transform: (isAnimatingExpand || isAnimatingClose) ? 'translate(0, 0)' : 'translate(-50%, -50%)',
                         transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
