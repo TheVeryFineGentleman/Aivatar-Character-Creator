@@ -12,7 +12,7 @@ import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
-import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage, compressImage } from "@/lib/storage";
+import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -201,10 +201,6 @@ const Index = () => {
   const [currentCustomPromptIndex, setCurrentCustomPromptIndex] = useState(0);
   const [customPromptChatInput, setCustomPromptChatInput] = useState("");
   const [isGeneratingCustomPrompt, setIsGeneratingCustomPrompt] = useState(false);
-  
-  // AI-suggested background state
-  const [suggestedBackground, setSuggestedBackground] = useState<string | null>(null);
-  const [suggestedSceneDescription, setSuggestedSceneDescription] = useState<string | null>(null);
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
@@ -378,13 +374,7 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
           reader.onloadend = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
-        // Compress the image before storing
-        try {
-          const compressed = await compressImage(base64, 800, 0.7);
-          newImages.push(compressed);
-        } catch {
-          newImages.push(base64); // Fallback to original if compression fails
-        }
+        newImages.push(base64);
       }
       
       setStoryReferenceImages(prev => {
@@ -643,26 +633,18 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     }
   }, [apiKey]);
 
-  // Save reference images when they change (with compression)
+  // Save reference images when they change
   useEffect(() => {
     if (referenceImages.length > 0) {
       Promise.all(
         referenceImages.map((file) => {
-          return new Promise<{ name: string; type: string; data: string }>(async (resolve) => {
+          return new Promise<{ name: string; type: string; data: string }>((resolve) => {
             const reader = new FileReader();
-            reader.onloadend = async () => {
-              const base64 = reader.result as string;
-              // Compress the image before storing
-              let compressedData = base64;
-              try {
-                compressedData = await compressImage(base64, 800, 0.7);
-              } catch {
-                // Use original if compression fails
-              }
+            reader.onloadend = () => {
               resolve({
                 name: file.name,
-                type: 'image/jpeg', // After compression it's JPEG
-                data: compressedData,
+                type: file.type,
+                data: reader.result as string,
               });
             };
             reader.readAsDataURL(file);
@@ -2060,26 +2042,11 @@ Regeln für den Prompt:
 - Berücksichtige die oben genannten Einstellungen
 - Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
 - 2-4 Sätze auf Deutsch
-
-Antworte NUR mit einem validen JSON-Objekt in diesem exakten Format:
-{"prompt": "Dein generierter Prompt hier (2-4 Sätze auf Deutsch)", "background": "white", "scene": ""}
-
-Wähle "background" basierend auf der Nutzer-Anfrage:
-- "white" wenn neutraler/weißer Hintergrund gewünscht oder keine Umgebung erwähnt
-- "greenscreen" wenn Greenscreen erwähnt
-- "scenery" wenn eine bestimmte Umgebung/Szene impliziert wird (z.B. "am Strand", "im Wald", "in der Stadt")
-
-Für "scene": Wenn background="scenery", beschreibe die Szene kurz. Sonst leerer String.
-
-WICHTIG: Keine Erklärungen, kein Markdown, nur das JSON-Objekt.`
+- Nur der Prompt, keine Erklärungen`
                   }
                 ]
               }
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 8192
-            }
+            ]
           }),
         }
       );
@@ -2090,69 +2057,17 @@ WICHTIG: Keine Erklärungen, kein Markdown, nur das JSON-Objekt.`
       }
 
       const data = await response.json();
-      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      const newPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
-      if (!responseText) {
+      if (!newPrompt) {
         throw new Error("Keine Antwort erhalten");
       }
 
-      // Parse JSON response
-      let newPrompt = responseText;
-      let suggestedBg: string | null = null;
-      let suggestedScene: string | null = null;
-
-      try {
-        // Remove markdown code blocks if present
-        let cleanedResponse = responseText
-          .replace(/```json\s*/gi, '')
-          .replace(/```\s*/g, '')
-          .trim();
-        
-        // Attempt to repair incomplete JSON (if cut off due to token limits)
-        if (!cleanedResponse.endsWith('}')) {
-          const openBraces = (cleanedResponse.match(/{/g) || []).length;
-          const closeBraces = (cleanedResponse.match(/}/g) || []).length;
-          const missingBraces = openBraces - closeBraces;
-          if (missingBraces > 0) {
-            // Try to find last complete field and close JSON
-            const lastQuoteIndex = cleanedResponse.lastIndexOf('"');
-            if (lastQuoteIndex > 0) {
-              cleanedResponse = cleanedResponse.substring(0, lastQuoteIndex + 1) + '}'.repeat(missingBraces);
-            }
-          }
-        }
-        
-        const parsed = JSON.parse(cleanedResponse);
-        newPrompt = parsed.prompt || responseText;
-        suggestedBg = parsed.background || null;
-        suggestedScene = parsed.scene || null;
-      } catch (e) {
-        // Fallback: if JSON parsing fails, use raw response as prompt
-        console.warn("JSON parsing failed, using raw response:", e);
-        newPrompt = responseText;
-      }
-      
       // Add as new version and navigate to it
       setCustomPromptVersions(prev => [...prev, newPrompt]);
       setCurrentCustomPromptIndex(customPromptVersions.length);
       setCustomPrompt(newPrompt);
-      
-      // Set suggested background if different from current
-      if (suggestedBg) {
-        if (suggestedBg !== selectedBackground) {
-          setSuggestedBackground(suggestedBg);
-          setSuggestedSceneDescription(suggestedScene);
-        } else if (suggestedBg === "scenery" && suggestedScene && suggestedScene !== sceneDescription) {
-          setSuggestedBackground(suggestedBg);
-          setSuggestedSceneDescription(suggestedScene);
-        } else {
-          setSuggestedBackground(null);
-          setSuggestedSceneDescription(null);
-        }
-      } else {
-        setSuggestedBackground(null);
-        setSuggestedSceneDescription(null);
-      }
+      // Don't clear the chat input so user can iterate
       
       toast({
         title: "Prompt generiert!",
@@ -2700,38 +2615,6 @@ WICHTIG: Keine Erklärungen, kein Markdown, nur das JSON-Objekt.`
                     </Button>
                   );
                 })}
-                
-                {/* AI Suggested Background Button */}
-                {suggestedBackground && (suggestedBackground !== selectedBackground || (suggestedBackground === "scenery" && suggestedSceneDescription && suggestedSceneDescription !== sceneDescription)) && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      if (!isPro && (suggestedBackground === "greenscreen" || suggestedBackground === "scenery")) {
-                        setShakingElement(suggestedBackground);
-                        setTimeout(() => setShakingElement(null), 500);
-                        setShowUpgradePopup(true);
-                        return;
-                      }
-                      setSelectedBackground(suggestedBackground);
-                      if (suggestedBackground === "scenery" && suggestedSceneDescription) {
-                        setSceneDescription(suggestedSceneDescription);
-                      }
-                      setSuggestedBackground(null);
-                      setSuggestedSceneDescription(null);
-                      toast({
-                        title: "Hintergrund übernommen",
-                        description: BACKGROUND_OPTIONS.find(b => b.id === suggestedBackground)?.label || suggestedBackground,
-                      });
-                    }}
-                    className="min-w-[140px] px-3 py-2 border-2 border-primary bg-primary/10 text-primary hover:bg-primary/20 animate-pulse"
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {suggestedBackground === "scenery" && suggestedSceneDescription 
-                      ? `"${suggestedSceneDescription.slice(0, 15)}${suggestedSceneDescription.length > 15 ? '...' : ''}" übernehmen`
-                      : `${BACKGROUND_OPTIONS.find(b => b.id === suggestedBackground)?.label} übernehmen`
-                    }
-                  </Button>
-                )}
               </div>
               
               {/* Scene Description Input - Shows when "Eigene Szenerie" is selected */}
