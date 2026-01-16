@@ -440,6 +440,57 @@ All colors MUST be HSL.
   animation: fade-in 0.6s ease-out forwards;
 }
 
+/* Popup slide-up animation */
+@keyframes popup-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-popup-in {
+  animation: popup-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Popup slide-down animation */
+@keyframes popup-slide-down {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+}
+
+.animate-popup-out {
+  animation: popup-slide-down 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Backdrop fade animations */
+@keyframes backdrop-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes backdrop-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-backdrop-in {
+  animation: backdrop-fade-in 0.3s ease-out forwards;
+}
+
+.animate-backdrop-out {
+  animation: backdrop-fade-out 0.25s ease-out forwards;
+}
+
 .writing-mode-vertical {
   writing-mode: vertical-rl;
   text-orientation: mixed;

@@ -222,9 +222,15 @@ const Index = () => {
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
+  const [isClosingPopup, setIsClosingPopup] = useState(false);
 
   const handleCloseExpandedCard = () => {
-    setExpandedStoryPointIndex(null);
+    if (isClosingPopup) return;
+    setIsClosingPopup(true);
+    setTimeout(() => {
+      setExpandedStoryPointIndex(null);
+      setIsClosingPopup(false);
+    }, 250);
   };
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3115,14 +3121,14 @@ Regeln für den Prompt:
                           <>
                             {/* Backdrop with blur */}
                             <div 
-                              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
+                              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 ${isClosingPopup ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
                               onClick={handleCloseExpandedCard}
                             />
                             
                             {/* Centered popup card */}
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
                               <div 
-                                className="bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden pointer-events-auto animate-scale-in"
+                                className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
                               >
                                 {/* Header */}
                                 <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-5 py-3">
