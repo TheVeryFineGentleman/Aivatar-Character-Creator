@@ -241,7 +241,7 @@ const Index = () => {
       setExpandedStoryPointIndex(null);
       setExpandedCardRect(null);
       setIsAnimatingClose(false);
-    }, 1000);
+    }, 500);
   };
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3166,7 +3166,7 @@ Regeln für den Prompt:
                         maxHeight: (isAnimatingExpand || isAnimatingClose) ? 'none' : '80vh',
                         transformOrigin: 'top left',
                         transform: (isAnimatingExpand || isAnimatingClose) ? 'translate(0, 0)' : 'translate(-50%, -50%)',
-                        transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
+                        transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
                     >
                       {/* Header */}
