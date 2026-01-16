@@ -2094,8 +2094,13 @@ Keine zusätzlichen Erklärungen, nur das JSON.`
         throw new Error("Keine Antwort erhalten");
       }
 
-      // Parse JSON response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      // Parse JSON response - remove markdown code blocks first
+      let cleanedResponse = responseText
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
       let newPrompt = responseText;
       let suggestedBg: string | null = null;
       let suggestedScene: string | null = null;
@@ -2105,7 +2110,7 @@ Keine zusätzlichen Erklärungen, nur das JSON.`
           const parsed = JSON.parse(jsonMatch[0]);
           // Extract the prompt from JSON
           if (parsed.prompt && typeof parsed.prompt === 'string') {
-            newPrompt = parsed.prompt;
+            newPrompt = parsed.prompt.trim();
           }
           // Extract background suggestion
           if (parsed.background && ["white", "greenscreen", "scenery"].includes(parsed.background)) {
@@ -2114,6 +2119,8 @@ Keine zusätzlichen Erklärungen, nur das JSON.`
           }
         } catch (e) {
           console.warn("Failed to parse JSON response, using raw text");
+          // If JSON parsing fails, try to extract just the prompt text
+          newPrompt = responseText.replace(/```json[\s\S]*```/gi, '').trim();
         }
       }
       
