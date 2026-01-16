@@ -224,7 +224,18 @@ const Index = () => {
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
   const [expandedCardRect, setExpandedCardRect] = useState<DOMRect | null>(null);
   const [isAnimatingExpand, setIsAnimatingExpand] = useState(false);
+  const [isAnimatingClose, setIsAnimatingClose] = useState(false);
   const storyCardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const handleCloseExpandedCard = () => {
+    if (isAnimatingClose) return;
+    setIsAnimatingClose(true);
+    setTimeout(() => {
+      setExpandedStoryPointIndex(null);
+      setExpandedCardRect(null);
+      setIsAnimatingClose(false);
+    }, 1000);
+  };
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -3132,24 +3143,21 @@ Regeln für den Prompt:
                   <>
                     {/* Backdrop */}
                     <div 
-                      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
-                      onClick={() => {
-                        setExpandedStoryPointIndex(null);
-                        setExpandedCardRect(null);
-                      }}
+                      className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 ${isAnimatingClose ? 'animate-fade-out' : 'animate-fade-in'}`}
+                      onClick={handleCloseExpandedCard}
                     />
                     
                     {/* Animated Card Clone */}
                     <div
                       className="fixed z-50 bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 shadow-2xl overflow-hidden"
                       style={{
-                        top: isAnimatingExpand ? expandedCardRect.top : '50%',
-                        left: isAnimatingExpand ? expandedCardRect.left : '50%',
-                        width: isAnimatingExpand ? expandedCardRect.width : '90%',
-                        maxWidth: isAnimatingExpand ? 'none' : '42rem',
-                        height: isAnimatingExpand ? expandedCardRect.height : 'auto',
-                        maxHeight: isAnimatingExpand ? 'none' : '80vh',
-                        transform: isAnimatingExpand ? 'none' : 'translate(-50%, -50%)',
+                        top: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.top : '50%',
+                        left: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.left : '50%',
+                        width: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.width : '90%',
+                        maxWidth: (isAnimatingExpand || isAnimatingClose) ? 'none' : '42rem',
+                        height: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.height : 'auto',
+                        maxHeight: (isAnimatingExpand || isAnimatingClose) ? 'none' : '80vh',
+                        transform: (isAnimatingExpand || isAnimatingClose) ? 'none' : 'translate(-50%, -50%)',
                         transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
                     >
@@ -3198,10 +3206,7 @@ Regeln für den Prompt:
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                            onClick={() => {
-                              setExpandedStoryPointIndex(null);
-                              setExpandedCardRect(null);
-                            }}
+                            onClick={handleCloseExpandedCard}
                           >
                             <X className="w-4 h-4" />
                           </Button>
