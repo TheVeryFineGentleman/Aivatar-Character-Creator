@@ -28,6 +28,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -3210,49 +3217,57 @@ Regeln für den Prompt:
                                   <div className="mt-4 grid grid-cols-2 gap-3">
                                     <div className="space-y-2">
                                       <label className="text-xs font-medium text-muted-foreground">Kamerawinkel</label>
-                                      <select
+                                      <Select
                                         value={storyPoints[expandedStoryPointIndex].cameraAngle || ""}
-                                        onChange={(e) => {
+                                        onValueChange={(value) => {
                                           const idx = expandedStoryPointIndex;
                                           setStoryPoints(prev => prev.map((p, i) => 
-                                            i === idx ? { ...p, cameraAngle: e.target.value } : p
+                                            i === idx ? { ...p, cameraAngle: value } : p
                                           ));
                                         }}
-                                        className="w-full h-9 px-3 rounded-md border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                       >
-                                        <option value="">Automatisch</option>
-                                        <option value="frontal">Frontal</option>
-                                        <option value="seitlich">Seitlich</option>
-                                        <option value="von-oben">Von oben</option>
-                                        <option value="von-unten">Von unten</option>
-                                        <option value="ueber-schulter">Über die Schulter</option>
-                                        <option value="dutch-angle">Dutch Angle</option>
-                                        <option value="vogelperspektive">Vogelperspektive</option>
-                                        <option value="froschperspektive">Froschperspektive</option>
-                                      </select>
+                                        <SelectTrigger className="w-full bg-background/50">
+                                          <SelectValue placeholder="Automatisch" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="auto">Automatisch</SelectItem>
+                                          <SelectItem value="frontal">Frontal</SelectItem>
+                                          <SelectItem value="seitlich">Seitlich</SelectItem>
+                                          <SelectItem value="von-oben">Von oben</SelectItem>
+                                          <SelectItem value="von-unten">Von unten</SelectItem>
+                                          <SelectItem value="ueber-schulter">Über die Schulter</SelectItem>
+                                          <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
+                                          <SelectItem value="vogelperspektive">Vogelperspektive</SelectItem>
+                                          <SelectItem value="froschperspektive">Froschperspektive</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                     </div>
                                     <div className="space-y-2">
                                       <label className="text-xs font-medium text-muted-foreground">Shot-Typ</label>
-                                      <select
+                                      <Select
                                         value={storyPoints[expandedStoryPointIndex].shotType || ""}
-                                        onChange={(e) => {
+                                        onValueChange={(value) => {
                                           const idx = expandedStoryPointIndex;
                                           setStoryPoints(prev => prev.map((p, i) => 
-                                            i === idx ? { ...p, shotType: e.target.value } : p
+                                            i === idx ? { ...p, shotType: value } : p
                                           ));
                                         }}
-                                        className="w-full h-9 px-3 rounded-md border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                       >
-                                        <option value="">Automatisch</option>
-                                        <option value="extreme-close-up">Extreme Close-Up</option>
-                                        <option value="close-up">Close-Up</option>
-                                        <option value="medium-close-up">Medium Close-Up</option>
-                                        <option value="medium-shot">Medium Shot</option>
-                                        <option value="medium-long-shot">Medium Long Shot</option>
-                                        <option value="full-shot">Full Shot</option>
-                                        <option value="long-shot">Long Shot</option>
-                                        <option value="extreme-long-shot">Extreme Long Shot</option>
-                                      </select>
+                                        <SelectTrigger className="w-full bg-background/50">
+                                          <SelectValue placeholder="Automatisch" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="auto">Automatisch</SelectItem>
+                                          <SelectItem value="extreme-close-up">Extreme Close-Up</SelectItem>
+                                          <SelectItem value="close-up">Close-Up</SelectItem>
+                                          <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
+                                          <SelectItem value="medium-shot">Medium Shot</SelectItem>
+                                          <SelectItem value="medium-long-shot">Medium Long Shot</SelectItem>
+                                          <SelectItem value="full-shot">Full Shot</SelectItem>
+                                          <SelectItem value="long-shot">Long Shot</SelectItem>
+                                          <SelectItem value="extreme-long-shot">Extreme Long Shot</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                     </div>
                                   </div>
                                   
