@@ -201,6 +201,10 @@ const Index = () => {
   const [currentCustomPromptIndex, setCurrentCustomPromptIndex] = useState(0);
   const [customPromptChatInput, setCustomPromptChatInput] = useState("");
   const [isGeneratingCustomPrompt, setIsGeneratingCustomPrompt] = useState(false);
+  
+  // AI-suggested background state
+  const [suggestedBackground, setSuggestedBackground] = useState<string | null>(null);
+  const [suggestedSceneDescription, setSuggestedSceneDescription] = useState<string | null>(null);
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
@@ -2056,11 +2060,24 @@ Regeln für den Prompt:
 - Berücksichtige die oben genannten Einstellungen
 - Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
 - 2-4 Sätze auf Deutsch
-- Nur der Prompt, keine Erklärungen`
+- Wenn die Nutzer-Anfrage eine bestimmte Umgebung/Szene impliziert (z.B. "am Strand", "im Wald", "in der Stadt"), dann setze background auf "scenery" und beschreibe die Szene in sceneDescription
+
+Antworte NUR mit einem validen JSON-Objekt in diesem Format:
+{
+  "prompt": "Der generierte Prompt hier (2-4 Sätze auf Deutsch)",
+  "background": "white" oder "greenscreen" oder "scenery",
+  "sceneDescription": "Nur wenn background=scenery, sonst leerer String"
+}
+
+Keine zusätzlichen Erklärungen, nur das JSON.`
                   }
                 ]
               }
-            ]
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 500
+            }
           }),
         }
       );
@@ -2071,17 +2088,50 @@ Regeln für den Prompt:
       }
 
       const data = await response.json();
-      const newPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
-      if (!newPrompt) {
+      if (!responseText) {
         throw new Error("Keine Antwort erhalten");
       }
 
-      // Add as new version and navigate to it
-      setCustomPromptVersions(prev => [...prev, newPrompt]);
-      setCurrentCustomPromptIndex(customPromptVersions.length);
-      setCustomPrompt(newPrompt);
-      // Don't clear the chat input so user can iterate
+      // Parse JSON response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        // Fallback: treat entire response as prompt if no JSON found
+        const newPrompt = responseText;
+        setCustomPromptVersions(prev => [...prev, newPrompt]);
+        setCurrentCustomPromptIndex(customPromptVersions.length);
+        setCustomPrompt(newPrompt);
+        setSuggestedBackground(null);
+        setSuggestedSceneDescription(null);
+      } else {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const newPrompt = parsed.prompt || responseText;
+        
+        // Add as new version and navigate to it
+        setCustomPromptVersions(prev => [...prev, newPrompt]);
+        setCurrentCustomPromptIndex(customPromptVersions.length);
+        setCustomPrompt(newPrompt);
+        
+        // Set suggested background if different from current
+        const suggestedBg = parsed.background;
+        if (suggestedBg && ["white", "greenscreen", "scenery"].includes(suggestedBg)) {
+          if (suggestedBg !== selectedBackground) {
+            setSuggestedBackground(suggestedBg);
+            setSuggestedSceneDescription(parsed.sceneDescription || null);
+          } else if (suggestedBg === "scenery" && parsed.sceneDescription && parsed.sceneDescription !== sceneDescription) {
+            // Same background type but different scene description
+            setSuggestedBackground(suggestedBg);
+            setSuggestedSceneDescription(parsed.sceneDescription);
+          } else {
+            setSuggestedBackground(null);
+            setSuggestedSceneDescription(null);
+          }
+        } else {
+          setSuggestedBackground(null);
+          setSuggestedSceneDescription(null);
+        }
+      }
       
       toast({
         title: "Prompt generiert!",
@@ -2629,6 +2679,38 @@ Regeln für den Prompt:
                     </Button>
                   );
                 })}
+                
+                {/* AI Suggested Background Button */}
+                {suggestedBackground && (suggestedBackground !== selectedBackground || (suggestedBackground === "scenery" && suggestedSceneDescription && suggestedSceneDescription !== sceneDescription)) && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!isPro && (suggestedBackground === "greenscreen" || suggestedBackground === "scenery")) {
+                        setShakingElement(suggestedBackground);
+                        setTimeout(() => setShakingElement(null), 500);
+                        setShowUpgradePopup(true);
+                        return;
+                      }
+                      setSelectedBackground(suggestedBackground);
+                      if (suggestedBackground === "scenery" && suggestedSceneDescription) {
+                        setSceneDescription(suggestedSceneDescription);
+                      }
+                      setSuggestedBackground(null);
+                      setSuggestedSceneDescription(null);
+                      toast({
+                        title: "Hintergrund übernommen",
+                        description: BACKGROUND_OPTIONS.find(b => b.id === suggestedBackground)?.label || suggestedBackground,
+                      });
+                    }}
+                    className="min-w-[140px] px-3 py-2 border-2 border-primary bg-primary/10 text-primary hover:bg-primary/20 animate-pulse"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {suggestedBackground === "scenery" && suggestedSceneDescription 
+                      ? `"${suggestedSceneDescription.slice(0, 15)}${suggestedSceneDescription.length > 15 ? '...' : ''}" übernehmen`
+                      : `${BACKGROUND_OPTIONS.find(b => b.id === suggestedBackground)?.label} übernehmen`
+                    }
+                  </Button>
+                )}
               </div>
               
               {/* Scene Description Input - Shows when "Eigene Szenerie" is selected */}
