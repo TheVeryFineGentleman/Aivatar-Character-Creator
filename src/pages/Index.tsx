@@ -218,6 +218,8 @@ const Index = () => {
   const [storyPoints, setStoryPoints] = useState<Array<{
     versions: string[];
     currentVersion: number;
+    cameraAngle?: string;
+    shotType?: string;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -3204,6 +3206,56 @@ Regeln für den Prompt:
                                     />
                                   </div>
                                   
+                                  {/* Camera & Shot Settings */}
+                                  <div className="mt-4 grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-medium text-muted-foreground">Kamerawinkel</label>
+                                      <select
+                                        value={storyPoints[expandedStoryPointIndex].cameraAngle || ""}
+                                        onChange={(e) => {
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => 
+                                            i === idx ? { ...p, cameraAngle: e.target.value } : p
+                                          ));
+                                        }}
+                                        className="w-full h-9 px-3 rounded-md border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                      >
+                                        <option value="">Automatisch</option>
+                                        <option value="frontal">Frontal</option>
+                                        <option value="seitlich">Seitlich</option>
+                                        <option value="von-oben">Von oben</option>
+                                        <option value="von-unten">Von unten</option>
+                                        <option value="ueber-schulter">Über die Schulter</option>
+                                        <option value="dutch-angle">Dutch Angle</option>
+                                        <option value="vogelperspektive">Vogelperspektive</option>
+                                        <option value="froschperspektive">Froschperspektive</option>
+                                      </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-medium text-muted-foreground">Shot-Typ</label>
+                                      <select
+                                        value={storyPoints[expandedStoryPointIndex].shotType || ""}
+                                        onChange={(e) => {
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => 
+                                            i === idx ? { ...p, shotType: e.target.value } : p
+                                          ));
+                                        }}
+                                        className="w-full h-9 px-3 rounded-md border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                      >
+                                        <option value="">Automatisch</option>
+                                        <option value="extreme-close-up">Extreme Close-Up</option>
+                                        <option value="close-up">Close-Up</option>
+                                        <option value="medium-close-up">Medium Close-Up</option>
+                                        <option value="medium-shot">Medium Shot</option>
+                                        <option value="medium-long-shot">Medium Long Shot</option>
+                                        <option value="full-shot">Full Shot</option>
+                                        <option value="long-shot">Long Shot</option>
+                                        <option value="extreme-long-shot">Extreme Long Shot</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                  
                                   {/* AI Chat for prompt refinement */}
                                   <div className="mt-4 border border-border/40 rounded-lg bg-muted/20 overflow-hidden">
                                     <div className="bg-muted/40 px-4 py-2 border-b border-border/30 flex items-center gap-2">
@@ -3212,11 +3264,11 @@ Regeln für den Prompt:
                                     </div>
                                     <div className="p-3 space-y-3">
                                       <p className="text-xs text-muted-foreground">
-                                        Beschreibe, wie die Szene angepasst werden soll. Die KI wird den Prompt entsprechend optimieren.
+                                        Beschreibe, wie die Szene angepasst werden soll. Die KI wird Story, Kamerawinkel und Shot-Typ optimieren.
                                       </p>
                                       <div className="flex gap-2">
                                         <Textarea
-                                          placeholder="z.B. 'Mache es dramatischer' oder 'Füge mehr Details zur Umgebung hinzu'..."
+                                          placeholder="z.B. 'Mache es dramatischer mit Nahaufnahme' oder 'Zeige die Szene von oben'..."
                                           className="text-sm min-h-[80px] bg-background/50 resize-none"
                                         />
                                       </div>
