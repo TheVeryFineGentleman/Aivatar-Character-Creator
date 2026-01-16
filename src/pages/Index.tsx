@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -3086,7 +3086,7 @@ Regeln für den Prompt:
                                   className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
                                   onClick={() => setExpandedStoryPointIndex(index)}
                                 >
-                                  <Scale className="w-3.5 h-3.5" />
+                                  <Maximize2 className="w-3.5 h-3.5" />
                                 </Button>
                               </div>
                             </div>
@@ -3204,11 +3204,29 @@ Regeln für den Prompt:
                                     />
                                   </div>
                                   
-                                  {/* Additional options placeholder */}
-                                  <div className="mt-4 p-4 border border-dashed border-border rounded-lg bg-muted/20">
-                                    <p className="text-sm text-muted-foreground text-center">
-                                      Weitere Optionen werden hier hinzugefügt...
-                                    </p>
+                                  {/* AI Chat for prompt refinement */}
+                                  <div className="mt-4 border border-border/40 rounded-lg bg-muted/20 overflow-hidden">
+                                    <div className="bg-muted/40 px-4 py-2 border-b border-border/30 flex items-center gap-2">
+                                      <MessageSquare className="w-4 h-4 text-primary" />
+                                      <span className="text-sm font-medium">KI-Assistent</span>
+                                    </div>
+                                    <div className="p-3 space-y-3">
+                                      <p className="text-xs text-muted-foreground">
+                                        Beschreibe, wie die Szene angepasst werden soll. Die KI wird den Prompt entsprechend optimieren.
+                                      </p>
+                                      <div className="flex gap-2">
+                                        <Textarea
+                                          placeholder="z.B. 'Mache es dramatischer' oder 'Füge mehr Details zur Umgebung hinzu'..."
+                                          className="text-sm min-h-[80px] bg-background/50 resize-none"
+                                        />
+                                      </div>
+                                      <div className="flex justify-end">
+                                        <Button size="sm" className="gap-1.5">
+                                          <Sparkles className="w-3.5 h-3.5" />
+                                          Anpassen
+                                        </Button>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
