@@ -2144,17 +2144,9 @@ Regeln für SCENE (wenn scenery):
                 text: `Basierend auf diesem Bild-Prompt:
 "${customPrompt}"
 
-Erstelle eine DETAILLIERTE Szenenbeschreibung für den Hintergrund, die perfekt zu diesem Prompt passt.
+Beschreibe einen passenden Hintergrund/Szene für dieses Bild. Sei kreativ und detailliert - beschreibe Ort, Licht, Atmosphäre und visuelle Details in 2-3 Sätzen auf Deutsch.
 
-Beschreibe in 2-3 Sätzen:
-- Den Ort und die Umgebung (z.B. urbane Gasse, tropischer Strand, industrielles Loft)
-- Lichtstimmung und Tageszeit (goldene Stunde, weiches Morgenlicht, dramatische Schatten)
-- Atmosphärische Details (Nebel, Regen, Sonnenstrahlen durch Blätter)
-- Konkrete visuelle Elemente (alte Backsteinmauern, üppige Palmen, moderne Glasfassaden)
-
-Antworte NUR mit der detaillierten Szenenbeschreibung auf Deutsch. Keine Einleitung, keine Erklärungen.
-
-Beispiel: "Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fällt. Efeu rankt an den alten Backsteinwänden empor, während Staub in den Lichtstrahlen tanzt."`
+Antworte NUR mit der Szenenbeschreibung, keine Einleitung oder Erklärungen.`
               }]
             }],
             generationConfig: {
