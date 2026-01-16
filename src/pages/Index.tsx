@@ -3158,13 +3158,13 @@ Regeln für den Prompt:
                     <div
                       className="fixed z-50 bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 shadow-2xl overflow-hidden"
                       style={{
-                        top: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.top : '50%',
-                        left: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.left : '50%',
-                        width: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.width : '90%',
+                        top: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.top}px` : '50%',
+                        left: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.left}px` : '50%',
+                        width: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.width}px` : '90%',
                         maxWidth: (isAnimatingExpand || isAnimatingClose) ? 'none' : '42rem',
-                        height: (isAnimatingExpand || isAnimatingClose) ? expandedCardRect.height : 'auto',
+                        height: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.height}px` : 'auto',
                         maxHeight: (isAnimatingExpand || isAnimatingClose) ? 'none' : '80vh',
-                        transform: (isAnimatingExpand || isAnimatingClose) ? 'none' : 'translate(-50%, -50%)',
+                        transform: (isAnimatingExpand || isAnimatingClose) ? 'translate(0, 0)' : 'translate(-50%, -50%)',
                         transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
                     >
