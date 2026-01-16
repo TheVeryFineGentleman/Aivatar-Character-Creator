@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -3040,220 +3040,171 @@ Regeln für den Prompt:
                         }}
                         style={{ overscrollBehavior: 'contain' }}
                       >
-                        {storyPoints.map((point, index) => (
+                        {/* Backdrop - rendered when any card is expanded */}
+                        {expandedStoryPointIndex !== null && expandedCardRect && (
                           <div 
-                            key={index}
-                            ref={(el) => { storyCardRefs.current[index] = el; }}
-                            className="group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 shadow-lg overflow-hidden relative min-w-[300px] max-w-[340px] flex-shrink-0 hover:shadow-xl hover:border-primary/30 transition-all duration-300 animate-scale-in"
-                            style={{ 
-                              animationDelay: `${index * 100}ms`, 
-                              animationFillMode: 'both',
-                              visibility: (expandedStoryPointIndex === index && !isAnimatingClose) ? 'hidden' : 'visible'
-                            }}
-                          >
-                            {/* Scene number header bar with controls */}
-                            <div className="bg-muted/40 border-b border-border/30 px-4 py-2.5 flex items-center justify-between">
-                              <span className="text-sm font-semibold text-foreground/80">Szene {index + 1}</span>
-                              
-                              <div className="flex items-center gap-1.5">
-                                <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5 rounded-full hover:bg-muted"
-                                    onClick={() => navigateStoryPointVersion(index, 'prev')}
-                                    disabled={point.currentVersion === 0}
-                                  >
-                                    <ChevronLeft className="w-3 h-3" />
-                                  </Button>
-                                  <span className="text-xs font-semibold min-w-[32px] text-center">
-                                    {point.currentVersion + 1}/{point.versions.length}
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5 rounded-full hover:bg-muted"
-                                    onClick={() => navigateStoryPointVersion(index, 'next')}
-                                    disabled={point.currentVersion === point.versions.length - 1}
-                                  >
-                                    <ChevronRight className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
-                                  onClick={() => regenerateStoryPoint(index)}
-                                  disabled={regeneratingPointIndex !== null}
-                                >
-                                  {regeneratingPointIndex === index ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="w-3.5 h-3.5" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
-                                  onClick={() => {
-                                    const rect = storyCardRefs.current[index]?.getBoundingClientRect();
-                                    if (rect) {
-                                      setExpandedCardRect(rect);
-                                      setIsAnimatingExpand(true);
-                                      setExpandedStoryPointIndex(index);
-                                      // Trigger animation to center after a frame
-                                      requestAnimationFrame(() => {
-                                        requestAnimationFrame(() => {
-                                          setIsAnimatingExpand(false);
-                                        });
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Scale className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            {/* Scene content - editable */}
-                            <div className="p-2">
-                              <div className="bg-muted/30 rounded-lg p-2 min-h-[200px]">
-                                <Textarea
-                                  value={point.versions[point.currentVersion]}
-                                  onChange={(e) => {
-                                    const newText = e.target.value;
-                                    setStoryPoints(prev => prev.map((p, i) => {
-                                      if (i === index) {
-                                        const updatedVersions = [...p.versions];
-                                        updatedVersions[p.currentVersion] = newText;
-                                        return { ...p, versions: updatedVersions };
-                                      }
-                                      return p;
-                                    }));
-                                  }}
-                                  className="text-[13px] leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[180px] overflow-hidden"
-                                  placeholder="Szene beschreiben..."
-                                  style={{ overflow: 'hidden' }}
+                            className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 ${isAnimatingClose ? 'animate-fade-out' : 'animate-fade-in'}`}
+                            onClick={handleCloseExpandedCard}
+                          />
+                        )}
+                        
+                        {storyPoints.map((point, index) => {
+                          const isExpanded = expandedStoryPointIndex === index;
+                          const isAnimating = isAnimatingExpand || isAnimatingClose;
+                          
+                          return (
+                            <React.Fragment key={index}>
+                              {/* Placeholder when card is expanded - maintains layout */}
+                              {isExpanded && expandedCardRect && (
+                                <div 
+                                  style={{ 
+                                    minWidth: '300px', 
+                                    maxWidth: '340px', 
+                                    height: expandedCardRect.height,
+                                    flexShrink: 0 
+                                  }} 
                                 />
+                              )}
+                              
+                              <div 
+                                ref={(el) => { storyCardRefs.current[index] = el; }}
+                                className={`group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden ${
+                                  isExpanded 
+                                    ? 'fixed z-50 shadow-2xl' 
+                                    : 'relative shadow-lg hover:shadow-xl hover:border-primary/30 min-w-[300px] max-w-[340px] flex-shrink-0 animate-scale-in'
+                                }`}
+                                style={isExpanded && expandedCardRect ? {
+                                  top: isAnimating ? `${expandedCardRect.top}px` : '50%',
+                                  left: isAnimating ? `${expandedCardRect.left}px` : '50%',
+                                  width: isAnimating ? `${expandedCardRect.width}px` : '90%',
+                                  maxWidth: isAnimating ? 'none' : '42rem',
+                                  height: isAnimating ? `${expandedCardRect.height}px` : 'auto',
+                                  maxHeight: isAnimating ? 'none' : '80vh',
+                                  transformOrigin: 'top left',
+                                  transform: isAnimating ? 'translate(0, 0)' : 'translate(-50%, -50%)',
+                                  transition: 'top 0.4s cubic-bezier(0.4, 0, 0.2, 1), left 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                } : { 
+                                  animationDelay: `${index * 100}ms`, 
+                                  animationFillMode: 'both',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              >
+                                {/* Scene number header bar with controls */}
+                                <div className={`bg-muted/40 border-b border-border/30 flex items-center justify-between ${isExpanded ? 'px-5 py-3' : 'px-4 py-2.5'}`}>
+                                  <span className={`font-semibold text-foreground/80 ${isExpanded ? 'text-base' : 'text-sm'}`}>Szene {index + 1}</span>
+                                  
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`rounded-full hover:bg-muted ${isExpanded ? 'h-6 w-6' : 'h-5 w-5'}`}
+                                        onClick={() => navigateStoryPointVersion(index, 'prev')}
+                                        disabled={point.currentVersion === 0}
+                                      >
+                                        <ChevronLeft className={isExpanded ? 'w-4 h-4' : 'w-3 h-3'} />
+                                      </Button>
+                                      <span className={`font-semibold min-w-[32px] text-center ${isExpanded ? 'text-sm' : 'text-xs'}`}>
+                                        {point.currentVersion + 1}/{point.versions.length}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`rounded-full hover:bg-muted ${isExpanded ? 'h-6 w-6' : 'h-5 w-5'}`}
+                                        onClick={() => navigateStoryPointVersion(index, 'next')}
+                                        disabled={point.currentVersion === point.versions.length - 1}
+                                      >
+                                        <ChevronRight className={isExpanded ? 'w-4 h-4' : 'w-3 h-3'} />
+                                      </Button>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className={`rounded-full hover:bg-primary/10 hover:text-primary ${isExpanded ? 'h-7 w-7' : 'h-6 w-6'}`}
+                                      onClick={() => regenerateStoryPoint(index)}
+                                      disabled={regeneratingPointIndex !== null}
+                                    >
+                                      {regeneratingPointIndex === index ? (
+                                        <Loader2 className={`animate-spin ${isExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
+                                      ) : (
+                                        <RefreshCw className={isExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
+                                      )}
+                                    </Button>
+                                    {isExpanded ? (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                                        onClick={handleCloseExpandedCard}
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
+                                        onClick={() => {
+                                          const rect = storyCardRefs.current[index]?.getBoundingClientRect();
+                                          if (rect) {
+                                            setExpandedCardRect(rect);
+                                            setIsAnimatingExpand(true);
+                                            setExpandedStoryPointIndex(index);
+                                            requestAnimationFrame(() => {
+                                              requestAnimationFrame(() => {
+                                                setIsAnimatingExpand(false);
+                                              });
+                                            });
+                                          }
+                                        }}
+                                      >
+                                        <Scale className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Scene content - editable */}
+                                <div className={isExpanded ? 'p-4' : 'p-2'}>
+                                  <div className={`bg-muted/30 rounded-lg ${isExpanded ? 'p-3 min-h-[300px]' : 'p-2 min-h-[200px]'}`}>
+                                    <Textarea
+                                      value={point.versions[point.currentVersion]}
+                                      onChange={(e) => {
+                                        const newText = e.target.value;
+                                        setStoryPoints(prev => prev.map((p, i) => {
+                                          if (i === index) {
+                                            const updatedVersions = [...p.versions];
+                                            updatedVersions[p.currentVersion] = newText;
+                                            return { ...p, versions: updatedVersions };
+                                          }
+                                          return p;
+                                        }));
+                                      }}
+                                      className={`leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                                        isExpanded ? 'text-base min-h-[280px]' : 'text-[13px] min-h-[180px]'
+                                      }`}
+                                      placeholder="Szene beschreiben..."
+                                      style={{ overflow: 'hidden' }}
+                                    />
+                                  </div>
+                                  
+                                  {/* Expanded options - only shown when fully expanded */}
+                                  {isExpanded && !isAnimating && (
+                                    <div className="mt-4 p-4 border border-dashed border-border rounded-lg bg-muted/20 animate-fade-in">
+                                      <p className="text-sm text-muted-foreground text-center">
+                                        Weitere Optionen werden hier hinzugefügt...
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        ))}
+                            </React.Fragment>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
                 </div>
-
-                {/* Expanded Card Overlay - OUTSIDE the scroll container */}
-                {expandedStoryPointIndex !== null && expandedCardRect && storyPoints[expandedStoryPointIndex] && (
-                  <>
-                    {/* Backdrop */}
-                    <div 
-                      className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 ${isAnimatingClose ? 'animate-fade-out' : 'animate-fade-in'}`}
-                      onClick={handleCloseExpandedCard}
-                    />
-                    
-                    {/* Animated Card Clone */}
-                    <div
-                      className="fixed z-50 bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 shadow-2xl overflow-hidden"
-                      style={{
-                        top: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.top}px` : '50%',
-                        left: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.left}px` : '50%',
-                        width: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.width}px` : '90%',
-                        maxWidth: (isAnimatingExpand || isAnimatingClose) ? 'none' : '42rem',
-                        height: (isAnimatingExpand || isAnimatingClose) ? `${expandedCardRect.height}px` : 'auto',
-                        maxHeight: (isAnimatingExpand || isAnimatingClose) ? 'none' : '80vh',
-                        transformOrigin: 'top left',
-                        transform: (isAnimatingExpand || isAnimatingClose) ? 'translate(0, 0)' : 'translate(-50%, -50%)',
-                        transition: 'top 0.4s cubic-bezier(0.4, 0, 0.2, 1), left 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
-                    >
-                      {/* Header */}
-                      <div className="bg-muted/40 border-b border-border/30 px-5 py-3 flex items-center justify-between">
-                        <span className="text-base font-semibold text-foreground/80">Szene {expandedStoryPointIndex + 1}</span>
-                        
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 rounded-full hover:bg-muted"
-                              onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'prev')}
-                              disabled={storyPoints[expandedStoryPointIndex].currentVersion === 0}
-                            >
-                              <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            <span className="text-sm font-semibold min-w-[32px] text-center">
-                              {storyPoints[expandedStoryPointIndex].currentVersion + 1}/{storyPoints[expandedStoryPointIndex].versions.length}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 rounded-full hover:bg-muted"
-                              onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'next')}
-                              disabled={storyPoints[expandedStoryPointIndex].currentVersion === storyPoints[expandedStoryPointIndex].versions.length - 1}
-                            >
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-full hover:bg-primary/10 hover:text-primary"
-                            onClick={() => regenerateStoryPoint(expandedStoryPointIndex)}
-                            disabled={regeneratingPointIndex !== null}
-                          >
-                            {regeneratingPointIndex === expandedStoryPointIndex ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                            onClick={handleCloseExpandedCard}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="p-4">
-                        <div className="bg-muted/30 rounded-lg p-3 min-h-[300px]">
-                          <Textarea
-                            value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
-                            onChange={(e) => {
-                              const newText = e.target.value;
-                              setStoryPoints(prev => prev.map((p, i) => {
-                                if (i === expandedStoryPointIndex) {
-                                  const updatedVersions = [...p.versions];
-                                  updatedVersions[p.currentVersion] = newText;
-                                  return { ...p, versions: updatedVersions };
-                                }
-                                return p;
-                              }));
-                            }}
-                            className="text-base leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[280px]"
-                            placeholder="Szene beschreiben..."
-                          />
-                        </div>
-                        
-                        {/* Expanded options */}
-                        {!isAnimatingExpand && (
-                          <div className="mt-4 p-4 border border-dashed border-border rounded-lg bg-muted/20 animate-fade-in">
-                            <p className="text-sm text-muted-foreground text-center">
-                              Weitere Optionen werden hier hinzugefügt...
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
             </CardContent>
           </Card>
