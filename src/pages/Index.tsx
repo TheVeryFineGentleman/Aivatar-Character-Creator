@@ -12,7 +12,7 @@ import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
-import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
+import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage, compressImage } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -374,7 +374,13 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
           reader.onloadend = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
-        newImages.push(base64);
+        // Compress the image before storing
+        try {
+          const compressed = await compressImage(base64, 800, 0.7);
+          newImages.push(compressed);
+        } catch {
+          newImages.push(base64); // Fallback to original if compression fails
+        }
       }
       
       setStoryReferenceImages(prev => {
@@ -633,18 +639,26 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     }
   }, [apiKey]);
 
-  // Save reference images when they change
+  // Save reference images when they change (with compression)
   useEffect(() => {
     if (referenceImages.length > 0) {
       Promise.all(
         referenceImages.map((file) => {
-          return new Promise<{ name: string; type: string; data: string }>((resolve) => {
+          return new Promise<{ name: string; type: string; data: string }>(async (resolve) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
+            reader.onloadend = async () => {
+              const base64 = reader.result as string;
+              // Compress the image before storing
+              let compressedData = base64;
+              try {
+                compressedData = await compressImage(base64, 800, 0.7);
+              } catch {
+                // Use original if compression fails
+              }
               resolve({
                 name: file.name,
-                type: file.type,
-                data: reader.result as string,
+                type: 'image/jpeg', // After compression it's JPEG
+                data: compressedData,
               });
             };
             reader.readAsDataURL(file);
