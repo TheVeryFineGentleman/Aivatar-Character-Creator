@@ -226,14 +226,15 @@ const Index = () => {
   const [isAnimatingExpand, setIsAnimatingExpand] = useState(false);
   const [isAnimatingClose, setIsAnimatingClose] = useState(false);
   const storyCardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const placeholderRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleCloseExpandedCard = () => {
     if (isAnimatingClose || expandedStoryPointIndex === null) return;
     
-    // Get the current position of the original card (in case user scrolled)
-    const currentRect = storyCardRefs.current[expandedStoryPointIndex]?.getBoundingClientRect();
-    if (currentRect) {
-      setExpandedCardRect(currentRect);
+    // Get the position from the placeholder (which maintains the original position in the scroll container)
+    const placeholderRect = placeholderRefs.current[expandedStoryPointIndex]?.getBoundingClientRect();
+    if (placeholderRect) {
+      setExpandedCardRect(placeholderRect);
     }
     
     setIsAnimatingClose(true);
@@ -3055,16 +3056,18 @@ Regeln für den Prompt:
                           return (
                             <React.Fragment key={index}>
                               {/* Placeholder when card is expanded - maintains layout */}
-                              {isExpanded && expandedCardRect && (
-                                <div 
-                                  style={{ 
-                                    minWidth: '300px', 
-                                    maxWidth: '340px', 
-                                    height: expandedCardRect.height,
-                                    flexShrink: 0 
-                                  }} 
-                                />
-                              )}
+                              {/* Placeholder - always rendered but invisible when not expanded */}
+                              <div 
+                                ref={(el) => { placeholderRefs.current[index] = el; }}
+                                style={{ 
+                                  minWidth: isExpanded ? '300px' : '0px', 
+                                  maxWidth: isExpanded ? '340px' : '0px', 
+                                  width: isExpanded ? '300px' : '0px',
+                                  height: isExpanded && expandedCardRect ? expandedCardRect.height : 0,
+                                  flexShrink: 0,
+                                  overflow: 'hidden'
+                                }} 
+                              />
                               
                               <div 
                                 ref={(el) => { storyCardRefs.current[index] = el; }}
