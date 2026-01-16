@@ -3227,10 +3227,9 @@ Regeln für den Prompt:
                                         }}
                                       >
                                         <SelectTrigger className="w-full bg-background/50">
-                                          <SelectValue placeholder="Automatisch" />
+                                          <SelectValue placeholder="Von KI wählen lassen..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value="auto">Automatisch</SelectItem>
                                           <SelectItem value="frontal">Frontal</SelectItem>
                                           <SelectItem value="seitlich">Seitlich</SelectItem>
                                           <SelectItem value="von-oben">Von oben</SelectItem>
@@ -3254,10 +3253,9 @@ Regeln für den Prompt:
                                         }}
                                       >
                                         <SelectTrigger className="w-full bg-background/50">
-                                          <SelectValue placeholder="Automatisch" />
+                                          <SelectValue placeholder="Von KI wählen lassen..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value="auto">Automatisch</SelectItem>
                                           <SelectItem value="extreme-close-up">Extreme Close-Up</SelectItem>
                                           <SelectItem value="close-up">Close-Up</SelectItem>
                                           <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
