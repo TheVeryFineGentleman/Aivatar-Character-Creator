@@ -2061,17 +2061,17 @@ Regeln für den Prompt:
 - Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
 - 2-4 Sätze auf Deutsch
 
-Antworte in diesem EXAKTEN Format (3 Zeilen):
-PROMPT: [Dein generierter Prompt hier, 2-4 Sätze auf Deutsch]
-BACKGROUND: [white ODER greenscreen ODER scenery]
-SCENE: [Wenn BACKGROUND=scenery, beschreibe die Szene kurz. Sonst leer lassen]
+Antworte NUR mit einem validen JSON-Objekt in diesem exakten Format:
+{"prompt": "Dein generierter Prompt hier (2-4 Sätze auf Deutsch)", "background": "white", "scene": ""}
 
-Wähle BACKGROUND basierend auf der Nutzer-Anfrage:
+Wähle "background" basierend auf der Nutzer-Anfrage:
 - "white" wenn neutraler/weißer Hintergrund gewünscht oder keine Umgebung erwähnt
 - "greenscreen" wenn Greenscreen erwähnt
 - "scenery" wenn eine bestimmte Umgebung/Szene impliziert wird (z.B. "am Strand", "im Wald", "in der Stadt")
 
-Keine zusätzlichen Erklärungen, nur diese 3 Zeilen.`
+Für "scene": Wenn background="scenery", beschreibe die Szene kurz. Sonst leerer String.
+
+WICHTIG: Keine Erklärungen, kein Markdown, nur das JSON-Objekt.`
                   }
                 ]
               }
@@ -2096,33 +2096,26 @@ Keine zusätzlichen Erklärungen, nur diese 3 Zeilen.`
         throw new Error("Keine Antwort erhalten");
       }
 
-      // Parse the structured response (PROMPT:, BACKGROUND:, SCENE:)
+      // Parse JSON response
       let newPrompt = responseText;
       let suggestedBg: string | null = null;
       let suggestedScene: string | null = null;
 
-      // Extract PROMPT - everything between PROMPT: and BACKGROUND:
-      const promptMatch = responseText.match(/PROMPT:\s*([\s\S]*?)(?=\nBACKGROUND:)/i);
-      if (promptMatch && promptMatch[1]) {
-        newPrompt = promptMatch[1].trim();
-      } else {
-        // Fallback: if no BACKGROUND: found, take everything after PROMPT:
-        const fallbackMatch = responseText.match(/PROMPT:\s*([\s\S]*)/i);
-        if (fallbackMatch && fallbackMatch[1]) {
-          newPrompt = fallbackMatch[1].trim();
-        }
-      }
-
-      // Extract BACKGROUND line
-      const bgMatch = responseText.match(/BACKGROUND:\s*(white|greenscreen|scenery)/i);
-      if (bgMatch && bgMatch[1]) {
-        suggestedBg = bgMatch[1].toLowerCase();
-      }
-
-      // Extract SCENE line
-      const sceneMatch = responseText.match(/SCENE:\s*(.+?)$/is);
-      if (sceneMatch && sceneMatch[1] && sceneMatch[1].trim()) {
-        suggestedScene = sceneMatch[1].trim();
+      try {
+        // Remove markdown code blocks if present
+        const cleanedResponse = responseText
+          .replace(/```json\s*/gi, '')
+          .replace(/```\s*/g, '')
+          .trim();
+        
+        const parsed = JSON.parse(cleanedResponse);
+        newPrompt = parsed.prompt || responseText;
+        suggestedBg = parsed.background || null;
+        suggestedScene = parsed.scene || null;
+      } catch (e) {
+        // Fallback: if JSON parsing fails, use raw response as prompt
+        console.warn("JSON parsing failed, using raw response:", e);
+        newPrompt = responseText;
       }
       
       // Add as new version and navigate to it
