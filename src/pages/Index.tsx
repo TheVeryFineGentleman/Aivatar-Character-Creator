@@ -2044,13 +2044,18 @@ ${settingsContext}${existingPromptContext}
 Antworte im folgenden strukturierten Format:
 PROMPT: [Der generierte Bild-Prompt, 2-4 Sätze auf Deutsch]
 BACKGROUND: [white, greenscreen, oder scenery - was am besten zur Anfrage passt]
-SCENE: [Wenn BACKGROUND=scenery, beschreibe kurz die passende Szene in max 10 Worten, sonst leer lassen]
+SCENE: [Wenn BACKGROUND=scenery, beschreibe die Szene DETAILLIERT in 2-3 Sätzen: Ort, Lichtstimmung, Atmosphäre, Details wie Pflanzen/Architektur/Wetter. Sonst leer lassen]
 
 Regeln für den Prompt:
 - Fokussiere dich GENAU auf das, was der Nutzer beschrieben hat
 - Berücksichtige die oben genannten Einstellungen
 - Beschreibe Pose, Ausdruck, Kleidung passend zur Anfrage und zum Aufnahme-Typ
-- 2-4 Sätze auf Deutsch`
+- 2-4 Sätze auf Deutsch
+
+Regeln für SCENE (wenn scenery):
+- Beschreibe Lichtverhältnisse (goldene Stunde, diffuses Licht, dramatische Schatten)
+- Nenne konkrete Details (alte Backsteinmauern, üppige Vegetation, moderne Glasfassaden)
+- Erwähne Atmosphäre und Stimmung (ruhig, urban, mystisch, lebendig)`
                   }
                 ]
               }
@@ -2139,15 +2144,22 @@ Regeln für den Prompt:
                 text: `Basierend auf diesem Bild-Prompt:
 "${customPrompt}"
 
-Schlage eine passende Szene/Hintergrund vor, die zu diesem Prompt passt.
+Erstelle eine DETAILLIERTE Szenenbeschreibung für den Hintergrund, die perfekt zu diesem Prompt passt.
 
-Antworte NUR mit der Szenenbeschreibung in max 10 Worten auf Deutsch. Keine Erklärungen.
-Beispiele: "Strand bei Sonnenuntergang", "Urbaner Park im Herbst", "Modernes Loft mit großen Fenstern"`
+Beschreibe in 2-3 Sätzen:
+- Den Ort und die Umgebung (z.B. urbane Gasse, tropischer Strand, industrielles Loft)
+- Lichtstimmung und Tageszeit (goldene Stunde, weiches Morgenlicht, dramatische Schatten)
+- Atmosphärische Details (Nebel, Regen, Sonnenstrahlen durch Blätter)
+- Konkrete visuelle Elemente (alte Backsteinmauern, üppige Palmen, moderne Glasfassaden)
+
+Antworte NUR mit der detaillierten Szenenbeschreibung auf Deutsch. Keine Einleitung, keine Erklärungen.
+
+Beispiel: "Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fällt. Efeu rankt an den alten Backsteinwänden empor, während Staub in den Lichtstrahlen tanzt."`
               }]
             }],
             generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 50
+              temperature: 0.8,
+              maxOutputTokens: 200
             }
           })
         }
