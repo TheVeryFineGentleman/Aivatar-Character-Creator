@@ -2096,41 +2096,47 @@ Keine zusätzlichen Erklärungen, nur das JSON.`
 
       // Parse JSON response
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        // Fallback: treat entire response as prompt if no JSON found
-        const newPrompt = responseText;
-        setCustomPromptVersions(prev => [...prev, newPrompt]);
-        setCurrentCustomPromptIndex(customPromptVersions.length);
-        setCustomPrompt(newPrompt);
-        setSuggestedBackground(null);
-        setSuggestedSceneDescription(null);
-      } else {
-        const parsed = JSON.parse(jsonMatch[0]);
-        const newPrompt = parsed.prompt || responseText;
-        
-        // Add as new version and navigate to it
-        setCustomPromptVersions(prev => [...prev, newPrompt]);
-        setCurrentCustomPromptIndex(customPromptVersions.length);
-        setCustomPrompt(newPrompt);
-        
-        // Set suggested background if different from current
-        const suggestedBg = parsed.background;
-        if (suggestedBg && ["white", "greenscreen", "scenery"].includes(suggestedBg)) {
-          if (suggestedBg !== selectedBackground) {
-            setSuggestedBackground(suggestedBg);
-            setSuggestedSceneDescription(parsed.sceneDescription || null);
-          } else if (suggestedBg === "scenery" && parsed.sceneDescription && parsed.sceneDescription !== sceneDescription) {
-            // Same background type but different scene description
-            setSuggestedBackground(suggestedBg);
-            setSuggestedSceneDescription(parsed.sceneDescription);
-          } else {
-            setSuggestedBackground(null);
-            setSuggestedSceneDescription(null);
+      let newPrompt = responseText;
+      let suggestedBg: string | null = null;
+      let suggestedScene: string | null = null;
+
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          // Extract the prompt from JSON
+          if (parsed.prompt && typeof parsed.prompt === 'string') {
+            newPrompt = parsed.prompt;
           }
+          // Extract background suggestion
+          if (parsed.background && ["white", "greenscreen", "scenery"].includes(parsed.background)) {
+            suggestedBg = parsed.background;
+            suggestedScene = parsed.sceneDescription || null;
+          }
+        } catch (e) {
+          console.warn("Failed to parse JSON response, using raw text");
+        }
+      }
+      
+      // Add as new version and navigate to it
+      setCustomPromptVersions(prev => [...prev, newPrompt]);
+      setCurrentCustomPromptIndex(customPromptVersions.length);
+      setCustomPrompt(newPrompt);
+      
+      // Set suggested background if different from current
+      if (suggestedBg) {
+        if (suggestedBg !== selectedBackground) {
+          setSuggestedBackground(suggestedBg);
+          setSuggestedSceneDescription(suggestedScene);
+        } else if (suggestedBg === "scenery" && suggestedScene && suggestedScene !== sceneDescription) {
+          setSuggestedBackground(suggestedBg);
+          setSuggestedSceneDescription(suggestedScene);
         } else {
           setSuggestedBackground(null);
           setSuggestedSceneDescription(null);
         }
+      } else {
+        setSuggestedBackground(null);
+        setSuggestedSceneDescription(null);
       }
       
       toast({
