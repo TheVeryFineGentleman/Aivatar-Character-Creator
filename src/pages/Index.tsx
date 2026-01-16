@@ -3150,7 +3150,7 @@ Regeln für den Prompt:
                         height: isAnimatingExpand ? expandedCardRect.height : 'auto',
                         maxHeight: isAnimatingExpand ? 'none' : '80vh',
                         transform: isAnimatingExpand ? 'none' : 'translate(-50%, -50%)',
-                        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
                     >
                       {/* Header */}
