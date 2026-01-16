@@ -2078,7 +2078,7 @@ WICHTIG: Keine Erklärungen, kein Markdown, nur das JSON-Objekt.`
             ],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 2048
+              maxOutputTokens: 8192
             }
           }),
         }
@@ -2103,10 +2103,24 @@ WICHTIG: Keine Erklärungen, kein Markdown, nur das JSON-Objekt.`
 
       try {
         // Remove markdown code blocks if present
-        const cleanedResponse = responseText
+        let cleanedResponse = responseText
           .replace(/```json\s*/gi, '')
           .replace(/```\s*/g, '')
           .trim();
+        
+        // Attempt to repair incomplete JSON (if cut off due to token limits)
+        if (!cleanedResponse.endsWith('}')) {
+          const openBraces = (cleanedResponse.match(/{/g) || []).length;
+          const closeBraces = (cleanedResponse.match(/}/g) || []).length;
+          const missingBraces = openBraces - closeBraces;
+          if (missingBraces > 0) {
+            // Try to find last complete field and close JSON
+            const lastQuoteIndex = cleanedResponse.lastIndexOf('"');
+            if (lastQuoteIndex > 0) {
+              cleanedResponse = cleanedResponse.substring(0, lastQuoteIndex + 1) + '}'.repeat(missingBraces);
+            }
+          }
+        }
         
         const parsed = JSON.parse(cleanedResponse);
         newPrompt = parsed.prompt || responseText;
