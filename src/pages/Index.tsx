@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -205,6 +205,7 @@ const Index = () => {
   // AI Background Suggestion state
   const [aiBackgroundSuggestion, setAiBackgroundSuggestion] = useState("");
   const [isGeneratingBackgroundSuggestion, setIsGeneratingBackgroundSuggestion] = useState(false);
+  const [isBackgroundAiPanelOpen, setIsBackgroundAiPanelOpen] = useState(false);
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
@@ -2717,78 +2718,91 @@ Beispiel einer korrekten Antwort:
                   : "max-h-0 opacity-0 mt-0"
               }`}>
                 <div className="space-y-3">
-                  {/* Textarea with AI button next to it */}
-                  <div className="flex gap-3 items-start max-w-lg">
+                  {/* Textarea with AI toggle button */}
+                  <div className="flex gap-0 items-stretch max-w-lg">
                     <Textarea
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[80px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[80px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-r-none border-r-0"
                       maxLength={300}
                     />
-                    {/* AI Button - only visible when custom prompt is active */}
+                    
+                    {/* AI Toggle Button - only visible when custom prompt is active */}
                     {authData.planCode === "FULL" && useCustomPrompt && (
                       <Button
-                        onClick={handleGenerateBackgroundSuggestion}
-                        disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        className="shrink-0 h-[80px] px-5 bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                        title="KI um Hintergrund-Vorschlag bitten"
+                        onClick={() => {
+                          if (!isBackgroundAiPanelOpen) {
+                            setIsBackgroundAiPanelOpen(true);
+                            // Auto-generate when opening if no suggestion exists
+                            if (!aiBackgroundSuggestion && !isGeneratingBackgroundSuggestion && !sceneDescription.trim()) {
+                              handleGenerateBackgroundSuggestion();
+                            }
+                          } else {
+                            setIsBackgroundAiPanelOpen(false);
+                          }
+                        }}
+                        disabled={isGeneratingBackgroundSuggestion}
+                        className="shrink-0 w-10 rounded-l-none bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                        title={isBackgroundAiPanelOpen ? "KI-Panel schließen" : "KI um Hintergrund-Vorschlag bitten"}
                       >
                         {isGeneratingBackgroundSuggestion ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <div className="flex flex-col items-center gap-1.5">
-                            <Sparkles className="w-5 h-5" />
-                            <span className="text-xs font-semibold">KI fragen</span>
-                          </div>
+                          <ArrowRight 
+                            className={`w-4 h-4 transition-transform duration-300 ${isBackgroundAiPanelOpen ? 'rotate-180' : ''}`} 
+                          />
                         )}
                       </Button>
                     )}
                   </div>
                   
-                  {/* AI Background Suggestion - cleaner card design */}
-                  {aiBackgroundSuggestion && selectedBackground === "scenery" && (
-                    <div className="animate-fade-in rounded-lg border border-primary/30 bg-primary/5 p-3">
+                  {/* AI Background Suggestion - sliding panel */}
+                  <div 
+                    className={`overflow-hidden transition-all duration-300 ease-out ${
+                      isBackgroundAiPanelOpen && selectedBackground === "scenery" 
+                        ? 'max-h-[200px] opacity-100' 
+                        : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
                       <div className="flex items-start gap-3">
                         <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-foreground leading-relaxed">
-                            {aiBackgroundSuggestion}
+                            {aiBackgroundSuggestion || "Generiere einen Vorschlag..."}
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          onClick={handleApplyBackgroundSuggestion}
-                          size="sm"
-                          className="flex-1"
-                        >
-                          <Check className="w-4 h-4 mr-1" />
-                          Übernehmen
-                        </Button>
-                        <Button
-                          onClick={handleGenerateBackgroundSuggestion}
-                          disabled={isGeneratingBackgroundSuggestion}
-                          variant="outline"
-                          size="sm"
-                        >
-                          {isGeneratingBackgroundSuggestion ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          onClick={() => setAiBackgroundSuggestion("")}
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {aiBackgroundSuggestion && (
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            onClick={() => {
+                              handleApplyBackgroundSuggestion();
+                              setIsBackgroundAiPanelOpen(false);
+                            }}
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Übernehmen
+                          </Button>
+                          <Button
+                            onClick={handleGenerateBackgroundSuggestion}
+                            disabled={isGeneratingBackgroundSuggestion}
+                            variant="outline"
+                            size="sm"
+                          >
+                            {isGeneratingBackgroundSuggestion ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
