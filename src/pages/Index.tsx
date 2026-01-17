@@ -3135,12 +3135,8 @@ Beispiel einer korrekten Antwort:
                       {/* Right: AI Chat Input - Only for FULL plan */}
                       {authData.planCode === "FULL" && (
                         <div className="flex-1 flex flex-col">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-muted-foreground" />
-                              <Label className="text-muted-foreground">KI-Assistent</Label>
-                            </div>
-                            {/* Segmented Control for Target Selection */}
+                          {/* Segmented Control centered at top */}
+                          <div className="flex justify-center mb-2">
                             <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
                               <Button
                                 variant={aiAssistantTarget === "prompt" ? "default" : "ghost"}
