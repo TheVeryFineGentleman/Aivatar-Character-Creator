@@ -2726,12 +2726,13 @@ Beispiel einer korrekten Antwort:
                       className="min-h-[80px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
-                    {/* AI Button - positioned to the right of textarea */}
-                    {authData.planCode === "FULL" && (
+                    {/* AI Button - only visible when custom prompt is active */}
+                    {authData.planCode === "FULL" && useCustomPrompt && (
                       <Button
                         onClick={handleGenerateBackgroundSuggestion}
                         disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        className="shrink-0 h-[80px] px-4 bg-amber-500 hover:bg-amber-600 text-white border-0 transition-all"
+                        variant="outline"
+                        className="shrink-0 h-[80px] px-4 bg-white hover:bg-gray-100 text-gray-800 border-gray-300 transition-all"
                         title="KI um Hintergrund-Vorschlag bitten"
                       >
                         {isGeneratingBackgroundSuggestion ? (
