@@ -3704,10 +3704,10 @@ Beispiel einer korrekten Antwort:
                       {/* Toggle Button - moves with panel */}
                       <button
                         onClick={() => setVideoPromptOpen(!videoPromptOpen)}
-                        className="flex-shrink-0 w-8 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-all hover:w-9 rounded-l-lg"
+                        className="flex-shrink-0 w-6 h-12 self-center bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-all hover:w-7 rounded-l-md"
                       >
                         <ChevronRight 
-                          className={`w-5 h-5 transition-transform duration-300 ${videoPromptOpen ? 'rotate-0' : 'rotate-180'}`} 
+                          className={`w-4 h-4 transition-transform duration-300 ${videoPromptOpen ? 'rotate-0' : 'rotate-180'}`} 
                         />
                       </button>
                       
