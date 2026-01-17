@@ -3137,42 +3137,44 @@ Beispiel einer korrekten Antwort:
                         <div className="flex-1 flex flex-col">
                           {/* Header with label left and segmented control centered */}
                           <div className="flex items-center mb-2">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 w-24">
                               <Sparkles className="w-4 h-4 text-muted-foreground" />
                               <Label className="text-muted-foreground">KI-Assistent</Label>
                             </div>
                             <div className="flex-1 flex justify-center">
                               <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
-                              <Button
-                                variant={aiAssistantTarget === "prompt" ? "default" : "ghost"}
-                                size="sm"
-                                className={`h-6 px-2 text-xs ${aiAssistantTarget === "prompt" ? "" : "text-muted-foreground hover:text-foreground"}`}
-                                onClick={() => setAiAssistantTarget("prompt")}
-                              >
-                                Prompt
-                              </Button>
-                              <Button
-                                variant={aiAssistantTarget === "background" ? "default" : "ghost"}
-                                size="sm"
-                                className={`h-6 px-2 text-xs ${aiAssistantTarget === "background" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
-                                onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("background")}
-                                disabled={selectedBackground !== "scenery"}
-                                title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
-                              >
-                                Hintergrund
-                              </Button>
-                              <Button
-                                variant={aiAssistantTarget === "both" ? "default" : "ghost"}
-                                size="sm"
-                                className={`h-6 px-2 text-xs ${aiAssistantTarget === "both" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
-                                onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("both")}
-                                disabled={selectedBackground !== "scenery"}
-                                title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
-                              >
-                                Beides
-                              </Button>
+                                <Button
+                                  variant={aiAssistantTarget === "prompt" ? "default" : "ghost"}
+                                  size="sm"
+                                  className={`h-6 px-2 text-xs ${aiAssistantTarget === "prompt" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                                  onClick={() => setAiAssistantTarget("prompt")}
+                                >
+                                  Prompt
+                                </Button>
+                                <Button
+                                  variant={aiAssistantTarget === "background" ? "default" : "ghost"}
+                                  size="sm"
+                                  className={`h-6 px-2 text-xs ${aiAssistantTarget === "background" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                  onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("background")}
+                                  disabled={selectedBackground !== "scenery"}
+                                  title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
+                                >
+                                  Hintergrund
+                                </Button>
+                                <Button
+                                  variant={aiAssistantTarget === "both" ? "default" : "ghost"}
+                                  size="sm"
+                                  className={`h-6 px-2 text-xs ${aiAssistantTarget === "both" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                  onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("both")}
+                                  disabled={selectedBackground !== "scenery"}
+                                  title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
+                                >
+                                  Beides
+                                </Button>
+                              </div>
                             </div>
-                            </div>
+                            {/* Spacer to balance the label */}
+                            <div className="w-24" />
                           </div>
                           <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                             <Textarea
