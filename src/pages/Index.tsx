@@ -2718,13 +2718,13 @@ Beispiel einer korrekten Antwort:
               }`}>
                 <div className="space-y-3">
                   {/* Textarea with AI button integrated */}
-                  <div className="relative">
+                  <div className="relative max-w-md">
                     <Textarea
-                      placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang mit warmem Licht', 'Urbaner Park im Herbst mit bunten Blättern')"
+                      placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[100px] resize-none pr-24"
-                      maxLength={500}
+                      className="min-h-[80px] resize-none pr-24"
+                      maxLength={300}
                     />
                     {/* AI Button - positioned inside the textarea */}
                     {authData.planCode === "FULL" && !sceneDescription.trim() && (
@@ -3641,27 +3641,32 @@ Beispiel einer korrekten Antwort:
                 <div className="flex-1 relative flex min-h-0 overflow-hidden">
                   {/* Image Area */}
                   <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden transition-all duration-300">
-                    {/* Left Navigation */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
-                      onClick={() => navigateImage('prev')}
-                      disabled={selectedImageIndex === 0}
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </Button>
-
-                    {/* Right Navigation */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 hover:bg-background shadow-md"
-                      onClick={() => navigateImage('next')}
-                      disabled={selectedImageIndex === imageSlots.length - 1}
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </Button>
+                    {/* Navigation Controls - centered at bottom */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="rounded-full bg-background/90 hover:bg-background shadow-lg backdrop-blur-sm h-10 w-10"
+                        onClick={() => navigateImage('prev')}
+                        disabled={selectedImageIndex === 0}
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </Button>
+                      
+                      <span className="text-sm font-medium bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                        {selectedImageIndex + 1} / {imageSlots.length}
+                      </span>
+                      
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="rounded-full bg-background/90 hover:bg-background shadow-lg backdrop-blur-sm h-10 w-10"
+                        onClick={() => navigateImage('next')}
+                        disabled={selectedImageIndex === imageSlots.length - 1}
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </Button>
+                    </div>
 
                     {/* Image Display */}
                     <div className="w-full h-full flex items-center justify-center px-12 overflow-hidden">
@@ -3952,10 +3957,10 @@ Beispiel einer korrekten Antwort:
                   {isPro && imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && !videoPromptOpen && (
                     <button
                       onClick={() => setVideoPromptOpen(true)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-primary/90 hover:bg-primary text-primary-foreground px-1.5 py-4 rounded-l-lg shadow-lg transition-all hover:px-2 flex items-center gap-1"
+                      className="absolute right-4 bottom-20 z-20 bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2"
                     >
-                      <ChevronLeft className="w-4 h-4" />
                       <Video className="w-4 h-4" />
+                      <span className="text-sm font-medium">Video Prompt</span>
                     </button>
                   )}
                 </div>
