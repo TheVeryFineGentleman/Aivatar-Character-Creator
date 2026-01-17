@@ -792,121 +792,108 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
-      // Create AbortController for timeout
+      // ===== Gemini Image Generation (robust & production-safe) =====
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
-      
-      // Call Google Gemini API directly with ALL reference images
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-0520:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: parts,
-              },
-            ],
-            generationConfig: {
-              responseModalities: ["TEXT", "IMAGE"],
+      const timeoutId = setTimeout(() => controller.abort(), 120_000); // 2 Minuten
+
+      let response;
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-0520:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-          }),
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: "user",
+                  parts: parts,
+                },
+              ],
+              generationConfig: {
+                responseModalities: ["TEXT", "IMAGE"],
+              },
+            }),
+          }
+        );
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          throw new Error("Gemini request timed out");
         }
-      );
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
-      clearTimeout(timeoutId);
+      console.log("🔍 API Request sent, Response status:", response.status);
 
-      console.log("🔍 API Request sent to:", response.url);
-      console.log("🔍 Response status:", response.status);
-      console.log("🔍 Response headers:", Object.fromEntries(response.headers.entries()));
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ Google API error: ${response.status}`, errorText);
-        console.error("❌ Full response:", response);
-        throw new Error(`Image generation failed: ${response.status}`);
+        console.error(`❌ Gemini API error ${response.status}:`, errorText);
+        throw new Error(`Gemini API error ${response.status}: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log("📦 Full API Response for image", index + 1, ":");
-      console.log(JSON.stringify(data, null, 2));
-      
+      console.log("📦 Full API Response for image", index + 1);
+
+      // ===== IMAGE EXTRACTION =====
+      const candidates = data.candidates ?? [];
+      if (candidates.length === 0) {
+        throw new Error("No candidates returned by Gemini");
+      }
+
       // Check for IMAGE_OTHER error (model couldn't generate from reference)
-      if (data.candidates?.[0]?.finishReason === "IMAGE_OTHER") {
+      if (candidates[0]?.finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
         
-        // Retry with fresh API call (not just recursive call)
         if (retryCount < MAX_RETRIES) {
-          console.log(`🔄 Retrying image ${index + 1} with new API call (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
-          
-          updateSlotSafe(index, { 
-            status: "loading", 
-            progress: 30,
-            retrying: true 
-          });
-          
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+          console.log(`🔄 Retrying image ${index + 1} (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+          updateSlotSafe(index, { status: "loading", progress: 30, retrying: true });
+          await new Promise(resolve => setTimeout(resolve, 2000));
           return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
         } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
-          // Final attempt with simplified prompt
           console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
-          
-          updateSlotSafe(index, { 
-            status: "loading", 
-            progress: 40,
-            retrying: true 
-          });
-          
+          updateSlotSafe(index, { status: "loading", progress: 40, retrying: true });
           await new Promise(resolve => setTimeout(resolve, 2000));
           return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
         }
-        
         return null;
       }
-      
-      console.log("🔍 Checking response structure:");
-      console.log("  - data.candidates exists?", !!data.candidates);
-      console.log("  - candidates length:", data.candidates?.length);
-      console.log("  - candidates[0]:", data.candidates?.[0]);
-      console.log("  - candidates[0].content:", data.candidates?.[0]?.content);
-      console.log("  - candidates[0].content.parts:", data.candidates?.[0]?.content?.parts);
-      
-      // Extract the generated image from the response
-      if (data.candidates && data.candidates[0]?.content?.parts) {
-        const imagePart = data.candidates[0].content.parts.find(
-          (part: any) => part.inlineData
-        );
-        console.log("🔍 Found imagePart:", imagePart);
-        
-        if (imagePart?.inlineData?.data) {
-          const imageData = imagePart.inlineData.data;
-          const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
-          
-          console.log(`✅ Image ${index + 1} generated successfully`);
-          console.log("🔍 MIME Type:", mimeType);
-          console.log("🔍 Base64 data length:", imageData.length);
-          
-          // Convert Base64 to Blob for better memory management
-          const byteCharacters = atob(imageData);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: mimeType });
-          
-          // Create Blob URL instead of Data URL to save memory
-          const blobUrl = URL.createObjectURL(blob);
-          
-          console.log("✅ Blob URL created:", blobUrl);
-          
-          return blobUrl;
+
+      const partsOut = candidates[0]?.content?.parts ?? [];
+      const imagePart = partsOut.find(
+        (p: any) =>
+          p.inlineData &&
+          typeof p.inlineData.data === "string" &&
+          p.inlineData.mimeType?.startsWith("image/")
+      );
+
+      if (imagePart) {
+        // ===== BASE64 → BLOB (Browser) =====
+        const base64 = imagePart.inlineData.data;
+        const mimeType = imagePart.inlineData.mimeType || "image/png";
+
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
         }
+        const blob = new Blob([bytes], { type: mimeType });
+
+        const objectUrl = URL.createObjectURL(blob);
+        console.log(`✅ Image ${index + 1} generated successfully:`, objectUrl);
+        return objectUrl;
       }
+
+      // No image found - log text response for debugging
+      const textFallback = partsOut
+        .map((p: any) => p.text)
+        .filter(Boolean)
+        .join("\n");
+      console.error("❌ Gemini did not return an image. Text response:", textFallback);
       
       console.error("❌ No image in response for image", index + 1);
       console.error("❌ Response structure did not match expected format");
