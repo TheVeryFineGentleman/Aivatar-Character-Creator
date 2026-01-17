@@ -2731,7 +2731,7 @@ Beispiel einer korrekten Antwort:
                       <Button
                         onClick={handleGenerateBackgroundSuggestion}
                         disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        className="shrink-0 h-[80px] px-5 bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                        className="shrink-0 h-[80px] px-5 bg-zinc-800 hover:bg-zinc-700 text-white border-0 shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                         title="KI um Hintergrund-Vorschlag bitten"
                       >
                         {isGeneratingBackgroundSuggestion ? (
