@@ -3700,31 +3700,35 @@ Beispiel einer korrekten Antwort:
 
                   {/* Video Prompt Side Panel - Only for Pro users */}
                   {isPro && imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && (
-                    <div 
-                      className={`flex-shrink-0 border-l border-border/50 bg-gradient-to-b from-card to-card/80 flex flex-col overflow-hidden transition-all duration-300 ease-out ${
-                        videoPromptOpen ? 'w-64' : 'w-0 border-l-0'
-                      }`}
-                    >
-                      <div className={`w-64 h-full flex flex-col ${videoPromptOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
-                        <div className="p-3 border-b border-border/30 flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                            <Video className="w-3.5 h-3.5" />
-                            <span>Video-Prompt</span>
-                            {allVideoPrompts.length > 0 && (
-                              <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
-                                {allVideoPrompts.length}
-                              </span>
-                            )}
+                    <div className="flex-shrink-0 flex items-stretch">
+                      {/* Toggle Button - moves with panel */}
+                      <button
+                        onClick={() => setVideoPromptOpen(!videoPromptOpen)}
+                        className="flex-shrink-0 w-8 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-all hover:w-9 rounded-l-lg"
+                      >
+                        <ChevronRight 
+                          className={`w-5 h-5 transition-transform duration-300 ${videoPromptOpen ? 'rotate-0' : 'rotate-180'}`} 
+                        />
+                      </button>
+                      
+                      {/* Panel Content */}
+                      <div 
+                        className={`border-l border-border/50 bg-gradient-to-b from-card to-card/80 flex flex-col overflow-hidden transition-all duration-300 ease-out ${
+                          videoPromptOpen ? 'w-64' : 'w-0 border-l-0'
+                        }`}
+                      >
+                        <div className={`w-64 h-full flex flex-col ${videoPromptOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
+                          <div className="p-3 border-b border-border/30 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                              <Video className="w-3.5 h-3.5" />
+                              <span>Video-Prompt</span>
+                              {allVideoPrompts.length > 0 && (
+                                <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                                  {allVideoPrompts.length}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => setVideoPromptOpen(false)}
-                          >
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
                         
                         <div className="flex-1 overflow-y-auto p-3">
                           <div className="flex flex-col gap-3">
@@ -3943,19 +3947,9 @@ Beispiel einer korrekten Antwort:
                             )}
                           </div>
                         </div>
+                        </div>
                       </div>
                     </div>
-                  )}
-
-                  {/* Video Prompt Toggle Tab - Only for Pro users */}
-                  {isPro && imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && !videoPromptOpen && (
-                    <button
-                      onClick={() => setVideoPromptOpen(true)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-primary hover:bg-primary/90 text-primary-foreground px-2 py-4 rounded-l-lg shadow-lg transition-all hover:scale-105 flex flex-col items-center gap-1"
-                    >
-                      <Video className="w-5 h-5" />
-                      <span className="text-xs font-medium writing-mode-vertical" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>Video Prompt</span>
-                    </button>
                   )}
                 </div>
 
