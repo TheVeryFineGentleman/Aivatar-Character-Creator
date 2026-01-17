@@ -2718,12 +2718,12 @@ Beispiel einer korrekten Antwort:
               }`}>
                 <div className="space-y-3">
                   {/* Textarea with AI button next to it */}
-                  <div className="flex gap-2 items-start max-w-lg">
+                  <div className="flex gap-3 items-start max-w-lg">
                     <Textarea
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[80px] resize-none flex-1"
+                      className="min-h-[80px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
                     {/* AI Button - positioned to the right of textarea */}
@@ -2731,17 +2731,16 @@ Beispiel einer korrekten Antwort:
                       <Button
                         onClick={handleGenerateBackgroundSuggestion}
                         disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        variant="secondary"
-                        size="sm"
-                        className="shrink-0 shadow-md h-[80px]"
+                        variant="outline"
+                        className="shrink-0 h-[80px] px-4 border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary transition-all"
                         title="KI um Hintergrund-Vorschlag bitten"
                       >
                         {isGeneratingBackgroundSuggestion ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
                         ) : (
-                          <div className="flex flex-col items-center gap-1">
-                            <Sparkles className="w-4 h-4" />
-                            <span className="text-xs">KI fragen</span>
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Sparkles className="w-5 h-5 text-primary" />
+                            <span className="text-xs font-medium text-primary">KI fragen</span>
                           </div>
                         )}
                       </Button>
