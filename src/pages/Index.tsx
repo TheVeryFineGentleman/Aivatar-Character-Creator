@@ -792,35 +792,28 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
-      // ===== Gemini Image Generation (robust & production-safe) =====
+      // ===== Gemini 2.5 Flash Image Generation =====
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120_000); // 2 Minuten
 
-      let response;
+      let response: Response;
       try {
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             signal: controller.signal,
             body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: parts,
-                },
-              ],
+              contents: [{ role: "user", parts }],
               generationConfig: {
-                responseModalities: ["TEXT", "IMAGE"],
+                responseModalities: ["IMAGE", "TEXT"],
               },
             }),
           }
         );
       } catch (err: any) {
-        if (err.name === "AbortError") {
+        if (err?.name === "AbortError") {
           throw new Error("Gemini request timed out");
         }
         throw err;
