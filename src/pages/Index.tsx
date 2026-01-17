@@ -3957,10 +3957,10 @@ Beispiel einer korrekten Antwort:
                   {isPro && imageSlots[selectedImageIndex]?.status === "completed" && imageSlots[selectedImageIndex]?.imageUrl && !videoPromptOpen && (
                     <button
                       onClick={() => setVideoPromptOpen(true)}
-                      className="absolute right-4 bottom-20 z-20 bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-primary hover:bg-primary/90 text-primary-foreground px-2 py-4 rounded-l-lg shadow-lg transition-all hover:scale-105 flex flex-col items-center gap-1"
                     >
-                      <Video className="w-4 h-4" />
-                      <span className="text-sm font-medium">Video Prompt</span>
+                      <Video className="w-5 h-5" />
+                      <span className="text-xs font-medium writing-mode-vertical" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>Video Prompt</span>
                     </button>
                   )}
                 </div>
