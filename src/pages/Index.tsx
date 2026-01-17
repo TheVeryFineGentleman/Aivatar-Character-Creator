@@ -2668,44 +2668,15 @@ Beispiel einer korrekten Antwort:
             {/* Background Selection - Horizontal Layout */}
             <div className="space-y-2">
               <Label>Hintergrund</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-3">
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
                   const isPremiumFeature = option.id === "greenscreen" || option.id === "scenery";
                   const isLocked = isPremiumFeature && !isPro;
                   
-                  let bgClass = "bg-background border-border";
-                  let bgStyle: React.CSSProperties = {};
-                  
-                  if (option.id === "white") {
-                    bgClass = isSelected 
-                      ? "bg-white text-black border-gray-400 shadow-md" 
-                      : "bg-white/70 text-black/70 border-gray-300 hover:bg-white hover:text-black hover:border-gray-400 hover:shadow-sm";
-                  } else if (option.id === "greenscreen") {
-                    bgClass = isLocked
-                      ? "bg-green-500/40 text-white/50 border-green-600/50"
-                      : isSelected 
-                        ? "bg-green-500 text-white border-green-700 shadow-md" 
-                        : "bg-green-500/70 text-white/70 border-green-600 hover:bg-green-500 hover:text-white hover:border-green-700 hover:shadow-sm";
-                  } else if (option.id === "scenery") {
-                    bgClass = isLocked
-                      ? "text-white/50 border-gray-300/50"
-                      : isSelected 
-                        ? "text-white border-gray-400 shadow-md" 
-                        : "text-white/90 border-gray-300 hover:text-white hover:border-gray-400 hover:shadow-sm";
-                    bgStyle = {
-                      backgroundImage: `url(${sceneryBg})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundColor: isLocked ? 'rgba(0,0,0,0.7)' : isSelected ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)',
-                      backgroundBlendMode: 'darken'
-                    };
-                  }
-                  
                   return (
-                    <Button
+                    <button
                       key={option.id}
-                      variant="outline"
                       onClick={() => {
                         if (isLocked) {
                           setShakingElement(option.id);
@@ -2715,34 +2686,69 @@ Beispiel einer korrekten Antwort:
                           setSelectedBackground(option.id);
                         }
                       }}
-                      className={`relative min-w-[120px] px-4 py-2 transition-all duration-200 border-2 font-semibold group hover:bg-transparent ${
+                      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 group ${
                         isLocked && shakingElement === option.id
-                          ? "animate-shake border-red-500 bg-red-500/30"
-                          : bgClass
+                          ? "animate-shake"
+                          : ""
                       } ${
                         isLocked
-                          ? "cursor-pointer opacity-60 hover:opacity-70"
+                          ? "cursor-pointer opacity-50 hover:opacity-70"
                           : isSelected 
-                            ? "scale-105" 
-                            : "hover:scale-[1.02]"
+                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background" 
+                            : "hover:ring-1 hover:ring-muted-foreground/30"
                       }`}
-                      style={{ transformOrigin: 'center', ...(isLocked && shakingElement === option.id ? {} : bgStyle) }}
                     >
-                      {isLocked && (
-                        <div className={`absolute inset-0 flex items-center justify-center rounded-md transition-all duration-200 ${
-                          shakingElement === option.id 
-                            ? "bg-red-500/30" 
-                            : "bg-black/40 group-hover:bg-black/50"
-                        }`}>
-                          <Lock className={`w-8 h-8 transition-all duration-200 ${
+                      {/* Preview Box */}
+                      <div 
+                        className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                          isSelected ? "border-primary shadow-lg" : "border-muted"
+                        }`}
+                      >
+                        {option.id === "white" && (
+                          <div className="w-full h-full bg-white" />
+                        )}
+                        {option.id === "greenscreen" && (
+                          <div className="w-full h-full bg-green-500" />
+                        )}
+                        {option.id === "scenery" && (
+                          <div 
+                            className="w-full h-full bg-cover bg-center"
+                            style={{ backgroundImage: `url(${sceneryBg})` }}
+                          />
+                        )}
+                        
+                        {/* Lock Overlay */}
+                        {isLocked && (
+                          <div className={`absolute inset-0 flex items-center justify-center transition-all ${
                             shakingElement === option.id 
-                              ? "text-red-500" 
-                              : "text-white/80 group-hover:text-white group-hover:scale-110"
-                          }`} />
-                        </div>
-                      )}
-                      {option.label}
-                    </Button>
+                              ? "bg-red-500/50" 
+                              : "bg-black/50 group-hover:bg-black/40"
+                          }`}>
+                            <Lock className={`w-5 h-5 transition-all ${
+                              shakingElement === option.id 
+                                ? "text-red-400" 
+                                : "text-white/90 group-hover:scale-110"
+                            }`} />
+                          </div>
+                        )}
+                        
+                        {/* Selected Checkmark */}
+                        {isSelected && !isLocked && (
+                          <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                            <Check className="w-3 h-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Label */}
+                      <span className={`text-xs font-medium text-center leading-tight max-w-[70px] ${
+                        isSelected ? "text-foreground" : "text-muted-foreground"
+                      }`}>
+                        {option.id === "white" && "Weiß"}
+                        {option.id === "greenscreen" && "Green Screen"}
+                        {option.id === "scenery" && "Szenerie"}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
