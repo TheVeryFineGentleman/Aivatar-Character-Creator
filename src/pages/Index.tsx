@@ -2666,8 +2666,8 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Background Selection - Horizontal Layout */}
-            <div className="space-y-2">
-              <Label>Hintergrund</Label>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs text-muted-foreground">Hintergrund</Label>
               <div className="inline-flex rounded-lg bg-muted/50 p-1 gap-1">
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
@@ -2723,7 +2723,7 @@ Beispiel einer korrekten Antwort:
                       <span>
                         {option.id === "white" && "Weiß"}
                         {option.id === "greenscreen" && "Green Screen"}
-                        {option.id === "scenery" && "Szenerie"}
+                        {option.id === "scenery" && "Custom"}
                       </span>
                       
                       {/* Lock Icon */}
