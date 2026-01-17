@@ -2121,13 +2121,15 @@ REGELN FÜR SCENE (nur wenn scenery):
                 text: `Der Nutzer hat folgenden Bild-Prompt erstellt:
 "${customPrompt}"
 
-Beschreibe einen passenden Hintergrund für dieses Bild.
+Beschreibe einen passenden Hintergrund/Szenerie für dieses Bild.
 
-REGELN:
-- Antworte NUR mit der Szenenbeschreibung selbst
+STRENGE REGELN:
+- Antworte NUR mit der reinen Hintergrundbeschreibung
 - KEINE Einleitungen wie "Passend wäre..." oder "Statt..."
 - KEINE Erklärungen oder Kommentare
-- Beschreibe den Ort, Lichtstimmung und atmosphärische Details
+- KEINE Details über Personen, Menschen, Charaktere oder deren Erscheinung
+- NUR der Ort, die Umgebung, Lichtstimmung und atmosphärische Details
+- Beschreibe ausschließlich die Kulisse/Szenerie selbst
 - 2-3 Sätze auf Deutsch
 
 Beispiel einer korrekten Antwort:
