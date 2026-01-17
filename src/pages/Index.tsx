@@ -2747,7 +2747,7 @@ Beispiel einer korrekten Antwort:
               }`}>
                 <div className="space-y-3">
                   {/* Textarea with AI button next to it */}
-                  <div className="flex gap-3 items-start max-w-lg">
+                  <div className="flex gap-3 items-start">
                     <Textarea
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
