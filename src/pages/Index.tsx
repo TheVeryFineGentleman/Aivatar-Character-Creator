@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -2698,21 +2698,26 @@ Beispiel einer korrekten Antwort:
                             : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                       }`}
                     >
-                      {/* Color Indicator */}
-                      <div 
-                        className={`w-4 h-4 rounded-full border transition-all ${
-                          isSelected ? "border-primary" : "border-muted-foreground/30"
-                        } ${
-                          option.id === "white" ? "bg-white" : ""
-                        } ${
-                          option.id === "greenscreen" ? "bg-green-500" : ""
-                        }`}
-                        style={option.id === "scenery" ? {
-                          backgroundImage: `url(${sceneryBg})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        } : {}}
-                      />
+                      {/* Icon/Indicator */}
+                      {option.id === "white" && (
+                        <div 
+                          className={`w-4 h-4 rounded-full border bg-white transition-all ${
+                            isSelected ? "border-primary" : "border-muted-foreground/30"
+                          }`}
+                        />
+                      )}
+                      {option.id === "greenscreen" && (
+                        <div 
+                          className={`w-4 h-4 rounded-full border bg-green-500 transition-all ${
+                            isSelected ? "border-primary" : "border-muted-foreground/30"
+                          }`}
+                        />
+                      )}
+                      {option.id === "scenery" && (
+                        <Mountain className={`w-4 h-4 transition-all ${
+                          isSelected ? "text-primary" : "text-muted-foreground"
+                        }`} />
+                      )}
                       
                       {/* Label */}
                       <span>
