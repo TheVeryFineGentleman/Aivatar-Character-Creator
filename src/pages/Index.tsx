@@ -2731,16 +2731,15 @@ Beispiel einer korrekten Antwort:
                       <Button
                         onClick={handleGenerateBackgroundSuggestion}
                         disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        variant="outline"
-                        className="shrink-0 h-[80px] px-4 border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary transition-all"
+                        className="shrink-0 h-[80px] px-4 bg-amber-500 hover:bg-amber-600 text-white border-0 transition-all"
                         title="KI um Hintergrund-Vorschlag bitten"
                       >
                         {isGeneratingBackgroundSuggestion ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                           <div className="flex flex-col items-center gap-1.5">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <span className="text-xs font-medium text-primary">KI fragen</span>
+                            <Sparkles className="w-5 h-5" />
+                            <span className="text-xs font-medium">KI fragen</span>
                           </div>
                         )}
                       </Button>
@@ -2790,10 +2789,6 @@ Beispiel einer korrekten Antwort:
                       </div>
                     </div>
                   )}
-                  
-                  <p className="text-xs text-muted-foreground">
-                    Tipp: Leer lassen = KI wählt passende Szene automatisch
-                  </p>
                 </div>
               </div>
             </div>
