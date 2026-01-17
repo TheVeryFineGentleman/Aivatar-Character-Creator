@@ -2668,7 +2668,7 @@ Beispiel einer korrekten Antwort:
             {/* Background Selection - Horizontal Layout */}
             <div className="space-y-2">
               <Label>Hintergrund</Label>
-              <div className="flex gap-3">
+              <div className="inline-flex rounded-lg bg-muted/50 p-1 gap-1">
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
                   const isPremiumFeature = option.id === "greenscreen" || option.id === "scenery";
@@ -2686,68 +2686,49 @@ Beispiel einer korrekten Antwort:
                           setSelectedBackground(option.id);
                         }
                       }}
-                      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 group ${
+                      className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 group ${
                         isLocked && shakingElement === option.id
-                          ? "animate-shake"
+                          ? "animate-shake bg-red-500/20"
                           : ""
                       } ${
                         isLocked
-                          ? "cursor-pointer opacity-50 hover:opacity-70"
+                          ? "text-muted-foreground/50 cursor-pointer hover:text-muted-foreground/70"
                           : isSelected 
-                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background" 
-                            : "hover:ring-1 hover:ring-muted-foreground/30"
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                       }`}
                     >
-                      {/* Preview Box */}
+                      {/* Color Indicator */}
                       <div 
-                        className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                          isSelected ? "border-primary shadow-lg" : "border-muted"
+                        className={`w-4 h-4 rounded-full border transition-all ${
+                          isSelected ? "border-primary" : "border-muted-foreground/30"
+                        } ${
+                          option.id === "white" ? "bg-white" : ""
+                        } ${
+                          option.id === "greenscreen" ? "bg-green-500" : ""
                         }`}
-                      >
-                        {option.id === "white" && (
-                          <div className="w-full h-full bg-white" />
-                        )}
-                        {option.id === "greenscreen" && (
-                          <div className="w-full h-full bg-green-500" />
-                        )}
-                        {option.id === "scenery" && (
-                          <div 
-                            className="w-full h-full bg-cover bg-center"
-                            style={{ backgroundImage: `url(${sceneryBg})` }}
-                          />
-                        )}
-                        
-                        {/* Lock Overlay */}
-                        {isLocked && (
-                          <div className={`absolute inset-0 flex items-center justify-center transition-all ${
-                            shakingElement === option.id 
-                              ? "bg-red-500/50" 
-                              : "bg-black/50 group-hover:bg-black/40"
-                          }`}>
-                            <Lock className={`w-5 h-5 transition-all ${
-                              shakingElement === option.id 
-                                ? "text-red-400" 
-                                : "text-white/90 group-hover:scale-110"
-                            }`} />
-                          </div>
-                        )}
-                        
-                        {/* Selected Checkmark */}
-                        {isSelected && !isLocked && (
-                          <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <Check className="w-3 h-3 text-primary-foreground" />
-                          </div>
-                        )}
-                      </div>
+                        style={option.id === "scenery" ? {
+                          backgroundImage: `url(${sceneryBg})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        } : {}}
+                      />
                       
                       {/* Label */}
-                      <span className={`text-xs font-medium text-center leading-tight max-w-[70px] ${
-                        isSelected ? "text-foreground" : "text-muted-foreground"
-                      }`}>
+                      <span>
                         {option.id === "white" && "Weiß"}
                         {option.id === "greenscreen" && "Green Screen"}
                         {option.id === "scenery" && "Szenerie"}
                       </span>
+                      
+                      {/* Lock Icon */}
+                      {isLocked && (
+                        <Lock className={`w-3.5 h-3.5 transition-all ${
+                          shakingElement === option.id 
+                            ? "text-red-400" 
+                            : "text-muted-foreground/50 group-hover:text-muted-foreground"
+                        }`} />
+                      )}
                     </button>
                   );
                 })}
