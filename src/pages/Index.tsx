@@ -798,8 +798,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       let response;
       try {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-0520:generateContent?key=${apiKey}`,
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: {
