@@ -205,6 +205,9 @@ const Index = () => {
   // AI Background Suggestion state
   const [aiBackgroundSuggestion, setAiBackgroundSuggestion] = useState("");
   const [isGeneratingBackgroundSuggestion, setIsGeneratingBackgroundSuggestion] = useState(false);
+  
+  // AI Assistant Target (unified control for prompt/background)
+  const [aiAssistantTarget, setAiAssistantTarget] = useState<"prompt" | "background" | "both">("prompt");
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
@@ -1947,7 +1950,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
     }
   };
 
-  // Custom Prompt AI Generation
+  // Custom Prompt AI Generation (handles prompt, background, or both based on aiAssistantTarget)
   const handleGenerateCustomPromptWithAI = async () => {
     if (!apiKey) {
       toast({
@@ -1961,9 +1964,17 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
     if (!customPromptChatInput.trim()) {
       toast({
         title: "Eingabe erforderlich",
-        description: "Bitte beschreibe, was du generieren möchtest",
+        description: aiAssistantTarget === "background" 
+          ? "Bitte beschreibe den gewünschten Hintergrund"
+          : "Bitte beschreibe, was du generieren möchtest",
         variant: "destructive",
       });
+      return;
+    }
+
+    // If targeting background only, use the simpler background generation
+    if (aiAssistantTarget === "background") {
+      await handleGenerateBackgroundOnly();
       return;
     }
 
@@ -2112,20 +2123,42 @@ REGELN FÜR SCENE (nur wenn scenery):
       setCurrentCustomPromptIndex(customPromptVersions.length);
       setCustomPrompt(newPrompt);
       
-      // If scenery is selected AND AI suggests a scene that differs from current, show suggestion button
-      if (selectedBackground === "scenery" && suggestedScene && suggestedScene !== sceneDescription) {
-        setAiBackgroundSuggestion(suggestedScene);
-      } else if (suggestedBackground === "scenery" && suggestedScene && selectedBackground !== "scenery") {
-        // AI suggests scenery but user hasn't selected it - still save the suggestion
-        setAiBackgroundSuggestion(suggestedScene);
-      } else {
+      // Handle background based on aiAssistantTarget
+      if (aiAssistantTarget === "both" && suggestedScene) {
+        // For "both" mode: directly apply the scene
+        setSceneDescription(suggestedScene);
+        if (selectedBackground !== "scenery") {
+          setSelectedBackground("scenery");
+        }
         setAiBackgroundSuggestion("");
+        toast({
+          title: "Prompt & Hintergrund generiert!",
+          description: `Version ${customPromptVersions.length + 1} mit Szenerie erstellt`,
+        });
+      } else if (aiAssistantTarget === "prompt") {
+        // For "prompt" mode: only update the prompt, ignore scene suggestions
+        setAiBackgroundSuggestion("");
+        toast({
+          title: "Prompt generiert!",
+          description: `Version ${customPromptVersions.length + 1} erstellt`,
+        });
+      } else {
+        // Legacy behavior for other cases
+        if (selectedBackground === "scenery" && suggestedScene && suggestedScene !== sceneDescription) {
+          setAiBackgroundSuggestion(suggestedScene);
+        } else if (suggestedBackground === "scenery" && suggestedScene && selectedBackground !== "scenery") {
+          setAiBackgroundSuggestion(suggestedScene);
+        } else {
+          setAiBackgroundSuggestion("");
+        }
+        toast({
+          title: "Prompt generiert!",
+          description: `Version ${customPromptVersions.length + 1} erstellt`,
+        });
       }
       
-      toast({
-        title: "Prompt generiert!",
-        description: `Version ${customPromptVersions.length + 1} erstellt`,
-      });
+      // Clear input after successful generation
+      setCustomPromptChatInput("");
     } catch (error) {
       console.error("Custom prompt generation error:", error);
       toast({
@@ -2138,7 +2171,7 @@ REGELN FÜR SCENE (nur wenn scenery):
     }
   };
 
-  // Generate AI background suggestion for scenery when prompt exists
+  // Generate AI background suggestion for scenery when prompt exists (legacy)
   const handleGenerateBackgroundSuggestion = async () => {
     if (!apiKey || !customPrompt.trim() || isGeneratingBackgroundSuggestion) return;
     
@@ -2196,6 +2229,77 @@ Beispiel einer korrekten Antwort:
       toast({
         title: "Fehler",
         description: "Hintergrund-Vorschlag konnte nicht generiert werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingBackgroundSuggestion(false);
+    }
+  };
+
+  // Generate background only from AI Assistant input (unified control)
+  const handleGenerateBackgroundOnly = async () => {
+    setIsGeneratingBackgroundSuggestion(true);
+    
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Der Nutzer wünscht folgenden Hintergrund für sein Bild:
+"${customPromptChatInput}"
+
+Erstelle eine detaillierte Hintergrundbeschreibung basierend auf dieser Anfrage.
+
+STRENGE REGELN:
+- Antworte NUR mit der reinen Hintergrundbeschreibung
+- KEINE Einleitungen wie "Passend wäre..." oder "Statt..."
+- KEINE Erklärungen oder Kommentare
+- KEINE Details über Personen, Menschen, Charaktere oder deren Erscheinung
+- NUR der Ort, die Umgebung, Lichtstimmung und atmosphärische Details
+- Beschreibe ausschließlich die Kulisse/Szenerie selbst
+- 2-3 Sätze auf Deutsch
+
+Beispiel einer korrekten Antwort:
+"Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fällt. Efeu rankt an den alten Backsteinwänden empor, während Staub in den Lichtstrahlen tanzt."`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.8,
+              maxOutputTokens: 200
+            }
+          })
+        }
+      );
+
+      if (!response.ok) throw new Error("API request failed");
+
+      const data = await response.json();
+      const suggestion = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      
+      if (suggestion) {
+        // Directly apply to scene description
+        setSceneDescription(suggestion);
+        setCustomPromptChatInput("");
+        
+        // Ensure scenery is selected
+        if (selectedBackground !== "scenery") {
+          setSelectedBackground("scenery");
+        }
+        
+        toast({
+          title: "Hintergrund generiert!",
+          description: suggestion.substring(0, 50) + "..."
+        });
+      }
+    } catch (error) {
+      console.error("Background generation error:", error);
+      toast({
+        title: "Fehler",
+        description: "Hintergrund konnte nicht generiert werden.",
         variant: "destructive"
       });
     } finally {
@@ -2755,24 +2859,6 @@ Beispiel einer korrekten Antwort:
                       className="min-h-[100px] min-w-[400px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
-                    {/* AI Button - only visible when custom prompt is active */}
-                    {authData.planCode === "FULL" && useCustomPrompt && (
-                      <Button
-                        onClick={handleGenerateBackgroundSuggestion}
-                        disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        className="shrink-0 h-[100px] px-5 bg-zinc-800 text-white border border-zinc-700 shadow-md transition-all hover:shadow-lg hover:scale-[1.02] hover:border-zinc-600 disabled:opacity-50 disabled:hover:scale-100"
-                        title="KI um Hintergrund-Vorschlag bitten"
-                      >
-                        {isGeneratingBackgroundSuggestion ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <div className="flex flex-col items-center gap-1.5">
-                            <Sparkles className="w-5 h-5" />
-                            <span className="text-xs font-semibold">KI fragen</span>
-                          </div>
-                        )}
-                      </Button>
-                    )}
                   </div>
                   
                   {/* AI Background Suggestion - cleaner card design */}
@@ -3024,11 +3110,11 @@ Beispiel einer korrekten Antwort:
                           {/* Main button - transfers prompt to left */}
                           <Button
                             onClick={handleGenerateCustomPromptWithAI}
-                            disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt}
+                            disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt || isGeneratingBackgroundSuggestion}
                             className="w-10 flex-1 rounded-lg"
-                            title="Prompt generieren und links einfügen"
+                            title={aiAssistantTarget === "background" ? "Hintergrund generieren" : aiAssistantTarget === "both" ? "Prompt & Hintergrund generieren" : "Prompt generieren und links einfügen"}
                           >
-                            {isGeneratingCustomPrompt ? (
+                            {(isGeneratingCustomPrompt || isGeneratingBackgroundSuggestion) ? (
                               <Sparkles className="w-5 h-5 animate-spin" />
                             ) : (
                               <ChevronLeft className="w-6 h-6" />
@@ -3049,13 +3135,52 @@ Beispiel einer korrekten Antwort:
                       {/* Right: AI Chat Input - Only for FULL plan */}
                       {authData.planCode === "FULL" && (
                         <div className="flex-1 flex flex-col">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Sparkles className="w-4 h-4 text-muted-foreground" />
-                            <Label className="text-muted-foreground">KI-Assistent</Label>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-muted-foreground" />
+                              <Label className="text-muted-foreground">KI-Assistent</Label>
+                            </div>
+                            {/* Segmented Control for Target Selection */}
+                            <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+                              <Button
+                                variant={aiAssistantTarget === "prompt" ? "default" : "ghost"}
+                                size="sm"
+                                className={`h-6 px-2 text-xs ${aiAssistantTarget === "prompt" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                                onClick={() => setAiAssistantTarget("prompt")}
+                              >
+                                Prompt
+                              </Button>
+                              <Button
+                                variant={aiAssistantTarget === "background" ? "default" : "ghost"}
+                                size="sm"
+                                className={`h-6 px-2 text-xs ${aiAssistantTarget === "background" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("background")}
+                                disabled={selectedBackground !== "scenery"}
+                                title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
+                              >
+                                Hintergrund
+                              </Button>
+                              <Button
+                                variant={aiAssistantTarget === "both" ? "default" : "ghost"}
+                                size="sm"
+                                className={`h-6 px-2 text-xs ${aiAssistantTarget === "both" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("both")}
+                                disabled={selectedBackground !== "scenery"}
+                                title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
+                              >
+                                Beides
+                              </Button>
+                            </div>
                           </div>
                           <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                             <Textarea
-                              placeholder="Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
+                              placeholder={
+                                aiAssistantTarget === "prompt" 
+                                  ? "Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
+                                  : aiAssistantTarget === "background"
+                                  ? "Beschreibe den gewünschten Hintergrund, z.B. 'Strand bei Sonnenuntergang'..."
+                                  : "Beschreibe Person und Hintergrund, z.B. 'Person liest ein Buch im gemütlichen Café'..."
+                              }
                               value={customPromptChatInput}
                               onChange={(e) => setCustomPromptChatInput(e.target.value)}
                               className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
