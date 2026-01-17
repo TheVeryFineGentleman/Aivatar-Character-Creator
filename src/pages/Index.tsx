@@ -2631,7 +2631,7 @@ Beispiel einer korrekten Antwort:
             {/* Background Selection - Horizontal Layout */}
             <div className="space-y-2">
               <Label>Hintergrund</Label>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-2">
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
                   const isPremiumFeature = option.id === "greenscreen" || option.id === "scenery";
@@ -2731,8 +2731,7 @@ Beispiel einer korrekten Antwort:
                       <Button
                         onClick={handleGenerateBackgroundSuggestion}
                         disabled={isGeneratingBackgroundSuggestion || !!sceneDescription.trim()}
-                        variant="outline"
-                        className="shrink-0 h-[80px] px-4 bg-white hover:bg-gray-100 text-gray-800 border-gray-300 transition-all"
+                        className="shrink-0 h-[80px] px-5 bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                         title="KI um Hintergrund-Vorschlag bitten"
                       >
                         {isGeneratingBackgroundSuggestion ? (
@@ -2740,7 +2739,7 @@ Beispiel einer korrekten Antwort:
                         ) : (
                           <div className="flex flex-col items-center gap-1.5">
                             <Sparkles className="w-5 h-5" />
-                            <span className="text-xs font-medium">KI fragen</span>
+                            <span className="text-xs font-semibold">KI fragen</span>
                           </div>
                         )}
                       </Button>
