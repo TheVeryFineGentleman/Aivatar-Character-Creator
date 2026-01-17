@@ -2336,6 +2336,7 @@ Beispiel einer korrekten Antwort:
     setCustomPromptVersions(prev => [...prev, ""]);
     setCurrentCustomPromptIndex(customPromptVersions.length);
     setCustomPrompt("");
+    setSceneDescription(""); // Also clear the background/scenery prompt
   };
 
   // Sync customPrompt changes to versions array
