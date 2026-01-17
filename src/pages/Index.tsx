@@ -3062,8 +3062,8 @@ Beispiel einer korrekten Antwort:
               >
                 <div className="overflow-hidden">
                   <div className="pt-2">
-                    {/* Layout: Full plan gets AI Chat, others get simple prompt */}
-                    <div className={`flex gap-3 items-stretch ${authData.planCode !== "FULL" ? "flex-col" : ""}`}>
+                    {/* Layout: PREMIUM and FULL plans get AI Chat, others get simple prompt */}
+                    <div className={`flex gap-3 items-stretch ${authData.planCode !== "FULL" && authData.planCode !== "PREMIUM" ? "flex-col" : ""}`}>
                       {/* Left: Prompt Output */}
                       <div className="flex-1 flex flex-col">
                         {/* Header with Version Navigation */}
@@ -3104,8 +3104,8 @@ Beispiel einer korrekten Antwort:
                         />
                       </div>
                       
-                      {/* Center: Generate Buttons - Only for FULL plan */}
-                      {authData.planCode === "FULL" && (
+                      {/* Center: Generate Buttons - For PREMIUM and FULL plans */}
+                      {(authData.planCode === "FULL" || authData.planCode === "PREMIUM") && (
                         <div className="flex flex-col gap-2 pt-7">
                           {/* Main button - transfers prompt to left */}
                           <Button
@@ -3132,8 +3132,8 @@ Beispiel einer korrekten Antwort:
                         </div>
                       )}
                       
-                      {/* Right: AI Chat Input - Only for FULL plan */}
-                      {authData.planCode === "FULL" && (
+                      {/* Right: AI Chat Input - For PREMIUM and FULL plans */}
+                      {(authData.planCode === "FULL" || authData.planCode === "PREMIUM") && (
                         <div className="flex-1 flex flex-col">
                           {/* Header with label left and segmented control centered */}
                           <div className="flex items-center mb-2">
