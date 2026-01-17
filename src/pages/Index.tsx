@@ -3136,7 +3136,11 @@ Beispiel einer korrekten Antwort:
                       {authData.planCode === "FULL" && (
                         <div className="flex-1 flex flex-col">
                           {/* Segmented Control centered at top */}
-                          <div className="flex justify-center mb-2">
+                          <div className="flex flex-col items-center gap-1 mb-2">
+                            <div className="flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">KI-Assistent</span>
+                            </div>
                             <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
                               <Button
                                 variant={aiAssistantTarget === "prompt" ? "default" : "ghost"}
