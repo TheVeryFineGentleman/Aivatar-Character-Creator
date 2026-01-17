@@ -2000,19 +2000,42 @@ ${backgroundContext}`;
         ? `\n\nAktueller Prompt zur Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"\n\nVerbessere oder ergänze diesen basierend auf der Nutzer-Anfrage.`
         : "";
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Du bist ein Experte für Bild-Generierungs-Prompts.
+      // Build parts array with text and reference images
+      const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+      
+      // Add reference images for context
+      const currentRefImages = referenceImagesRef.current;
+      for (const img of currentRefImages) {
+        try {
+          // Convert File to base64
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1] || '');
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(img);
+          });
+          
+          if (base64) {
+            parts.push({
+              inlineData: {
+                mimeType: img.type || "image/jpeg",
+                data: base64
+              }
+            });
+          }
+        } catch (e) {
+          console.warn("Could not convert reference image for AI context:", e);
+        }
+      }
+      
+      // Add the text prompt
+      parts.push({
+        text: `Du bist ein Experte für Bild-Generierungs-Prompts.
+
+${currentRefImages.length > 0 ? "Die beigefügten Bilder zeigen die Person/den Charakter, für die/den der Prompt erstellt werden soll. Nutze diese als Referenz für Beschreibungen von Aussehen, Stil und Merkmalen." : ""}
 
 Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
 "${customPromptChatInput}"
@@ -2025,6 +2048,7 @@ SCENE: [Nur wenn BACKGROUND=scenery: Detaillierte Szenenbeschreibung, sonst leer
 
 WICHTIGE REGELN FÜR DEN PROMPT:
 - Beschreibe NUR die Person: Pose, Körperhaltung, Gesichtsausdruck, Blickrichtung, Kleidung
+- Nutze die Referenzbilder um Merkmale der Person korrekt zu beschreiben
 - KEINE Kameraeinstellungen erwähnen (kein "Close-Up", "Ganzkörper", etc.)
 - KEINE Hintergrundbeschreibungen im Prompt
 - 2-4 Sätze auf Deutsch
@@ -2033,8 +2057,19 @@ REGELN FÜR SCENE (nur wenn scenery):
 - Beschreibe den Ort detailliert (z.B. "Ein verlassener Industriehof mit rostigen Metallstrukturen")
 - Lichtstimmung (goldene Stunde, weiches Morgenlicht, dramatische Schatten)
 - Atmosphärische Details (Nebel, Regen, Sonnenstrahlen)`
-                  }
-                ]
+      });
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: parts
               }
             ]
           }),
