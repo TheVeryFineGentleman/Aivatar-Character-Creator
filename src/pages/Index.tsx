@@ -798,7 +798,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       
       // Call Google Gemini API directly with ALL reference images
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-0520:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
@@ -813,9 +813,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             ],
             generationConfig: {
               responseModalities: ["TEXT", "IMAGE"],
-              imageConfig: {
-                aspectRatio: formatOption?.ratio || "1:1",
-              },
             },
           }),
         }
