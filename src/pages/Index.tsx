@@ -2666,9 +2666,9 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Background Selection - Horizontal Layout */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 items-start">
               <Label className="text-xs text-muted-foreground">Hintergrund</Label>
-              <div className="inline-flex rounded-lg bg-muted/50 p-1 gap-1">
+              <div className="inline-flex rounded-lg bg-muted/50 p-1 gap-1 w-fit">
                 {BACKGROUND_OPTIONS.map((option) => {
                   const isSelected = selectedBackground === option.id;
                   const isPremiumFeature = option.id === "greenscreen" || option.id === "scenery";
