@@ -2856,7 +2856,7 @@ Beispiel einer korrekten Antwort:
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[100px] min-w-[400px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[100px] min-w-[450px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
                   </div>
