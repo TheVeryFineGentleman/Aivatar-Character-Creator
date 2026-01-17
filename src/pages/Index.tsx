@@ -2777,7 +2777,7 @@ Beispiel einer korrekten Antwort:
                   
                   {/* AI Background Suggestion - cleaner card design */}
                   {aiBackgroundSuggestion && selectedBackground === "scenery" && (
-                    <div className="animate-fade-in rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <div className="animate-fade-in rounded-lg border border-primary/30 bg-primary/5 p-3 max-w-2xl">
                       <div className="flex items-start gap-3">
                         <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                         <div className="flex-1 min-w-0">
