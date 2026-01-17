@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -2713,27 +2713,27 @@ Beispiel einer korrekten Antwort:
               {/* Scene Description Input - Shows when "Eigene Szenerie" is selected */}
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
                 selectedBackground === "scenery" 
-                  ? "max-h-48 opacity-100 mt-3" 
+                  ? "max-h-96 opacity-100 mt-3" 
                   : "max-h-0 opacity-0 mt-0"
               }`}>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Beschreibe die Szene (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
+                <div className="space-y-3">
+                  {/* Textarea with AI button integrated */}
+                  <div className="relative">
+                    <Textarea
+                      placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang mit warmem Licht', 'Urbaner Park im Herbst mit bunten Blättern')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="flex-1"
-                      maxLength={200}
+                      className="min-h-[100px] resize-none pr-24"
+                      maxLength={500}
                     />
-                    {/* Button to ask AI for background suggestion - shows when prompt exists but no scene yet */}
-                    {customPrompt.trim() && !sceneDescription.trim() && !aiBackgroundSuggestion && authData.planCode === "FULL" && (
+                    {/* AI Button - positioned inside the textarea */}
+                    {authData.planCode === "FULL" && !sceneDescription.trim() && (
                       <Button
                         onClick={handleGenerateBackgroundSuggestion}
                         disabled={isGeneratingBackgroundSuggestion}
                         variant="secondary"
                         size="sm"
-                        className="whitespace-nowrap"
+                        className="absolute bottom-2 right-2 shadow-md"
                         title="KI um Hintergrund-Vorschlag bitten"
                       >
                         {isGeneratingBackgroundSuggestion ? (
@@ -2748,32 +2748,52 @@ Beispiel einer korrekten Antwort:
                     )}
                   </div>
                   
-                  {/* AI Background Suggestion Button - pulsing when suggestion available */}
+                  {/* AI Background Suggestion - cleaner card design */}
                   {aiBackgroundSuggestion && selectedBackground === "scenery" && (
-                    <div className="flex items-center gap-2 animate-fade-in">
-                      <Button
-                        onClick={handleApplyBackgroundSuggestion}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 border-primary/50 bg-primary/10 hover:bg-primary/20 animate-pulse"
-                      >
-                        <Sparkles className="w-4 h-4 mr-2 text-primary" />
-                        Übernehmen: "{aiBackgroundSuggestion}"
-                      </Button>
-                      <Button
-                        onClick={() => setAiBackgroundSuggestion("")}
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        title="Vorschlag verwerfen"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                    <div className="animate-fade-in rounded-lg border border-primary/30 bg-primary/5 p-3">
+                      <div className="flex items-start gap-3">
+                        <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {aiBackgroundSuggestion}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          onClick={handleApplyBackgroundSuggestion}
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Übernehmen
+                        </Button>
+                        <Button
+                          onClick={handleGenerateBackgroundSuggestion}
+                          disabled={isGeneratingBackgroundSuggestion}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {isGeneratingBackgroundSuggestion ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => setAiBackgroundSuggestion("")}
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                   
                   <p className="text-xs text-muted-foreground">
-                    Hinweis: Wenn leer gelassen, wird die KI sich selbst eine passende Szene ausdenken
+                    Tipp: Leer lassen = KI wählt passende Szene automatisch
                   </p>
                 </div>
               </div>
