@@ -121,6 +121,30 @@ export default {
             borderRadius: "0"
           },
         },
+        "scale-in": {
+          "0%": { 
+            transform: "scale(0.8) translateY(20px)", 
+            opacity: "0"
+          },
+          "100%": { 
+            transform: "scale(1) translateY(0)", 
+            opacity: "1"
+          },
+        },
+        "storyboard-appear": {
+          "0%": { 
+            transform: "scale(0.85) translateY(30px)", 
+            opacity: "0"
+          },
+          "60%": {
+            transform: "scale(1.02) translateY(-5px)",
+            opacity: "1"
+          },
+          "100%": { 
+            transform: "scale(1) translateY(0)", 
+            opacity: "1"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -128,6 +152,8 @@ export default {
         "shake": "shake 0.5s ease-in-out",
         "switch-snap-back": "switch-snap-back 0.4s ease-out",
         "expand-from-card": "expand-from-card 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "scale-in": "scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "storyboard-appear": "storyboard-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
       },
     },
   },
