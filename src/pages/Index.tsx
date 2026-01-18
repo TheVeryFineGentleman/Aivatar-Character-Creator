@@ -3548,7 +3548,7 @@ Beispiel einer korrekten Antwort:
                           >
                             {/* Card Back - decorative */}
                             <div 
-                              className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-muted/80 rounded-xl border border-border/40 shadow-lg overflow-hidden"
+                              className="absolute inset-0 bg-background rounded-xl border border-border/40 shadow-lg overflow-hidden"
                               style={{ 
                                 backfaceVisibility: 'hidden',
                                 WebkitBackfaceVisibility: 'hidden',
@@ -3568,8 +3568,6 @@ Beispiel einer korrekten Antwort:
                                   <Sparkles className="w-8 h-8 text-muted-foreground/50" />
                                 </div>
                               </div>
-                              {/* Subtle shimmer effect */}
-                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-foreground/[0.02] to-transparent" />
                             </div>
                             {/* Card Front */}
                             <div 
