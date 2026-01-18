@@ -3531,7 +3531,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden relative shadow-lg hover:shadow-xl hover:border-primary/30 min-w-[300px] max-w-[340px] flex-shrink-0",
+                              "min-w-[300px] max-w-[340px] flex-shrink-0",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
@@ -3541,10 +3541,25 @@ Beispiel einer korrekten Antwort:
                             style={{ 
                               animationDelay: (regeneratingCardIndex === index || justFinishedIndex === index) ? '0ms' : `${index * 120}ms`, 
                               animationFillMode: 'both',
-                              transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
                               transformStyle: 'preserve-3d'
                             }}
                           >
+                            {/* Card Back - empty */}
+                            <div 
+                              className="absolute inset-0 bg-gradient-to-b from-muted to-muted/80 rounded-xl border border-border/40 shadow-lg"
+                              style={{ 
+                                backfaceVisibility: 'hidden',
+                                transform: 'rotateX(180deg)'
+                              }}
+                            />
+                            {/* Card Front */}
+                            <div 
+                              className="group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden relative shadow-lg hover:shadow-xl hover:border-primary/30"
+                              style={{ 
+                                backfaceVisibility: 'hidden',
+                                transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
+                              }}
+                            >
                             {/* Scene number header bar with controls */}
                             <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-4 py-2.5">
                               <span className="font-semibold text-foreground/80 text-sm">Szene {index + 1}</span>
@@ -3618,6 +3633,7 @@ Beispiel einer korrekten Antwort:
                                   style={{ overflow: 'hidden' }}
                                 />
                               </div>
+                            </div>
                             </div>
                           </div>
                         ))}
