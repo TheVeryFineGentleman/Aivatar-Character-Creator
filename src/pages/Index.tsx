@@ -169,6 +169,7 @@ const Index = () => {
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
   const [selectedSkinType, setSelectedSkinType] = useState("realistic");
+  const [selectedCameraAngle, setSelectedCameraAngle] = useState("random");
   const isGeneratingRef = useRef(false);
   const referenceImagesRef = useRef<File[]>([]);
   const { toast } = useToast();
@@ -246,6 +247,7 @@ const Index = () => {
 
   // Camera angle and shot type options for AI
   const CAMERA_ANGLE_OPTIONS = [
+    { value: "random", label: "Zufällig" },
     { value: "frontal", label: "Frontal" },
     { value: "seitlich", label: "Seitlich" },
     { value: "von-oben", label: "Von oben" },
@@ -708,9 +710,25 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     const MAX_RETRIES = 3;
     
     try {
-      // For first 20%: exactly 4 angles to show all sides (front, back, left, right)
-      const angles = ["front view", "right side view", "back view", "left side view"];
-      const viewAngle = angles[index % angles.length];
+      // Determine camera angle - use selected angle or cycle through angles if random
+      let viewAngle = "";
+      if (selectedCameraAngle === "random") {
+        const angles = ["front view", "right side view", "back view", "left side view"];
+        viewAngle = angles[index % angles.length];
+      } else {
+        // Map selected camera angle to English for the prompt
+        const angleMap: Record<string, string> = {
+          "frontal": "front view",
+          "seitlich": "side view",
+          "von-oben": "high angle view from above",
+          "von-unten": "low angle view from below",
+          "ueber-schulter": "over the shoulder view",
+          "dutch-angle": "dutch angle tilted view",
+          "vogelperspektive": "bird's eye view from above",
+          "froschperspektive": "worm's eye view from below"
+        };
+        viewAngle = angleMap[selectedCameraAngle] || "front view";
+      }
       
       // Get shot type text
       const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
@@ -2770,8 +2788,8 @@ Beispiel einer korrekten Antwort:
               </div>
             </div>
 
-            {/* Format, Shot Type, and Skin Type Selection */}
-            <div className={`grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
+            {/* Format, Shot Type, Skin Type, and Camera Angle Selection */}
+            <div className={`grid gap-4 ${isPro ? "grid-cols-4" : "grid-cols-3"}`}>
               {/* Image Format Dropdown */}
               <div className="space-y-2">
                 <Label>Bildformat</Label>
@@ -2818,6 +2836,29 @@ Beispiel einer korrekten Antwort:
                 </DropdownMenu>
               </div>
 
+              {/* Camera Angle Dropdown */}
+              <div className="space-y-2">
+                <Label>Kamerawinkel</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {CAMERA_ANGLE_OPTIONS.find(c => c.value === selectedCameraAngle)?.label || "Winkel wählen"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full bg-popover">
+                    {CAMERA_ANGLE_OPTIONS.map((angle) => (
+                      <DropdownMenuItem
+                        key={angle.value}
+                        onClick={() => setSelectedCameraAngle(angle.value)}
+                        className={selectedCameraAngle === angle.value ? "bg-accent" : ""}
+                      >
+                        {angle.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
               {/* Skin Type Dropdown - Pro Only */}
               {isPro && (
                 <div className="space-y-2">
@@ -2842,6 +2883,33 @@ Beispiel einer korrekten Antwort:
                   </DropdownMenu>
                 </div>
               )}
+            </div>
+
+            {/* Image Count Slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="flex items-center gap-2">
+                  Anzahl Bilder
+                  {!isPro && (
+                    <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
+                  )}
+                </Label>
+                <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
+              </div>
+              <div className="relative">
+                <Slider
+                  value={imageCount}
+                  onValueChange={(value) => {
+                    const maxValue = !isPro ? 6 : 40;
+                    setImageCount([Math.min(value[0], maxValue)]);
+                  }}
+                  min={1}
+                  max={40}
+                  step={1}
+                  className="w-full relative z-10"
+                  lockedStart={!isPro ? 6 : undefined}
+                />
+              </div>
             </div>
 
             {/* Background Selection - Horizontal Layout */}
@@ -3175,33 +3243,6 @@ Beispiel einer korrekten Antwort:
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Image Count Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label className="flex items-center gap-2">
-                  Anzahl Bilder
-                  {!isPro && (
-                    <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
-                  )}
-                </Label>
-                <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
-              </div>
-              <div className="relative">
-                <Slider
-                  value={imageCount}
-                  onValueChange={(value) => {
-                    const maxValue = !isPro ? 6 : 40;
-                    setImageCount([Math.min(value[0], maxValue)]);
-                  }}
-                  min={1}
-                  max={40}
-                  step={1}
-                  className="w-full relative z-10"
-                  lockedStart={!isPro ? 6 : undefined}
-                />
               </div>
             </div>
 
