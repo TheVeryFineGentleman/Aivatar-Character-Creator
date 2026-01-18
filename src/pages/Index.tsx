@@ -3548,7 +3548,7 @@ Beispiel einer korrekten Antwort:
                           >
                             {/* Card Back - decorative */}
                             <div 
-                              className="absolute inset-0 bg-gradient-to-br from-primary/20 via-muted to-accent/20 rounded-xl border border-primary/30 shadow-lg overflow-hidden"
+                              className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-muted/80 rounded-xl border border-border/40 shadow-lg overflow-hidden"
                               style={{ 
                                 backfaceVisibility: 'hidden',
                                 WebkitBackfaceVisibility: 'hidden',
@@ -3556,20 +3556,20 @@ Beispiel einer korrekten Antwort:
                               }}
                             >
                               {/* Decorative pattern */}
-                              <div className="absolute inset-0 opacity-10">
-                                <div className="absolute top-4 left-4 w-16 h-16 border-2 border-primary rounded-full" />
-                                <div className="absolute top-8 left-8 w-12 h-12 border-2 border-primary rounded-full" />
-                                <div className="absolute bottom-4 right-4 w-20 h-20 border-2 border-primary rounded-full" />
-                                <div className="absolute bottom-10 right-10 w-10 h-10 border-2 border-primary rounded-full" />
+                              <div className="absolute inset-0 opacity-[0.07]">
+                                <div className="absolute top-4 left-4 w-16 h-16 border-2 border-foreground rounded-full" />
+                                <div className="absolute top-8 left-8 w-12 h-12 border-2 border-foreground rounded-full" />
+                                <div className="absolute bottom-4 right-4 w-20 h-20 border-2 border-foreground rounded-full" />
+                                <div className="absolute bottom-10 right-10 w-10 h-10 border-2 border-foreground rounded-full" />
                               </div>
                               {/* Center icon */}
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
-                                  <Sparkles className="w-8 h-8 text-primary/60" />
+                                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
+                                  <Sparkles className="w-8 h-8 text-muted-foreground/50" />
                                 </div>
                               </div>
                               {/* Subtle shimmer effect */}
-                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent" />
+                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-foreground/[0.02] to-transparent" />
                             </div>
                             {/* Card Front */}
                             <div 
