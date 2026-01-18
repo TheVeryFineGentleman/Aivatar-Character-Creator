@@ -2983,33 +2983,6 @@ Beispiel einer korrekten Antwort:
               )}
             </div>
 
-            {/* Image Count Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label className="flex items-center gap-2">
-                  Anzahl Bilder
-                  {!isPro && (
-                    <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
-                  )}
-                </Label>
-                <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
-              </div>
-              <div className="relative">
-                <Slider
-                  value={imageCount}
-                  onValueChange={(value) => {
-                    const maxValue = !isPro ? 6 : 40;
-                    setImageCount([Math.min(value[0], maxValue)]);
-                  }}
-                  min={1}
-                  max={40}
-                  step={1}
-                  className="w-full relative z-10"
-                  lockedStart={!isPro ? 6 : undefined}
-                />
-              </div>
-            </div>
-
             {/* Custom Prompt Toggle */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
@@ -3202,6 +3175,33 @@ Beispiel einer korrekten Antwort:
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Image Count Slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="flex items-center gap-2">
+                  Anzahl Bilder
+                  {!isPro && (
+                    <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
+                  )}
+                </Label>
+                <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
+              </div>
+              <div className="relative">
+                <Slider
+                  value={imageCount}
+                  onValueChange={(value) => {
+                    const maxValue = !isPro ? 6 : 40;
+                    setImageCount([Math.min(value[0], maxValue)]);
+                  }}
+                  min={1}
+                  max={40}
+                  step={1}
+                  className="w-full relative z-10"
+                  lockedStart={!isPro ? 6 : undefined}
+                />
               </div>
             </div>
 
