@@ -2840,28 +2840,30 @@ Beispiel einer korrekten Antwort:
                 </DropdownMenu>
               </div>
 
-              {/* Camera Angle Dropdown */}
-              <div className="space-y-2">
-                <Label>Kamerawinkel</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {CAMERA_ANGLE_OPTIONS.find(c => c.value === selectedCameraAngle)?.label || "Winkel wählen"}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full bg-popover">
-                    {CAMERA_ANGLE_OPTIONS.map((angle) => (
-                      <DropdownMenuItem
-                        key={angle.value}
-                        onClick={() => setSelectedCameraAngle(angle.value)}
-                        className={selectedCameraAngle === angle.value ? "bg-accent" : ""}
-                      >
-                        {angle.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              {/* Camera Angle Dropdown - FULL Only */}
+              {authData.planCode === 'FULL' && (
+                <div className="space-y-2">
+                  <Label>Kamerawinkel</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {CAMERA_ANGLE_OPTIONS.find(c => c.value === selectedCameraAngle)?.label || "Winkel wählen"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full bg-popover">
+                      {CAMERA_ANGLE_OPTIONS.map((angle) => (
+                        <DropdownMenuItem
+                          key={angle.value}
+                          onClick={() => setSelectedCameraAngle(angle.value)}
+                          className={selectedCameraAngle === angle.value ? "bg-accent" : ""}
+                        >
+                          {angle.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
 
               {/* Skin Type Dropdown - Pro Only */}
               {isPro && (
