@@ -249,6 +249,10 @@ const Index = () => {
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
   const [isGeneratingSceneAssistant, setIsGeneratingSceneAssistant] = useState(false);
+  
+  // Story Idea AI Assistant state
+  const [storyAiAssistantInput, setStoryAiAssistantInput] = useState("");
+  const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
 
   // Camera angle and shot type options for AI
   const CAMERA_ANGLE_OPTIONS = [
@@ -363,6 +367,71 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
       });
     } finally {
       setIsGeneratingSceneAssistant(false);
+    }
+  };
+
+  // Story Idea AI Assistant handler
+  const handleGenerateStoryIdea = async () => {
+    if (!apiKey || isGeneratingStoryAiIdea) return;
+    
+    setIsGeneratingStoryAiIdea(true);
+    try {
+      const existingIdeaContext = storyIdea.trim() 
+        ? `\n\nAktuelle Story-Idee zur Referenz:\n"${storyIdea}"\n\nVerbessere oder ergänze diese basierend auf der Nutzer-Anfrage.`
+        : "";
+      
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Du bist ein kreativer Story-Autor. Basierend auf der Nutzeranfrage, erstelle eine fesselnde Story-Idee.
+
+NUTZERANFRAGE:
+"${storyAiAssistantInput.trim() || 'Erstelle eine kreative Story-Idee'}"
+${existingIdeaContext}
+
+REGELN:
+- Erstelle eine klare, prägnante Story-Idee (1-3 Sätze)
+- Die Idee sollte visuell umsetzbar sein für ein Storyboard
+- Schreibe auf Deutsch
+- Antworte NUR mit der Story-Idee selbst, keine Einleitungen oder Erklärungen
+- Die Idee sollte interessant und emotional ansprechend sein`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.9,
+              maxOutputTokens: 200
+            }
+          })
+        }
+      );
+
+      if (!response.ok) throw new Error("API request failed");
+
+      const data = await response.json();
+      const generatedIdea = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      
+      if (generatedIdea) {
+        setStoryIdea(generatedIdea);
+        setStoryAiAssistantInput("");
+        
+        toast({
+          title: "Story-Idee generiert!",
+          description: "Die KI hat eine neue Story-Idee erstellt."
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Die Story-Idee konnte nicht generiert werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingStoryAiIdea(false);
     }
   };
 
@@ -3358,60 +3427,92 @@ Beispiel einer korrekten Antwort:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="story-idea">Deine Story-Idee</Label>
-                <div className="relative">
-                  <Textarea
-                    id="story-idea"
-                    placeholder=""
-                    value={storyIdea}
-                    onChange={(e) => setStoryIdea(e.target.value)}
-                    className="min-h-[200px] resize-none"
-                  />
-                  
-                  {/* Suggestions overlay - only when empty and not animating */}
-                  {(!storyIdea || isAnimatingSuggestion) && (
-                    <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
-                      <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
-                        Wähle eine Idee oder schreibe deine eigene...
-                      </p>
-                      <div className="relative pointer-events-auto">
-                        {isLoadingStorySuggestions ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Generiere Ideen...</span>
-                          </div>
-                        ) : (
-                          storySuggestions.map((suggestion, index) => {
-                            const isSelected = selectedSuggestionIndex === index;
-                            const isOther = selectedSuggestionIndex !== null && !isSelected;
-                            
-                            // Calculate how far up this item needs to move to reach position 0
-                            // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
-                            const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
-                            
-                            return (
-                              <p
-                                key={index}
-                                onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
-                                className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
-                                  isSelected 
-                                    ? 'text-foreground font-medium' 
-                                    : isOther
-                                      ? 'opacity-0'
-                                      : 'text-foreground/70 hover:text-primary'
-                                }`}
-                                style={{
-                                  transitionDuration: isSelected ? '350ms' : '200ms',
-                                  transform: isSelected ? `translateY(-${moveUpDistance}px)` : 'translateY(0)',
-                                }}
-                              >
-                                {isSelected ? suggestion : `• ${suggestion}`}
-                              </p>
-                            );
-                          })
-                        )}
+              {/* Story Idea and AI Assistant side by side */}
+              <div className="flex gap-4">
+                {/* Left: Story Idea Field */}
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="story-idea">Deine Story-Idee</Label>
+                  <div className="relative">
+                    <Textarea
+                      id="story-idea"
+                      placeholder=""
+                      value={storyIdea}
+                      onChange={(e) => setStoryIdea(e.target.value)}
+                      className="min-h-[120px] resize-none"
+                    />
+                    
+                    {/* Suggestions overlay - only when empty and not animating */}
+                    {(!storyIdea || isAnimatingSuggestion) && (
+                      <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
+                        <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
+                          Wähle eine Idee oder schreibe deine eigene...
+                        </p>
+                        <div className="relative pointer-events-auto">
+                          {isLoadingStorySuggestions ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Generiere Ideen...</span>
+                            </div>
+                          ) : (
+                            storySuggestions.map((suggestion, index) => {
+                              const isSelected = selectedSuggestionIndex === index;
+                              const isOther = selectedSuggestionIndex !== null && !isSelected;
+                              
+                              // Calculate how far up this item needs to move to reach position 0
+                              // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
+                              const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
+                              
+                              return (
+                                <p
+                                  key={index}
+                                  onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
+                                  className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
+                                    isSelected 
+                                      ? 'text-foreground font-medium' 
+                                      : isOther
+                                        ? 'opacity-0'
+                                        : 'text-foreground/70 hover:text-primary'
+                                  }`}
+                                  style={{
+                                    transitionDuration: isSelected ? '350ms' : '200ms',
+                                    transform: isSelected ? `translateY(-${moveUpDistance}px)` : 'translateY(0)',
+                                  }}
+                                >
+                                  {isSelected ? suggestion : `• ${suggestion}`}
+                                </p>
+                              );
+                            })
+                          )}
+                        </div>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: AI Assistant for Story Ideas */}
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Sparkles className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-muted-foreground">KI-Assistent</Label>
+                  </div>
+                  <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
+                    <Textarea
+                      placeholder="Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
+                      value={storyAiAssistantInput}
+                      onChange={(e) => setStoryAiAssistantInput(e.target.value)}
+                      className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleGenerateStoryIdea();
+                        }
+                      }}
+                    />
+                  </div>
+                  {isGeneratingStoryAiIdea && (
+                    <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Generiere Story-Idee...</span>
                     </div>
                   )}
                 </div>
