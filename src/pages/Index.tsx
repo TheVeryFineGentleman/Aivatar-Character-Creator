@@ -779,6 +779,11 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
         const skinOption = isPro ? SKIN_OPTIONS.find(s => s.id === selectedSkinType) : null;
         const skinText = skinOption ? `- Skin appearance: ${skinOption.description}` : "";
         
+        // Determine camera angle instruction
+        const cameraAngleInstruction = selectedCameraAngle === "random" 
+          ? "- Shoot from various random angles" 
+          : `- IMPORTANT: Camera angle MUST be: ${viewAngle}. Do NOT use any other angle.`;
+        
         basePrompt = `CRITICAL CONSTRAINTS: 
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
@@ -790,10 +795,9 @@ Create a professional photoshoot of the person from the reference image(s).
 - Use the selected background: ${bgText}
 - Dress them in random clothing
 - Use random, varied poses (standing, sitting, leaning, walking, etc.)
-- Shoot from various angles
+${cameraAngleInstruction}
 - Format: ${formatText}
 - ${shotText}
-- ${viewAngle}
 ${skinText}
 Ultra high resolution, maintain style consistency with reference image(s).`;
       }
