@@ -242,7 +242,8 @@ const Index = () => {
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
   const [isClosingPopup, setIsClosingPopup] = useState(false);
   const [storyboardAnimationKey, setStoryboardAnimationKey] = useState(0);
-  const [justRegeneratedIndex, setJustRegeneratedIndex] = useState<number | null>(null);
+  const [regeneratingCardIndex, setRegeneratingCardIndex] = useState<number | null>(null);
+  const [justFinishedIndex, setJustFinishedIndex] = useState<number | null>(null);
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -462,6 +463,7 @@ Antworte NUR mit den ${storyPointCount} Story-Punkten, einer pro Zeile, ohne Num
     if (!apiKey || regeneratingPointIndex !== null) return;
     
     setRegeneratingPointIndex(index);
+    setRegeneratingCardIndex(index); // Start flip-away animation
     try {
       const currentPoint = storyPoints[index].versions[storyPoints[index].currentVersion];
       const prevPoint = index > 0 ? storyPoints[index - 1].versions[storyPoints[index - 1].currentVersion] : null;
@@ -508,9 +510,10 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
             }
             return point;
           }));
-          // Trigger flip animation for this card
-          setJustRegeneratedIndex(index);
-          setTimeout(() => setJustRegeneratedIndex(null), 800);
+          // Trigger flip-back animation for this card
+          setRegeneratingCardIndex(null);
+          setJustFinishedIndex(index);
+          setTimeout(() => setJustFinishedIndex(null), 700);
         }
       }
     } catch (error) {
@@ -3526,15 +3529,17 @@ Beispiel einer korrekten Antwort:
                       >
                         {storyPoints.map((point, index) => (
                           <div 
-                            key={justRegeneratedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
+                            key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
                               "group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden relative shadow-lg hover:shadow-xl hover:border-primary/30 min-w-[300px] max-w-[340px] flex-shrink-0",
-                              justRegeneratedIndex === index 
-                                ? "animate-storyboard-flip" 
-                                : storyboardAnimationKey > 0 ? "animate-storyboard-appear opacity-0" : ""
+                              regeneratingCardIndex === index 
+                                ? "animate-storyboard-flip-away" 
+                                : justFinishedIndex === index 
+                                  ? "animate-storyboard-flip-back" 
+                                  : storyboardAnimationKey > 0 ? "animate-storyboard-appear opacity-0" : ""
                             )}
                             style={{ 
-                              animationDelay: justRegeneratedIndex === index ? '0ms' : `${index * 120}ms`, 
+                              animationDelay: (regeneratingCardIndex === index || justFinishedIndex === index) ? '0ms' : `${index * 120}ms`, 
                               animationFillMode: 'both',
                               transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
                               transformStyle: 'preserve-3d'
