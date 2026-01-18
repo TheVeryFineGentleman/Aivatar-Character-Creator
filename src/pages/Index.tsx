@@ -3551,6 +3551,7 @@ Beispiel einer korrekten Antwort:
                               className="absolute inset-0 bg-gradient-to-b from-muted to-muted/80 rounded-xl border border-border/40 shadow-lg"
                               style={{ 
                                 backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
                                 transform: 'rotateX(180deg)'
                               }}
                             />
@@ -3559,6 +3560,8 @@ Beispiel einer korrekten Antwort:
                               className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30"
                               style={{ 
                                 backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                                transform: 'rotateX(0deg)',
                                 transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
                               }}
                             >
