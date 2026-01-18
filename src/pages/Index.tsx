@@ -240,6 +240,7 @@ const Index = () => {
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
   const [isClosingPopup, setIsClosingPopup] = useState(false);
+  const [storyboardAnimationKey, setStoryboardAnimationKey] = useState(0);
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -445,6 +446,7 @@ Antworte NUR mit den ${storyPointCount} Story-Punkten, einer pro Zeile, ohne Num
             versions: [point],
             currentVersion: 0
           })));
+          setStoryboardAnimationKey(prev => prev + 1);
         }
       }
     } catch (error) {
@@ -3519,12 +3521,12 @@ Beispiel einer korrekten Antwort:
                       >
                         {storyPoints.map((point, index) => (
                           <div 
-                            key={index}
-                            className="group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden relative shadow-lg hover:shadow-xl hover:border-primary/30 min-w-[300px] max-w-[340px] flex-shrink-0 animate-scale-in"
+                            key={`${storyboardAnimationKey}-${index}`}
+                            className="group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden relative shadow-lg hover:shadow-xl hover:border-primary/30 min-w-[300px] max-w-[340px] flex-shrink-0 animate-storyboard-appear opacity-0"
                             style={{ 
-                              animationDelay: `${index * 100}ms`, 
+                              animationDelay: `${index * 120}ms`, 
                               animationFillMode: 'both',
-                              transition: 'all 0.3s ease'
+                              transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
                             }}
                           >
                             {/* Scene number header bar with controls */}
