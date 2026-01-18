@@ -145,6 +145,24 @@ export default {
             opacity: "1"
           },
         },
+        "storyboard-flip": {
+          "0%": { 
+            transform: "rotateY(-90deg) scale(0.95)", 
+            opacity: "0.5"
+          },
+          "50%": {
+            transform: "rotateY(20deg) scale(1.02)",
+            opacity: "1"
+          },
+          "75%": {
+            transform: "rotateY(-10deg) scale(1)",
+            opacity: "1"
+          },
+          "100%": { 
+            transform: "rotateY(0deg) scale(1)", 
+            opacity: "1"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -154,6 +172,7 @@ export default {
         "expand-from-card": "expand-from-card 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "scale-in": "scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "storyboard-appear": "storyboard-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "storyboard-flip": "storyboard-flip 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
       },
     },
   },
