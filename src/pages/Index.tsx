@@ -2770,6 +2770,80 @@ Beispiel einer korrekten Antwort:
               </div>
             </div>
 
+            {/* Format, Shot Type, and Skin Type Selection */}
+            <div className={`grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
+              {/* Image Format Dropdown */}
+              <div className="space-y-2">
+                <Label>Bildformat</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Format wählen"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full bg-popover">
+                    {FORMAT_OPTIONS.map((format) => (
+                      <DropdownMenuItem
+                        key={format.id}
+                        onClick={() => setSelectedFormat(format.id)}
+                        className={selectedFormat === format.id ? "bg-accent" : ""}
+                      >
+                        {format.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Shot Type Dropdown */}
+              <div className="space-y-2">
+                <Label>Aufnahme-Typ</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Aufnahme wählen"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full bg-popover">
+                    {SHOT_OPTIONS.map((shot) => (
+                      <DropdownMenuItem
+                        key={shot.id}
+                        onClick={() => setSelectedShot(shot.id)}
+                        className={selectedShot === shot.id ? "bg-accent" : ""}
+                      >
+                        {shot.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Skin Type Dropdown - Pro Only */}
+              {isPro && (
+                <div className="space-y-2">
+                  <Label>Hauttyp</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "Hauttyp wählen"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full bg-popover">
+                      {SKIN_OPTIONS.map((skin) => (
+                        <DropdownMenuItem
+                          key={skin.id}
+                          onClick={() => setSelectedSkinType(skin.id)}
+                          className={selectedSkinType === skin.id ? "bg-accent" : ""}
+                        >
+                          {skin.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+            </div>
+
             {/* Background Selection - Horizontal Layout */}
             <div className="flex flex-col gap-2 items-start">
               <Label className="text-xs text-muted-foreground">Hintergrund</Label>
@@ -2907,80 +2981,6 @@ Beispiel einer korrekten Antwort:
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Format, Shot Type, and Skin Type Selection */}
-            <div className={`grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
-              {/* Image Format Dropdown */}
-              <div className="space-y-2">
-                <Label>Bildformat</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Format wählen"}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full bg-popover">
-                    {FORMAT_OPTIONS.map((format) => (
-                      <DropdownMenuItem
-                        key={format.id}
-                        onClick={() => setSelectedFormat(format.id)}
-                        className={selectedFormat === format.id ? "bg-accent" : ""}
-                      >
-                        {format.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Shot Type Dropdown */}
-              <div className="space-y-2">
-                <Label>Aufnahme-Typ</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Aufnahme wählen"}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full bg-popover">
-                    {SHOT_OPTIONS.map((shot) => (
-                      <DropdownMenuItem
-                        key={shot.id}
-                        onClick={() => setSelectedShot(shot.id)}
-                        className={selectedShot === shot.id ? "bg-accent" : ""}
-                      >
-                        {shot.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Skin Type Dropdown - Pro Only */}
-              {isPro && (
-                <div className="space-y-2">
-                  <Label>Hauttyp</Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
-                        {SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "Hauttyp wählen"}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-full bg-popover">
-                      {SKIN_OPTIONS.map((skin) => (
-                        <DropdownMenuItem
-                          key={skin.id}
-                          onClick={() => setSelectedSkinType(skin.id)}
-                          className={selectedSkinType === skin.id ? "bg-accent" : ""}
-                        >
-                          {skin.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
             </div>
 
             {/* Custom Prompt Toggle */}
