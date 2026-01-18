@@ -244,6 +244,7 @@ const Index = () => {
   const [storyboardAnimationKey, setStoryboardAnimationKey] = useState(0);
   const [regeneratingCardIndex, setRegeneratingCardIndex] = useState<number | null>(null);
   const [justFinishedIndex, setJustFinishedIndex] = useState<number | null>(null);
+  const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -513,6 +514,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           // Trigger flip-back animation for this card
           setRegeneratingCardIndex(null);
           setJustFinishedIndex(index);
+          setFlippedCards(prev => new Set(prev).add(index));
           setTimeout(() => setJustFinishedIndex(null), 700);
         }
       }
@@ -3531,12 +3533,12 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[300px] max-w-[340px] flex-shrink-0",
+                              "min-w-[300px] max-w-[340px] flex-shrink-0 relative h-[280px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
                                   ? "animate-storyboard-flip-back" 
-                                  : storyboardAnimationKey > 0 ? "animate-storyboard-appear opacity-0" : ""
+                                  : (storyboardAnimationKey > 0 && !flippedCards.has(index)) ? "animate-storyboard-appear opacity-0" : ""
                             )}
                             style={{ 
                               animationDelay: (regeneratingCardIndex === index || justFinishedIndex === index) ? '0ms' : `${index * 120}ms`, 
@@ -3554,7 +3556,7 @@ Beispiel einer korrekten Antwort:
                             />
                             {/* Card Front */}
                             <div 
-                              className="group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden relative shadow-lg hover:shadow-xl hover:border-primary/30"
+                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30"
                               style={{ 
                                 backfaceVisibility: 'hidden',
                                 transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
