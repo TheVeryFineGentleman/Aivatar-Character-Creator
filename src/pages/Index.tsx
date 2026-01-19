@@ -472,11 +472,32 @@ REGELN:
     }, 250);
   };
 
+  const STORY_MAX_FILE_SIZE_MB = 4;
+  const STORY_MAX_FILE_SIZE_BYTES = STORY_MAX_FILE_SIZE_MB * 1024 * 1024;
+
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const maxImages = 3;
-      const filesToProcess = Array.from(files).slice(0, maxImages - storyReferenceImages.length);
+      const allFiles = Array.from(files);
+      
+      // Check file size limit
+      const oversizedFiles = allFiles.filter(file => file.size > STORY_MAX_FILE_SIZE_BYTES);
+      if (oversizedFiles.length > 0) {
+        toast({
+          title: "Datei zu groß",
+          description: `Maximale Dateigröße: ${STORY_MAX_FILE_SIZE_MB}MB. ${oversizedFiles.length} Datei(en) übersprungen.`,
+          variant: "destructive",
+        });
+      }
+      
+      const validFiles = allFiles.filter(file => file.size <= STORY_MAX_FILE_SIZE_BYTES);
+      const filesToProcess = validFiles.slice(0, maxImages - storyReferenceImages.length);
+      
+      if (filesToProcess.length === 0) {
+        e.target.value = "";
+        return;
+      }
       
       const newImages: string[] = [];
       for (const file of filesToProcess) {
@@ -1375,8 +1396,36 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     };
   }, []);
 
+  const MAX_FILE_SIZE_MB = 4;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    
+    // Check file size limit
+    const oversizedFiles = files.filter(file => file.size > MAX_FILE_SIZE_BYTES);
+    if (oversizedFiles.length > 0) {
+      toast({
+        title: "Datei zu groß",
+        description: `Maximale Dateigröße: ${MAX_FILE_SIZE_MB}MB. ${oversizedFiles.length} Datei(en) übersprungen.`,
+        variant: "destructive",
+      });
+      // Filter out oversized files
+      const validFiles = files.filter(file => file.size <= MAX_FILE_SIZE_BYTES);
+      if (validFiles.length === 0) return;
+      
+      if (referenceImages.length + validFiles.length > 3) {
+        toast({
+          title: "Zu viele Bilder",
+          description: "Du kannst maximal 3 Referenzbilder hochladen",
+          variant: "destructive",
+        });
+        return;
+      }
+      setReferenceImages([...referenceImages, ...validFiles].slice(0, 3));
+      return;
+    }
+    
     if (referenceImages.length + files.length > 3) {
       toast({
         title: "Zu viele Bilder",
