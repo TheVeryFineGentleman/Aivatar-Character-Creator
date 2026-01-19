@@ -1527,7 +1527,31 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Gemini API error ${response.status}:`, errorText);
-        throw new Error(`Gemini API error ${response.status}: ${errorText}`);
+        // Create user-friendly error message based on status
+        let userFriendlyError = "";
+        switch (response.status) {
+          case 400:
+            userFriendlyError = "Ungültige Anfrage - Prompt prüfen";
+            break;
+          case 401:
+            userFriendlyError = "API-Key ungültig oder abgelaufen";
+            break;
+          case 403:
+            userFriendlyError = "Zugriff verweigert";
+            break;
+          case 429:
+            userFriendlyError = "API überlastet - bitte warte kurz";
+            break;
+          case 500:
+            userFriendlyError = "Server-Fehler bei Google";
+            break;
+          case 503:
+            userFriendlyError = "API überlastet - später versuchen";
+            break;
+          default:
+            userFriendlyError = `API-Fehler (${response.status})`;
+        }
+        throw new Error(userFriendlyError);
       }
 
       const data = await response.json();
@@ -1740,16 +1764,37 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               if (imageUrl) {
                 updated[index] = { status: "completed", imageUrl, progress: 100 };
               } else {
-                updated[index] = { status: "error", progress: 0 };
+                updated[index] = { status: "error", progress: 0, errorMessage: "Kein Bild generiert - bitte erneut versuchen" };
               }
               return updated;
             });
           } catch (error) {
             console.error(`❌ Error in processQueue for index ${index}:`, error);
+            // Determine specific error message
+            let errorMessage = "Unbekannter Fehler";
+            if (error instanceof Error) {
+              if (error.name === 'AbortError') {
+                errorMessage = "Zeitüberschreitung (2 Min.)";
+              } else if (error.message.includes("timed out")) {
+                errorMessage = "Zeitüberschreitung - bitte erneut versuchen";
+              } else if (error.message.includes("429") || error.message.includes("Too Many")) {
+                errorMessage = "API überlastet - bitte warte kurz";
+              } else if (error.message.includes("401") || error.message.includes("unauthorized")) {
+                errorMessage = "API-Key ungültig";
+              } else if (error.message.includes("503") || error.message.includes("overloaded")) {
+                errorMessage = "API überlastet - später versuchen";
+              } else if (error.message.includes("500")) {
+                errorMessage = "Server-Fehler bei Google";
+              } else if (error.message.includes("Failed to fetch") || error.message.includes("network")) {
+                errorMessage = "Netzwerkfehler - Verbindung prüfen";
+              } else {
+                errorMessage = error.message.length > 50 ? error.message.substring(0, 47) + "..." : error.message;
+              }
+            }
             setImageSlots((prev) => {
               const updated = [...prev];
               if (index < updated.length) {
-                updated[index] = { status: "error", progress: 0 };
+                updated[index] = { status: "error", progress: 0, errorMessage };
               }
               return updated;
             });
@@ -3124,7 +3169,7 @@ Beispiel einer korrekten Antwort:
         <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Version Indicator */}
         <div className="absolute top-2 left-2 text-[10px] text-muted-foreground/50 font-mono select-none">
-          v1.4.1
+          v1.4.2
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}

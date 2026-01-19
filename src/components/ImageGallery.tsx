@@ -5,6 +5,7 @@ export interface ImageSlotData {
   imageUrl?: string;
   progress?: number;
   retrying?: boolean;
+  errorMessage?: string;
 }
 
 interface ImageGalleryProps {
@@ -52,6 +53,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemo
             imageUrl={slot.imageUrl}
             progress={slot.progress}
             retrying={slot.retrying}
+            errorMessage={slot.errorMessage}
             onDownload={() => onDownload(index)}
             onImageClick={() => onImageClick?.(index)}
             onDelete={() => onDelete?.(index)}
