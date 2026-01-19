@@ -3218,7 +3218,7 @@ Beispiel einer korrekten Antwort:
         <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Version Indicator */}
         <div className="absolute top-2 left-2 text-[10px] text-muted-foreground/50 font-mono select-none">
-          v1.4.2
+          v1.4.3
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
