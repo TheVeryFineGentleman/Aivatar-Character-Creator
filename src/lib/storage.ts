@@ -130,6 +130,74 @@ export const removeFromLocalStorage = (key: string) => {
   }
 };
 
+// ============= IMAGE COMPRESSION TO FIT SIZE LIMIT =============
+const TARGET_MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB target
+
+export const compressImageToFitSize = async (
+  file: File,
+  maxSizeBytes: number = TARGET_MAX_SIZE_BYTES
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+      img.onload = () => {
+        let quality = 0.9;
+        let maxWidth = img.width;
+        const minWidth = 400; // Don't go below this
+        const minQuality = 0.5;
+        
+        const tryCompress = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
+          
+          // Calculate dimensions maintaining aspect ratio
+          const ratio = img.height / img.width;
+          canvas.width = maxWidth;
+          canvas.height = Math.round(maxWidth * ratio);
+          
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const base64 = canvas.toDataURL('image/jpeg', quality);
+          const sizeBytes = Math.round((base64.length - 22) * 0.75); // Approximate base64 to bytes
+          
+          console.log(`🖼️ Compression attempt: ${maxWidth}px, quality ${quality.toFixed(2)}, ~${(sizeBytes / 1024 / 1024).toFixed(2)}MB`);
+          
+          if (sizeBytes <= maxSizeBytes) {
+            resolve(base64);
+          } else if (quality > minQuality) {
+            // First reduce quality
+            quality -= 0.1;
+            tryCompress();
+          } else if (maxWidth > minWidth) {
+            // Then reduce resolution
+            quality = 0.8;
+            maxWidth = Math.round(maxWidth * 0.7);
+            tryCompress();
+          } else {
+            // Accept what we have at minimum settings
+            console.log('⚠️ Could not compress below target, using minimum settings');
+            resolve(base64);
+          }
+        };
+        
+        tryCompress();
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = reader.result as string;
+    };
+    
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+};
+
 // ============= BROWSER FEATURE DETECTION =============
 export const checkBrowserCompatibility = (): { compatible: boolean; issues: string[] } => {
   const issues: string[] = [];
