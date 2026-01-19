@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -239,6 +239,7 @@ const Index = () => {
     generatedImage?: string;
     detailedImagePrompt?: string;
     videoPrompt?: string;
+    generationError?: string;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -599,6 +600,26 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     }
   };
 
+  // Helper function to get specific error message from HTTP status
+  const getErrorMessageFromStatus = (status: number, step: string): string => {
+    switch (status) {
+      case 400:
+        return `${step}: Ungültige Anfrage`;
+      case 401:
+        return `${step}: API-Key ungültig oder abgelaufen`;
+      case 403:
+        return `${step}: Zugriff verweigert`;
+      case 429:
+        return `${step}: Zu viele Anfragen - bitte warte kurz`;
+      case 500:
+        return `${step}: Server-Fehler bei Google`;
+      case 503:
+        return `${step}: API überlastet - bitte später versuchen`;
+      default:
+        return `${step}: Fehler (${status})`;
+    }
+  };
+
   // Generate images and video prompts for all story points
   const generateStoryImagesAndPrompts = async () => {
     if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
@@ -616,6 +637,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     
     // Store generated images for continuity reference
     const generatedSceneImages: string[] = [];
+    let successCount = 0;
+    let failedScenes: number[] = [];
     
     for (let i = 0; i < storyPoints.length; i++) {
       setGeneratingStoryImageIndex(i);
@@ -626,6 +649,10 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
       const previousSceneImage = i > 0 ? generatedSceneImages[i - 1] : null;
       const previousScenePrompt = i > 0 ? storyPoints[i - 1]?.detailedImagePrompt : null;
       
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+      
       try {
         // STEP 1: Generate ultra-detailed image prompt using non-thinking model
         const promptGenerationRequest = await fetch(
@@ -633,6 +660,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [{
                 parts: [{
@@ -729,11 +757,14 @@ Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
           }
         );
 
-        let detailedImagePrompt = "";
-        if (promptGenerationRequest.ok) {
-          const promptData = await promptGenerationRequest.json();
-          detailedImagePrompt = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        if (!promptGenerationRequest.ok) {
+          const errorMsg = getErrorMessageFromStatus(promptGenerationRequest.status, `Szene ${i + 1} (Prompt)`);
+          throw new Error(errorMsg);
         }
+
+        let detailedImagePrompt = "";
+        const promptData = await promptGenerationRequest.json();
+        detailedImagePrompt = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
         // Fallback if prompt generation failed
         if (!detailedImagePrompt) {
@@ -784,6 +815,7 @@ Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [{ role: "user", parts }],
               generationConfig: {
@@ -793,27 +825,34 @@ Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
           }
         );
 
+        if (!imageResponse.ok) {
+          const errorMsg = getErrorMessageFromStatus(imageResponse.status, `Szene ${i + 1} (Bild)`);
+          throw new Error(errorMsg);
+        }
+
         let generatedImageUrl = "";
-        if (imageResponse.ok) {
-          const imageData = await imageResponse.json();
-          const candidates = imageData.candidates ?? [];
-          if (candidates.length > 0) {
-            const partsOut = candidates[0]?.content?.parts ?? [];
-            const imagePart = partsOut.find(
-              (p: any) => p.inlineData && typeof p.inlineData.data === "string" && p.inlineData.mimeType?.startsWith("image/")
-            );
-            if (imagePart) {
-              const base64 = imagePart.inlineData.data;
-              const mimeType = imagePart.inlineData.mimeType || "image/png";
-              const binary = atob(base64);
-              const bytes = new Uint8Array(binary.length);
-              for (let j = 0; j < binary.length; j++) {
-                bytes[j] = binary.charCodeAt(j);
-              }
-              const blob = new Blob([bytes], { type: mimeType });
-              generatedImageUrl = URL.createObjectURL(blob);
+        const imageData = await imageResponse.json();
+        const candidates = imageData.candidates ?? [];
+        if (candidates.length > 0) {
+          const partsOut = candidates[0]?.content?.parts ?? [];
+          const imagePart = partsOut.find(
+            (p: any) => p.inlineData && typeof p.inlineData.data === "string" && p.inlineData.mimeType?.startsWith("image/")
+          );
+          if (imagePart) {
+            const base64 = imagePart.inlineData.data;
+            const mimeType = imagePart.inlineData.mimeType || "image/png";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let j = 0; j < binary.length; j++) {
+              bytes[j] = binary.charCodeAt(j);
             }
+            const blob = new Blob([bytes], { type: mimeType });
+            generatedImageUrl = URL.createObjectURL(blob);
           }
+        }
+        
+        if (!generatedImageUrl) {
+          throw new Error(`Szene ${i + 1}: Kein Bild generiert`);
         }
         
         // Store this image for the next scene's reference
@@ -825,6 +864,7 @@ Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [{
                 parts: [{
@@ -895,25 +935,76 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
               ...p,
               generatedImage: generatedImageUrl,
               detailedImagePrompt: detailedImagePrompt,
-              videoPrompt: videoPrompt
+              videoPrompt: videoPrompt,
+              generationError: undefined
             };
           }
           return p;
         }));
+        
+        successCount++;
 
       } catch (error) {
         console.error(`Failed to generate for story point ${i}:`, error);
         generatedSceneImages.push(""); // Push empty to maintain index alignment
+        failedScenes.push(i + 1);
+        
+        // Determine error message
+        let errorMessage = "Unbekannter Fehler";
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            errorMessage = `Szene ${i + 1}: Zeitüberschreitung (2 Min.)`;
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        // Update story point with error
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === i) {
+            return {
+              ...p,
+              generationError: errorMessage
+            };
+          }
+          return p;
+        }));
+        
+        // Show toast for this specific error
+        toast({
+          title: `Fehler bei Szene ${i + 1}`,
+          description: errorMessage,
+          variant: "destructive"
+        });
+        
+        // Continue with next scene instead of stopping
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
     
     setGeneratingStoryImageIndex(null);
     setIsGeneratingStoryImages(false);
     
-    toast({
-      title: "Fertig!",
-      description: "Bilder und Video-Prompts wurden generiert."
-    });
+    // Show summary toast
+    if (failedScenes.length === 0) {
+      toast({
+        title: "Fertig!",
+        description: `Alle ${storyPoints.length} Bilder und Video-Prompts wurden generiert.`
+      });
+    } else if (successCount > 0) {
+      toast({
+        title: "Teilweise fertig",
+        description: `${successCount} von ${storyPoints.length} Bilder generiert. Szene ${failedScenes.join(', ')} fehlgeschlagen.`,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Generierung fehlgeschlagen",
+        description: "Keine Bilder konnten generiert werden. Bitte überprüfe deinen API-Key.",
+        variant: "destructive"
+      });
+    }
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
@@ -926,6 +1017,188 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
       }
       return point;
     }));
+  };
+
+  // Regenerate a single failed story scene
+  const regenerateSingleStoryScene = async (sceneIndex: number) => {
+    if (!apiKey || regeneratingPointIndex !== null) return;
+    
+    setRegeneratingPointIndex(sceneIndex);
+    
+    const point = storyPoints[sceneIndex];
+    const storyText = point.versions[point.currentVersion];
+    
+    // Get character reference images as base64
+    const characterBase64Images: string[] = [];
+    for (const imageUrl of storyReferenceImages) {
+      if (imageUrl.startsWith('data:')) {
+        const base64 = imageUrl.split(',')[1];
+        if (base64) characterBase64Images.push(base64);
+      }
+    }
+    
+    // Get previous scene's image for style reference
+    const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
+    const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    
+    try {
+      // STEP 1: Generate image prompt
+      const promptResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Erstelle einen DETAILLIERTEN Bild-Prompt auf Deutsch für folgende Szene:
+
+"${storyText}"
+
+Kamerawinkel: ${point.cameraAngle || 'dynamisch'}
+Shot-Typ: ${point.shotType || 'passend zur Szene'}
+
+${previousScenePrompt ? `Stil wie vorherige Szene: "${previousScenePrompt.substring(0, 300)}..."` : ''}
+
+Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person.`
+              }]
+            }],
+            generationConfig: { temperature: 0.85, maxOutputTokens: 1500 }
+          })
+        }
+      );
+      
+      if (!promptResponse.ok) {
+        throw new Error(getErrorMessageFromStatus(promptResponse.status, "Prompt"));
+      }
+      
+      const promptData = await promptResponse.json();
+      let detailedImagePrompt = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || storyText;
+      
+      // STEP 2: Generate image
+      const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, 16:9 aspect ratio." }];
+      
+      for (const base64Data of characterBase64Images) {
+        parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+      }
+      
+      if (previousSceneImage) {
+        try {
+          const response = await fetch(previousSceneImage);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          const prevBase64 = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+            reader.readAsDataURL(blob);
+          });
+          parts.push({ inlineData: { mimeType: "image/jpeg", data: prevBase64 } });
+        } catch (e) {
+          console.warn("Could not add previous scene as reference:", e);
+        }
+      }
+      
+      const imageResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{ role: "user", parts }],
+            generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
+          })
+        }
+      );
+      
+      if (!imageResponse.ok) {
+        throw new Error(getErrorMessageFromStatus(imageResponse.status, "Bild"));
+      }
+      
+      const imageData = await imageResponse.json();
+      const candidates = imageData.candidates ?? [];
+      let generatedImageUrl = "";
+      
+      if (candidates.length > 0) {
+        const partsOut = candidates[0]?.content?.parts ?? [];
+        const imagePart = partsOut.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
+        if (imagePart) {
+          const base64 = imagePart.inlineData.data;
+          const mimeType = imagePart.inlineData.mimeType || "image/png";
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+          const blob = new Blob([bytes], { type: mimeType });
+          generatedImageUrl = URL.createObjectURL(blob);
+        }
+      }
+      
+      if (!generatedImageUrl) {
+        throw new Error("Kein Bild generiert");
+      }
+      
+      // STEP 3: Generate video prompt
+      const videoResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `Erstelle einen Video-Animations-Prompt auf Deutsch für: "${storyText}". Beschreibe Kamerabewegung, Charakter-Animation, Umgebung. Mindestens 200 Wörter.`
+              }]
+            }],
+            generationConfig: { temperature: 0.85, maxOutputTokens: 600 }
+          })
+        }
+      );
+      
+      let videoPrompt = "";
+      if (videoResponse.ok) {
+        const vpData = await videoResponse.json();
+        videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      }
+      
+      // Update story point
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return {
+            ...p,
+            generatedImage: generatedImageUrl,
+            detailedImagePrompt,
+            videoPrompt,
+            generationError: undefined
+          };
+        }
+        return p;
+      }));
+      
+      toast({ title: `Szene ${sceneIndex + 1} generiert!` });
+      
+    } catch (error) {
+      let errorMessage = "Unbekannter Fehler";
+      if (error instanceof Error) {
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
+      }
+      
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return { ...p, generationError: errorMessage };
+        }
+        return p;
+      }));
+      
+      toast({ title: `Fehler bei Szene ${sceneIndex + 1}`, description: errorMessage, variant: "destructive" });
+    } finally {
+      clearTimeout(timeoutId);
+      setRegeneratingPointIndex(null);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string, index: number) => {
@@ -4152,6 +4425,25 @@ Beispiel einer korrekten Antwort:
                                     </div>
                                   )}
                                 </>
+                              ) : point.generationError ? (
+                                <div className="bg-destructive/10 rounded-lg p-3 min-h-[200px] flex-1 flex flex-col items-center justify-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
+                                    <AlertCircle className="w-5 h-5 text-destructive" />
+                                  </div>
+                                  <p className="text-xs text-destructive text-center max-w-[180px]">
+                                    {point.generationError}
+                                  </p>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7 border-destructive/30 hover:bg-destructive/10"
+                                    onClick={() => regenerateSingleStoryScene(index)}
+                                    disabled={regeneratingPointIndex !== null}
+                                  >
+                                    <RefreshCw className="w-3 h-3 mr-1" />
+                                    Erneut versuchen
+                                  </Button>
+                                </div>
                               ) : (
                                 <div className="bg-muted/30 rounded-lg p-2 min-h-[200px] flex-1">
                                   {generatingStoryImageIndex === index ? (
