@@ -3874,10 +3874,16 @@ Beispiel einer korrekten Antwort:
                                 <div className="absolute bottom-4 right-4 w-20 h-20 border-2 border-foreground rounded-full" />
                                 <div className="absolute bottom-10 right-10 w-10 h-10 border-2 border-foreground rounded-full" />
                               </div>
-                              {/* Center icon */}
+                              {/* Center icon - shows loader during regeneration, checkmark when done */}
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
-                                  <Sparkles className="w-8 h-8 text-muted-foreground/50" />
+                                  {justFinishedIndex === index ? (
+                                    <Check className="w-8 h-8 text-primary animate-scale-in" />
+                                  ) : regeneratingCardIndex === index ? (
+                                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                                  ) : (
+                                    <Sparkles className="w-8 h-8 text-muted-foreground/50" />
+                                  )}
                                 </div>
                               </div>
                             </div>
