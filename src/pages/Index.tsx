@@ -1120,7 +1120,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               };
               return updated;
             });
-          }, 1100);
+          }, 1000);
 
           try {
             const imageUrl = await generateSingleImage(
@@ -1389,7 +1389,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           }
           return updated;
         });
-      }, 1100);
+      }, 1000);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
