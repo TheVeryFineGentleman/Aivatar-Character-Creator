@@ -3493,6 +3493,24 @@ Beispiel einer korrekten Antwort:
                   </div>
                 </div>
 
+                {/* Generate Button (like poses generator) */}
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleGenerateStoryIdea}
+                    disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
+                    className="h-[120px] w-10 rounded-lg border-border/50 hover:bg-primary/10 hover:border-primary/50 transition-all"
+                    title="Story-Idee generieren"
+                  >
+                    {isGeneratingStoryAiIdea ? (
+                      <Sparkles className="w-4 h-4 animate-pulse text-primary" />
+                    ) : (
+                      <ChevronLeft className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+
                 {/* Right: AI Assistant for Story Ideas */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center gap-1.5 mb-2">
@@ -3513,12 +3531,6 @@ Beispiel einer korrekten Antwort:
                       }}
                     />
                   </div>
-                  {isGeneratingStoryAiIdea && (
-                    <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Generiere Story-Idee...</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
