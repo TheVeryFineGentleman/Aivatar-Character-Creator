@@ -3496,17 +3496,15 @@ Beispiel einer korrekten Antwort:
                 {/* Generate Button (like poses generator) */}
                 <div className="flex items-center">
                   <Button
-                    variant="outline"
-                    size="icon"
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="h-[120px] w-10 rounded-lg border-border/50 hover:bg-primary/10 hover:border-primary/50 transition-all"
+                    className="w-10 h-[120px] rounded-lg"
                     title="Story-Idee generieren"
                   >
                     {isGeneratingStoryAiIdea ? (
-                      <Sparkles className="w-4 h-4 animate-pulse text-primary" />
+                      <Sparkles className="w-5 h-5 animate-spin" />
                     ) : (
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-6 h-6" />
                     )}
                   </Button>
                 </div>
