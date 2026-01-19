@@ -604,44 +604,150 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     
     setIsGeneratingStoryImages(true);
     
-    // Get reference images as base64
-    const base64Images: string[] = [];
+    // Get character reference images as base64
+    const characterBase64Images: string[] = [];
     for (const imageUrl of storyReferenceImages) {
       if (imageUrl.startsWith('data:')) {
         const base64 = imageUrl.split(',')[1];
-        if (base64) base64Images.push(base64);
+        if (base64) characterBase64Images.push(base64);
       }
     }
+    
+    // Store generated images for continuity reference
+    const generatedSceneImages: string[] = [];
     
     for (let i = 0; i < storyPoints.length; i++) {
       setGeneratingStoryImageIndex(i);
       const point = storyPoints[i];
       const storyText = point.versions[point.currentVersion];
       
+      // Get previous scene's generated image for style continuity
+      const previousSceneImage = i > 0 ? generatedSceneImages[i - 1] : null;
+      
       try {
-        // Generate image using Gemini
-        const imagePrompt = `Create a single cinematic photograph for this scene:
+        // Build extremely detailed image prompt
+        const cameraAngleDesc = point.cameraAngle 
+          ? `Camera Angle: ${point.cameraAngle} - Position the camera accordingly with precise framing`
+          : 'Camera Angle: Choose a dynamic and cinematic angle that best captures the emotional essence of the scene';
+        
+        const shotTypeDesc = point.shotType
+          ? `Shot Type: ${point.shotType} - Frame the subject with exact composition for this shot type`
+          : 'Shot Type: Select the most impactful framing to convey the narrative moment';
+
+        const continuityInstructions = previousSceneImage 
+          ? `
+CRITICAL STYLE CONTINUITY:
+- This is Scene ${i + 1} of a continuous storyboard sequence
+- The previous scene's image is provided as a STYLE REFERENCE
+- You MUST maintain EXACT visual consistency with the previous scene:
+  * Same lighting style, color grading, and atmosphere
+  * Same artistic style (photorealistic, cinematic, etc.)
+  * Same character appearance, clothing, and features
+  * Same environmental aesthetic and mood
+- This scene is a DIRECT CONTINUATION of the previous scene
+- Imagine this as the next frame in a movie - visual style must be seamless`
+          : `
+ESTABLISHING SHOT:
+- This is Scene 1 - establish the visual style for the entire storyboard
+- Create a distinct, memorable cinematic look that can be continued`;
+
+        const imagePrompt = `ULTRA-DETAILED CINEMATIC IMAGE GENERATION
+
+SCENE DESCRIPTION:
 "${storyText}"
 
-REQUIREMENTS:
-- ONE person only (use reference if provided)
-- ${point.cameraAngle ? `Camera angle: ${point.cameraAngle}` : 'Dynamic camera angle'}
-- ${point.shotType ? `Shot type: ${point.shotType}` : 'Appropriate shot type'}
-- Cinematic lighting and composition
-- High quality, photorealistic
-- Aspect ratio: 16:9
-- NO collages, NO multiple images, NO split screens`;
+${continuityInstructions}
+
+DETAILED TECHNICAL REQUIREMENTS:
+
+1. COMPOSITION & FRAMING:
+   - ${cameraAngleDesc}
+   - ${shotTypeDesc}
+   - Apply rule of thirds for subject placement
+   - Create visual depth with foreground, midground, and background elements
+   - Use leading lines to guide viewer's eye to the subject
+
+2. LIGHTING & ATMOSPHERE:
+   - Cinematic three-point lighting setup (key, fill, rim lights)
+   - Natural light sources that match the scene's environment
+   - Dramatic shadows to add depth and dimension
+   - Atmospheric elements (haze, dust particles, volumetric light) where appropriate
+   - Color temperature that reflects the emotional tone
+
+3. CHARACTER DETAILS (SINGLE PERSON ONLY):
+   - Expressive facial features capturing the scene's emotion
+   - Natural, dynamic body posture and pose
+   - Detailed clothing with visible textures and folds
+   - Realistic skin texture with appropriate lighting
+   - Eyes that convey the character's inner state
+   - Hair with natural movement and detail
+
+4. ENVIRONMENT & BACKGROUND:
+   - Rich, detailed background elements that support the narrative
+   - Depth of field: sharp focus on subject, appropriate blur on background
+   - Environmental storytelling through props and setting details
+   - Consistent lighting between character and environment
+
+5. TECHNICAL QUALITY:
+   - Ultra high resolution, 4K quality rendering
+   - Photorealistic textures on all surfaces
+   - No artifacts, noise, or compression
+   - Sharp details where in focus
+   - Natural bokeh in out-of-focus areas
+
+6. MOOD & EMOTION:
+   - Color palette that reinforces the emotional tone
+   - Visual metaphors that enhance the narrative
+   - Subtle details that add layers to the story
+
+STRICT PROHIBITIONS:
+- NO multiple people - exactly ONE person only
+- NO collages, split screens, or multiple frames
+- NO text, watermarks, or overlays
+- NO unrealistic proportions or anatomy errors
+- NO inconsistent lighting or floating objects
+
+ASPECT RATIO: 16:9 widescreen cinematic format
+
+Generate ONE single, breathtaking cinematic photograph that could be a frame from a high-budget film.`;
 
         const parts: any[] = [{ text: imagePrompt }];
         
-        // Add reference images
-        for (const base64Data of base64Images) {
+        // Add character reference images first
+        for (const base64Data of characterBase64Images) {
           parts.push({
             inlineData: {
               mimeType: "image/jpeg",
               data: base64Data,
             },
           });
+        }
+        
+        // Add previous scene's image as style reference (if exists)
+        if (previousSceneImage) {
+          try {
+            // Convert blob URL to base64
+            const response = await fetch(previousSceneImage);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            const previousBase64 = await new Promise<string>((resolve) => {
+              reader.onloadend = () => {
+                const result = reader.result as string;
+                const base64 = result.split(',')[1];
+                resolve(base64);
+              };
+              reader.readAsDataURL(blob);
+            });
+            
+            parts.push({
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: previousBase64,
+              },
+            });
+          } catch (e) {
+            console.warn("Could not add previous scene as reference:", e);
+          }
         }
 
         const imageResponse = await fetch(
@@ -680,6 +786,9 @@ REQUIREMENTS:
             }
           }
         }
+        
+        // Store this image for the next scene's reference
+        generatedSceneImages.push(generatedImageUrl);
 
         // Generate video prompt
         const videoPromptResponse = await fetch(
@@ -731,6 +840,7 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
 
       } catch (error) {
         console.error(`Failed to generate for story point ${i}:`, error);
+        generatedSceneImages.push(""); // Push empty to maintain index alignment
       }
     }
     
