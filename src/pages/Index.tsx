@@ -3604,23 +3604,77 @@ Beispiel einer korrekten Antwort:
                     />
                   </div>
                 </div>
-                <Button
-                  onClick={generateStoryboard}
-                  disabled={!storyIdea.trim() || isGeneratingStoryboard}
-                  className="w-full"
-                >
-                  {isGeneratingStoryboard ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generiere Storyboard...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Storyboard generieren
-                    </>
-                  )}
-                </Button>
+                {storyPoints.length === 0 ? (
+                  <Button
+                    onClick={generateStoryboard}
+                    disabled={!storyIdea.trim() || isGeneratingStoryboard}
+                    className="w-full"
+                  >
+                    {isGeneratingStoryboard ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generiere Storyboard...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Storyboard generieren
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        // TODO: Generate images and video prompts from storyboard
+                        toast({
+                          title: "In Entwicklung",
+                          description: "Diese Funktion wird bald verfügbar sein.",
+                        });
+                      }}
+                      disabled={isGeneratingStoryboard}
+                      className="flex-1"
+                    >
+                      {isGeneratingStoryboard ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generiere...
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon className="w-4 h-4 mr-2" />
+                          Bilder & Video Prompt generieren
+                        </>
+                      )}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          disabled={isGeneratingStoryboard}
+                          className="shrink-0"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Neu generieren
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Storyboard neu generieren?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Das aktuelle Storyboard wird gelöscht und ein neues generiert. Diese Aktion kann nicht rückgängig gemacht werden.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                          <AlertDialogAction onClick={generateStoryboard}>
+                            Neu generieren
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
 
 {/* Story Points Display - Always visible container */}
                 <div className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-5 min-h-[160px] border border-border/40 shadow-inner">
