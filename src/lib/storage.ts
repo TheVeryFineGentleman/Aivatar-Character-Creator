@@ -22,13 +22,94 @@ export const deleteCookie = (name: string) => {
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
 };
 
-// LocalStorage utilities for larger data (images)
-export const saveToLocalStorage = (key: string, value: any) => {
+// ============= BLOB URL MEMORY MANAGEMENT =============
+// Prevents memory leaks on older/weaker devices
+const MAX_BLOB_URLS = 30;
+const blobUrlRegistry: string[] = [];
+
+export const createManagedBlobUrl = (blob: Blob): string => {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    // Clean up old URLs if limit reached
+    while (blobUrlRegistry.length >= MAX_BLOB_URLS) {
+      const oldUrl = blobUrlRegistry.shift();
+      if (oldUrl) {
+        try {
+          URL.revokeObjectURL(oldUrl);
+          console.log("🧹 Freed old Blob URL to save memory");
+        } catch (e) {
+          // Ignore revocation errors
+        }
+      }
+    }
+    
+    const url = URL.createObjectURL(blob);
+    blobUrlRegistry.push(url);
+    return url;
   } catch (error) {
-    console.error("Error saving to localStorage:", error);
+    console.error("Failed to create Blob URL:", error);
+    throw new Error("Speicherfehler - zu wenig RAM");
   }
+};
+
+export const revokeManagedBlobUrl = (url: string) => {
+  try {
+    const index = blobUrlRegistry.indexOf(url);
+    if (index > -1) {
+      blobUrlRegistry.splice(index, 1);
+    }
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    // Ignore revocation errors
+  }
+};
+
+export const cleanupAllBlobUrls = () => {
+  while (blobUrlRegistry.length > 0) {
+    const url = blobUrlRegistry.pop();
+    if (url) {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // Ignore revocation errors
+      }
+    }
+  }
+  console.log("🧹 All Blob URLs cleaned up");
+};
+
+// ============= LOCALSTORAGE PROTECTION =============
+// Handles QuotaExceededError gracefully
+export const safeLocalStorageSet = (key: string, value: any): { success: boolean; error?: string } => {
+  try {
+    const serialized = JSON.stringify(value);
+    localStorage.setItem(key, serialized);
+    return { success: true };
+  } catch (error: any) {
+    console.error("LocalStorage error:", error);
+    
+    if (error?.name === 'QuotaExceededError' || 
+        error?.code === 22 || 
+        error?.message?.includes('quota')) {
+      return { 
+        success: false, 
+        error: "Speicher voll - bitte Browser-Cache leeren" 
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: "Speicherfehler" 
+    };
+  }
+};
+
+// Original localStorage utilities for larger data (images)
+export const saveToLocalStorage = (key: string, value: any) => {
+  const result = safeLocalStorageSet(key, value);
+  if (!result.success) {
+    console.error("Error saving to localStorage:", result.error);
+  }
+  return result.success;
 };
 
 export const getFromLocalStorage = (key: string): any | null => {
@@ -47,4 +128,110 @@ export const removeFromLocalStorage = (key: string) => {
   } catch (error) {
     console.error("Error removing from localStorage:", error);
   }
+};
+
+// ============= BROWSER FEATURE DETECTION =============
+export const checkBrowserCompatibility = (): { compatible: boolean; issues: string[] } => {
+  const issues: string[] = [];
+  
+  // Check for Blob support
+  if (typeof Blob === 'undefined') {
+    issues.push("Blob API nicht unterstützt");
+  }
+  
+  // Check for fetch support
+  if (typeof fetch === 'undefined') {
+    issues.push("Fetch API nicht unterstützt");
+  }
+  
+  // Check for AbortController support
+  if (typeof AbortController === 'undefined') {
+    issues.push("AbortController nicht unterstützt");
+  }
+  
+  // Check for URL.createObjectURL support
+  if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    issues.push("URL.createObjectURL nicht unterstützt");
+  }
+  
+  return {
+    compatible: issues.length === 0,
+    issues
+  };
+};
+
+// ============= DEVICE INFO FOR ERROR REPORTING =============
+export const getDeviceInfo = (): string => {
+  try {
+    const nav = navigator as any;
+    const memory = nav.deviceMemory ? `${nav.deviceMemory}GB RAM` : "RAM unbekannt";
+    const connection = nav.connection?.effectiveType || "Verbindung unbekannt";
+    
+    // Simplified browser detection
+    let browser = "Unbekannt";
+    const ua = navigator.userAgent;
+    if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("Edg")) browser = "Edge";
+    else if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Safari")) browser = "Safari";
+    
+    return `${browser}, ${memory}, ${connection}`;
+  } catch (e) {
+    return "Gerät unbekannt";
+  }
+};
+
+// ============= DETAILED ERROR MESSAGE HELPER =============
+export const getDetailedErrorMessage = (error: any): string => {
+  if (!error) return "Unbekannter Fehler";
+  
+  const errorName = error?.name || "";
+  const errorMessage = error?.message || String(error);
+  
+  // Timeout errors
+  if (errorName === 'AbortError' || errorMessage.includes('timed out') || errorMessage.includes('timeout')) {
+    return "Zeitüberschreitung (2 Min.)";
+  }
+  
+  // Network errors
+  if (errorMessage.includes('Failed to fetch') || errorMessage.includes('network') || errorMessage.includes('Network')) {
+    return "Netzwerkfehler - Verbindung prüfen";
+  }
+  
+  // Memory errors
+  if (errorMessage.includes('memory') || errorMessage.includes('Memory') || errorMessage.includes('RAM')) {
+    return "Speicherfehler - zu wenig RAM";
+  }
+  
+  // Quota errors
+  if (errorName === 'QuotaExceededError' || errorMessage.includes('quota')) {
+    return "Speicher voll - Cache leeren";
+  }
+  
+  // API status errors
+  if (errorMessage.includes('429') || errorMessage.includes('Too Many') || errorMessage.includes('rate limit')) {
+    return "API überlastet - bitte warte kurz";
+  }
+  if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('Unauthorized')) {
+    return "API-Key ungültig";
+  }
+  if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+    return "Zugriff verweigert";
+  }
+  if (errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('Service Unavailable')) {
+    return "API überlastet - später versuchen";
+  }
+  if (errorMessage.includes('500') || errorMessage.includes('Internal Server')) {
+    return "Server-Fehler bei Google";
+  }
+  if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+    return "Ungültige Anfrage - Prompt prüfen";
+  }
+  
+  // Generic - truncate if too long
+  if (errorMessage.length > 40) {
+    return errorMessage.substring(0, 37) + "...";
+  }
+  
+  return errorMessage;
 };

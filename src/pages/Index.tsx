@@ -13,7 +13,7 @@ import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
-import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
+import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage, createManagedBlobUrl, revokeManagedBlobUrl, cleanupAllBlobUrls, getDetailedErrorMessage, checkBrowserCompatibility, getDeviceInfo } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -260,7 +260,29 @@ const Index = () => {
   const [storyAiAssistantInput, setStoryAiAssistantInput] = useState("");
   const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
 
-  // Camera angle and shot type options for AI
+  // Browser compatibility check on mount
+  useEffect(() => {
+    const { compatible, issues } = checkBrowserCompatibility();
+    if (!compatible) {
+      console.warn("⚠️ Browser compatibility issues:", issues);
+      toast({
+        title: "Browser-Hinweis",
+        description: `Mögliche Probleme: ${issues.join(", ")}. Bitte Chrome oder Firefox verwenden.`,
+        variant: "destructive",
+      });
+    }
+    
+    // Cleanup Blob URLs on page unload
+    const handleBeforeUnload = () => {
+      cleanupAllBlobUrls();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      cleanupAllBlobUrls();
+    };
+  }, []);
   const CAMERA_ANGLE_OPTIONS = [
     { value: "random", label: "Zufällig" },
     { value: "frontal", label: "Frontal" },
@@ -1384,6 +1406,13 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     useSimplifiedPrompt: boolean = false
   ): Promise<string | null> => {
     const MAX_RETRIES = 3;
+    const ABSOLUTE_MAX_ATTEMPTS = 5; // Prevent infinite loops on any device
+    
+    // CRITICAL: Absolute safety limit - prevent infinite loops
+    if (retryCount >= ABSOLUTE_MAX_ATTEMPTS) {
+      console.error(`❌ ABSOLUTE_MAX_ATTEMPTS (${ABSOLUTE_MAX_ATTEMPTS}) reached for image ${index + 1} - stopping immediately`);
+      return null;
+    }
     
     try {
       // Determine camera angle - use selected angle or cycle through angles if random
@@ -1601,7 +1630,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         }
         const blob = new Blob([bytes], { type: mimeType });
 
-        const objectUrl = URL.createObjectURL(blob);
+        // Use managed Blob URL to prevent memory leaks on older devices
+        const objectUrl = createManagedBlobUrl(blob);
         console.log(`✅ Image ${index + 1} generated successfully:`, objectUrl);
         return objectUrl;
       }
@@ -1770,27 +1800,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             });
           } catch (error) {
             console.error(`❌ Error in processQueue for index ${index}:`, error);
-            // Determine specific error message
-            let errorMessage = "Unbekannter Fehler";
-            if (error instanceof Error) {
-              if (error.name === 'AbortError') {
-                errorMessage = "Zeitüberschreitung (2 Min.)";
-              } else if (error.message.includes("timed out")) {
-                errorMessage = "Zeitüberschreitung - bitte erneut versuchen";
-              } else if (error.message.includes("429") || error.message.includes("Too Many")) {
-                errorMessage = "API überlastet - bitte warte kurz";
-              } else if (error.message.includes("401") || error.message.includes("unauthorized")) {
-                errorMessage = "API-Key ungültig";
-              } else if (error.message.includes("503") || error.message.includes("overloaded")) {
-                errorMessage = "API überlastet - später versuchen";
-              } else if (error.message.includes("500")) {
-                errorMessage = "Server-Fehler bei Google";
-              } else if (error.message.includes("Failed to fetch") || error.message.includes("network")) {
-                errorMessage = "Netzwerkfehler - Verbindung prüfen";
-              } else {
-                errorMessage = error.message.length > 50 ? error.message.substring(0, 47) + "..." : error.message;
-              }
-            }
+            // Use centralized error message helper for consistent, detailed messages
+            const errorMessage = getDetailedErrorMessage(error);
             setImageSlots((prev) => {
               const updated = [...prev];
               if (index < updated.length) {

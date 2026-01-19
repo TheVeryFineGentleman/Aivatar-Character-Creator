@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -167,10 +167,13 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
         {status === "error" && (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 bg-destructive/10">
             <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
-              <X className="w-5 h-5 text-destructive" />
+              <AlertCircle className="w-5 h-5 text-destructive" />
             </div>
-            <p className="text-xs text-destructive text-center max-w-[90%] leading-tight">
+            <p className="text-xs text-destructive text-center max-w-[90%] leading-tight font-medium">
               {errorMessage || "Generierung fehlgeschlagen"}
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 text-center">
+              Bitte erneut versuchen
             </p>
           </div>
         )}
