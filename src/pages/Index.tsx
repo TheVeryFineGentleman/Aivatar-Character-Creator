@@ -4185,278 +4185,279 @@ Beispiel einer korrekten Antwort:
                           </div>
                         ))}
 
-                        {/* Expanded Card Popup Modal */}
-                        {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && (
-                          <>
-                            {/* Backdrop with blur */}
-                            <div 
-                              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosingPopup ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-                              onClick={handleCloseExpandedCard}
-                            />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expanded Card Popup Modal - OUTSIDE scroll container and ternary */}
+                  {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && (
+                      <>
+                        {/* Backdrop with blur */}
+                        <div 
+                          className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosingPopup ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+                          onClick={handleCloseExpandedCard}
+                        />
+                        
+                        {/* Centered popup card */}
+                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
+                          <div 
+                            className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
+                          >
+                            {/* Header */}
+                            <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-5 py-3">
+                              <span className="font-semibold text-foreground/80 text-base">Szene {expandedStoryPointIndex + 1}</span>
+                              
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full hover:bg-muted h-6 w-6"
+                                    onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'prev')}
+                                    disabled={storyPoints[expandedStoryPointIndex].currentVersion === 0}
+                                  >
+                                    <ChevronLeft className="w-4 h-4" />
+                                  </Button>
+                                  <span className="font-semibold min-w-[40px] text-center text-sm">
+                                    {storyPoints[expandedStoryPointIndex].currentVersion + 1}/{storyPoints[expandedStoryPointIndex].versions.length}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full hover:bg-muted h-6 w-6"
+                                    onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'next')}
+                                    disabled={storyPoints[expandedStoryPointIndex].currentVersion === storyPoints[expandedStoryPointIndex].versions.length - 1}
+                                  >
+                                    <ChevronRight className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="rounded-full hover:bg-primary/10 hover:text-primary h-7 w-7"
+                                  onClick={() => regenerateStoryPoint(expandedStoryPointIndex)}
+                                  disabled={regeneratingPointIndex !== null}
+                                >
+                                  {regeneratingPointIndex === expandedStoryPointIndex ? (
+                                    <Loader2 className="animate-spin w-4 h-4" />
+                                  ) : (
+                                    <RefreshCw className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                                  onClick={handleCloseExpandedCard}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
                             
-                            {/* Centered popup card */}
-                            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
-                              <div 
-                                className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
-                              >
-                                {/* Header */}
-                                <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-5 py-3">
-                                  <span className="font-semibold text-foreground/80 text-base">Szene {expandedStoryPointIndex + 1}</span>
-                                  
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="rounded-full hover:bg-muted h-6 w-6"
-                                        onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'prev')}
-                                        disabled={storyPoints[expandedStoryPointIndex].currentVersion === 0}
-                                      >
-                                        <ChevronLeft className="w-4 h-4" />
-                                      </Button>
-                                      <span className="font-semibold min-w-[40px] text-center text-sm">
-                                        {storyPoints[expandedStoryPointIndex].currentVersion + 1}/{storyPoints[expandedStoryPointIndex].versions.length}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="rounded-full hover:bg-muted h-6 w-6"
-                                        onClick={() => navigateStoryPointVersion(expandedStoryPointIndex, 'next')}
-                                        disabled={storyPoints[expandedStoryPointIndex].currentVersion === storyPoints[expandedStoryPointIndex].versions.length - 1}
-                                      >
-                                        <ChevronRight className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="rounded-full hover:bg-primary/10 hover:text-primary h-7 w-7"
-                                      onClick={() => regenerateStoryPoint(expandedStoryPointIndex)}
-                                      disabled={regeneratingPointIndex !== null}
-                                    >
-                                      {regeneratingPointIndex === expandedStoryPointIndex ? (
-                                        <Loader2 className="animate-spin w-4 h-4" />
-                                      ) : (
-                                        <RefreshCw className="w-4 h-4" />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                                      onClick={handleCloseExpandedCard}
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
+                            {/* Content */}
+                            <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)] space-y-4">
+                              {/* Generated Image (if exists) */}
+                              {storyPoints[expandedStoryPointIndex].generatedImage && (
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    Generiertes Bild
+                                  </label>
+                                  <div className="relative rounded-lg overflow-hidden aspect-video bg-muted/30">
+                                    <img 
+                                      src={storyPoints[expandedStoryPointIndex].generatedImage} 
+                                      alt={`Szene ${expandedStoryPointIndex + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
                                   </div>
                                 </div>
-                                
-                                {/* Content */}
-                                <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)] space-y-4">
-                                  {/* Generated Image (if exists) */}
-                                  {storyPoints[expandedStoryPointIndex].generatedImage && (
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                        <ImageIcon className="w-3.5 h-3.5" />
-                                        Generiertes Bild
-                                      </label>
-                                      <div className="relative rounded-lg overflow-hidden aspect-video bg-muted/30">
-                                        <img 
-                                          src={storyPoints[expandedStoryPointIndex].generatedImage} 
-                                          alt={`Szene ${expandedStoryPointIndex + 1}`}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
+                              )}
 
-                                  {/* Story Description (original) */}
-                                  <div className="space-y-2">
-                                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                      <BookOpen className="w-3.5 h-3.5" />
-                                      Szenen-Beschreibung
-                                    </label>
-                                    <div className="bg-muted/30 rounded-lg p-3">
-                                      <Textarea
-                                        value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
-                                        onChange={(e) => {
-                                          const newText = e.target.value;
-                                          const idx = expandedStoryPointIndex;
-                                          setStoryPoints(prev => prev.map((p, i) => {
-                                            if (i === idx) {
-                                              const updatedVersions = [...p.versions];
-                                              updatedVersions[p.currentVersion] = newText;
-                                              return { ...p, versions: updatedVersions };
-                                            }
-                                            return p;
-                                          }));
-                                        }}
-                                        className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[80px]"
-                                        placeholder="Szene beschreiben..."
-                                      />
-                                    </div>
+                              {/* Story Description (original) */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                  <BookOpen className="w-3.5 h-3.5" />
+                                  Szenen-Beschreibung
+                                </label>
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <Textarea
+                                    value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
+                                    onChange={(e) => {
+                                      const newText = e.target.value;
+                                      const idx = expandedStoryPointIndex;
+                                      setStoryPoints(prev => prev.map((p, i) => {
+                                        if (i === idx) {
+                                          const updatedVersions = [...p.versions];
+                                          updatedVersions[p.currentVersion] = newText;
+                                          return { ...p, versions: updatedVersions };
+                                        }
+                                        return p;
+                                      }));
+                                    }}
+                                    className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[80px]"
+                                    placeholder="Szene beschreiben..."
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Detailed Image Prompt (if exists) */}
+                              {storyPoints[expandedStoryPointIndex].detailedImagePrompt && (
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    Detaillierter Bild-Prompt (KI-generiert)
+                                  </label>
+                                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 max-h-[200px] overflow-y-auto">
+                                    <Textarea
+                                      value={storyPoints[expandedStoryPointIndex].detailedImagePrompt || ""}
+                                      onChange={(e) => {
+                                        const newText = e.target.value;
+                                        const idx = expandedStoryPointIndex;
+                                        setStoryPoints(prev => prev.map((p, i) => 
+                                          i === idx ? { ...p, detailedImagePrompt: newText } : p
+                                        ));
+                                      }}
+                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[150px]"
+                                      placeholder="Detaillierter Bild-Prompt..."
+                                    />
                                   </div>
+                                </div>
+                              )}
 
-                                  {/* Detailed Image Prompt (if exists) */}
-                                  {storyPoints[expandedStoryPointIndex].detailedImagePrompt && (
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                        <Sparkles className="w-3.5 h-3.5" />
-                                        Detaillierter Bild-Prompt (KI-generiert)
-                                      </label>
-                                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 max-h-[200px] overflow-y-auto">
-                                        <Textarea
-                                          value={storyPoints[expandedStoryPointIndex].detailedImagePrompt || ""}
-                                          onChange={(e) => {
-                                            const newText = e.target.value;
-                                            const idx = expandedStoryPointIndex;
-                                            setStoryPoints(prev => prev.map((p, i) => 
-                                              i === idx ? { ...p, detailedImagePrompt: newText } : p
-                                            ));
-                                          }}
-                                          className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[150px]"
-                                          placeholder="Detaillierter Bild-Prompt..."
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Video Prompt (if exists) */}
-                                  {storyPoints[expandedStoryPointIndex].videoPrompt && (
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                        <Video className="w-3.5 h-3.5" />
-                                        Video-Prompt
-                                      </label>
-                                      <div className="bg-muted/30 rounded-lg p-3">
-                                        <Textarea
-                                          value={storyPoints[expandedStoryPointIndex].videoPrompt || ""}
-                                          onChange={(e) => {
-                                            const newText = e.target.value;
-                                            const idx = expandedStoryPointIndex;
-                                            setStoryPoints(prev => prev.map((p, i) => 
-                                              i === idx ? { ...p, videoPrompt: newText } : p
-                                            ));
-                                          }}
-                                          className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[100px]"
-                                          placeholder="Video-Animations-Prompt..."
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Camera & Shot Settings */}
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-medium text-muted-foreground">Kamerawinkel</label>
-                                      <Select
-                                        value={storyPoints[expandedStoryPointIndex].cameraAngle || ""}
-                                        onValueChange={(value) => {
-                                          const idx = expandedStoryPointIndex;
-                                          setStoryPoints(prev => prev.map((p, i) => 
-                                            i === idx ? { ...p, cameraAngle: value } : p
-                                          ));
-                                        }}
-                                      >
-                                        <SelectTrigger className="w-full bg-background/50">
-                                          <SelectValue placeholder="Von KI wählen lassen..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="frontal">Frontal</SelectItem>
-                                          <SelectItem value="seitlich">Seitlich</SelectItem>
-                                          <SelectItem value="von-oben">Von oben</SelectItem>
-                                          <SelectItem value="von-unten">Von unten</SelectItem>
-                                          <SelectItem value="ueber-schulter">Über die Schulter</SelectItem>
-                                          <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
-                                          <SelectItem value="vogelperspektive">Vogelperspektive</SelectItem>
-                                          <SelectItem value="froschperspektive">Froschperspektive</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-medium text-muted-foreground">Shot-Typ</label>
-                                      <Select
-                                        value={storyPoints[expandedStoryPointIndex].shotType || ""}
-                                        onValueChange={(value) => {
-                                          const idx = expandedStoryPointIndex;
-                                          setStoryPoints(prev => prev.map((p, i) => 
-                                            i === idx ? { ...p, shotType: value } : p
-                                          ));
-                                        }}
-                                      >
-                                        <SelectTrigger className="w-full bg-background/50">
-                                          <SelectValue placeholder="Von KI wählen lassen..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="extreme-close-up">Extreme Close-Up</SelectItem>
-                                          <SelectItem value="close-up">Close-Up</SelectItem>
-                                          <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
-                                          <SelectItem value="medium-shot">Medium Shot</SelectItem>
-                                          <SelectItem value="medium-long-shot">Medium Long Shot</SelectItem>
-                                          <SelectItem value="full-shot">Full Shot</SelectItem>
-                                          <SelectItem value="long-shot">Long Shot</SelectItem>
-                                          <SelectItem value="extreme-long-shot">Extreme Long Shot</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
+                              {/* Video Prompt (if exists) */}
+                              {storyPoints[expandedStoryPointIndex].videoPrompt && (
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                    <Video className="w-3.5 h-3.5" />
+                                    Video-Prompt
+                                  </label>
+                                  <div className="bg-muted/30 rounded-lg p-3">
+                                    <Textarea
+                                      value={storyPoints[expandedStoryPointIndex].videoPrompt || ""}
+                                      onChange={(e) => {
+                                        const newText = e.target.value;
+                                        const idx = expandedStoryPointIndex;
+                                        setStoryPoints(prev => prev.map((p, i) => 
+                                          i === idx ? { ...p, videoPrompt: newText } : p
+                                        ));
+                                      }}
+                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[100px]"
+                                      placeholder="Video-Animations-Prompt..."
+                                    />
                                   </div>
-                                  
-                                  {/* AI Chat for prompt refinement */}
-                                  <div className="border border-border/40 rounded-lg bg-muted/20 overflow-hidden">
-                                    <div className="bg-muted/40 px-4 py-2 border-b border-border/30 flex items-center gap-2">
-                                      <MessageSquare className="w-4 h-4 text-primary" />
-                                      <span className="text-sm font-medium">KI-Assistent</span>
-                                      {isGeneratingSceneAssistant && (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary ml-auto" />
+                                </div>
+                              )}
+                              
+                              {/* Camera & Shot Settings */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-muted-foreground">Kamerawinkel</label>
+                                  <Select
+                                    value={storyPoints[expandedStoryPointIndex].cameraAngle || ""}
+                                    onValueChange={(value) => {
+                                      const idx = expandedStoryPointIndex;
+                                      setStoryPoints(prev => prev.map((p, i) => 
+                                        i === idx ? { ...p, cameraAngle: value } : p
+                                      ));
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-full bg-background/50">
+                                      <SelectValue placeholder="Von KI wählen lassen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="frontal">Frontal</SelectItem>
+                                      <SelectItem value="seitlich">Seitlich</SelectItem>
+                                      <SelectItem value="von-oben">Von oben</SelectItem>
+                                      <SelectItem value="von-unten">Von unten</SelectItem>
+                                      <SelectItem value="ueber-schulter">Über die Schulter</SelectItem>
+                                      <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
+                                      <SelectItem value="vogelperspektive">Vogelperspektive</SelectItem>
+                                      <SelectItem value="froschperspektive">Froschperspektive</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-muted-foreground">Shot-Typ</label>
+                                  <Select
+                                    value={storyPoints[expandedStoryPointIndex].shotType || ""}
+                                    onValueChange={(value) => {
+                                      const idx = expandedStoryPointIndex;
+                                      setStoryPoints(prev => prev.map((p, i) => 
+                                        i === idx ? { ...p, shotType: value } : p
+                                      ));
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-full bg-background/50">
+                                      <SelectValue placeholder="Von KI wählen lassen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="extreme-close-up">Extreme Close-Up</SelectItem>
+                                      <SelectItem value="close-up">Close-Up</SelectItem>
+                                      <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
+                                      <SelectItem value="medium-shot">Medium Shot</SelectItem>
+                                      <SelectItem value="medium-long-shot">Medium Long Shot</SelectItem>
+                                      <SelectItem value="full-shot">Full Shot</SelectItem>
+                                      <SelectItem value="long-shot">Long Shot</SelectItem>
+                                      <SelectItem value="extreme-long-shot">Extreme Long Shot</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              
+                              {/* AI Chat for prompt refinement */}
+                              <div className="border border-border/40 rounded-lg bg-muted/20 overflow-hidden">
+                                <div className="bg-muted/40 px-4 py-2 border-b border-border/30 flex items-center gap-2">
+                                  <MessageSquare className="w-4 h-4 text-primary" />
+                                  <span className="text-sm font-medium">KI-Assistent</span>
+                                  {isGeneratingSceneAssistant && (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary ml-auto" />
+                                  )}
+                                </div>
+                                <div className="p-3 space-y-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    Beschreibe, wie die Szene angepasst werden soll. Die KI wird Story, Kamerawinkel und Shot-Typ optimieren.
+                                  </p>
+                                  <Textarea
+                                    value={sceneAssistantInput}
+                                    onChange={(e) => setSceneAssistantInput(e.target.value)}
+                                    placeholder="z.B. 'Mache es dramatischer' oder 'Zeige die Szene romantischer von oben'..."
+                                    className="text-sm min-h-[80px] bg-background/50 resize-none"
+                                    disabled={isGeneratingSceneAssistant}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSceneAssistant();
+                                      }
+                                    }}
+                                  />
+                                  <div className="flex justify-end">
+                                    <Button 
+                                      size="sm" 
+                                      className="gap-1.5"
+                                      onClick={handleSceneAssistant}
+                                      disabled={isGeneratingSceneAssistant}
+                                    >
+                                      {isGeneratingSceneAssistant ? (
+                                        <>
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          Optimiere...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Sparkles className="w-3.5 h-3.5" />
+                                          Anpassen
+                                        </>
                                       )}
-                                    </div>
-                                    <div className="p-3 space-y-3">
-                                      <p className="text-xs text-muted-foreground">
-                                        Beschreibe, wie die Szene angepasst werden soll. Die KI wird Story, Kamerawinkel und Shot-Typ optimieren.
-                                      </p>
-                                      <Textarea
-                                        value={sceneAssistantInput}
-                                        onChange={(e) => setSceneAssistantInput(e.target.value)}
-                                        placeholder="z.B. 'Mache es dramatischer' oder 'Zeige die Szene romantischer von oben'..."
-                                        className="text-sm min-h-[80px] bg-background/50 resize-none"
-                                        disabled={isGeneratingSceneAssistant}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            handleSceneAssistant();
-                                          }
-                                        }}
-                                      />
-                                      <div className="flex justify-end">
-                                        <Button 
-                                          size="sm" 
-                                          className="gap-1.5"
-                                          onClick={handleSceneAssistant}
-                                          disabled={isGeneratingSceneAssistant}
-                                        >
-                                          {isGeneratingSceneAssistant ? (
-                                            <>
-                                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                              Optimiere...
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Sparkles className="w-3.5 h-3.5" />
-                                              Anpassen
-                                            </>
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
+                                    </Button>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                          </div>
+                        </div>
+                      </>
+                    )}
                 </div>
               </div>
             </CardContent>
