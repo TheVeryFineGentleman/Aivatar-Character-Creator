@@ -236,6 +236,8 @@ const Index = () => {
     currentVersion: number;
     cameraAngle?: string;
     shotType?: string;
+    generatedImage?: string;
+    videoPrompt?: string;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -245,6 +247,8 @@ const Index = () => {
   const [regeneratingCardIndex, setRegeneratingCardIndex] = useState<number | null>(null);
   const [justFinishedIndex, setJustFinishedIndex] = useState<number | null>(null);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
+  const [isGeneratingStoryImages, setIsGeneratingStoryImages] = useState(false);
+  const [generatingStoryImageIndex, setGeneratingStoryImageIndex] = useState<number | null>(null);
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -592,6 +596,151 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     } finally {
       setRegeneratingPointIndex(null);
     }
+  };
+
+  // Generate images and video prompts for all story points
+  const generateStoryImagesAndPrompts = async () => {
+    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
+    
+    setIsGeneratingStoryImages(true);
+    
+    // Get reference images as base64
+    const base64Images: string[] = [];
+    for (const imageUrl of storyReferenceImages) {
+      if (imageUrl.startsWith('data:')) {
+        const base64 = imageUrl.split(',')[1];
+        if (base64) base64Images.push(base64);
+      }
+    }
+    
+    for (let i = 0; i < storyPoints.length; i++) {
+      setGeneratingStoryImageIndex(i);
+      const point = storyPoints[i];
+      const storyText = point.versions[point.currentVersion];
+      
+      try {
+        // Generate image using Gemini
+        const imagePrompt = `Create a single cinematic photograph for this scene:
+"${storyText}"
+
+REQUIREMENTS:
+- ONE person only (use reference if provided)
+- ${point.cameraAngle ? `Camera angle: ${point.cameraAngle}` : 'Dynamic camera angle'}
+- ${point.shotType ? `Shot type: ${point.shotType}` : 'Appropriate shot type'}
+- Cinematic lighting and composition
+- High quality, photorealistic
+- Aspect ratio: 16:9
+- NO collages, NO multiple images, NO split screens`;
+
+        const parts: any[] = [{ text: imagePrompt }];
+        
+        // Add reference images
+        for (const base64Data of base64Images) {
+          parts.push({
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: base64Data,
+            },
+          });
+        }
+
+        const imageResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts }],
+              generationConfig: {
+                responseModalities: ["IMAGE", "TEXT"],
+              },
+            }),
+          }
+        );
+
+        let generatedImageUrl = "";
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          const candidates = imageData.candidates ?? [];
+          if (candidates.length > 0) {
+            const partsOut = candidates[0]?.content?.parts ?? [];
+            const imagePart = partsOut.find(
+              (p: any) => p.inlineData && typeof p.inlineData.data === "string" && p.inlineData.mimeType?.startsWith("image/")
+            );
+            if (imagePart) {
+              const base64 = imagePart.inlineData.data;
+              const mimeType = imagePart.inlineData.mimeType || "image/png";
+              const binary = atob(base64);
+              const bytes = new Uint8Array(binary.length);
+              for (let j = 0; j < binary.length; j++) {
+                bytes[j] = binary.charCodeAt(j);
+              }
+              const blob = new Blob([bytes], { type: mimeType });
+              generatedImageUrl = URL.createObjectURL(blob);
+            }
+          }
+        }
+
+        // Generate video prompt
+        const videoPromptResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Erstelle einen detaillierten Video-Animations-Prompt für diese Szene:
+"${storyText}"
+
+Der Prompt soll:
+- 3-5 Sätze auf Deutsch
+- Kamerabewegungen beschreiben (Schwenk, Zoom, Fahrt etc.)
+- Bewegungen der Person/Objekte beschreiben
+- Stimmung und Atmosphäre einfangen
+- Für KI-Videogenerierung optimiert sein
+
+Antworte NUR mit dem Video-Prompt, keine Einleitung.`
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.8,
+                maxOutputTokens: 300
+              }
+            })
+          }
+        );
+
+        let videoPrompt = "";
+        if (videoPromptResponse.ok) {
+          const vpData = await videoPromptResponse.json();
+          videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        }
+
+        // Update the story point with image and video prompt
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === i) {
+            return {
+              ...p,
+              generatedImage: generatedImageUrl,
+              videoPrompt: videoPrompt
+            };
+          }
+          return p;
+        }));
+
+      } catch (error) {
+        console.error(`Failed to generate for story point ${i}:`, error);
+      }
+    }
+    
+    setGeneratingStoryImageIndex(null);
+    setIsGeneratingStoryImages(false);
+    
+    toast({
+      title: "Fertig!",
+      description: "Bilder und Video-Prompts wurden generiert."
+    });
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
@@ -3625,20 +3774,14 @@ Beispiel einer korrekten Antwort:
                 ) : (
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => {
-                        // TODO: Generate images and video prompts from storyboard
-                        toast({
-                          title: "In Entwicklung",
-                          description: "Diese Funktion wird bald verfügbar sein.",
-                        });
-                      }}
-                      disabled={isGeneratingStoryboard}
+                      onClick={generateStoryImagesAndPrompts}
+                      disabled={isGeneratingStoryImages || isGeneratingStoryboard}
                       className="flex-1"
                     >
-                      {isGeneratingStoryboard ? (
+                      {isGeneratingStoryImages ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generiere...
+                          Generiere Szene {(generatingStoryImageIndex ?? 0) + 1}/{storyPoints.length}...
                         </>
                       ) : (
                         <>
@@ -3800,27 +3943,64 @@ Beispiel einer korrekten Antwort:
                               </div>
                             </div>
                             
-                            {/* Scene content - editable */}
-                            <div className="p-2">
-                              <div className="bg-muted/30 rounded-lg p-2 min-h-[200px]">
-                                <Textarea
-                                  value={point.versions[point.currentVersion]}
-                                  onChange={(e) => {
-                                    const newText = e.target.value;
-                                    setStoryPoints(prev => prev.map((p, i) => {
-                                      if (i === index) {
-                                        const updatedVersions = [...p.versions];
-                                        updatedVersions[p.currentVersion] = newText;
-                                        return { ...p, versions: updatedVersions };
-                                      }
-                                      return p;
-                                    }));
-                                  }}
-                                  className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-[13px] min-h-[180px]"
-                                  placeholder="Szene beschreiben..."
-                                  style={{ overflow: 'hidden' }}
-                                />
-                              </div>
+                            {/* Scene content - image pushes text away */}
+                            <div className="p-2 flex-1 flex flex-col overflow-hidden">
+                              {point.generatedImage ? (
+                                <>
+                                  {/* Generated Image */}
+                                  <div className="relative rounded-lg overflow-hidden flex-shrink-0 h-[140px] mb-2 transition-all duration-500 animate-in slide-in-from-top-4">
+                                    <img 
+                                      src={point.generatedImage} 
+                                      alt={`Szene ${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    {generatingStoryImageIndex === index && (
+                                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  {/* Video Prompt collapsed */}
+                                  {point.videoPrompt && (
+                                    <div className="bg-muted/30 rounded-lg p-2 flex-1 overflow-hidden transition-all duration-500 animate-in slide-in-from-bottom-4">
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <Video className="w-3 h-3 text-primary" />
+                                        <span className="text-[10px] font-medium text-muted-foreground">Video-Prompt</span>
+                                      </div>
+                                      <p className="text-[11px] text-foreground/80 line-clamp-3 leading-relaxed">
+                                        {point.videoPrompt}
+                                      </p>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div className="bg-muted/30 rounded-lg p-2 min-h-[200px] flex-1">
+                                  {generatingStoryImageIndex === index ? (
+                                    <div className="flex flex-col items-center justify-center h-full gap-2">
+                                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                      <span className="text-xs text-muted-foreground">Generiere Bild...</span>
+                                    </div>
+                                  ) : (
+                                    <Textarea
+                                      value={point.versions[point.currentVersion]}
+                                      onChange={(e) => {
+                                        const newText = e.target.value;
+                                        setStoryPoints(prev => prev.map((p, i) => {
+                                          if (i === index) {
+                                            const updatedVersions = [...p.versions];
+                                            updatedVersions[p.currentVersion] = newText;
+                                            return { ...p, versions: updatedVersions };
+                                          }
+                                          return p;
+                                        }));
+                                      }}
+                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-[13px] min-h-[180px]"
+                                      placeholder="Szene beschreiben..."
+                                      style={{ overflow: 'hidden' }}
+                                    />
+                                  )}
+                                </div>
+                              )}
                             </div>
                             </div>
                           </div>
@@ -3893,29 +4073,77 @@ Beispiel einer korrekten Antwort:
                                 </div>
                                 
                                 {/* Content */}
-                                <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)]">
-                                  <div className="bg-muted/30 rounded-lg p-3">
-                                    <Textarea
-                                      value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
-                                      onChange={(e) => {
-                                        const newText = e.target.value;
-                                        const idx = expandedStoryPointIndex;
-                                        setStoryPoints(prev => prev.map((p, i) => {
-                                          if (i === idx) {
-                                            const updatedVersions = [...p.versions];
-                                            updatedVersions[p.currentVersion] = newText;
-                                            return { ...p, versions: updatedVersions };
-                                          }
-                                          return p;
-                                        }));
-                                      }}
-                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[300px]"
-                                      placeholder="Szene beschreiben..."
-                                    />
+                                <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)] space-y-4">
+                                  {/* Generated Image (if exists) */}
+                                  {storyPoints[expandedStoryPointIndex].generatedImage && (
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                        <ImageIcon className="w-3.5 h-3.5" />
+                                        Generiertes Bild
+                                      </label>
+                                      <div className="relative rounded-lg overflow-hidden aspect-video bg-muted/30">
+                                        <img 
+                                          src={storyPoints[expandedStoryPointIndex].generatedImage} 
+                                          alt={`Szene ${expandedStoryPointIndex + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Story/Image Prompt */}
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                      <Sparkles className="w-3.5 h-3.5" />
+                                      Bild-Prompt
+                                    </label>
+                                    <div className="bg-muted/30 rounded-lg p-3">
+                                      <Textarea
+                                        value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => {
+                                            if (i === idx) {
+                                              const updatedVersions = [...p.versions];
+                                              updatedVersions[p.currentVersion] = newText;
+                                              return { ...p, versions: updatedVersions };
+                                            }
+                                            return p;
+                                          }));
+                                        }}
+                                        className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[120px]"
+                                        placeholder="Szene beschreiben..."
+                                      />
+                                    </div>
                                   </div>
+
+                                  {/* Video Prompt (if exists) */}
+                                  {storyPoints[expandedStoryPointIndex].videoPrompt && (
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                        <Video className="w-3.5 h-3.5" />
+                                        Video-Prompt
+                                      </label>
+                                      <div className="bg-muted/30 rounded-lg p-3">
+                                        <Textarea
+                                          value={storyPoints[expandedStoryPointIndex].videoPrompt || ""}
+                                          onChange={(e) => {
+                                            const newText = e.target.value;
+                                            const idx = expandedStoryPointIndex;
+                                            setStoryPoints(prev => prev.map((p, i) => 
+                                              i === idx ? { ...p, videoPrompt: newText } : p
+                                            ));
+                                          }}
+                                          className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[100px]"
+                                          placeholder="Video-Animations-Prompt..."
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
                                   
                                   {/* Camera & Shot Settings */}
-                                  <div className="mt-4 grid grid-cols-2 gap-3">
+                                  <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-2">
                                       <label className="text-xs font-medium text-muted-foreground">Kamerawinkel</label>
                                       <Select
@@ -3971,7 +4199,7 @@ Beispiel einer korrekten Antwort:
                                   </div>
                                   
                                   {/* AI Chat for prompt refinement */}
-                                  <div className="mt-4 border border-border/40 rounded-lg bg-muted/20 overflow-hidden">
+                                  <div className="border border-border/40 rounded-lg bg-muted/20 overflow-hidden">
                                     <div className="bg-muted/40 px-4 py-2 border-b border-border/30 flex items-center gap-2">
                                       <MessageSquare className="w-4 h-4 text-primary" />
                                       <span className="text-sm font-medium">KI-Assistent</span>
