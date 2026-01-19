@@ -2527,6 +2527,10 @@ Beispiel einer korrekten Antwort:
         <LoginDialog onLogin={login} />
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Version Indicator */}
+        <div className="absolute top-2 left-2 text-[10px] text-muted-foreground/50 font-mono select-none">
+          v1.0.0
+        </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
         <div className="absolute top-6 right-6 flex flex-col gap-2">
