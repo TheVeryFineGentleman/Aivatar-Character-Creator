@@ -4190,12 +4190,12 @@ Beispiel einer korrekten Antwort:
                           <>
                             {/* Backdrop with blur */}
                             <div 
-                              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 ${isClosingPopup ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+                              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosingPopup ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
                               onClick={handleCloseExpandedCard}
                             />
                             
                             {/* Centered popup card */}
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
                               <div 
                                 className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
                               >
