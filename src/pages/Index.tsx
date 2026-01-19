@@ -472,8 +472,8 @@ REGELN:
     }, 250);
   };
 
-  const STORY_MAX_FILE_SIZE_MB = 4;
-  const STORY_MAX_FILE_SIZE_BYTES = STORY_MAX_FILE_SIZE_MB * 1024 * 1024;
+    const STORY_MAX_FILE_SIZE_MB = 1;
+    const STORY_MAX_FILE_SIZE_BYTES = STORY_MAX_FILE_SIZE_MB * 1024 * 1024;
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -1396,8 +1396,8 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     };
   }, []);
 
-  const MAX_FILE_SIZE_MB = 4;
-  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+    const MAX_FILE_SIZE_MB = 1;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
