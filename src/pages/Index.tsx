@@ -237,6 +237,7 @@ const Index = () => {
     cameraAngle?: string;
     shotType?: string;
     generatedImage?: string;
+    detailedImagePrompt?: string;
     videoPrompt?: string;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
@@ -623,95 +624,124 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
       
       // Get previous scene's generated image for style continuity
       const previousSceneImage = i > 0 ? generatedSceneImages[i - 1] : null;
+      const previousScenePrompt = i > 0 ? storyPoints[i - 1]?.detailedImagePrompt : null;
       
       try {
-        // Build extremely detailed image prompt
-        const cameraAngleDesc = point.cameraAngle 
-          ? `Camera Angle: ${point.cameraAngle} - Position the camera accordingly with precise framing`
-          : 'Camera Angle: Choose a dynamic and cinematic angle that best captures the emotional essence of the scene';
-        
-        const shotTypeDesc = point.shotType
-          ? `Shot Type: ${point.shotType} - Frame the subject with exact composition for this shot type`
-          : 'Shot Type: Select the most impactful framing to convey the narrative moment';
+        // STEP 1: Generate ultra-detailed image prompt using non-thinking model
+        const promptGenerationRequest = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
 
-        const continuityInstructions = previousSceneImage 
-          ? `
-CRITICAL STYLE CONTINUITY:
-- This is Scene ${i + 1} of a continuous storyboard sequence
-- The previous scene's image is provided as a STYLE REFERENCE
-- You MUST maintain EXACT visual consistency with the previous scene:
-  * Same lighting style, color grading, and atmosphere
-  * Same artistic style (photorealistic, cinematic, etc.)
-  * Same character appearance, clothing, and features
-  * Same environmental aesthetic and mood
-- This scene is a DIRECT CONTINUATION of the previous scene
-- Imagine this as the next frame in a movie - visual style must be seamless`
-          : `
-ESTABLISHING SHOT:
-- This is Scene 1 - establish the visual style for the entire storyboard
-- Create a distinct, memorable cinematic look that can be continued`;
-
-        const imagePrompt = `ULTRA-DETAILED CINEMATIC IMAGE GENERATION
-
-SCENE DESCRIPTION:
+SZENEN-BESCHREIBUNG:
 "${storyText}"
 
-${continuityInstructions}
+KAMERA-EINSTELLUNGEN:
+- Kamerawinkel: ${point.cameraAngle || 'dynamisch und cineastisch'}
+- Shot-Typ: ${point.shotType || 'passend zur Szene'}
 
-DETAILED TECHNICAL REQUIREMENTS:
+${previousScenePrompt ? `VORHERIGE SZENE (für Style-Kontinuität):
+"${previousScenePrompt.substring(0, 500)}..."
 
-1. COMPOSITION & FRAMING:
-   - ${cameraAngleDesc}
-   - ${shotTypeDesc}
-   - Apply rule of thirds for subject placement
-   - Create visual depth with foreground, midground, and background elements
-   - Use leading lines to guide viewer's eye to the subject
+WICHTIG: Der visuelle Stil MUSS exakt mit der vorherigen Szene übereinstimmen!` : 'Dies ist Szene 1 - etabliere einen einzigartigen visuellen Stil.'}
 
-2. LIGHTING & ATMOSPHERE:
-   - Cinematic three-point lighting setup (key, fill, rim lights)
-   - Natural light sources that match the scene's environment
-   - Dramatic shadows to add depth and dimension
-   - Atmospheric elements (haze, dust particles, volumetric light) where appropriate
-   - Color temperature that reflects the emotional tone
+ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
 
-3. CHARACTER DETAILS (SINGLE PERSON ONLY):
-   - Expressive facial features capturing the scene's emotion
-   - Natural, dynamic body posture and pose
-   - Detailed clothing with visible textures and folds
-   - Realistic skin texture with appropriate lighting
-   - Eyes that convey the character's inner state
-   - Hair with natural movement and detail
+1. HAUPTSZENE & HANDLUNG (100+ Wörter):
+   - Was passiert genau in diesem Moment?
+   - Welche Emotionen zeigt die Person?
+   - Welche Körperhaltung und Gesten?
+   - Was ist der narrative Kontext?
 
-4. ENVIRONMENT & BACKGROUND:
-   - Rich, detailed background elements that support the narrative
-   - Depth of field: sharp focus on subject, appropriate blur on background
-   - Environmental storytelling through props and setting details
-   - Consistent lighting between character and environment
+2. PERSON/CHARAKTER (150+ Wörter):
+   - Detaillierte Gesichtsbeschreibung: Augenfarbe, Augenform, Augenbrauen, Nase, Lippen, Gesichtsform, Hautton, Sommersprossen, Falten
+   - Haare: Farbe, Länge, Stil, Textur, wie das Licht darauf fällt
+   - Ausdruck: Welche Muskeln im Gesicht angespannt sind, Blickrichtung, emotionale Nuance
+   - Körperbau: Größe, Statur, Haltung, Gewichtsverlagerung
+   - Kleidung: Material, Farbe, Textur, Falten, wie sie am Körper sitzt, Accessoires, Schmuck
+   - Hände: Position, Geste, Details der Finger
 
-5. TECHNICAL QUALITY:
-   - Ultra high resolution, 4K quality rendering
-   - Photorealistic textures on all surfaces
-   - No artifacts, noise, or compression
-   - Sharp details where in focus
-   - Natural bokeh in out-of-focus areas
+3. UMGEBUNG & HINTERGRUND (150+ Wörter):
+   - Ort: Innen/Außen, spezifische Location, architektonische Details
+   - Atmosphäre: Tageszeit, Wetter, Jahreszeit
+   - Objekte im Vordergrund: Was ist nahe der Kamera?
+   - Objekte im Mittelgrund: Was umgibt die Person?
+   - Objekte im Hintergrund: Was ist in der Ferne sichtbar?
+   - Bodenbelag/Untergrund: Textur, Material, Zustand
+   - Requisiten: Gegenstände die zur Story beitragen
 
-6. MOOD & EMOTION:
-   - Color palette that reinforces the emotional tone
-   - Visual metaphors that enhance the narrative
-   - Subtle details that add layers to the story
+4. BELEUCHTUNG (100+ Wörter):
+   - Hauptlichtquelle: Position, Intensität, Farbe, Art (Sonnenlicht, Neon, Kerzen etc.)
+   - Füllicht: Wo kommen sekundäre Lichtquellen her?
+   - Gegenlicht/Rim Light: Konturen und Silhouetten
+   - Schatten: Härte, Richtung, wo sie fallen
+   - Reflexionen: Auf Haut, in Augen, auf glänzenden Oberflächen
+   - Atmosphärisches Licht: Volumetrisches Licht, Staubpartikel, Nebel
 
-STRICT PROHIBITIONS:
-- NO multiple people - exactly ONE person only
-- NO collages, split screens, or multiple frames
-- NO text, watermarks, or overlays
-- NO unrealistic proportions or anatomy errors
-- NO inconsistent lighting or floating objects
+5. FARBPALETTE & STIMMUNG (80+ Wörter):
+   - Dominante Farben: Welche 3-4 Hauptfarben?
+   - Color Grading: Warm/Kalt, Sättigung, Kontrast
+   - Emotionale Farbsymbolik: Was vermitteln die Farben?
+   - Farbkontraste: Komplementärfarben, Akzente
 
-ASPECT RATIO: 16:9 widescreen cinematic format
+6. TECHNISCHE DETAILS (80+ Wörter):
+   - Kamera: Brennweite, Tiefenschärfe, Fokuspunkt
+   - Bildkomposition: Drittel-Regel, Führungslinien, Symmetrie/Asymmetrie
+   - Perspektive: Augenhöhe, Vogel-, Froschperspektive
+   - Bewegungsunschärfe: Falls relevant
+   - Filmkorn/Textur: Ästhetischer Look
 
-Generate ONE single, breathtaking cinematic photograph that could be a frame from a high-budget film.`;
+7. KLEINE DETAILS (100+ Wörter):
+   - Mikrodetails auf der Haut: Poren, feine Härchen, Glanz
+   - Stoffdetails: Nähte, Knöpfe, Reißverschlüsse, Abnutzung
+   - Umgebungsdetails: Staub, Wassertropfen, Blätter, Rauch
+   - Lichtreflexe in den Augen (Catchlights)
+   - Subtile Bewegungen: Wehende Haare, flatternder Stoff
+   - Texturkontraste: Glatt vs. Rau, Matt vs. Glänzend
 
-        const parts: any[] = [{ text: imagePrompt }];
+8. STIL-REFERENZEN (50+ Wörter):
+   - Filmische Referenzen: "Im Stil von [Regisseur/Film]"
+   - Fotografische Ästhetik: Portrait, Editorial, Cinematic
+   - Künstlerische Einflüsse
+
+REGELN:
+- NUR EINE PERSON im Bild
+- KEIN Text, Wasserzeichen oder Rahmen
+- Format: 16:9 Breitbild
+- Qualität: Fotorealistisch, 4K, höchste Detailstufe
+- Schreibe den Prompt als zusammenhängenden, fließenden Text
+- Auf Deutsch
+- Mindestens 800 Wörter
+
+Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.85,
+                maxOutputTokens: 2000
+              }
+            })
+          }
+        );
+
+        let detailedImagePrompt = "";
+        if (promptGenerationRequest.ok) {
+          const promptData = await promptGenerationRequest.json();
+          detailedImagePrompt = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        }
+
+        // Fallback if prompt generation failed
+        if (!detailedImagePrompt) {
+          detailedImagePrompt = storyText;
+        }
+
+        // STEP 2: Generate image using the detailed prompt
+        const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, NO multiple frames, 16:9 aspect ratio, photorealistic quality." }];
         
         // Add character reference images first
         for (const base64Data of characterBase64Images) {
@@ -726,7 +756,6 @@ Generate ONE single, breathtaking cinematic photograph that could be a frame fro
         // Add previous scene's image as style reference (if exists)
         if (previousSceneImage) {
           try {
-            // Convert blob URL to base64
             const response = await fetch(previousSceneImage);
             const blob = await response.blob();
             const reader = new FileReader();
@@ -790,31 +819,64 @@ Generate ONE single, breathtaking cinematic photograph that could be a frame fro
         // Store this image for the next scene's reference
         generatedSceneImages.push(generatedImageUrl);
 
-        // Generate video prompt
+        // STEP 3: Generate ultra-detailed video prompt
         const videoPromptResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Erstelle einen detaillierten Video-Animations-Prompt für diese Szene:
+                  text: `Du bist ein Elite-Regisseur für KI-Video-Generierung. Erstelle einen EXTREM DETAILLIERTEN Video-Animations-Prompt auf Deutsch.
+
+SZENEN-BESCHREIBUNG:
 "${storyText}"
 
-Der Prompt soll:
-- 3-5 Sätze auf Deutsch
-- Kamerabewegungen beschreiben (Schwenk, Zoom, Fahrt etc.)
-- Bewegungen der Person/Objekte beschreiben
-- Stimmung und Atmosphäre einfangen
-- Für KI-Videogenerierung optimiert sein
+DETAILLIERTER BILD-PROMPT (als Basis):
+"${detailedImagePrompt.substring(0, 1000)}..."
 
+ERSTELLE EINEN VIDEO-PROMPT MIT FOLGENDEN ELEMENTEN (mindestens 300 Wörter):
+
+1. KAMERABEWEGUNG (80+ Wörter):
+   - Startposition der Kamera
+   - Bewegungsart: Schwenk, Fahrt, Dolly, Crane, Steadicam, Handkamera
+   - Geschwindigkeit und Rhythmus der Bewegung
+   - Endposition der Kamera
+   - Fokusverschiebungen während der Bewegung
+
+2. CHARAKTER-ANIMATION (80+ Wörter):
+   - Genaue Bewegungsabläufe des Charakters
+   - Gesichtsanimation: Wie verändert sich der Ausdruck?
+   - Kopfbewegungen und Blickrichtung
+   - Körperbewegungen: Arme, Hände, Schultern
+   - Atmung und subtile Körpersprache
+   - Interaktion mit der Umgebung
+
+3. UMGEBUNGS-ANIMATION (60+ Wörter):
+   - Bewegte Elemente im Hintergrund
+   - Lichtveränderungen während der Szene
+   - Atmosphärische Effekte: Wind, Blätter, Staub, Rauch
+   - Schatten die sich bewegen
+
+4. TIMING & TEMPO (40+ Wörter):
+   - Gesamtdauer der Szene
+   - Langsame vs. schnelle Momente
+   - Dramatische Pausen
+   - Climax-Punkt der Bewegung
+
+5. EMOTIONALER BOGEN (40+ Wörter):
+   - Wie entwickelt sich die Stimmung?
+   - Spannung, Entspannung, Höhepunkt
+   - Musikalische Untermalung (Vorschlag)
+
+Schreibe den Prompt als zusammenhängenden, fließenden Text auf Deutsch.
 Antworte NUR mit dem Video-Prompt, keine Einleitung.`
                 }]
               }],
               generationConfig: {
-                temperature: 0.8,
-                maxOutputTokens: 300
+                temperature: 0.85,
+                maxOutputTokens: 800
               }
             })
           }
@@ -826,12 +888,13 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
           videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
         }
 
-        // Update the story point with image and video prompt
+        // Update the story point with all generated content
         setStoryPoints(prev => prev.map((p, idx) => {
           if (idx === i) {
             return {
               ...p,
               generatedImage: generatedImageUrl,
+              detailedImagePrompt: detailedImagePrompt,
               videoPrompt: videoPrompt
             };
           }
@@ -4207,11 +4270,11 @@ Beispiel einer korrekten Antwort:
                                     </div>
                                   )}
 
-                                  {/* Story/Image Prompt */}
+                                  {/* Story Description (original) */}
                                   <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                      <Sparkles className="w-3.5 h-3.5" />
-                                      Bild-Prompt
+                                      <BookOpen className="w-3.5 h-3.5" />
+                                      Szenen-Beschreibung
                                     </label>
                                     <div className="bg-muted/30 rounded-lg p-3">
                                       <Textarea
@@ -4228,11 +4291,35 @@ Beispiel einer korrekten Antwort:
                                             return p;
                                           }));
                                         }}
-                                        className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[120px]"
+                                        className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[80px]"
                                         placeholder="Szene beschreiben..."
                                       />
                                     </div>
                                   </div>
+
+                                  {/* Detailed Image Prompt (if exists) */}
+                                  {storyPoints[expandedStoryPointIndex].detailedImagePrompt && (
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        Detaillierter Bild-Prompt (KI-generiert)
+                                      </label>
+                                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 max-h-[200px] overflow-y-auto">
+                                        <Textarea
+                                          value={storyPoints[expandedStoryPointIndex].detailedImagePrompt || ""}
+                                          onChange={(e) => {
+                                            const newText = e.target.value;
+                                            const idx = expandedStoryPointIndex;
+                                            setStoryPoints(prev => prev.map((p, i) => 
+                                              i === idx ? { ...p, detailedImagePrompt: newText } : p
+                                            ));
+                                          }}
+                                          className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[150px]"
+                                          placeholder="Detaillierter Bild-Prompt..."
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
 
                                   {/* Video Prompt (if exists) */}
                                   {storyPoints[expandedStoryPointIndex].videoPrompt && (
