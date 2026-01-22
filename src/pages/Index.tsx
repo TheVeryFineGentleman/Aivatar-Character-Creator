@@ -684,17 +684,21 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
       const timeoutId = setTimeout(() => controller.abort(), 120000);
       
       try {
-        // STEP 1: Generate ultra-detailed image prompt
-        const promptGenerationRequest = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        // STEP 1: Generate ultra-detailed image prompt WITH reference images
+        const promptParts: any[] = [
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: `Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
+            text: `Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
+
+${characterBase64Images.length > 0 ? `WICHTIG: Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
+Analysiere diese Bilder SORGFÄLTIG und beschreibe die Person mit EXAKTEN Details:
+- Gesichtszüge: Augenfarbe, Augenform, Augenbrauen, Nasenform, Lippenform, Gesichtsform
+- Hautfarbe und -textur (genauer Hautton)
+- Haare: exakte Farbe, Länge, Textur, Stil
+- Körperbau und Erscheinungsbild
+- Besondere Merkmale (Sommersprossen, Muttermale, etc.)
+
+DEINE PERSONENBESCHREIBUNG MUSS EXAKT AUF DIE PERSON IN DEN REFERENZBILDERN PASSEN!
+` : ''}
 
 SZENEN-BESCHREIBUNG:
 "${storyText}"
@@ -768,9 +772,9 @@ ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
    - Künstlerische Einflüsse
 
 REGELN:
-- NUR EINE PERSON im Bild
+- NUR EINE PERSON im Bild (die Person aus den Referenzbildern)
 - KEIN Text, Wasserzeichen oder Rahmen
-- Format: 1:1 Quadratisch
+- Format: WIDESCREEN 16:9 cineastisches Breitbild (Querformat)
 - Qualität: Fotorealistisch, 4K, höchste Detailstufe
 - Schreibe den Prompt als zusammenhängenden, fließenden Text
 - Auf Deutsch
@@ -783,7 +787,28 @@ Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
 BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
 
 Dann folgt der detaillierte Bild-Prompt.`
-                }]
+          }
+        ];
+        
+        // Add ALL reference images for the AI to analyze
+        for (const base64Data of characterBase64Images) {
+          promptParts.push({
+            inlineData: {
+              mimeType: "image/png",
+              data: base64Data,
+            },
+          });
+        }
+        
+        const promptGenerationRequest = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{
+                parts: promptParts
               }],
               generationConfig: {
                 temperature: 0.85,
@@ -1178,19 +1203,23 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     const timeoutId = setTimeout(() => controller.abort(), 120000);
     
     try {
-      // STEP 1: Generate image prompt
-      const promptResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      // STEP 1: Generate image prompt WITH reference images
+      const promptParts: any[] = [
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Erstelle einen DETAILLIERTEN Bild-Prompt auf Deutsch für folgende Szene:
+          text: `Erstelle einen DETAILLIERTEN Bild-Prompt auf Deutsch für folgende Szene:
 
 "${storyText}"
+
+${characterBase64Images.length > 0 ? `WICHTIG: Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
+Analysiere diese Bilder SORGFÄLTIG und beschreibe die Person mit EXAKTEN Details:
+- Gesichtszüge: Augenfarbe, Augenform, Augenbrauen, Nasenform, Lippenform, Gesichtsform
+- Hautfarbe und -textur (genauer Hautton)
+- Haare: exakte Farbe, Länge, Textur, Stil
+- Körperbau und Erscheinungsbild
+- Besondere Merkmale (Sommersprossen, Muttermale, etc.)
+
+DEINE PERSONENBESCHREIBUNG MUSS EXAKT AUF DIE PERSON IN DEN REFERENZBILDERN PASSEN!
+` : ''}
 
 Kamerawinkel: ${point.cameraAngle || 'dynamisch'}
 Shot-Typ: ${point.shotType || 'passend zur Szene'}
@@ -1204,8 +1233,29 @@ Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
 BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
 
 Dann folgt der detaillierte Bild-Prompt.
-Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person.`
-              }]
+Beschreibe: Person (EXAKT wie in den Referenzbildern), Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person. Format: WIDESCREEN 16:9 cineastisches Breitbild.`
+        }
+      ];
+      
+      // Add ALL reference images for the AI to analyze
+      for (const base64Data of characterBase64Images) {
+        promptParts.push({
+          inlineData: {
+            mimeType: "image/png",
+            data: base64Data,
+          },
+        });
+      }
+      
+      const promptResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{
+              parts: promptParts
             }],
             generationConfig: { temperature: 0.85, maxOutputTokens: 1500 }
           })
