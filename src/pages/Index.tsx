@@ -240,6 +240,7 @@ const Index = () => {
     detailedImagePrompt?: string;
     videoPrompt?: string;
     generationError?: string;
+    sceneTitle?: string;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -782,7 +783,10 @@ REGELN:
 - Auf Deutsch
 - Mindestens 800 Wörter
 
-Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
+WICHTIG: Beginne deine Antwort mit einer kurzen Szenen-Überschrift (max 6-8 Wörter) in der Form:
+TITEL: [Kurze prägnante Beschreibung der Szene]
+
+Dann folgt der detaillierte Bild-Prompt.`
                 }]
               }],
               generationConfig: {
@@ -799,8 +803,20 @@ Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
         }
 
         let detailedImagePrompt = "";
+        let sceneTitle = "";
         const promptData = await promptGenerationRequest.json();
-        detailedImagePrompt = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        
+        // Extract scene title from response
+        const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/i);
+        if (titleMatch) {
+          sceneTitle = titleMatch[1].trim();
+          detailedImagePrompt = fullPromptResponse.replace(/^TITEL:\s*.+?\n?/i, '').trim();
+        } else {
+          detailedImagePrompt = fullPromptResponse;
+          // Generate a fallback title from the story text
+          sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
+        }
 
         // Fallback if prompt generation failed
         if (!detailedImagePrompt) {
@@ -962,6 +978,7 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
               generatedImage: generatedImageUrl,
               detailedImagePrompt: detailedImagePrompt,
               videoPrompt: videoPrompt,
+              sceneTitle: sceneTitle,
               generationError: undefined
             };
           }
@@ -1091,6 +1108,10 @@ Shot-Typ: ${point.shotType || 'passend zur Szene'}
 
 ${previousScenePrompt ? `Stil wie vorherige Szene: "${previousScenePrompt.substring(0, 300)}..."` : ''}
 
+WICHTIG: Beginne deine Antwort mit einer kurzen Szenen-Überschrift (max 6-8 Wörter) in der Form:
+TITEL: [Kurze prägnante Beschreibung der Szene]
+
+Dann folgt der detaillierte Bild-Prompt.
 Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person.`
               }]
             }],
@@ -1104,7 +1125,19 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
       }
       
       const promptData = await promptResponse.json();
-      let detailedImagePrompt = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || storyText;
+      const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || storyText;
+      
+      // Extract scene title from response
+      let sceneTitle = "";
+      let detailedImagePrompt = "";
+      const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/i);
+      if (titleMatch) {
+        sceneTitle = titleMatch[1].trim();
+        detailedImagePrompt = fullPromptResponse.replace(/^TITEL:\s*.+?\n?/i, '').trim();
+      } else {
+        detailedImagePrompt = fullPromptResponse;
+        sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
+      }
       
       // STEP 2: Generate image
       const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, 16:9 aspect ratio." }];
@@ -1199,6 +1232,7 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
             generatedImage: generatedImageUrl,
             detailedImagePrompt,
             videoPrompt,
+            sceneTitle,
             generationError: undefined
           };
         }
@@ -4375,7 +4409,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[300px] max-w-[340px] flex-shrink-0 relative h-[280px]",
+                              "min-w-[280px] max-w-[320px] flex-shrink-0 relative",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
@@ -4479,33 +4513,36 @@ Beispiel einer korrekten Antwort:
                               </div>
                             </div>
                             
-                            {/* Scene content - image pushes text away */}
-                            <div className="p-2 flex-1 flex flex-col overflow-hidden">
+                            {/* Scene content - clean card layout */}
+                            <div className="p-3 flex-1 flex flex-col">
                               {point.generatedImage ? (
                                 <>
-                                  {/* Generated Image */}
-                                  <div className="relative rounded-lg overflow-hidden flex-shrink-0 h-[140px] mb-2 transition-all duration-500 animate-in slide-in-from-top-4">
-                                    <img 
-                                      src={point.generatedImage} 
-                                      alt={`Szene ${index + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
+                                  {/* Generated Image with proper aspect ratio */}
+                                  <div className="relative rounded-lg overflow-hidden bg-muted/20 mb-2 transition-all duration-500 animate-in slide-in-from-top-4">
+                                    <div className="aspect-video flex items-center justify-center">
+                                      <img 
+                                        src={point.generatedImage} 
+                                        alt={`Szene ${index + 1}`}
+                                        className="max-w-full max-h-full object-contain"
+                                      />
+                                    </div>
                                     {generatingStoryImageIndex === index && (
                                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
                                       </div>
                                     )}
                                   </div>
-                                  {/* Video Prompt collapsed */}
+                                  {/* Scene Title */}
+                                  {point.sceneTitle && (
+                                    <div className="text-sm font-medium text-foreground/90 line-clamp-2 mb-2 px-1">
+                                      {point.sceneTitle}
+                                    </div>
+                                  )}
+                                  {/* Video Prompt indicator */}
                                   {point.videoPrompt && (
-                                    <div className="bg-muted/30 rounded-lg p-2 flex-1 overflow-hidden transition-all duration-500 animate-in slide-in-from-bottom-4">
-                                      <div className="flex items-center gap-1.5 mb-1">
-                                        <Video className="w-3 h-3 text-primary" />
-                                        <span className="text-[10px] font-medium text-muted-foreground">Video-Prompt</span>
-                                      </div>
-                                      <p className="text-[11px] text-foreground/80 line-clamp-3 leading-relaxed">
-                                        {point.videoPrompt}
-                                      </p>
+                                    <div className="bg-muted/30 rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+                                      <Video className="w-3 h-3 text-primary flex-shrink-0" />
+                                      <span className="text-[10px] text-muted-foreground truncate">Video-Prompt verfügbar</span>
                                     </div>
                                   )}
                                 </>
@@ -4633,6 +4670,16 @@ Beispiel einer korrekten Antwort:
                             
                             {/* Content */}
                             <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)] space-y-4">
+                              {/* Scene Title (if exists) */}
+                              {storyPoints[expandedStoryPointIndex].sceneTitle && (
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Szenen-Titel</label>
+                                  <p className="text-lg font-semibold text-foreground">
+                                    {storyPoints[expandedStoryPointIndex].sceneTitle}
+                                  </p>
+                                </div>
+                              )}
+                              
                               {/* Generated Image (if exists) */}
                               {storyPoints[expandedStoryPointIndex].generatedImage && (
                                 <div className="space-y-2">
@@ -4640,12 +4687,14 @@ Beispiel einer korrekten Antwort:
                                     <ImageIcon className="w-3.5 h-3.5" />
                                     Generiertes Bild
                                   </label>
-                                  <div className="relative rounded-lg overflow-hidden aspect-video bg-muted/30">
-                                    <img 
-                                      src={storyPoints[expandedStoryPointIndex].generatedImage} 
-                                      alt={`Szene ${expandedStoryPointIndex + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
+                                  <div className="relative rounded-lg overflow-hidden bg-muted/20">
+                                    <div className="aspect-video flex items-center justify-center">
+                                      <img 
+                                        src={storyPoints[expandedStoryPointIndex].generatedImage} 
+                                        alt={`Szene ${expandedStoryPointIndex + 1}`}
+                                        className="max-w-full max-h-full object-contain"
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               )}
