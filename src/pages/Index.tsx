@@ -4179,7 +4179,7 @@ Beispiel einer korrekten Antwort:
                       placeholder=""
                       value={storyIdea}
                       onChange={(e) => setStoryIdea(e.target.value)}
-                      className="min-h-[120px] resize-none"
+                      className="min-h-[160px] resize-none"
                     />
                     
                     {/* Suggestions overlay - only when empty and not animating */}
@@ -4235,7 +4235,7 @@ Beispiel einer korrekten Antwort:
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="w-10 h-[120px] rounded-lg"
+                    className="w-10 h-[160px] rounded-lg"
                     title="Story-Idee generieren"
                   >
                     {isGeneratingStoryAiIdea ? (
@@ -4257,7 +4257,7 @@ Beispiel einer korrekten Antwort:
                       placeholder="Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
                       value={storyAiAssistantInput}
                       onChange={(e) => setStoryAiAssistantInput(e.target.value)}
-                      className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                      className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
