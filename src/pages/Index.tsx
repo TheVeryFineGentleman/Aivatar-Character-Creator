@@ -4599,7 +4599,7 @@ Beispiel einer korrekten Antwort:
                                           return p;
                                         }));
                                       }}
-                                      className="leading-relaxed bg-muted/20 border-none resize-none p-3 focus-visible:ring-1 focus-visible:ring-primary/30 text-[13px] flex-1 w-full rounded-lg"
+                                      className="leading-relaxed bg-muted/20 border-none resize-none p-3 focus-visible:ring-1 focus-visible:ring-primary/30 text-[13px] min-h-[200px] flex-1 w-full rounded-lg"
                                       placeholder="Szene beschreiben..."
                                     />
                                   )}
