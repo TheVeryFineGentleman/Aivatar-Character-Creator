@@ -4188,7 +4188,7 @@ Beispiel einer korrekten Antwort:
                         <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
                           Wähle eine Idee oder schreibe deine eigene...
                         </p>
-                        <div className="relative pointer-events-auto">
+                        <div className="relative pointer-events-auto pb-6">
                           {isLoadingStorySuggestions ? (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -4230,8 +4230,8 @@ Beispiel einer korrekten Antwort:
                   </div>
                 </div>
 
-                {/* Generate Button (like poses generator) */}
-                <div className="flex items-center">
+                {/* Generate Button (like poses generator) - aligned with textareas */}
+                <div className="flex items-end pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
@@ -4538,16 +4538,16 @@ Beispiel einer korrekten Antwort:
                             </div>
                             
                             {/* Scene content - clean card layout */}
-                            <div className="p-3 flex-1 flex flex-col">
+                            <div className="p-3 flex-1 flex flex-col items-center">
                               {point.generatedImage ? (
                                 <>
                                   {/* Generated Image with proper aspect ratio */}
-                                  <div className="relative rounded-lg overflow-hidden bg-muted/20 mb-2 transition-all duration-500 animate-in slide-in-from-top-4">
-                                    <div className="aspect-video flex items-center justify-center">
+                                  <div className="relative rounded-lg overflow-hidden bg-muted/20 mb-2 transition-all duration-500 animate-in slide-in-from-top-4 w-full">
+                                    <div className="aspect-video flex items-center justify-center bg-muted/10">
                                       <img 
                                         src={point.generatedImage} 
                                         alt={`Szene ${index + 1}`}
-                                        className="max-w-full max-h-full object-contain"
+                                        className="w-full h-full object-cover"
                                       />
                                     </div>
                                     {generatingStoryImageIndex === index && (
@@ -4558,13 +4558,13 @@ Beispiel einer korrekten Antwort:
                                   </div>
                                   {/* Scene Title */}
                                   {point.sceneTitle && (
-                                    <div className="text-sm font-medium text-foreground/90 line-clamp-2 mb-2 px-1">
+                                    <div className="text-sm font-medium text-foreground/90 line-clamp-2 mb-2 px-1 text-center w-full">
                                       {point.sceneTitle}
                                     </div>
                                   )}
                                   {/* Video Prompt indicator */}
                                   {point.videoPrompt && (
-                                    <div className="bg-muted/30 rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+                                    <div className="bg-muted/30 rounded-lg px-2 py-1.5 flex items-center justify-center gap-1.5 w-full">
                                       <Video className="w-3 h-3 text-primary flex-shrink-0" />
                                       <span className="text-[10px] text-muted-foreground truncate">Video-Prompt verfügbar</span>
                                     </div>
