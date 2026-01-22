@@ -241,6 +241,7 @@ const Index = () => {
     videoPrompt?: string;
     generationError?: string;
     sceneTitle?: string;
+    sceneDescription?: string;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -798,6 +799,9 @@ REGELN:
 WICHTIG: Beginne deine Antwort mit einer kurzen Szenen-Überschrift (max 6-8 Wörter) in der Form:
 TITEL: [Kurze prägnante Beschreibung der Szene]
 
+Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
+BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
+
 Dann folgt der detaillierte Bild-Prompt.`
                 }]
               }],
@@ -816,19 +820,31 @@ Dann folgt der detaillierte Bild-Prompt.`
 
         let detailedImagePrompt = "";
         let sceneTitle = "";
+        let sceneDescription = "";
         const promptData = await promptGenerationRequest.json();
         const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
         
         // Extract scene title from response
-        const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/i);
+        const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
         if (titleMatch) {
           sceneTitle = titleMatch[1].trim();
-          detailedImagePrompt = fullPromptResponse.replace(/^TITEL:\s*.+?\n?/i, '').trim();
         } else {
-          detailedImagePrompt = fullPromptResponse;
-          // Generate a fallback title from the story text
           sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
         }
+        
+        // Extract scene description from response
+        const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
+        if (descriptionMatch) {
+          sceneDescription = descriptionMatch[1].trim();
+        } else {
+          sceneDescription = storyText;
+        }
+        
+        // Extract detailed prompt (everything after BESCHREIBUNG block)
+        detailedImagePrompt = fullPromptResponse
+          .replace(/^TITEL:\s*.+?\n?/im, '')
+          .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
+          .trim();
 
         // Fallback if prompt generation failed
         if (!detailedImagePrompt) {
@@ -991,6 +1007,7 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
               detailedImagePrompt: detailedImagePrompt,
               videoPrompt: videoPrompt,
               sceneTitle: sceneTitle,
+              sceneDescription: sceneDescription,
               generationError: undefined
             };
           }
@@ -1135,6 +1152,9 @@ ${previousScenePrompt ? `Stil wie vorherige Szene: "${previousScenePrompt.substr
 WICHTIG: Beginne deine Antwort mit einer kurzen Szenen-Überschrift (max 6-8 Wörter) in der Form:
 TITEL: [Kurze prägnante Beschreibung der Szene]
 
+Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
+BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
+
 Dann folgt der detaillierte Bild-Prompt.
 Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person.`
               }]
@@ -1153,15 +1173,29 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
       
       // Extract scene title from response
       let sceneTitle = "";
+      let sceneDescription = "";
       let detailedImagePrompt = "";
-      const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/i);
+      
+      const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
       if (titleMatch) {
         sceneTitle = titleMatch[1].trim();
-        detailedImagePrompt = fullPromptResponse.replace(/^TITEL:\s*.+?\n?/i, '').trim();
       } else {
-        detailedImagePrompt = fullPromptResponse;
         sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
       }
+      
+      // Extract scene description from response
+      const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
+      if (descriptionMatch) {
+        sceneDescription = descriptionMatch[1].trim();
+      } else {
+        sceneDescription = storyText;
+      }
+      
+      // Extract detailed prompt (everything after BESCHREIBUNG block)
+      detailedImagePrompt = fullPromptResponse
+        .replace(/^TITEL:\s*.+?\n?/im, '')
+        .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
+        .trim();
       
       // STEP 2: Generate image
       const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, 16:9 aspect ratio." }];
@@ -1257,6 +1291,7 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
             detailedImagePrompt,
             videoPrompt,
             sceneTitle,
+            sceneDescription,
             generationError: undefined
           };
         }
@@ -4433,7 +4468,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[300px]",
+                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[380px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
@@ -4554,9 +4589,11 @@ Beispiel einer korrekten Antwort:
                                       </div>
                                     )}
                                   </div>
-                                  {/* Short scene description */}
-                                  <div className="text-xs text-muted-foreground line-clamp-1 mt-2 text-center w-full px-1">
-                                    {point.sceneTitle || point.versions[point.currentVersion]?.slice(0, 60) + '...'}
+                                  {/* Scene description - read only */}
+                                  <div className="mt-3 bg-muted/30 rounded-lg p-2.5 border border-border/20">
+                                    <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">
+                                      {point.sceneDescription || point.versions[point.currentVersion]}
+                                    </p>
                                   </div>
                                 </>
                               ) : point.generationError ? (
