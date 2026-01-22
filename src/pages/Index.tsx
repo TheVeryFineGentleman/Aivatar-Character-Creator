@@ -790,7 +790,7 @@ ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
 REGELN:
 - NUR EINE PERSON im Bild
 - KEIN Text, Wasserzeichen oder Rahmen
-- Format: 16:9 Breitbild
+- Format: 1:1 Quadratisch
 - Qualität: Fotorealistisch, 4K, höchste Detailstufe
 - Schreibe den Prompt als zusammenhängenden, fließenden Text
 - Auf Deutsch
@@ -863,7 +863,7 @@ ${detailedImagePrompt}
 STRICT REQUIREMENTS:
 - ONE person only
 - NO collages, NO multiple frames
-- 16:9 aspect ratio
+- 1:1 square aspect ratio
 - Photorealistic quality
 - Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images
 - Ultra high resolution`;
@@ -1198,7 +1198,7 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
         .trim();
       
       // STEP 2: Generate image
-      const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, 16:9 aspect ratio." }];
+      const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, 1:1 square aspect ratio." }];
       
       for (const base64Data of characterBase64Images) {
         parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
@@ -4737,7 +4737,7 @@ Beispiel einer korrekten Antwort:
                                     Generiertes Bild
                                   </label>
                                   <div className="relative rounded-lg overflow-hidden bg-muted/20">
-                                    <div className="aspect-video flex items-center justify-center">
+                                    <div className="aspect-square flex items-center justify-center">
                                       <img 
                                         src={storyPoints[expandedStoryPointIndex].generatedImage} 
                                         alt={`Szene ${expandedStoryPointIndex + 1}`}
