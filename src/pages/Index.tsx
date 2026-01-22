@@ -4538,40 +4538,29 @@ Beispiel einer korrekten Antwort:
                             </div>
                             
                             {/* Scene content - clean card layout */}
-                            <div className="p-3 flex-1 flex flex-col items-center">
+                            <div className="p-3 flex-1 flex flex-col">
                               {point.generatedImage ? (
                                 <>
-                                  {/* Generated Image with proper aspect ratio */}
-                                  <div className="relative rounded-lg overflow-hidden bg-muted/20 mb-2 transition-all duration-500 animate-in slide-in-from-top-4 w-full">
-                                    <div className="aspect-video flex items-center justify-center bg-muted/10">
-                                      <img 
-                                        src={point.generatedImage} 
-                                        alt={`Szene ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
+                                  {/* Generated Image - object-contain for no cropping */}
+                                  <div className="relative rounded-lg overflow-hidden bg-muted/10 flex-1 transition-all duration-500 animate-in slide-in-from-top-4 w-full flex items-center justify-center">
+                                    <img 
+                                      src={point.generatedImage} 
+                                      alt={`Szene ${index + 1}`}
+                                      className="max-w-full max-h-full object-contain"
+                                    />
                                     {generatingStoryImageIndex === index && (
                                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
                                       </div>
                                     )}
                                   </div>
-                                  {/* Scene Title */}
-                                  {point.sceneTitle && (
-                                    <div className="text-sm font-medium text-foreground/90 line-clamp-2 mb-2 px-1 text-center w-full">
-                                      {point.sceneTitle}
-                                    </div>
-                                  )}
-                                  {/* Video Prompt indicator */}
-                                  {point.videoPrompt && (
-                                    <div className="bg-muted/30 rounded-lg px-2 py-1.5 flex items-center justify-center gap-1.5 w-full">
-                                      <Video className="w-3 h-3 text-primary flex-shrink-0" />
-                                      <span className="text-[10px] text-muted-foreground truncate">Video-Prompt verfügbar</span>
-                                    </div>
-                                  )}
+                                  {/* Short scene description */}
+                                  <div className="text-xs text-muted-foreground line-clamp-1 mt-2 text-center w-full px-1">
+                                    {point.sceneTitle || point.versions[point.currentVersion]?.slice(0, 60) + '...'}
+                                  </div>
                                 </>
                               ) : point.generationError ? (
-                                <div className="bg-destructive/10 rounded-lg p-3 min-h-[200px] flex-1 flex flex-col items-center justify-center gap-3">
+                                <div className="bg-destructive/10 rounded-lg p-3 flex-1 flex flex-col items-center justify-center gap-3">
                                   <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
                                     <AlertCircle className="w-5 h-5 text-destructive" />
                                   </div>
@@ -4590,9 +4579,9 @@ Beispiel einer korrekten Antwort:
                                   </Button>
                                 </div>
                               ) : (
-                                <div className="bg-muted/30 rounded-lg p-2 min-h-[200px] flex-1">
+                                <div className="flex-1 flex items-center justify-center p-1">
                                   {generatingStoryImageIndex === index ? (
-                                    <div className="flex flex-col items-center justify-center h-full gap-2">
+                                    <div className="flex flex-col items-center justify-center gap-2">
                                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                                       <span className="text-xs text-muted-foreground">Generiere Bild...</span>
                                     </div>
@@ -4610,9 +4599,8 @@ Beispiel einer korrekten Antwort:
                                           return p;
                                         }));
                                       }}
-                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-[13px] min-h-[180px]"
+                                      className="leading-relaxed bg-muted/20 border-none resize-none p-3 focus-visible:ring-1 focus-visible:ring-primary/30 text-[13px] h-full w-full rounded-lg"
                                       placeholder="Szene beschreiben..."
-                                      style={{ overflow: 'hidden' }}
                                     />
                                   )}
                                 </div>
