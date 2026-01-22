@@ -4579,9 +4579,9 @@ Beispiel einer korrekten Antwort:
                                   </Button>
                                 </div>
                               ) : (
-                                <div className="flex-1 flex items-center justify-center p-1">
+                                <div className="flex-1 flex flex-col p-2">
                                   {generatingStoryImageIndex === index ? (
-                                    <div className="flex flex-col items-center justify-center gap-2">
+                                    <div className="flex-1 flex flex-col items-center justify-center gap-2">
                                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                                       <span className="text-xs text-muted-foreground">Generiere Bild...</span>
                                     </div>
@@ -4599,7 +4599,7 @@ Beispiel einer korrekten Antwort:
                                           return p;
                                         }));
                                       }}
-                                      className="leading-relaxed bg-muted/20 border-none resize-none p-3 focus-visible:ring-1 focus-visible:ring-primary/30 text-[13px] h-full w-full rounded-lg"
+                                      className="leading-relaxed bg-muted/20 border-none resize-none p-3 focus-visible:ring-1 focus-visible:ring-primary/30 text-[13px] flex-1 w-full rounded-lg"
                                       placeholder="Szene beschreiben..."
                                     />
                                   )}
