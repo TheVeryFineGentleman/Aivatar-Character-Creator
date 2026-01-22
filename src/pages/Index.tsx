@@ -690,18 +690,33 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
             text: `Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
 
 ${characterBase64Images.length > 0 ? `WICHTIG: Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
-Analysiere diese Bilder SORGFÄLTIG und beschreibe die Person mit EXAKTEN Details:
-- Gesichtszüge: Augenfarbe, Augenform, Augenbrauen, Nasenform, Lippenform, Gesichtsform
-- Hautfarbe und -textur (genauer Hautton)
-- Haare: exakte Farbe, Länge, Textur, Stil
-- Körperbau und Erscheinungsbild
+Diese Bilder dienen als GRUNDLAGE für das Aussehen der Person - aber NICHT als exakte Kopie!
+
+CHARAKTER-KONSISTENZ (was GLEICH bleiben muss):
+- Gesichtszüge: Augenfarbe, Augenform, Nasenform, Lippenform, Gesichtsform
+- Hautfarbe und -ton
+- Haare: Farbe, ungefähre Länge und Textur
+- Körperbau und Statur
 - Besondere Merkmale (Sommersprossen, Muttermale, etc.)
 
-DEINE PERSONENBESCHREIBUNG MUSS EXAKT AUF DIE PERSON IN DEN REFERENZBILDERN PASSEN!
+SZENEN-VARIATION (was sich ÄNDERN soll passend zur Handlung):
+- Kleidung/Outfit: Passend zur Szene und Handlung
+- Pose und Körperhaltung: Aktiv und zur Handlung passend
+- Gesichtsausdruck: Emotional passend zur Szene
+- Haarstyling: Kann leicht variieren (z.B. offen/zusammengebunden, vom Wind bewegt)
+- Perspektive und Winkel auf die Person
 ` : ''}
 
 SZENEN-BESCHREIBUNG:
 "${storyText}"
+
+KRITISCH - SCHLÜSSELSZENE MIT KLARER HANDLUNG:
+Diese Szene MUSS einen EINDEUTIGEN, ERKENNBAREN MOMENT zeigen!
+- Was TUT die Person GENAU in diesem Moment? (konkrete Aktion!)
+- Welche Bewegung führt sie gerade aus?
+- Was hält sie in den Händen oder womit interagiert sie?
+- Welche Emotion zeigt ihr Gesicht in diesem Augenblick?
+Die Handlung muss SOFORT erkennbar sein - als würde man ein Standbild aus einem Film sehen!
 
 KAMERA-EINSTELLUNGEN:
 - Kamerawinkel: ${point.cameraAngle || 'dynamisch und cineastisch'}
@@ -710,23 +725,25 @@ KAMERA-EINSTELLUNGEN:
 ${previousScenePrompt ? `VORHERIGE SZENE (für Style-Kontinuität):
 "${previousScenePrompt.substring(0, 500)}..."
 
-WICHTIG: Der visuelle Stil MUSS exakt mit der vorherigen Szene übereinstimmen!` : 'Dies ist Szene 1 - etabliere einen einzigartigen visuellen Stil.'}
+WICHTIG: Der visuelle Stil MUSS mit der vorherigen Szene übereinstimmen, aber die HANDLUNG und POSE sind KOMPLETT NEU!` : 'Dies ist Szene 1 - etabliere einen einzigartigen visuellen Stil.'}
 
 ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
 
-1. HAUPTSZENE & HANDLUNG (100+ Wörter):
-   - Was passiert genau in diesem Moment?
-   - Welche Emotionen zeigt die Person?
-   - Welche Körperhaltung und Gesten?
-   - Was ist der narrative Kontext?
+1. SCHLÜSSELMOMENT & HANDLUNG (150+ Wörter) - DER WICHTIGSTE TEIL!:
+   - Welche KONKRETE AKTION führt die Person GENAU JETZT aus?
+   - Was machen ihre Hände? Was halten sie, worauf zeigen sie, was berühren sie?
+   - Welche Körperbewegung ist eingefroren in diesem Moment?
+   - Welche Emotion ist auf dem Gesicht ablesbar?
+   - Welche Interaktion mit Objekten oder der Umgebung findet statt?
+   - Dieser Moment muss so konkret sein, dass ein Betrachter SOFORT versteht was passiert!
 
 2. PERSON/CHARAKTER (150+ Wörter):
-   - Detaillierte Gesichtsbeschreibung: Augenfarbe, Augenform, Augenbrauen, Nase, Lippen, Gesichtsform, Hautton, Sommersprossen, Falten
-   - Haare: Farbe, Länge, Stil, Textur, wie das Licht darauf fällt
-   - Ausdruck: Welche Muskeln im Gesicht angespannt sind, Blickrichtung, emotionale Nuance
-   - Körperbau: Größe, Statur, Haltung, Gewichtsverlagerung
-   - Kleidung: Material, Farbe, Textur, Falten, wie sie am Körper sitzt, Accessoires, Schmuck
-   - Hände: Position, Geste, Details der Finger
+   - Gesichtszüge (konsistent mit Referenz): Augenfarbe, Augenform, Nase, Lippen, Gesichtsform, Hautton
+   - Haare: Farbe und Textur wie in Referenz, aber Styling passend zur Szene
+   - Aktueller Ausdruck: Welche Emotion, Blickrichtung, Mundstellung passend zur HANDLUNG
+   - Körperhaltung: Aktive Pose die zur Handlung passt - KEINE statische Pose!
+   - Kleidung: SZENEN-PASSEND (nicht von Referenz übernehmen!) - Material, Farbe, wie sie sich bei der Bewegung verhält
+   - Hände: KRITISCH - Was tun die Hände in diesem Moment? Greifen, zeigen, halten?
 
 3. UMGEBUNG & HINTERGRUND (150+ Wörter):
    - Ort: Innen/Außen, spezifische Location, architektonische Details
@@ -858,16 +875,21 @@ Dann folgt der detaillierte Bild-Prompt.`
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
 
-IMPORTANT: Study the reference images carefully. Replicate the EXACT same person with identical facial features, hair, skin tone, and overall appearance.
+IMPORTANT CHARACTER GUIDANCE FROM REFERENCE IMAGES:
+- Use the reference images to understand the person's BASIC FEATURES: face shape, eye color, hair color, skin tone, body type
+- DO NOT copy the pose, expression, clothing, or setting from the reference images!
+- The scene must show a UNIQUE KEY ACTION MOMENT with the character in a COMPLETELY NEW situation
+- The clothing, pose, and expression must match the STORY SCENE, not the reference photos
 
 ${detailedImagePrompt}
 
 STRICT REQUIREMENTS:
-- ONE person only - must match the person in reference images
+- ONE person only - facial features inspired by reference images but in a NEW POSE/OUTFIT
+- CLEAR KEY ACTION: The person must be DOING something specific and recognizable
 - WIDESCREEN 16:9 cinematic format (landscape orientation)
 - NO collages, NO multiple frames
 - Photorealistic quality
-- Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images
+- Match the style and quality level from the reference images, but NOT the exact pose/clothing
 - Ultra high resolution`;
 
         const parts: any[] = [{ text: imagePromptText }];
