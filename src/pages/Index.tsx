@@ -828,7 +828,7 @@ Dann folgt der detaillierte Bild-Prompt.`
 
         // STEP 2: Generate image
         const imagePromptText = `CRITICAL FORMAT CONSTRAINTS - YOU MUST FOLLOW:
-- OUTPUT FORMAT: Generate a SQUARE image with 1:1 aspect ratio (same width and height)
+- OUTPUT FORMAT: Generate a WIDESCREEN image with 16:9 aspect ratio (cinematic landscape orientation)
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
@@ -839,7 +839,7 @@ ${detailedImagePrompt}
 
 STRICT REQUIREMENTS:
 - ONE person only - must match the person in reference images
-- SQUARE 1:1 format (equal width and height)
+- WIDESCREEN 16:9 cinematic format (landscape orientation)
 - NO collages, NO multiple frames
 - Photorealistic quality
 - Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images
@@ -866,6 +866,9 @@ STRICT REQUIREMENTS:
               contents: [{ role: "user", parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
+                imageConfig: {
+                  aspectRatio: "16:9",
+                },
               },
             }),
           }
@@ -1279,7 +1282,9 @@ STRICT: ONE person only (matching reference images), SQUARE 1:1 format, NO colla
             contents: [{ role: "user", parts }],
             generationConfig: { 
               responseModalities: ["IMAGE", "TEXT"],
-              aspectRatio: "1:1"
+              imageConfig: {
+                aspectRatio: "16:9",
+              },
             }
           })
         }
