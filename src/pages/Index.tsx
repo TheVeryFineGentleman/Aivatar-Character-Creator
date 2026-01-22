@@ -853,17 +853,20 @@ Dann folgt der detaillierte Bild-Prompt.`
 
         // STEP 2: Generate image using the detailed prompt (same method as pose mode)
         // Only use user's reference images - NO previous scene images for consistency with pose mode
-        const imagePromptText = `CRITICAL CONSTRAINTS: 
+        const imagePromptText = `CRITICAL FORMAT CONSTRAINTS - YOU MUST FOLLOW:
+- OUTPUT FORMAT: Generate a SQUARE image with 1:1 aspect ratio (same width and height)
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
 
+IMPORTANT: Study the reference images carefully. Replicate the EXACT same person with identical facial features, hair, skin tone, and overall appearance.
+
 ${detailedImagePrompt}
 
 STRICT REQUIREMENTS:
-- ONE person only
+- ONE person only - must match the person in reference images
+- SQUARE 1:1 format (equal width and height)
 - NO collages, NO multiple frames
-- 1:1 square aspect ratio
 - Photorealistic quality
 - Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images
 - Ultra high resolution`;
@@ -890,6 +893,7 @@ STRICT REQUIREMENTS:
               contents: [{ role: "user", parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
+                aspectRatio: "1:1",
               },
             }),
           }
@@ -1198,7 +1202,12 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
         .trim();
       
       // STEP 2: Generate image
-      const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, 1:1 square aspect ratio." }];
+      const parts: any[] = [{ text: `CRITICAL FORMAT: Generate a SQUARE 1:1 aspect ratio image (same width and height).
+Study the reference images - replicate the EXACT same person with identical features.
+
+${detailedImagePrompt}
+
+STRICT: ONE person only (matching reference images), SQUARE 1:1 format, NO collages.` }];
       
       for (const base64Data of characterBase64Images) {
         parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
@@ -1227,7 +1236,10 @@ Beschreibe: Person, Umgebung, Beleuchtung, Farben, technische Details. Mindesten
           signal: controller.signal,
           body: JSON.stringify({
             contents: [{ role: "user", parts }],
-            generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
+            generationConfig: { 
+              responseModalities: ["IMAGE", "TEXT"],
+              aspectRatio: "1:1"
+            }
           })
         }
       );
