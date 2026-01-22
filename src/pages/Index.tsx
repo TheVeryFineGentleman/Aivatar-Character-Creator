@@ -866,7 +866,6 @@ STRICT REQUIREMENTS:
               contents: [{ role: "user", parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
-                aspectRatio: "1:1",
               },
             }),
           }
