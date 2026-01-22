@@ -658,53 +658,33 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     }
   };
 
-  // Generate images and video prompts for all story points
-  const generateStoryImagesAndPrompts = async () => {
-    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
+  // Helper function to generate a single story scene with retries
+  const generateSingleStoryScene = async (
+    sceneIndex: number,
+    point: {
+      versions: string[];
+      currentVersion: number;
+      cameraAngle?: string;
+      shotType?: string;
+      generatedImage?: string;
+      detailedImagePrompt?: string;
+      videoPrompt?: string;
+      generationError?: string;
+      sceneTitle?: string;
+      sceneDescription?: string;
+    },
+    characterBase64Images: string[],
+    previousScenePrompt: string | null,
+    maxRetries: number = 3
+  ): Promise<{ success: boolean; generatedImageUrl?: string; detailedImagePrompt?: string; videoPrompt?: string; sceneTitle?: string; sceneDescription?: string; errorMessage?: string }> => {
+    const storyText = point.versions[point.currentVersion];
     
-    setIsGeneratingStoryImages(true);
-    
-    // Get character reference images from main reference images (File[]) as base64
-    const characterBase64Images: string[] = [];
-    for (const file of referenceImages) {
-      try {
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const result = reader.result as string;
-            const base64Data = result.split(',')[1];
-            if (base64Data) resolve(base64Data);
-            else reject(new Error('No base64 data'));
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        characterBase64Images.push(base64);
-      } catch (error) {
-        console.error('Error converting reference image to base64:', error);
-      }
-    }
-    
-    // Store generated images for continuity reference
-    const generatedSceneImages: string[] = [];
-    let successCount = 0;
-    let failedScenes: number[] = [];
-    
-    for (let i = 0; i < storyPoints.length; i++) {
-      setGeneratingStoryImageIndex(i);
-      const point = storyPoints[i];
-      const storyText = point.versions[point.currentVersion];
-      
-      // Get previous scene's generated image for style continuity
-      const previousSceneImage = i > 0 ? generatedSceneImages[i - 1] : null;
-      const previousScenePrompt = i > 0 ? storyPoints[i - 1]?.detailedImagePrompt : null;
-      
-      // Create AbortController for timeout
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
       
       try {
-        // STEP 1: Generate ultra-detailed image prompt using non-thinking model
+        // STEP 1: Generate ultra-detailed image prompt
         const promptGenerationRequest = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           {
@@ -814,8 +794,7 @@ Dann folgt der detaillierte Bild-Prompt.`
         );
 
         if (!promptGenerationRequest.ok) {
-          const errorMsg = getErrorMessageFromStatus(promptGenerationRequest.status, `Szene ${i + 1} (Prompt)`);
-          throw new Error(errorMsg);
+          throw new Error(getErrorMessageFromStatus(promptGenerationRequest.status, `Szene ${sceneIndex + 1} (Prompt)`));
         }
 
         let detailedImagePrompt = "";
@@ -824,7 +803,6 @@ Dann folgt der detaillierte Bild-Prompt.`
         const promptData = await promptGenerationRequest.json();
         const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
         
-        // Extract scene title from response
         const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
         if (titleMatch) {
           sceneTitle = titleMatch[1].trim();
@@ -832,7 +810,6 @@ Dann folgt der detaillierte Bild-Prompt.`
           sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
         }
         
-        // Extract scene description from response
         const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
         if (descriptionMatch) {
           sceneDescription = descriptionMatch[1].trim();
@@ -840,19 +817,16 @@ Dann folgt der detaillierte Bild-Prompt.`
           sceneDescription = storyText;
         }
         
-        // Extract detailed prompt (everything after BESCHREIBUNG block)
         detailedImagePrompt = fullPromptResponse
           .replace(/^TITEL:\s*.+?\n?/im, '')
           .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
           .trim();
 
-        // Fallback if prompt generation failed
         if (!detailedImagePrompt) {
           detailedImagePrompt = storyText;
         }
 
-        // STEP 2: Generate image using the detailed prompt (same method as pose mode)
-        // Only use user's reference images - NO previous scene images for consistency with pose mode
+        // STEP 2: Generate image
         const imagePromptText = `CRITICAL FORMAT CONSTRAINTS - YOU MUST FOLLOW:
 - OUTPUT FORMAT: Generate a SQUARE image with 1:1 aspect ratio (same width and height)
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
@@ -873,7 +847,6 @@ STRICT REQUIREMENTS:
 
         const parts: any[] = [{ text: imagePromptText }];
         
-        // Add ONLY user's character reference images (same as pose mode)
         for (const base64Data of characterBase64Images) {
           parts.push({
             inlineData: {
@@ -900,8 +873,7 @@ STRICT REQUIREMENTS:
         );
 
         if (!imageResponse.ok) {
-          const errorMsg = getErrorMessageFromStatus(imageResponse.status, `Szene ${i + 1} (Bild)`);
-          throw new Error(errorMsg);
+          throw new Error(getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1} (Bild)`));
         }
 
         let generatedImageUrl = "";
@@ -926,13 +898,10 @@ STRICT REQUIREMENTS:
         }
         
         if (!generatedImageUrl) {
-          throw new Error(`Szene ${i + 1}: Kein Bild generiert`);
+          throw new Error(`Szene ${sceneIndex + 1}: Kein Bild generiert`);
         }
-        
-        // Store this image for the next scene's reference
-        generatedSceneImages.push(generatedImageUrl);
 
-        // STEP 3: Generate ultra-detailed video prompt
+        // STEP 3: Generate video prompt
         const videoPromptResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           {
@@ -1002,60 +971,133 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
           videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
         }
 
-        // Update the story point with all generated content
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === i) {
-            return {
-              ...p,
-              generatedImage: generatedImageUrl,
-              detailedImagePrompt: detailedImagePrompt,
-              videoPrompt: videoPrompt,
-              sceneTitle: sceneTitle,
-              sceneDescription: sceneDescription,
-              generationError: undefined
-            };
-          }
-          return p;
-        }));
-        
-        successCount++;
+        clearTimeout(timeoutId);
+        return {
+          success: true,
+          generatedImageUrl,
+          detailedImagePrompt,
+          videoPrompt,
+          sceneTitle,
+          sceneDescription
+        };
 
       } catch (error) {
-        console.error(`Failed to generate for story point ${i}:`, error);
-        generatedSceneImages.push(""); // Push empty to maintain index alignment
-        failedScenes.push(i + 1);
+        clearTimeout(timeoutId);
+        console.error(`Attempt ${attempt}/${maxRetries} failed for scene ${sceneIndex + 1}:`, error);
         
-        // Determine error message
+        if (attempt < maxRetries) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        }
+        
+        // All retries exhausted
         let errorMessage = "Unbekannter Fehler";
         if (error instanceof Error) {
           if (error.name === 'AbortError') {
-            errorMessage = `Szene ${i + 1}: Zeitüberschreitung (2 Min.)`;
+            errorMessage = `Szene ${sceneIndex + 1}: Zeitüberschreitung (2 Min.)`;
           } else {
             errorMessage = error.message;
           }
         }
         
-        // Update story point with error
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === i) {
-            return {
-              ...p,
-              generationError: errorMessage
-            };
-          }
-          return p;
-        }));
-        
-        // Show toast for this specific error
-        toast({
-          title: `Fehler bei Szene ${i + 1}`,
-          description: errorMessage,
-          variant: "destructive"
+        return { success: false, errorMessage };
+      }
+    }
+    
+    return { success: false, errorMessage: "Alle Versuche fehlgeschlagen" };
+  };
+
+  // Generate images and video prompts for all story points (2 parallel)
+  const generateStoryImagesAndPrompts = async () => {
+    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
+    
+    setIsGeneratingStoryImages(true);
+    
+    // Get character reference images from main reference images (File[]) as base64
+    const characterBase64Images: string[] = [];
+    for (const file of referenceImages) {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (base64Data) resolve(base64Data);
+            else reject(new Error('No base64 data'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
         });
+        characterBase64Images.push(base64);
+      } catch (error) {
+        console.error('Error converting reference image to base64:', error);
+      }
+    }
+    
+    let successCount = 0;
+    let failedScenes: number[] = [];
+    const PARALLEL_COUNT = 2; // Generate 2 images at once
+    
+    // Process scenes in batches of 2
+    for (let batchStart = 0; batchStart < storyPoints.length; batchStart += PARALLEL_COUNT) {
+      const batchEnd = Math.min(batchStart + PARALLEL_COUNT, storyPoints.length);
+      const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
+      
+      // Update UI to show which scenes are being generated
+      setGeneratingStoryImageIndex(batchStart);
+      
+      // Generate batch in parallel
+      const batchPromises = batchIndices.map(async (sceneIndex) => {
+        const point = storyPoints[sceneIndex];
+        const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
         
-        // Continue with next scene instead of stopping
-      } finally {
-        clearTimeout(timeoutId);
+        const result = await generateSingleStoryScene(
+          sceneIndex,
+          point,
+          characterBase64Images,
+          previousScenePrompt,
+          3 // Max 3 retries
+        );
+        
+        return { sceneIndex, result };
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      
+      // Process results
+      for (const { sceneIndex, result } of batchResults) {
+        if (result.success) {
+          setStoryPoints(prev => prev.map((p, idx) => {
+            if (idx === sceneIndex) {
+              return {
+                ...p,
+                generatedImage: result.generatedImageUrl,
+                detailedImagePrompt: result.detailedImagePrompt,
+                videoPrompt: result.videoPrompt,
+                sceneTitle: result.sceneTitle,
+                sceneDescription: result.sceneDescription,
+                generationError: undefined
+              };
+            }
+            return p;
+          }));
+          successCount++;
+        } else {
+          failedScenes.push(sceneIndex + 1);
+          setStoryPoints(prev => prev.map((p, idx) => {
+            if (idx === sceneIndex) {
+              return { ...p, generationError: result.errorMessage };
+            }
+            return p;
+          }));
+          
+          toast({
+            title: `Fehler bei Szene ${sceneIndex + 1}`,
+            description: result.errorMessage,
+            variant: "destructive"
+          });
+        }
       }
     }
     
