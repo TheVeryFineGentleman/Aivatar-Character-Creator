@@ -3241,12 +3241,12 @@ Beispiel einer korrekten Antwort:
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Version Indicator */}
-        <div className="absolute top-2 left-2 text-[10px] text-muted-foreground/50 font-mono select-none">
+        <div className="absolute top-4 left-4 text-[10px] text-muted-foreground/50 font-mono select-none">
           v1.4.3
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
-        <div className="absolute top-6 right-6 flex flex-col gap-2">
+        <div className="absolute top-4 right-4 flex flex-col gap-2">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="rounded-full">
@@ -3437,7 +3437,7 @@ Beispiel einer korrekten Antwort:
 
         {/* Header */}
         <div 
-          className="text-center mb-12 pr-12 animate-fade-in"
+          className="text-center mb-12 animate-fade-in"
           style={{ animationDelay: '0ms', animationDuration: '600ms', animationFillMode: 'both' }}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
@@ -3803,7 +3803,7 @@ Beispiel einer korrekten Antwort:
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[100px] min-w-[600px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[100px] w-full max-w-[600px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
                   </div>
@@ -4384,7 +4384,7 @@ Beispiel einer korrekten Antwort:
                 )}
 
 {/* Story Points Display - Always visible container */}
-                <div className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-5 min-h-[160px] border border-border/40 shadow-inner">
+                <div className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-4 min-h-[160px] border border-border/40 shadow-inner">
                   {storyPoints.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full min-h-[130px] text-muted-foreground gap-2">
                       <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
@@ -4396,7 +4396,7 @@ Beispiel einer korrekten Antwort:
                     <div className="relative">
                       <div 
                         id="story-points-scroll" 
-                        className="flex gap-4 overflow-x-auto pb-3 px-6 scrollbar-thin scroll-smooth"
+                        className="flex gap-4 overflow-x-auto pb-3 px-2 scrollbar-thin scroll-smooth"
                         onWheel={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -4409,7 +4409,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[280px] max-w-[320px] flex-shrink-0 relative h-[300px]",
+                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[300px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
