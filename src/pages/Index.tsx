@@ -663,12 +663,24 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     
     setIsGeneratingStoryImages(true);
     
-    // Get character reference images as base64
+    // Get character reference images from main reference images (File[]) as base64
     const characterBase64Images: string[] = [];
-    for (const imageUrl of storyReferenceImages) {
-      if (imageUrl.startsWith('data:')) {
-        const base64 = imageUrl.split(',')[1];
-        if (base64) characterBase64Images.push(base64);
+    for (const file of referenceImages) {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (base64Data) resolve(base64Data);
+            else reject(new Error('No base64 data'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        characterBase64Images.push(base64);
+      } catch (error) {
+        console.error('Error converting reference image to base64:', error);
       }
     }
     
@@ -1071,12 +1083,24 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     const point = storyPoints[sceneIndex];
     const storyText = point.versions[point.currentVersion];
     
-    // Get character reference images as base64
+    // Get character reference images from main reference images (File[]) as base64
     const characterBase64Images: string[] = [];
-    for (const imageUrl of storyReferenceImages) {
-      if (imageUrl.startsWith('data:')) {
-        const base64 = imageUrl.split(',')[1];
-        if (base64) characterBase64Images.push(base64);
+    for (const file of referenceImages) {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (base64Data) resolve(base64Data);
+            else reject(new Error('No base64 data'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        characterBase64Images.push(base64);
+      } catch (error) {
+        console.error('Error converting reference image to base64:', error);
       }
     }
     
