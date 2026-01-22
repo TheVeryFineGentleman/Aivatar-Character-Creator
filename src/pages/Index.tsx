@@ -1041,10 +1041,13 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     
     setIsGeneratingStoryImages(true);
     
-    // Get character reference images from main reference images (File[]) as base64
+    // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
-    for (const file of referenceImages) {
+    for (const imageUrl of storyReferenceImages) {
       try {
+        // Fetch the image URL and convert to base64
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -1054,11 +1057,11 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
             else reject(new Error('No base64 data'));
           };
           reader.onerror = reject;
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(blob);
         });
         characterBase64Images.push(base64);
       } catch (error) {
-        console.error('Error converting reference image to base64:', error);
+        console.error('Error converting story reference image to base64:', error);
       }
     }
     
@@ -1173,10 +1176,13 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     const point = storyPoints[sceneIndex];
     const storyText = point.versions[point.currentVersion];
     
-    // Get character reference images from main reference images (File[]) as base64
+    // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
-    for (const file of referenceImages) {
+    for (const imageUrl of storyReferenceImages) {
       try {
+        // Fetch the image URL and convert to base64
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -1186,11 +1192,11 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
             else reject(new Error('No base64 data'));
           };
           reader.onerror = reject;
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(blob);
         });
         characterBase64Images.push(base64);
       } catch (error) {
-        console.error('Error converting reference image to base64:', error);
+        console.error('Error converting story reference image to base64:', error);
       }
     }
     
