@@ -4676,10 +4676,19 @@ Beispiel einer korrekten Antwort:
                               ) : (
                                 <div className="flex-1 flex flex-col p-2">
                                   {generatingStoryImageIndex === index ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center gap-2">
-                                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                      <span className="text-xs text-muted-foreground">Generiere Bild...</span>
-                                    </div>
+                                    <>
+                                      {/* Image placeholder sliding from top */}
+                                      <div className="relative rounded-lg overflow-hidden bg-muted/10 flex items-center justify-center animate-image-from-top aspect-video mb-3">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+                                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                      </div>
+                                      {/* Text field tweening to bottom position */}
+                                      <div className="bg-muted/30 rounded-lg p-2.5 border border-border/20 animate-text-to-bottom overflow-hidden">
+                                        <p className="text-xs text-foreground/60 leading-relaxed line-clamp-3">
+                                          {point.versions[point.currentVersion]}
+                                        </p>
+                                      </div>
+                                    </>
                                   ) : (
                                     <Textarea
                                       value={point.versions[point.currentVersion]}
