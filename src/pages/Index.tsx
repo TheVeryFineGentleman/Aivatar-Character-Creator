@@ -689,22 +689,26 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           {
             text: `Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
 
-${characterBase64Images.length > 0 ? `WICHTIG: Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
-Diese Bilder dienen als GRUNDLAGE für das Aussehen der Person - aber NICHT als exakte Kopie!
+${characterBase64Images.length > 0 ? `KRITISCH - CHARAKTER-REPLIKATION:
+Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
+Du MUSST das Aussehen dieser Person zu 100% EXAKT REPLIZIEREN!
 
-CHARAKTER-KONSISTENZ (was GLEICH bleiben muss):
-- Gesichtszüge: Augenfarbe, Augenform, Nasenform, Lippenform, Gesichtsform
-- Hautfarbe und -ton
-- Haare: Farbe, ungefähre Länge und Textur
-- Körperbau und Statur
-- Besondere Merkmale (Sommersprossen, Muttermale, etc.)
+WAS DU 100% IDENTISCH ÜBERNEHMEN MUSST (KEINE ABWEICHUNGEN!):
+- Gesichtszüge: EXAKT die gleichen Augen (Farbe, Form, Größe, Abstand), Nase, Lippen, Gesichtsform, Wangenknochen, Kinn
+- Hautfarbe und -ton: IDENTISCH zum Referenzbild
+- Haare: EXAKT die gleiche Farbe, Länge, Textur, Schnitt
+- Körperbau und Statur: IDENTISCH - Größe, Proportionen, Körperform
+- Besondere Merkmale: ALLE Sommersprossen, Muttermale, Narben etc. EXAKT übernehmen
+- Augenbrauen: Form und Dichte IDENTISCH
+- Ohren, Hände, Finger: IDENTISCH zur Referenz
 
-SZENEN-VARIATION (was sich ÄNDERN soll passend zur Handlung):
-- Kleidung/Outfit: Passend zur Szene und Handlung
-- Pose und Körperhaltung: Aktiv und zur Handlung passend
-- Gesichtsausdruck: Emotional passend zur Szene
-- Haarstyling: Kann leicht variieren (z.B. offen/zusammengebunden, vom Wind bewegt)
-- Perspektive und Winkel auf die Person
+DIE PERSON MUSS SO AUSSEHEN, ALS WÄRE ES DIESELBE PERSON WIE IM REFERENZBILD - 100% ERKENNBAR!
+
+NUR DIE POSE DARF SICH ÄNDERN (passend zur Szenenhandlung):
+- Körperhaltung und Pose: NEUE Pose passend zur Handlung
+- Gesichtsausdruck: Emotional passend zur Szene (aber Gesichtszüge bleiben identisch!)
+- Kleidung: Passend zur Szene und Handlung
+- Perspektive und Kamerawinkel: Kann variieren
 ` : ''}
 
 SZENEN-BESCHREIBUNG:
@@ -875,21 +879,21 @@ Dann folgt der detaillierte Bild-Prompt.`
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
 
-IMPORTANT CHARACTER GUIDANCE FROM REFERENCE IMAGES:
-- Use the reference images to understand the person's BASIC FEATURES: face shape, eye color, hair color, skin tone, body type
-- DO NOT copy the pose, expression, clothing, or setting from the reference images!
-- The scene must show a UNIQUE KEY ACTION MOMENT with the character in a COMPLETELY NEW situation
-- The clothing, pose, and expression must match the STORY SCENE, not the reference photos
+KRITISCHE CHARAKTER-REPLIKATION:
+- REPLIZIERE die Person aus den Referenzbildern 100% EXAKT - sie muss IDENTISCH erkennbar sein!
+- Kopiere ALLE Gesichtszüge: Augen, Nase, Lippen, Gesichtsform, Hautton, Haare, Körperbau
+- Die Person muss aussehen wie EIN UND DIESELBE PERSON aus dem Referenzbild!
+- NUR die POSE ist NEU - der Charakter selbst ist IDENTISCH!
+- Kleidung passend zur Szene, aber das AUSSEHEN der Person bleibt 100% gleich!
 
 ${detailedImagePrompt}
 
-STRICT REQUIREMENTS:
-- ONE person only - facial features inspired by reference images but in a NEW POSE/OUTFIT
-- CLEAR KEY ACTION: The person must be DOING something specific and recognizable
-- WIDESCREEN 16:9 cinematic format (landscape orientation)
-- NO collages, NO multiple frames
-- Photorealistic quality
-- Match the style and quality level from the reference images, but NOT the exact pose/clothing
+STRENGE ANFORDERUNGEN:
+- EINE Person - 100% identisches Aussehen wie im Referenzbild, NUR mit NEUER POSE
+- KLARE SCHLÜSSELSZENE: Die Person führt eine spezifische, erkennbare Handlung aus
+- WIDESCREEN 16:9 cineastisches Format (Querformat)
+- KEINE Collagen, KEINE mehreren Bilder
+- Fotorealistische Qualität
 - Ultra high resolution`;
 
         const parts: any[] = [{ text: imagePromptText }];
