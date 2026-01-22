@@ -807,43 +807,33 @@ Antworte NUR mit dem Bild-Prompt, keine Einleitung oder Erklärung.`
           detailedImagePrompt = storyText;
         }
 
-        // STEP 2: Generate image using the detailed prompt
-        const parts: any[] = [{ text: detailedImagePrompt + "\n\nSTRICT: ONE person only, NO collages, NO multiple frames, 16:9 aspect ratio, photorealistic quality." }];
+        // STEP 2: Generate image using the detailed prompt (same method as pose mode)
+        // Only use user's reference images - NO previous scene images for consistency with pose mode
+        const imagePromptText = `CRITICAL CONSTRAINTS: 
+- Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
+- Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
+- NO photo strips, NO side-by-side comparisons, NO split screens.
+
+${detailedImagePrompt}
+
+STRICT REQUIREMENTS:
+- ONE person only
+- NO collages, NO multiple frames
+- 16:9 aspect ratio
+- Photorealistic quality
+- Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images
+- Ultra high resolution`;
+
+        const parts: any[] = [{ text: imagePromptText }];
         
-        // Add character reference images first
+        // Add ONLY user's character reference images (same as pose mode)
         for (const base64Data of characterBase64Images) {
           parts.push({
             inlineData: {
-              mimeType: "image/jpeg",
+              mimeType: "image/png",
               data: base64Data,
             },
           });
-        }
-        
-        // Add previous scene's image as style reference (if exists)
-        if (previousSceneImage) {
-          try {
-            const response = await fetch(previousSceneImage);
-            const blob = await response.blob();
-            const reader = new FileReader();
-            const previousBase64 = await new Promise<string>((resolve) => {
-              reader.onloadend = () => {
-                const result = reader.result as string;
-                const base64 = result.split(',')[1];
-                resolve(base64);
-              };
-              reader.readAsDataURL(blob);
-            });
-            
-            parts.push({
-              inlineData: {
-                mimeType: "image/jpeg",
-                data: previousBase64,
-              },
-            });
-          } catch (e) {
-            console.warn("Could not add previous scene as reference:", e);
-          }
         }
 
         const imageResponse = await fetch(
