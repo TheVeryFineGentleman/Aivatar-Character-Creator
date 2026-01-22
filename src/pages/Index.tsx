@@ -4183,7 +4183,7 @@ Beispiel einer korrekten Antwort:
                                 <p
                                   key={index}
                                   onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
-                                  className={`text-sm cursor-pointer py-0.5 transition-all ease-out ${
+                                  className={`text-sm cursor-pointer py-0.5 transition-all ease-out line-clamp-1 ${
                                     isSelected 
                                       ? 'text-foreground font-medium' 
                                       : isOther
@@ -4409,7 +4409,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[280px] max-w-[320px] flex-shrink-0 relative",
+                              "min-w-[280px] max-w-[320px] flex-shrink-0 relative h-[300px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
