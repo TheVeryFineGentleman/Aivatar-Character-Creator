@@ -813,7 +813,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     },
     characterBase64Images: string[],
     previousScenePrompt: string | null,
-    maxRetries: number = 3
+    maxRetries: number = 3,
+    useSimplifiedPrompt: boolean = false
   ): Promise<{ success: boolean; generatedImageUrl?: string; detailedImagePrompt?: string; videoPrompt?: string; sceneTitle?: string; sceneDescription?: string; errorMessage?: string }> => {
     const storyText = point.versions[point.currentVersion];
     
@@ -993,8 +994,23 @@ Dann der detaillierte Bild-Prompt.`
         }
         
         // Text-Prompt - unterschiedlich für erste Szene vs. Folgeszenen
-        const imagePromptText = (sceneIndex === 0)
-          ? `🔴 REFERENZBILDER SIND BINDEND - ERSTE SZENE 🔴
+        // Bei useSimplifiedPrompt: Vereinfachter Prompt für bessere Erfolgsrate
+        let imagePromptText: string;
+        
+        if (useSimplifiedPrompt) {
+          // VEREINFACHTER FALLBACK-PROMPT für schwierige Fälle
+          imagePromptText = sceneIndex === 0
+            ? `Generate a photorealistic image of the person shown in the reference image above.
+Scene: ${storyText.substring(0, 200)}
+Style: Professional photography, 16:9 widescreen, high quality.
+Important: The person must look exactly like in the reference image. Simple background.`
+            : `Continue the story from the previous scene image shown above.
+Scene: ${storyText.substring(0, 200)}
+Style: Professional photography, 16:9 widescreen, high quality.
+Important: Same person as before, consistent appearance. Simple background.`;
+        } else {
+          imagePromptText = (sceneIndex === 0)
+            ? `🔴 REFERENZBILDER SIND BINDEND - ERSTE SZENE 🔴
 
 DIE OBIGEN BILDER ZEIGEN DEN EXAKTEN CHARAKTER!
 
@@ -1015,7 +1031,7 @@ FINALE ANFORDERUNGEN:
 - EINZIGARTIGE SZENE mit KLARER HANDLUNG
 - Kamerawinkel EXAKT wie beschrieben
 - Fotorealistisch, 4K, Ultra HD`
-          : `🔴 CHARAKTER-KONTINUITÄT - FOLGESZENE 🔴
+            : `🔴 CHARAKTER-KONTINUITÄT - FOLGESZENE 🔴
 
 DAS OBIGE BILD ZEIGT DIE VORHERIGE SZENE!
 Der Charakter MUSS IDENTISCH bleiben - nur Pose/Handlung ändert sich.
@@ -1033,6 +1049,7 @@ FINALE ANFORDERUNGEN:
 - Kamerawinkel EXAKT wie beschrieben
 - Charakter bleibt konsistent
 - Fotorealistisch, 4K, Ultra HD`;
+        }
 
         parts.push({ text: imagePromptText });
 
@@ -1080,6 +1097,14 @@ FINALE ANFORDERUNGEN:
         }
         
         if (!generatedImageUrl) {
+          // Check for specific API error messages
+          const finishReason = candidates[0]?.finishReason;
+          const finishMessage = candidates[0]?.finishMessage;
+          
+          if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
+            console.warn(`API response for scene ${sceneIndex + 1}:`, { finishReason, finishMessage });
+            throw new Error(`Szene ${sceneIndex + 1}: Bild konnte nicht generiert werden (${finishReason}). Versuche einen vereinfachten Prompt.`);
+          }
           throw new Error(`Szene ${sceneIndex + 1}: Kein Bild generiert`);
         }
 
@@ -1196,54 +1221,55 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
     
     let successCount = 0;
     let failedScenes: number[] = [];
-    const PARALLEL_COUNT = 1; // Generate 1 image at a time for proper reference chaining
+    const MAX_SCENE_ATTEMPTS = 5; // Maximum attempts per scene (including fallback)
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
     
-    // Process scenes sequentially to ensure each scene can use the previous as reference
-    for (let batchStart = 0; batchStart < storyPoints.length; batchStart += PARALLEL_COUNT) {
-      const batchEnd = Math.min(batchStart + PARALLEL_COUNT, storyPoints.length);
-      const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
+    // Process scenes SEQUENTIALLY - each scene MUST succeed before moving to next
+    for (let sceneIndex = 0; sceneIndex < storyPoints.length; sceneIndex++) {
+      const point = storyPoints[sceneIndex];
+      const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
       
-      // Update UI to show which scenes are being generated
-      setGeneratingStoryImageIndex(batchStart);
+      // Update UI to show which scene is being generated
+      setGeneratingStoryImageIndex(sceneIndex);
       
-      // Generate batch in parallel - each scene gets its own reference images
-      const batchPromises = batchIndices.map(async (sceneIndex) => {
-        const point = storyPoints[sceneIndex];
-        const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
+      // REFERENZBILD-LOGIK:
+      // - Szene 1 (Index 0): Nutzt die hochgeladenen Referenzbilder
+      // - Ab Szene 2: Nutzt NUR das letzte generierte Bild als Referenz
+      let sceneReferenceImages: string[];
+      if (sceneIndex === 0) {
+        // Erste Szene: Upload-Referenzbilder verwenden
+        sceneReferenceImages = [...characterBase64Images];
+      } else {
+        // Folgende Szenen: Nur das letzte generierte Bild verwenden
+        sceneReferenceImages = lastGeneratedImageBase64 ? [lastGeneratedImageBase64] : [...characterBase64Images];
+      }
+      
+      let sceneSuccess = false;
+      let sceneAttempt = 0;
+      let lastError = "";
+      
+      // Keep trying this scene until it succeeds or we exhaust all attempts
+      while (!sceneSuccess && sceneAttempt < MAX_SCENE_ATTEMPTS) {
+        sceneAttempt++;
+        console.log(`Szene ${sceneIndex + 1}: Versuch ${sceneAttempt}/${MAX_SCENE_ATTEMPTS}`);
         
-        // REFERENZBILD-LOGIK:
-        // - Szene 1 (Index 0): Nutzt die hochgeladenen Referenzbilder
-        // - Ab Szene 2: Nutzt NUR das letzte generierte Bild als Referenz
-        let sceneReferenceImages: string[];
-        if (sceneIndex === 0) {
-          // Erste Szene: Upload-Referenzbilder verwenden
-          sceneReferenceImages = [...characterBase64Images];
-        } else {
-          // Folgende Szenen: Nur das letzte generierte Bild verwenden
-          sceneReferenceImages = lastGeneratedImageBase64 ? [lastGeneratedImageBase64] : [...characterBase64Images];
-        }
+        // On later attempts, try with simplified prompt
+        const useSimplifiedPrompt = sceneAttempt > 2;
         
         const result = await generateSingleStoryScene(
           sceneIndex,
           point,
           sceneReferenceImages,
           previousScenePrompt,
-          3 // Max 3 retries
+          1, // Only 1 internal retry per attempt (we handle retries in this loop)
+          useSimplifiedPrompt
         );
         
-        return { sceneIndex, result };
-      });
-      
-      const batchResults = await Promise.all(batchPromises);
-      
-      // Process results and capture last generated image for next batch
-      let lastSuccessfulImageUrl: string | null = null;
-      
-      for (const { sceneIndex, result } of batchResults) {
         if (result.success) {
+          sceneSuccess = true;
+          
           // Add shot label to the generated image
           let finalImageUrl = result.generatedImageUrl;
           const shotType = storyPoints[sceneIndex]?.shotType;
@@ -1271,47 +1297,70 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
           }));
           successCount++;
           
-          // Track the last successful image in this batch (use highest index)
+          // Convert this image to base64 for the next scene
           if (result.generatedImageUrl) {
-            lastSuccessfulImageUrl = result.generatedImageUrl;
+            try {
+              const response = await fetch(result.generatedImageUrl);
+              const blob = await response.blob();
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  const dataUrl = reader.result as string;
+                  const base64Data = dataUrl.split(',')[1];
+                  if (base64Data) resolve(base64Data);
+                  else reject(new Error('No base64 data'));
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              lastGeneratedImageBase64 = base64;
+            } catch (error) {
+              console.warn('Could not convert generated image to base64 for reference:', error);
+            }
           }
+          
+          toast({
+            title: `Szene ${sceneIndex + 1} fertig`,
+            description: `${sceneAttempt > 1 ? `Nach ${sceneAttempt} Versuchen. ` : ''}${successCount}/${storyPoints.length} Szenen generiert.`
+          });
+          
         } else {
-          failedScenes.push(sceneIndex + 1);
+          lastError = result.errorMessage || "Unbekannter Fehler";
+          console.warn(`Szene ${sceneIndex + 1} Versuch ${sceneAttempt} fehlgeschlagen:`, lastError);
+          
+          // Update UI to show current error (will be cleared on success)
           setStoryPoints(prev => prev.map((p, idx) => {
             if (idx === sceneIndex) {
-              return { ...p, generationError: result.errorMessage };
+              return { ...p, generationError: `Versuch ${sceneAttempt}/${MAX_SCENE_ATTEMPTS}: ${lastError}` };
             }
             return p;
           }));
           
-          toast({
-            title: `Fehler bei Szene ${sceneIndex + 1}`,
-            description: result.errorMessage,
-            variant: "destructive"
-          });
+          // Wait before next attempt
+          if (sceneAttempt < MAX_SCENE_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
         }
       }
       
-      // Convert the last successful image to base64 for the next batch
-      if (lastSuccessfulImageUrl) {
-        try {
-          const response = await fetch(lastSuccessfulImageUrl);
-          const blob = await response.blob();
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const dataUrl = reader.result as string;
-              const base64Data = dataUrl.split(',')[1];
-              if (base64Data) resolve(base64Data);
-              else reject(new Error('No base64 data'));
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-          lastGeneratedImageBase64 = base64;
-        } catch (error) {
-          console.warn('Could not convert generated image to base64 for reference:', error);
-        }
+      // If scene completely failed after all attempts
+      if (!sceneSuccess) {
+        failedScenes.push(sceneIndex + 1);
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === sceneIndex) {
+            return { ...p, generationError: `Endgültig fehlgeschlagen: ${lastError}` };
+          }
+          return p;
+        }));
+        
+        toast({
+          title: `Szene ${sceneIndex + 1} fehlgeschlagen`,
+          description: `Nach ${MAX_SCENE_ATTEMPTS} Versuchen abgebrochen. Generierung wird gestoppt.`,
+          variant: "destructive"
+        });
+        
+        // STOP the entire generation - we cannot continue without a reference image
+        break;
       }
     }
     
