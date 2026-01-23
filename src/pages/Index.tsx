@@ -1103,12 +1103,12 @@ REGELN:
     
     let successCount = 0;
     let failedScenes: number[] = [];
-    const PARALLEL_COUNT = 2; // Generate 2 images at once
+    const PARALLEL_COUNT = 1; // Generate 1 image at a time for proper reference chaining
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
     
-    // Process scenes in batches of 2 (parallel within batch, sequential between batches)
+    // Process scenes sequentially to ensure each scene can use the previous as reference
     for (let batchStart = 0; batchStart < storyPoints.length; batchStart += PARALLEL_COUNT) {
       const batchEnd = Math.min(batchStart + PARALLEL_COUNT, storyPoints.length);
       const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
