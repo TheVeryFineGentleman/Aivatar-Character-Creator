@@ -477,7 +477,7 @@ REGELN:
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const maxImages = 3;
+      const maxImages = 2; // Max 2 manuelle Uploads, 3. Bild kommt von letzter Szene
       const allFiles = Array.from(files);
       const filesToProcess = allFiles.slice(0, maxImages - storyReferenceImages.length);
       
@@ -504,7 +504,7 @@ REGELN:
       
       if (newImages.length > 0) {
         setStoryReferenceImages(prev => {
-          const updated = [...prev, ...newImages].slice(0, maxImages);
+          const updated = [...prev, ...newImages].slice(0, 2); // Max 2 manuelle Uploads
           saveToLocalStorage('storyReferenceImages', updated);
           return updated;
         });
@@ -1113,65 +1113,85 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     let failedScenes: number[] = [];
     const PARALLEL_COUNT = 2; // Generate 2 images at once
     
-    // Process scenes in batches of 2
-    for (let batchStart = 0; batchStart < storyPoints.length; batchStart += PARALLEL_COUNT) {
-      const batchEnd = Math.min(batchStart + PARALLEL_COUNT, storyPoints.length);
-      const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
+    // Track the last successfully generated image for use as 3rd reference
+    let lastGeneratedImageBase64: string | null = null;
+    
+    // Process scenes SEQUENTIALLY to use last generated image as reference
+    for (let sceneIndex = 0; sceneIndex < storyPoints.length; sceneIndex++) {
+      // Update UI to show which scene is being generated
+      setGeneratingStoryImageIndex(sceneIndex);
       
-      // Update UI to show which scenes are being generated
-      setGeneratingStoryImageIndex(batchStart);
+      const point = storyPoints[sceneIndex];
+      const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
       
-      // Generate batch in parallel
-      const batchPromises = batchIndices.map(async (sceneIndex) => {
-        const point = storyPoints[sceneIndex];
-        const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
+      // Build reference images array: uploaded images + last generated image (if available)
+      const sceneReferenceImages = [...characterBase64Images];
+      if (lastGeneratedImageBase64) {
+        sceneReferenceImages.push(lastGeneratedImageBase64);
+      }
+      
+      const result = await generateSingleStoryScene(
+        sceneIndex,
+        point,
+        sceneReferenceImages,
+        previousScenePrompt,
+        3 // Max 3 retries
+      );
+      
+      
+      // Process result for this scene
+      if (result.success) {
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === sceneIndex) {
+            return {
+              ...p,
+              generatedImage: result.generatedImageUrl,
+              detailedImagePrompt: result.detailedImagePrompt,
+              videoPrompt: result.videoPrompt,
+              sceneTitle: result.sceneTitle,
+              sceneDescription: result.sceneDescription,
+              generationError: undefined
+            };
+          }
+          return p;
+        }));
+        successCount++;
         
-        const result = await generateSingleStoryScene(
-          sceneIndex,
-          point,
-          characterBase64Images,
-          previousScenePrompt,
-          3 // Max 3 retries
-        );
-        
-        return { sceneIndex, result };
-      });
-      
-      const batchResults = await Promise.all(batchPromises);
-      
-      // Process results
-      for (const { sceneIndex, result } of batchResults) {
-        if (result.success) {
-          setStoryPoints(prev => prev.map((p, idx) => {
-            if (idx === sceneIndex) {
-              return {
-                ...p,
-                generatedImage: result.generatedImageUrl,
-                detailedImagePrompt: result.detailedImagePrompt,
-                videoPrompt: result.videoPrompt,
-                sceneTitle: result.sceneTitle,
-                sceneDescription: result.sceneDescription,
-                generationError: undefined
+        // Extract base64 from the generated image URL for use as next reference
+        if (result.generatedImageUrl) {
+          try {
+            const response = await fetch(result.generatedImageUrl);
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                const base64Data = dataUrl.split(',')[1];
+                if (base64Data) resolve(base64Data);
+                else reject(new Error('No base64 data'));
               };
-            }
-            return p;
-          }));
-          successCount++;
-        } else {
-          failedScenes.push(sceneIndex + 1);
-          setStoryPoints(prev => prev.map((p, idx) => {
-            if (idx === sceneIndex) {
-              return { ...p, generationError: result.errorMessage };
-            }
-            return p;
-          }));
-          
-          toast({
-            title: `Fehler bei Szene ${sceneIndex + 1}`,
-            description: result.errorMessage,
-            variant: "destructive"
-          });
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            lastGeneratedImageBase64 = base64;
+          } catch (error) {
+            console.warn('Could not convert generated image to base64 for reference:', error);
+          }
         }
+      } else {
+        failedScenes.push(sceneIndex + 1);
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === sceneIndex) {
+            return { ...p, generationError: result.errorMessage };
+          }
+          return p;
+        }));
+        
+        toast({
+          title: `Fehler bei Szene ${sceneIndex + 1}`,
+          description: result.errorMessage,
+          variant: "destructive"
+        });
       }
     }
     
@@ -4467,7 +4487,7 @@ Beispiel einer korrekten Antwort:
                 <Label className="flex items-center gap-2">
                   Charakter Referenzbild
                   <span className="flex items-center gap-2 ml-1">
-                    {[1, 2, 3].map((num) => {
+                    {[1, 2].map((num) => {
                       const isFilled = num <= storyReferenceImages.length;
                       
                       return (
@@ -4504,7 +4524,7 @@ Beispiel einer korrekten Antwort:
                       </button>
                     </div>
                   ))}
-                  {storyReferenceImages.length < 3 && (
+                  {storyReferenceImages.length < 2 && (
                     <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
                       <input
                         type="file"
