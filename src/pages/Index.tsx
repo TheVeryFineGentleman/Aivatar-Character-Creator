@@ -234,6 +234,8 @@ const Index = () => {
   const [storyPoints, setStoryPoints] = useState<Array<{
     versions: string[];
     currentVersion: number;
+    summary?: string;           // Short 1-sentence summary for card preview
+    detailedDescription?: string; // Full detailed scene description
     cameraAngle?: string;
     shotType?: string;
     generatedImage?: string;
@@ -525,6 +527,10 @@ REGELN:
     if (!apiKey || !storyIdea.trim() || isGeneratingStoryboard) return;
     
     setIsGeneratingStoryboard(true);
+    // Clear existing storypoints when regenerating
+    setStoryPoints([]);
+    setFlippedCards(new Set());
+    
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -534,18 +540,32 @@ REGELN:
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Basierend auf dieser Story-Idee: "${storyIdea}"
+                text: `Du bist ein professioneller Drehbuchautor und Storyboard-Experte. Basierend auf dieser Story-Idee: "${storyIdea}"
 
-Generiere genau ${storyPointCount} aufeinanderfolgende Story-Punkte für ein Storyboard. Jeder Punkt soll eine Szene beschreiben, die als Bild umgesetzt werden kann.
+Generiere genau ${storyPointCount} aufeinanderfolgende Szenen für ein visuelles Storyboard.
 
-Jeder Story-Punkt soll:
-- 1-2 Sätze lang sein
-- Eine klare visuelle Szene beschreiben
-- Logisch auf den vorherigen Punkt aufbauen
+WICHTIG: Antworte NUR mit einem validen JSON-Array in diesem exakten Format:
+[
+  {
+    "summary": "Kurze 1-Satz-Zusammenfassung der Szene (max. 20 Wörter)",
+    "detailedDescription": "Ausführliche, detaillierte Beschreibung der Szene (4-6 Sätze). Beschreibe: Setting, Atmosphäre, Beleuchtung, was der Charakter tut, Emotionen, wichtige visuelle Details. Schreibe im gleichen sprachlichen Stil wie alle anderen Szenen.",
+    "cameraAngle": "frontal|seitlich|von-oben|von-unten|ueber-schulter|dutch-angle|vogelperspektive|froschperspektive",
+    "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-long-shot|full-shot|long-shot|extreme-long-shot"
+  }
+]
 
-Antworte NUR mit den ${storyPointCount} Story-Punkten, einer pro Zeile, ohne Nummerierung. Auf Deutsch.`
+REGELN:
+- Jede Szene muss visuell umsetzbar sein
+- Die Szenen müssen logisch aufeinander aufbauen und eine zusammenhängende Geschichte erzählen
+- Wähle Kamerawinkel und Shot-Typ passend zur Stimmung jeder Szene
+- Der sprachliche Stil muss über alle Szenen hinweg konsistent sein
+- Antworte NUR mit dem JSON-Array, keine zusätzlichen Erklärungen. Auf Deutsch.`
               }]
-            }]
+            }],
+            generationConfig: {
+              temperature: 0.8,
+              maxOutputTokens: 4000
+            }
           }),
         }
       );
@@ -554,23 +574,141 @@ Antworte NUR mit den ${storyPointCount} Story-Punkten, einer pro Zeile, ohne Num
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          const points = text.split('\n')
-            .map((line: string) => line.trim())
-            .filter((line: string) => line.length > 5)
-            .slice(0, storyPointCount);
-          
-          setStoryPoints(points.map((point: string) => ({
-            versions: [point],
-            currentVersion: 0
-          })));
-          setStoryboardAnimationKey(prev => prev + 1);
+          // Extract JSON from response
+          const jsonMatch = text.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            try {
+              const scenes = JSON.parse(jsonMatch[0]);
+              if (Array.isArray(scenes) && scenes.length > 0) {
+                setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
+                  versions: [scene.detailedDescription || scene.summary || ""],
+                  currentVersion: 0,
+                  summary: scene.summary || "",
+                  detailedDescription: scene.detailedDescription || "",
+                  cameraAngle: scene.cameraAngle || "",
+                  shotType: scene.shotType || ""
+                })));
+                setStoryboardAnimationKey(prev => prev + 1);
+              }
+            } catch (parseError) {
+              console.error("JSON parse error, falling back to line-based parsing:", parseError);
+              // Fallback to line-based parsing
+              const points = text.split('\n')
+                .map((line: string) => line.trim())
+                .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
+                .slice(0, storyPointCount);
+              
+              setStoryPoints(points.map((point: string) => ({
+                versions: [point],
+                currentVersion: 0,
+                summary: point.length > 80 ? point.substring(0, 80) + "..." : point,
+                detailedDescription: point
+              })));
+              setStoryboardAnimationKey(prev => prev + 1);
+            }
+          } else {
+            // Fallback to line-based parsing if no JSON found
+            const points = text.split('\n')
+              .map((line: string) => line.trim())
+              .filter((line: string) => line.length > 5)
+              .slice(0, storyPointCount);
+            
+            setStoryPoints(points.map((point: string) => ({
+              versions: [point],
+              currentVersion: 0,
+              summary: point.length > 80 ? point.substring(0, 80) + "..." : point,
+              detailedDescription: point
+            })));
+            setStoryboardAnimationKey(prev => prev + 1);
+          }
         }
       }
     } catch (error) {
       console.error("Failed to generate storyboard:", error);
+      toast({
+        title: "Fehler",
+        description: "Das Storyboard konnte nicht generiert werden.",
+        variant: "destructive"
+      });
     } finally {
       setIsGeneratingStoryboard(false);
     }
+  };
+  
+  // Helper function to add shot label to generated image
+  const addShotLabelToImage = async (imageUrl: string, shotType: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          resolve(imageUrl); // Return original if canvas fails
+          return;
+        }
+        
+        // Draw original image
+        ctx.drawImage(img, 0, 0);
+        
+        // Format shot type for display
+        const shotLabel = shotType
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        
+        // Configure label style
+        const padding = 12;
+        const fontSize = Math.max(16, img.width * 0.02);
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+        const textMetrics = ctx.measureText(shotLabel);
+        const textWidth = textMetrics.width;
+        const textHeight = fontSize;
+        
+        // Position: bottom right with margin
+        const margin = 20;
+        const labelX = img.width - textWidth - padding * 2 - margin;
+        const labelY = img.height - textHeight - padding * 2 - margin;
+        
+        // Draw semi-transparent black background with rounded corners
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        const borderRadius = 6;
+        ctx.beginPath();
+        ctx.roundRect(labelX, labelY, textWidth + padding * 2, textHeight + padding * 2, borderRadius);
+        ctx.fill();
+        
+        // Draw white text
+        ctx.fillStyle = 'white';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(shotLabel, labelX + padding, labelY + padding + textHeight / 2);
+        
+        // Convert canvas to blob URL
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newUrl = URL.createObjectURL(blob);
+            resolve(newUrl);
+          } else {
+            resolve(imageUrl);
+          }
+        }, 'image/png');
+      };
+      img.onerror = () => resolve(imageUrl);
+      img.src = imageUrl;
+    });
+  };
+  
+  // Clear all storyboard content
+  const clearAllStoryboard = () => {
+    setStoryPoints([]);
+    setFlippedCards(new Set());
+    setStoryboardAnimationKey(0);
+    toast({
+      title: "Storyboard gelöscht",
+      description: "Alle Szenen und Bilder wurden entfernt."
+    });
   };
 
   const regenerateStoryPoint = async (index: number) => {
@@ -1106,11 +1244,22 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
       
       for (const { sceneIndex, result } of batchResults) {
         if (result.success) {
+          // Add shot label to the generated image
+          let finalImageUrl = result.generatedImageUrl;
+          const shotType = storyPoints[sceneIndex]?.shotType;
+          if (finalImageUrl && shotType) {
+            try {
+              finalImageUrl = await addShotLabelToImage(finalImageUrl, shotType);
+            } catch (e) {
+              console.warn('Could not add shot label to image:', e);
+            }
+          }
+          
           setStoryPoints(prev => prev.map((p, idx) => {
             if (idx === sceneIndex) {
               return {
                 ...p,
-                generatedImage: result.generatedImageUrl,
+                generatedImage: finalImageUrl,
                 detailedImagePrompt: result.detailedImagePrompt,
                 videoPrompt: result.videoPrompt,
                 sceneTitle: result.sceneTitle,
@@ -4558,7 +4707,7 @@ Beispiel einer korrekten Antwort:
                       ) : (
                         <>
                           <ImageIcon className="w-4 h-4 mr-2" />
-                          Bilder & Video Prompt generieren
+                          Bilder generieren
                         </>
                       )}
                     </Button>
@@ -4566,24 +4715,24 @@ Beispiel einer korrekten Antwort:
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="destructive"
-                          disabled={isGeneratingStoryboard}
+                          disabled={isGeneratingStoryboard || isGeneratingStoryImages}
                           className="shrink-0"
                         >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Neu generieren
+                          <X className="w-4 h-4 mr-2" />
+                          Alles löschen
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Storyboard neu generieren?</AlertDialogTitle>
+                          <AlertDialogTitle>Storyboard komplett löschen?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Das aktuelle Storyboard wird gelöscht und ein neues generiert. Diese Aktion kann nicht rückgängig gemacht werden.
+                            Alle generierten Szenen und Bilder werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                          <AlertDialogAction onClick={generateStoryboard}>
-                            Neu generieren
+                          <AlertDialogAction onClick={clearAllStoryboard}>
+                            Alles löschen
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -4738,10 +4887,10 @@ Beispiel einer korrekten Antwort:
                                       </div>
                                     )}
                                   </div>
-                                  {/* Scene description - read only */}
+                                  {/* Scene summary - read only (short version for cards) */}
                                   <div className="mt-3 bg-muted/30 rounded-lg p-2.5 border border-border/20">
                                     <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">
-                                      {point.sceneDescription || point.versions[point.currentVersion]}
+                                      {point.summary || point.sceneDescription || point.versions[point.currentVersion]}
                                     </p>
                                   </div>
                                 </>
@@ -4776,27 +4925,22 @@ Beispiel einer korrekten Antwort:
                                       {/* Text field tweening to bottom position */}
                                       <div className="bg-muted/30 rounded-lg p-2.5 border border-border/20 animate-text-to-bottom overflow-hidden">
                                         <p className="text-xs text-foreground/60 leading-relaxed line-clamp-3">
-                                          {point.versions[point.currentVersion]}
+                                          {point.summary || point.versions[point.currentVersion]}
                                         </p>
                                       </div>
                                     </>
                                   ) : (
-                                    <Textarea
-                                      value={point.versions[point.currentVersion]}
-                                      onChange={(e) => {
-                                        const newText = e.target.value;
-                                        setStoryPoints(prev => prev.map((p, i) => {
-                                          if (i === index) {
-                                            const updatedVersions = [...p.versions];
-                                            updatedVersions[p.currentVersion] = newText;
-                                            return { ...p, versions: updatedVersions };
-                                          }
-                                          return p;
-                                        }));
-                                      }}
-                                      className="leading-relaxed bg-muted/20 border-none resize-none p-3 focus-visible:ring-1 focus-visible:ring-primary/30 text-[13px] min-h-[200px] flex-1 w-full rounded-lg"
-                                      placeholder="Szene beschreiben..."
-                                    />
+                                    /* Show summary in card, editing happens in popup */
+                                    <div className="flex-1 flex flex-col">
+                                      <div className="bg-muted/30 rounded-lg p-3 border border-border/20 flex-1">
+                                        <p className="text-sm text-foreground/80 leading-relaxed">
+                                          {point.summary || point.versions[point.currentVersion]}
+                                        </p>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                                        Klicke auf <Maximize2 className="w-3 h-3 inline mx-0.5" /> für Details
+                                      </p>
+                                    </div>
                                   )}
                                 </div>
                               )}
@@ -4906,29 +5050,54 @@ Beispiel einer korrekten Antwort:
                                 </div>
                               )}
 
-                              {/* Story Description (original) */}
+                              {/* Summary (short version for quick reference) */}
+                              {storyPoints[expandedStoryPointIndex].summary && (
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                    <BookOpen className="w-3.5 h-3.5" />
+                                    Zusammenfassung
+                                  </label>
+                                  <div className="bg-muted/30 rounded-lg p-3">
+                                    <Textarea
+                                      value={storyPoints[expandedStoryPointIndex].summary || ""}
+                                      onChange={(e) => {
+                                        const newText = e.target.value;
+                                        const idx = expandedStoryPointIndex;
+                                        setStoryPoints(prev => prev.map((p, i) => 
+                                          i === idx ? { ...p, summary: newText } : p
+                                        ));
+                                      }}
+                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[60px]"
+                                      placeholder="Kurze Zusammenfassung..."
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Detailed Description (full scene description) */}
                               <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                                   <BookOpen className="w-3.5 h-3.5" />
-                                  Szenen-Beschreibung
+                                  Detaillierte Szenen-Beschreibung
                                 </label>
                                 <div className="bg-muted/30 rounded-lg p-3">
                                   <Textarea
-                                    value={storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
+                                    value={storyPoints[expandedStoryPointIndex].detailedDescription || storyPoints[expandedStoryPointIndex].versions[storyPoints[expandedStoryPointIndex].currentVersion]}
                                     onChange={(e) => {
                                       const newText = e.target.value;
                                       const idx = expandedStoryPointIndex;
                                       setStoryPoints(prev => prev.map((p, i) => {
                                         if (i === idx) {
+                                          // Update both detailedDescription and versions
                                           const updatedVersions = [...p.versions];
                                           updatedVersions[p.currentVersion] = newText;
-                                          return { ...p, versions: updatedVersions };
+                                          return { ...p, detailedDescription: newText, versions: updatedVersions };
                                         }
                                         return p;
                                       }));
                                     }}
-                                    className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[80px]"
-                                    placeholder="Szene beschreiben..."
+                                    className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[120px]"
+                                    placeholder="Ausführliche Szenen-Beschreibung..."
                                   />
                                 </div>
                               </div>
