@@ -4664,7 +4664,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[395px]",
+                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[345px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
