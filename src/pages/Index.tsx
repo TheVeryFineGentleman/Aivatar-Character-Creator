@@ -141,6 +141,25 @@ const VIDEO_SPEED_OPTIONS = [
   { id: "fast", label: "Schnell", description: "dynamic, fast-paced" },
 ];
 
+// Veo3-optimierte Kamerabewegungen für Video-Prompts
+const VEO3_CAMERA_MOVEMENTS = [
+  { id: "dolly-in", label: "Dolly-In", description: "Langsame Fahrt nach vorn auf das Subjekt zu" },
+  { id: "dolly-out", label: "Dolly-Out", description: "Langsame Fahrt nach hinten, vom Subjekt weg" },
+  { id: "truck-left", label: "Truck Links", description: "Seitliche Fahrt nach links" },
+  { id: "truck-right", label: "Truck Rechts", description: "Seitliche Fahrt nach rechts" },
+  { id: "tilt-up", label: "Tilt-Up", description: "Kamera neigt sich nach oben" },
+  { id: "tilt-down", label: "Tilt-Down", description: "Kamera neigt sich nach unten" },
+  { id: "pan-left", label: "Pan Links", description: "Horizontales Schwenken nach links" },
+  { id: "pan-right", label: "Pan Rechts", description: "Horizontales Schwenken nach rechts" },
+  { id: "crane-up", label: "Crane-Up", description: "Vertikale Aufwärtsfahrt mit Kran" },
+  { id: "crane-down", label: "Crane-Down", description: "Vertikale Abwärtsfahrt mit Kran" },
+  { id: "arc-left", label: "Arc Links", description: "Bogenfahrt um das Subjekt nach links" },
+  { id: "arc-right", label: "Arc Rechts", description: "Bogenfahrt um das Subjekt nach rechts" },
+  { id: "steadicam-follow", label: "Steadicam-Follow", description: "Flüssige Verfolgung des Subjekts" },
+  { id: "push-in", label: "Push-In", description: "Schnelle Fahrt nach vorn mit Zoom" },
+  { id: "pull-back", label: "Pull-Back", description: "Schnelle Fahrt nach hinten mit Zoom" },
+];
+
 const Index = () => {
   const { authData, isLoading: authLoading, login, logout } = useAuth();
   
@@ -244,6 +263,11 @@ const Index = () => {
     generationError?: string;
     sceneTitle?: string;
     sceneDescription?: string;
+    // Veo3-optimierte Felder
+    veo3CameraMovement?: string;  // z.B. "dolly-in", "pan-left"
+    veo3StartState?: string;      // Beschreibung des Startframes
+    veo3Motion?: string;          // Bewegung/Aktion
+    veo3EndState?: string;        // Beschreibung des Endframes für Übergang
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -255,6 +279,10 @@ const Index = () => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [isGeneratingStoryImages, setIsGeneratingStoryImages] = useState(false);
   const [generatingStoryImageIndex, setGeneratingStoryImageIndex] = useState<number | null>(null);
+  
+  // Veo3 Export und Kamerabewegung-Tracking
+  const [usedCameraMovements, setUsedCameraMovements] = useState<string[]>([]);
+  const [isExportingVeo3, setIsExportingVeo3] = useState(false);
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -705,10 +733,178 @@ REGELN:
     setStoryPoints([]);
     setFlippedCards(new Set());
     setStoryboardAnimationKey(0);
+    setUsedCameraMovements([]);
     toast({
       title: "Storyboard gelöscht",
       description: "Alle Szenen und Bilder wurden entfernt."
     });
+  };
+
+  // Export Storyboard für Veo3 als ZIP-Datei
+  const exportForVeo3 = async () => {
+    if (storyPoints.length === 0 || isExportingVeo3) return;
+    
+    const hasImages = storyPoints.some(p => p.generatedImage);
+    if (!hasImages) {
+      toast({
+        title: "Keine Bilder vorhanden",
+        description: "Generiere zuerst Bilder für dein Storyboard.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsExportingVeo3(true);
+    
+    try {
+      const zip = new JSZip();
+      const scenesFolder = zip.folder("veo3_scenes");
+      
+      // Übersichtsdatei erstellen
+      let overviewContent = `# Veo3 Storyboard Export
+# Erstellt am: ${new Date().toLocaleString('de-DE')}
+# Story: ${storyIdea}
+# Anzahl Szenen: ${storyPoints.length}
+
+========================================
+ÜBERSICHT ALLER SZENEN
+========================================
+
+`;
+
+      for (let i = 0; i < storyPoints.length; i++) {
+        const point = storyPoints[i];
+        const sceneNum = String(i + 1).padStart(2, '0');
+        
+        // Bild als PNG speichern
+        if (point.generatedImage) {
+          try {
+            const response = await fetch(point.generatedImage);
+            const blob = await response.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+            scenesFolder?.file(`scene_${sceneNum}.png`, arrayBuffer);
+          } catch (e) {
+            console.warn(`Could not export image for scene ${i + 1}:`, e);
+          }
+        }
+        
+        // Veo3-optimierter Prompt-Datei erstellen
+        const cameraMovementInfo = point.veo3CameraMovement 
+          ? VEO3_CAMERA_MOVEMENTS.find(m => m.id === point.veo3CameraMovement)
+          : null;
+        
+        const promptContent = `=== SZENE ${sceneNum} ===
+BILD: scene_${sceneNum}.png
+
+────────────────────────────────────────
+VEO3 VIDEO-PROMPT (Kopieren für Veo3)
+────────────────────────────────────────
+${point.videoPrompt || 'Kein Video-Prompt generiert'}
+
+────────────────────────────────────────
+STRUKTURIERTE DETAILS
+────────────────────────────────────────
+KAMERABEWEGUNG: ${cameraMovementInfo ? `${cameraMovementInfo.label} (${cameraMovementInfo.description})` : 'Nicht definiert'}
+
+START-FRAME:
+${point.veo3StartState || point.sceneDescription || 'Nicht definiert'}
+
+BEWEGUNG/AKTION:
+${point.veo3Motion || 'Nicht definiert'}
+
+END-FRAME (für Übergang zu nächster Szene):
+${point.veo3EndState || 'Nicht definiert'}
+
+────────────────────────────────────────
+SZENEN-DETAILS
+────────────────────────────────────────
+TITEL: ${point.sceneTitle || 'Ohne Titel'}
+BESCHREIBUNG: ${point.sceneDescription || point.versions[point.currentVersion]}
+KAMERAWINKEL: ${point.cameraAngle || 'Automatisch'}
+SHOT-TYP: ${point.shotType || 'Automatisch'}
+
+────────────────────────────────────────
+BILD-PROMPT (Referenz)
+────────────────────────────────────────
+${point.detailedImagePrompt || 'Nicht verfügbar'}
+
+────────────────────────────────────────
+ÜBERGANG
+────────────────────────────────────────
+DAUER: 5 Sekunden empfohlen
+SCHNITT: ${i < storyPoints.length - 1 ? 'Cut oder Fade zu Szene ' + (i + 2) : 'Letzte Szene'}
+`;
+        
+        scenesFolder?.file(`scene_${sceneNum}_prompt.txt`, promptContent);
+        
+        // Zur Übersicht hinzufügen
+        overviewContent += `
+SZENE ${sceneNum}: ${point.sceneTitle || 'Ohne Titel'}
+────────────────────────────────────────
+${point.videoPrompt || 'Kein Video-Prompt'}
+Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
+Übergang: ${point.veo3EndState?.substring(0, 100) || '-'}...
+
+`;
+      }
+      
+      // Übersichtsdatei speichern
+      zip.file("STORYBOARD_OVERVIEW.txt", overviewContent);
+      
+      // Anleitung für Veo3 hinzufügen
+      const instructionsContent = `# Anleitung für Google Veo3
+
+## So verwendest du diese Dateien:
+
+1. Öffne Google AI Studio oder Veo3 Interface
+2. Für JEDE Szene:
+   a) Lade das Bild (scene_XX.png) als Startframe hoch
+   b) Kopiere den VEO3 VIDEO-PROMPT aus der entsprechenden .txt Datei
+   c) Generiere das Video (empfohlen: 5 Sekunden)
+
+## Tipps für beste Ergebnisse:
+
+- Verwende die Bilder als "First Frame" / Startbild
+- Halte die Prompts so wie sie sind - sie sind auf Veo3 optimiert
+- Die Szenen sind für nahtlose Übergänge konzipiert
+- Empfohlene Auflösung: 16:9 (Widescreen)
+- Empfohlene Qualität: Höchste verfügbare
+
+## Szenen-Reihenfolge:
+
+${storyPoints.map((p, i) => `Szene ${String(i + 1).padStart(2, '0')}: ${p.sceneTitle || p.versions[p.currentVersion].substring(0, 50)}...`).join('\n')}
+
+Viel Spaß beim Erstellen deines Videos!
+`;
+      
+      zip.file("VEO3_ANLEITUNG.txt", instructionsContent);
+      
+      // ZIP generieren und herunterladen
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `veo3_storyboard_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export erfolgreich!",
+        description: `${storyPoints.length} Szenen als ZIP-Datei exportiert.`
+      });
+      
+    } catch (error) {
+      console.error("Veo3 export error:", error);
+      toast({
+        title: "Export fehlgeschlagen",
+        description: "Die ZIP-Datei konnte nicht erstellt werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExportingVeo3(false);
+    }
   };
 
   const regenerateStoryPoint = async (index: number) => {
@@ -815,7 +1011,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     previousScenePrompt: string | null,
     maxRetries: number = 3,
     useSimplifiedPrompt: boolean = false
-  ): Promise<{ success: boolean; generatedImageUrl?: string; detailedImagePrompt?: string; videoPrompt?: string; sceneTitle?: string; sceneDescription?: string; errorMessage?: string }> => {
+  ): Promise<{ success: boolean; generatedImageUrl?: string; detailedImagePrompt?: string; videoPrompt?: string; sceneTitle?: string; sceneDescription?: string; errorMessage?: string; veo3CameraMovement?: string; veo3StartState?: string; veo3Motion?: string; veo3EndState?: string }> => {
     const storyText = point.versions[point.currentVersion];
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -1118,7 +1314,21 @@ FINALE ANFORDERUNGEN:
           throw new Error(`Szene ${sceneIndex + 1}: Kein Bild generiert`);
         }
 
-        // STEP 3: Generate video prompt
+        // STEP 3: Generate Veo3-optimized video prompt AFTER image is generated
+        // This prompt is structured specifically for Gemini Veo3 video generation
+        const previousVideoPrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.videoPrompt : null;
+        const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
+        
+        // Get list of already used camera movements to ensure variety
+        const usedMovements = storyPoints
+          .slice(0, sceneIndex)
+          .map(p => p.veo3CameraMovement)
+          .filter(Boolean);
+        
+        const availableMovements = VEO3_CAMERA_MOVEMENTS
+          .filter(m => !usedMovements.includes(m.id))
+          .map(m => `- "${m.id}": ${m.label} (${m.description})`);
+        
         const videoPromptResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           {
@@ -1128,38 +1338,70 @@ FINALE ANFORDERUNGEN:
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Erstelle einen PRÄZISEN Video-Animations-Prompt auf Deutsch für diese Szene.
+                  text: `Du erstellst einen VEO3-OPTIMIERTEN Video-Prompt für die Szene.
 
-SZENE: "${storyText}"
+SZENE ${sceneIndex + 1}: "${storyText}"
 
-STRIKTE REGELN - KEINE AUSNAHMEN:
-1. GENAU EINE Kameraeinstellung (z.B. Close-Up, Medium Shot, Wide Shot)
-2. GENAU EINE Kamerabewegung (z.B. langsamer Zoom-in, sanfter Schwenk nach rechts, Dolly-forward)
-3. KEINE Schnitte, KEINE Szenenwechsel
+BILDPROMPT (was im Startframe zu sehen ist):
+"${detailedImagePrompt.substring(0, 500)}..."
 
-STRUKTUR (ca. 100 Wörter):
+${previousEndState ? `ÜBERGANG VON VORHERIGER SZENE:
+Die letzte Szene endete mit: "${previousEndState}"
+Deine Szene sollte nahtlos daran anknüpfen.` : 'Dies ist die ERSTE Szene - sie eröffnet die Geschichte.'}
 
-KAMERA: [Eine Einstellung] mit [einer Bewegung] - beschreibe Start, Bewegungsrichtung, Geschwindigkeit, Ende.
+VERFÜGBARE KAMERABEWEGUNGEN (wähle EINE die noch nicht verwendet wurde):
+${availableMovements.length > 0 ? availableMovements.join('\n') : VEO3_CAMERA_MOVEMENTS.map(m => `- "${m.id}": ${m.label}`).join('\n')}
 
-ANIMATION: Subtile Bewegungen des Charakters (Atmung, Blickrichtung, kleine Gesten). Was bewegt sich im Bild?
+${usedMovements.length > 0 ? `BEREITS VERWENDETE BEWEGUNGEN (NICHT erneut verwenden): ${usedMovements.join(', ')}` : ''}
 
-ATMOSPHÄRE: Bewegte Umgebungselemente (wehende Haare, Lichtflackern, Partikel). Stimmung.
+ANTWORTE NUR MIT EINEM JSON-OBJEKT:
+{
+  "cameraMovement": "eine der verfügbaren Bewegungs-IDs",
+  "startState": "2-3 Sätze: Was EXAKT ist im Startframe zu sehen? Beschreibe die Position der Person, ihren Gesichtsausdruck, ihre Haltung, die Umgebung.",
+  "motion": "3-4 Sätze: Was BEWEGT sich während der 5-Sekunden-Szene? Beschreibe: 1) Kamerabewegung (Richtung, Geschwindigkeit), 2) Bewegung der Person (Gesten, Kopfdrehung, Atmung), 3) Umgebungsbewegung (wehende Haare, Lichtänderung, Partikel)",
+  "endState": "2 Sätze: Wo endet die Szene? Beschreibe den finalen Frame für nahtlosen Übergang zur nächsten Szene.",
+  "fullPrompt": "Der VOLLSTÄNDIGE Video-Prompt für Veo3 in 100-150 Wörtern. Format: [Kamerabewegung]. [Startbeschreibung]. [Aktion und Bewegung]. Gimbal-stabilized, 16:9 cinematic, smooth motion."
+}
 
-Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
+NUR DAS JSON, keine Erklärung!`
                 }]
               }],
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 400
+                maxOutputTokens: 800
               }
             })
           }
         );
 
         let videoPrompt = "";
+        let veo3CameraMovement = "";
+        let veo3StartState = "";
+        let veo3Motion = "";
+        let veo3EndState = "";
+        
         if (videoPromptResponse.ok) {
           const vpData = await videoPromptResponse.json();
-          videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+          const vpText = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+          
+          // Parse JSON response
+          try {
+            const jsonMatch = vpText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              veo3CameraMovement = parsed.cameraMovement || "";
+              veo3StartState = parsed.startState || "";
+              veo3Motion = parsed.motion || "";
+              veo3EndState = parsed.endState || "";
+              videoPrompt = parsed.fullPrompt || "";
+            } else {
+              // Fallback: use raw text as video prompt
+              videoPrompt = vpText;
+            }
+          } catch (e) {
+            console.warn("Could not parse Veo3 JSON response, using raw text:", e);
+            videoPrompt = vpText;
+          }
         }
 
         clearTimeout(timeoutId);
@@ -1169,7 +1411,11 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
           detailedImagePrompt,
           videoPrompt,
           sceneTitle,
-          sceneDescription
+          sceneDescription,
+          veo3CameraMovement,
+          veo3StartState,
+          veo3Motion,
+          veo3EndState
         };
 
       } catch (error) {
@@ -1312,6 +1558,10 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
                 videoPrompt: result.videoPrompt,
                 sceneTitle: result.sceneTitle,
                 sceneDescription: result.sceneDescription,
+                veo3CameraMovement: result.veo3CameraMovement,
+                veo3StartState: result.veo3StartState,
+                veo3Motion: result.veo3Motion,
+                veo3EndState: result.veo3EndState,
                 generationError: undefined
               };
             }
@@ -4764,50 +5014,73 @@ Beispiel einer korrekten Antwort:
                     )}
                   </Button>
                 ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={generateStoryImagesAndPrompts}
-                      disabled={isGeneratingStoryImages || isGeneratingStoryboard}
-                      className="flex-1"
-                    >
-                      {isGeneratingStoryImages ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generiere Szene {(generatingStoryImageIndex ?? 0) + 1}/{storyPoints.length}...
-                        </>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-4 h-4 mr-2" />
-                          Bilder generieren
-                        </>
-                      )}
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          disabled={isGeneratingStoryboard || isGeneratingStoryImages}
-                          className="shrink-0"
-                        >
-                          <X className="w-4 h-4 mr-2" />
-                          Alles löschen
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Storyboard komplett löschen?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Alle generierten Szenen und Bilder werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                          <AlertDialogAction onClick={clearAllStoryboard}>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={generateStoryImagesAndPrompts}
+                        disabled={isGeneratingStoryImages || isGeneratingStoryboard}
+                        className="flex-1"
+                      >
+                        {isGeneratingStoryImages ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generiere Szene {(generatingStoryImageIndex ?? 0) + 1}/{storyPoints.length}...
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-4 h-4 mr-2" />
+                            Bilder generieren
+                          </>
+                        )}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            disabled={isGeneratingStoryboard || isGeneratingStoryImages}
+                            className="shrink-0"
+                          >
+                            <X className="w-4 h-4 mr-2" />
                             Alles löschen
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Storyboard komplett löschen?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Alle generierten Szenen und Bilder werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                            <AlertDialogAction onClick={clearAllStoryboard}>
+                              Alles löschen
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                    {/* Veo3 Export Button - nur anzeigen wenn Bilder vorhanden */}
+                    {storyPoints.some(p => p.generatedImage) && (
+                      <Button
+                        onClick={exportForVeo3}
+                        disabled={isExportingVeo3 || isGeneratingStoryImages}
+                        variant="secondary"
+                        className="w-full"
+                      >
+                        {isExportingVeo3 ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Exportiere...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 mr-2" />
+                            Für Veo3 exportieren
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -5197,26 +5470,128 @@ Beispiel einer korrekten Antwort:
                                 </div>
                               )}
 
-                              {/* Video Prompt (if exists) */}
-                              {storyPoints[expandedStoryPointIndex].videoPrompt && (
-                                <div className="space-y-2">
-                                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                    <Video className="w-3.5 h-3.5" />
-                                    Video-Prompt
-                                  </label>
-                                  <div className="bg-muted/30 rounded-lg p-3">
-                                    <Textarea
-                                      value={storyPoints[expandedStoryPointIndex].videoPrompt || ""}
-                                      onChange={(e) => {
-                                        const newText = e.target.value;
+                              {/* Veo3 Video-Prompt Section */}
+                              {(storyPoints[expandedStoryPointIndex].videoPrompt || storyPoints[expandedStoryPointIndex].generatedImage) && (
+                                <div className="space-y-3 border border-primary/20 bg-primary/5 rounded-lg p-4">
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                      <Video className="w-4 h-4 text-primary" />
+                                      Veo3 Video-Prompt
+                                    </label>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 text-xs gap-1.5"
+                                      onClick={() => {
+                                        const point = storyPoints[expandedStoryPointIndex];
+                                        const cameraInfo = VEO3_CAMERA_MOVEMENTS.find(m => m.id === point.veo3CameraMovement);
+                                        const copyText = `${point.videoPrompt || ''}
+
+--- STRUKTURIERTE DETAILS ---
+Kamerabewegung: ${cameraInfo?.label || 'Nicht definiert'}
+Start: ${point.veo3StartState || 'Nicht definiert'}
+Bewegung: ${point.veo3Motion || 'Nicht definiert'}
+Ende: ${point.veo3EndState || 'Nicht definiert'}`;
+                                        navigator.clipboard.writeText(copyText);
+                                        toast({ title: "Kopiert!", description: "Video-Prompt in Zwischenablage kopiert." });
+                                      }}
+                                    >
+                                      <Download className="w-3 h-3" />
+                                      Kopieren
+                                    </Button>
+                                  </div>
+                                  
+                                  {/* Main Video Prompt */}
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground">Vollständiger Prompt</label>
+                                    <div className="bg-background/50 rounded-lg p-3">
+                                      <Textarea
+                                        value={storyPoints[expandedStoryPointIndex].videoPrompt || ""}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => 
+                                            i === idx ? { ...p, videoPrompt: newText } : p
+                                          ));
+                                        }}
+                                        className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[100px]"
+                                        placeholder="Video-Animations-Prompt..."
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Veo3 Camera Movement */}
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground">Kamerabewegung (Veo3)</label>
+                                    <Select
+                                      value={storyPoints[expandedStoryPointIndex].veo3CameraMovement || ""}
+                                      onValueChange={(value) => {
                                         const idx = expandedStoryPointIndex;
                                         setStoryPoints(prev => prev.map((p, i) => 
-                                          i === idx ? { ...p, videoPrompt: newText } : p
+                                          i === idx ? { ...p, veo3CameraMovement: value } : p
                                         ));
                                       }}
-                                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base min-h-[100px]"
-                                      placeholder="Video-Animations-Prompt..."
-                                    />
+                                    >
+                                      <SelectTrigger className="w-full bg-background/50">
+                                        <SelectValue placeholder="Kamerabewegung wählen..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {VEO3_CAMERA_MOVEMENTS.map(movement => (
+                                          <SelectItem key={movement.id} value={movement.id}>
+                                            {movement.label} - {movement.description}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  {/* Structured Veo3 Details */}
+                                  <div className="grid grid-cols-1 gap-2">
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-medium text-muted-foreground">Start-Frame</label>
+                                      <Textarea
+                                        value={storyPoints[expandedStoryPointIndex].veo3StartState || ""}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => 
+                                            i === idx ? { ...p, veo3StartState: newText } : p
+                                          ));
+                                        }}
+                                        className="text-xs bg-background/50 min-h-[60px] resize-none"
+                                        placeholder="Was ist im Startframe zu sehen?"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-medium text-muted-foreground">Bewegung/Aktion</label>
+                                      <Textarea
+                                        value={storyPoints[expandedStoryPointIndex].veo3Motion || ""}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => 
+                                            i === idx ? { ...p, veo3Motion: newText } : p
+                                          ));
+                                        }}
+                                        className="text-xs bg-background/50 min-h-[60px] resize-none"
+                                        placeholder="Welche Bewegung findet statt?"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-medium text-muted-foreground">End-Frame (für Übergang)</label>
+                                      <Textarea
+                                        value={storyPoints[expandedStoryPointIndex].veo3EndState || ""}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          const idx = expandedStoryPointIndex;
+                                          setStoryPoints(prev => prev.map((p, i) => 
+                                            i === idx ? { ...p, veo3EndState: newText } : p
+                                          ));
+                                        }}
+                                        className="text-xs bg-background/50 min-h-[60px] resize-none"
+                                        placeholder="Wie endet die Szene?"
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               )}
@@ -5224,7 +5599,7 @@ Beispiel einer korrekten Antwort:
                               {/* Camera & Shot Settings */}
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                  <label className="text-xs font-medium text-muted-foreground">Kamerawinkel</label>
+                                  <label className="text-xs font-medium text-muted-foreground">Kamerawinkel (Bild)</label>
                                   <Select
                                     value={storyPoints[expandedStoryPointIndex].cameraAngle || ""}
                                     onValueChange={(value) => {
