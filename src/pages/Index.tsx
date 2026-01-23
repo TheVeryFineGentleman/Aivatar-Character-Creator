@@ -685,31 +685,48 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
       
       try {
         // STEP 1: Generate ultra-detailed image prompt WITH reference images
-        const promptParts: any[] = [
-          {
-            text: `Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
+        // REFERENZBILDER ZUERST - damit das Modell sie als primäre Vorlage behandelt
+        const promptParts: any[] = [];
+        
+        // Bilder ZUERST einfügen - das Modell sieht sie vor dem Text
+        for (const base64Data of characterBase64Images) {
+          promptParts.push({
+            inlineData: {
+              mimeType: "image/png",
+              data: base64Data,
+            },
+          });
+        }
+        
+        // Text-Prompt NACH den Bildern - mit expliziter Referenz auf "die obigen Bilder"
+        promptParts.push({
+            text: `🔴🔴🔴 HÖCHSTE PRIORITÄT - REFERENZBILD-PFLICHT 🔴🔴🔴
 
-${characterBase64Images.length > 0 ? `KRITISCH - CHARAKTER-REPLIKATION:
-Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
-Du MUSST das Aussehen dieser Person zu 100% EXAKT REPLIZIEREN!
+${characterBase64Images.length > 0 ? `DIE OBIGEN ${characterBase64Images.length} BILDER ZEIGEN DEN EXAKTEN CHARAKTER DEN DU VERWENDEN MUSST!
 
-WAS DU 100% IDENTISCH ÜBERNEHMEN MUSST (KEINE ABWEICHUNGEN!):
-- Gesichtszüge: EXAKT die gleichen Augen (Farbe, Form, Größe, Abstand), Nase, Lippen, Gesichtsform, Wangenknochen, Kinn
-- Hautfarbe und -ton: IDENTISCH zum Referenzbild
-- Haare: EXAKT die gleiche Farbe, Länge, Textur, Schnitt
-- Körperbau und Statur: IDENTISCH - Größe, Proportionen, Körperform
-- Besondere Merkmale: ALLE Sommersprossen, Muttermale, Narben etc. EXAKT übernehmen
-- Augenbrauen: Form und Dichte IDENTISCH
-- Ohren, Hände, Finger: IDENTISCH zur Referenz
+⚠️ ABSOLUTE PFLICHT - KEINE AUSNAHMEN:
+Diese Referenzbilder sind BINDEND. Du darfst KEIN anderes Aussehen generieren!
+Die Person im generierten Bild MUSS zu 100% wie die Person in den Referenzbildern aussehen!
 
-DIE PERSON MUSS SO AUSSEHEN, ALS WÄRE ES DIESELBE PERSON WIE IM REFERENZBILD - 100% ERKENNBAR!
+📌 DU MUSST FOLGENDES PIXEL FÜR PIXEL KOPIEREN:
+1. GESICHT: Exakt dieselben Augen (Farbe, Form, Größe, Abstand), Nase, Lippen, Gesichtsform, Wangenknochen, Kinn - KEINE ABWEICHUNG!
+2. HAUTFARBE: Identischer Hautton wie im Referenzbild
+3. HAARE: Exakte Farbe, Länge, Textur und Schnitt - NICHT verändern!
+4. KÖRPERBAU: Identische Statur und Proportionen
+5. BESONDERE MERKMALE: ALLE Sommersprossen, Muttermale, Narben etc. EXAKT übernehmen
+6. AUGENBRAUEN: Form und Dichte IDENTISCH
+7. OHREN, HÄNDE, FINGER: IDENTISCH zur Referenz
 
-NUR DIE POSE DARF SICH ÄNDERN (passend zur Szenenhandlung):
-- Körperhaltung und Pose: NEUE Pose passend zur Handlung
-- Gesichtsausdruck: Emotional passend zur Szene (aber Gesichtszüge bleiben identisch!)
-- Kleidung: Passend zur Szene und Handlung
-- Perspektive und Kamerawinkel: Kann variieren
+🎯 TEST: Wenn man das generierte Bild NEBEN das Referenzbild legt, muss es zu 100% DIESELBE PERSON sein - nicht ähnlich, DIESELBE!
+
+✅ EINZIG ERLAUBTE ÄNDERUNGEN (alles andere VERBOTEN):
+- Pose und Körperhaltung: NEU passend zur Szene
+- Gesichtsausdruck/Emotion: Passend zur Handlung (aber Gesichtszüge bleiben IDENTISCH!)
+- Kleidung: Passend zur Szene
+- Kamerawinkel: Kann variieren
 ` : ''}
+
+Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
 
 SZENEN-BESCHREIBUNG:
 "${storyText}"
@@ -742,11 +759,12 @@ ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
    - Dieser Moment muss so konkret sein, dass ein Betrachter SOFORT versteht was passiert!
 
 2. PERSON/CHARAKTER (150+ Wörter):
-   - Gesichtszüge (konsistent mit Referenz): Augenfarbe, Augenform, Nase, Lippen, Gesichtsform, Hautton
-   - Haare: Farbe und Textur wie in Referenz, aber Styling passend zur Szene
+   - Gesichtszüge: EXAKT WIE IM REFERENZBILD - beschreibe was du siehst!
+   - Haare: Farbe und Textur EXAKT wie in Referenz
+   - Hautton: IDENTISCH zum Referenzbild
    - Aktueller Ausdruck: Welche Emotion, Blickrichtung, Mundstellung passend zur HANDLUNG
    - Körperhaltung: Aktive Pose die zur Handlung passt - KEINE statische Pose!
-   - Kleidung: SZENEN-PASSEND (nicht von Referenz übernehmen!) - Material, Farbe, wie sie sich bei der Bewegung verhält
+   - Kleidung: SZENEN-PASSEND - Material, Farbe, wie sie sich bei der Bewegung verhält
    - Hände: KRITISCH - Was tun die Hände in diesem Moment? Greifen, zeigen, halten?
 
 3. UMGEBUNG & HINTERGRUND (150+ Wörter):
@@ -793,7 +811,7 @@ ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
    - Künstlerische Einflüsse
 
 REGELN:
-- NUR EINE PERSON im Bild (die Person aus den Referenzbildern)
+- NUR EINE PERSON im Bild (DIE PERSON AUS DEN REFERENZBILDERN!)
 - KEIN Text, Wasserzeichen oder Rahmen
 - Format: WIDESCREEN 16:9 cineastisches Breitbild (Querformat)
 - Qualität: Fotorealistisch, 4K, höchste Detailstufe
@@ -808,18 +826,7 @@ Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
 BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
 
 Dann folgt der detaillierte Bild-Prompt.`
-          }
-        ];
-        
-        // Add ALL reference images for the AI to analyze
-        for (const base64Data of characterBase64Images) {
-          promptParts.push({
-            inlineData: {
-              mimeType: "image/png",
-              data: base64Data,
-            },
           });
-        }
         
         const promptGenerationRequest = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -872,32 +879,10 @@ Dann folgt der detaillierte Bild-Prompt.`
           detailedImagePrompt = storyText;
         }
 
-        // STEP 2: Generate image
-        const imagePromptText = `CRITICAL FORMAT CONSTRAINTS - YOU MUST FOLLOW:
-- OUTPUT FORMAT: Generate a WIDESCREEN image with 16:9 aspect ratio (cinematic landscape orientation)
-- Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
-- Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
-- NO photo strips, NO side-by-side comparisons, NO split screens.
-
-KRITISCHE CHARAKTER-REPLIKATION:
-- REPLIZIERE die Person aus den Referenzbildern 100% EXAKT - sie muss IDENTISCH erkennbar sein!
-- Kopiere ALLE Gesichtszüge: Augen, Nase, Lippen, Gesichtsform, Hautton, Haare, Körperbau
-- Die Person muss aussehen wie EIN UND DIESELBE PERSON aus dem Referenzbild!
-- NUR die POSE ist NEU - der Charakter selbst ist IDENTISCH!
-- Kleidung passend zur Szene, aber das AUSSEHEN der Person bleibt 100% gleich!
-
-${detailedImagePrompt}
-
-STRENGE ANFORDERUNGEN:
-- EINE Person - 100% identisches Aussehen wie im Referenzbild, NUR mit NEUER POSE
-- KLARE SCHLÜSSELSZENE: Die Person führt eine spezifische, erkennbare Handlung aus
-- WIDESCREEN 16:9 cineastisches Format (Querformat)
-- KEINE Collagen, KEINE mehreren Bilder
-- Fotorealistische Qualität
-- Ultra high resolution`;
-
-        const parts: any[] = [{ text: imagePromptText }];
+        // STEP 2: Generate image - BILDER ZUERST für maximale Charakter-Treue
+        const parts: any[] = [];
         
+        // Referenzbilder ZUERST einfügen - das Modell sieht sie VOR dem Prompt
         for (const base64Data of characterBase64Images) {
           parts.push({
             inlineData: {
@@ -906,6 +891,39 @@ STRENGE ANFORDERUNGEN:
             },
           });
         }
+        
+        // Text-Prompt NACH den Bildern mit expliziter Referenz
+        const imagePromptText = `🔴🔴🔴 ABSOLUT KRITISCH - REFERENZBILDER SIND BINDEND 🔴🔴🔴
+
+DIE OBIGEN BILDER ZEIGEN DIE EXAKTE PERSON DIE DU GENERIEREN MUSST!
+
+⚠️ CHECKLISTE VOR DER GENERIERUNG - PRÜFE JEDEN PUNKT:
+☑️ Gesichtszüge: IDENTISCH zum Referenzbild (Augen, Nase, Lippen, Gesichtsform)
+☑️ Hautfarbe: IDENTISCH zum Referenzbild
+☑️ Haarfarbe & Stil: IDENTISCH zum Referenzbild
+☑️ Körperbau: IDENTISCH zum Referenzbild
+☑️ Besondere Merkmale: ALLE vom Referenzbild übernommen
+
+🚫 VERBOTEN: Ein anderes Aussehen zu generieren!
+✅ ERLAUBT: Nur Pose und Kleidung dürfen neu sein!
+
+CRITICAL FORMAT CONSTRAINTS:
+- OUTPUT FORMAT: WIDESCREEN 16:9 aspect ratio (cinematic landscape)
+- EXACTLY ONE person (the person from the reference images!)
+- ONE SINGLE COMPLETE IMAGE - NO collages, grids, or multiple images
+- NO photo strips, NO side-by-side comparisons, NO split screens
+
+${detailedImagePrompt}
+
+FINALE ANFORDERUNGEN:
+- EINE Person - 100% IDENTISCHES AUSSEHEN wie im Referenzbild
+- NUR die POSE ist neu - passend zur Szenenhandlung
+- KLARE SCHLÜSSELSZENE mit erkennbarer Handlung
+- WIDESCREEN 16:9 cineastisches Format
+- Fotorealistische Qualität
+- Ultra high resolution`;
+
+        parts.push({ text: imagePromptText });
 
         const imageResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
