@@ -1004,10 +1004,12 @@ Dann der detaillierte Bild-Prompt.`
 Scene: ${storyText.substring(0, 200)}
 Style: Professional photography, 16:9 widescreen, high quality.
 Important: The person must look exactly like in the reference image. Simple background.`
-            : `Continue the story from the previous scene image shown above.
+            : `Generate the NEXT scene of this story. The previous scene is shown above.
+Keep 40% from reference: The person's face and appearance.
+Create 60% new: New scene, new action, new environment.
 Scene: ${storyText.substring(0, 200)}
 Style: Professional photography, 16:9 widescreen, high quality.
-Important: Same person as before, consistent appearance. Simple background.`;
+Important: Same person, completely different scene and action.`;
         } else {
           imagePromptText = (sceneIndex === 0)
             ? `🔴 REFERENZBILDER SIND BINDEND - ERSTE SZENE 🔴
@@ -1031,10 +1033,20 @@ FINALE ANFORDERUNGEN:
 - EINZIGARTIGE SZENE mit KLARER HANDLUNG
 - Kamerawinkel EXAKT wie beschrieben
 - Fotorealistisch, 4K, Ultra HD`
-            : `🔴 CHARAKTER-KONTINUITÄT - FOLGESZENE 🔴
+            : `🔴 NÄCHSTE SZENE DER STORY - PROGRESSION 🔴
 
-DAS OBIGE BILD ZEIGT DIE VORHERIGE SZENE!
-Der Charakter MUSS IDENTISCH bleiben - nur Pose/Handlung ändert sich.
+Das obige Bild zeigt die VORHERIGE Szene. Generiere jetzt die NÄCHSTE Szene.
+
+WICHTIG - BALANCE ZWISCHEN KONTINUITÄT UND NEUEM:
+🔹 40% BEHALTEN: Charakter-Erscheinung (Gesicht, Haare, Hautfarbe, Körperbau)
+🔹 60% NEU: Szene, Umgebung, Handlung, Pose, Kamerawinkel, Beleuchtung
+
+DER CHARAKTER:
+- Gesichtszüge IDENTISCH zum vorherigen Bild
+- Alles andere DARF sich ändern (Kleidung, Position, Ausdruck)
+
+DIE NEUE SZENE:
+${detailedImagePrompt}
 
 FORMAT-REGELN:
 ✅ WIDESCREEN 16:9 - Bild füllt 100% des Rahmens
@@ -1042,12 +1054,10 @@ FORMAT-REGELN:
 🚫 KEINE schwarzen Ränder, KEIN Letterboxing
 🚫 KEINE Collagen, Gitter oder Split-Screens
 
-${detailedImagePrompt}
-
 FINALE ANFORDERUNGEN:
-- NEUE EINZIGARTIGE SZENE - visuell anders als vorherige!
-- Kamerawinkel EXAKT wie beschrieben
-- Charakter bleibt konsistent
+- KOMPLETT NEUE SZENE - visuell deutlich anders als vorherige!
+- NEUE Umgebung, NEUE Handlung, NEUE Atmosphäre
+- Nur der Charakter bleibt erkennbar
 - Fotorealistisch, 4K, Ultra HD`;
         }
 
@@ -1242,8 +1252,20 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
         // Erste Szene: Upload-Referenzbilder verwenden
         sceneReferenceImages = [...characterBase64Images];
       } else {
-        // Folgende Szenen: Nur das letzte generierte Bild verwenden
-        sceneReferenceImages = lastGeneratedImageBase64 ? [lastGeneratedImageBase64] : [...characterBase64Images];
+        // Folgende Szenen: NUR das letzte generierte Bild verwenden
+        // KEINE Original-Referenzbilder - nur das vorherige Szenen-Bild für 40/60 Balance
+        if (lastGeneratedImageBase64) {
+          sceneReferenceImages = [lastGeneratedImageBase64];
+        } else {
+          // Fehler - vorherige Szene hat kein Bild generiert
+          console.error(`Szene ${sceneIndex + 1}: Kein vorheriges Bild vorhanden - Generierung wird abgebrochen`);
+          toast({
+            title: "Fehler",
+            description: `Szene ${sceneIndex + 1} kann nicht generiert werden, da Szene ${sceneIndex} kein Bild hat.`,
+            variant: "destructive"
+          });
+          break;
+        }
       }
       
       let sceneSuccess = false;
