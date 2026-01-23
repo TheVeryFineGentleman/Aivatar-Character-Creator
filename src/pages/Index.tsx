@@ -1116,82 +1116,100 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     // Track the last successfully generated image for use as 3rd reference
     let lastGeneratedImageBase64: string | null = null;
     
-    // Process scenes SEQUENTIALLY to use last generated image as reference
-    for (let sceneIndex = 0; sceneIndex < storyPoints.length; sceneIndex++) {
-      // Update UI to show which scene is being generated
-      setGeneratingStoryImageIndex(sceneIndex);
+    // Process scenes in batches of 2 (parallel within batch, sequential between batches)
+    for (let batchStart = 0; batchStart < storyPoints.length; batchStart += PARALLEL_COUNT) {
+      const batchEnd = Math.min(batchStart + PARALLEL_COUNT, storyPoints.length);
+      const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
       
-      const point = storyPoints[sceneIndex];
-      const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
+      // Update UI to show which scenes are being generated
+      setGeneratingStoryImageIndex(batchStart);
       
-      // Build reference images array: uploaded images + last generated image (if available)
-      const sceneReferenceImages = [...characterBase64Images];
+      // Build reference images array for this batch: uploaded images + last generated image (if available)
+      const batchReferenceImages = [...characterBase64Images];
       if (lastGeneratedImageBase64) {
-        sceneReferenceImages.push(lastGeneratedImageBase64);
+        batchReferenceImages.push(lastGeneratedImageBase64);
       }
       
-      const result = await generateSingleStoryScene(
-        sceneIndex,
-        point,
-        sceneReferenceImages,
-        previousScenePrompt,
-        3 // Max 3 retries
-      );
-      
-      
-      // Process result for this scene
-      if (result.success) {
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === sceneIndex) {
-            return {
-              ...p,
-              generatedImage: result.generatedImageUrl,
-              detailedImagePrompt: result.detailedImagePrompt,
-              videoPrompt: result.videoPrompt,
-              sceneTitle: result.sceneTitle,
-              sceneDescription: result.sceneDescription,
-              generationError: undefined
-            };
-          }
-          return p;
-        }));
-        successCount++;
+      // Generate batch in parallel
+      const batchPromises = batchIndices.map(async (sceneIndex) => {
+        const point = storyPoints[sceneIndex];
+        const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
         
-        // Extract base64 from the generated image URL for use as next reference
-        if (result.generatedImageUrl) {
-          try {
-            const response = await fetch(result.generatedImageUrl);
-            const blob = await response.blob();
-            const base64 = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                const dataUrl = reader.result as string;
-                const base64Data = dataUrl.split(',')[1];
-                if (base64Data) resolve(base64Data);
-                else reject(new Error('No base64 data'));
+        const result = await generateSingleStoryScene(
+          sceneIndex,
+          point,
+          batchReferenceImages,
+          previousScenePrompt,
+          3 // Max 3 retries
+        );
+        
+        return { sceneIndex, result };
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      
+      // Process results and capture last generated image for next batch
+      let lastSuccessfulImageUrl: string | null = null;
+      
+      for (const { sceneIndex, result } of batchResults) {
+        if (result.success) {
+          setStoryPoints(prev => prev.map((p, idx) => {
+            if (idx === sceneIndex) {
+              return {
+                ...p,
+                generatedImage: result.generatedImageUrl,
+                detailedImagePrompt: result.detailedImagePrompt,
+                videoPrompt: result.videoPrompt,
+                sceneTitle: result.sceneTitle,
+                sceneDescription: result.sceneDescription,
+                generationError: undefined
               };
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-            lastGeneratedImageBase64 = base64;
-          } catch (error) {
-            console.warn('Could not convert generated image to base64 for reference:', error);
+            }
+            return p;
+          }));
+          successCount++;
+          
+          // Track the last successful image in this batch (use highest index)
+          if (result.generatedImageUrl) {
+            lastSuccessfulImageUrl = result.generatedImageUrl;
           }
+        } else {
+          failedScenes.push(sceneIndex + 1);
+          setStoryPoints(prev => prev.map((p, idx) => {
+            if (idx === sceneIndex) {
+              return { ...p, generationError: result.errorMessage };
+            }
+            return p;
+          }));
+          
+          toast({
+            title: `Fehler bei Szene ${sceneIndex + 1}`,
+            description: result.errorMessage,
+            variant: "destructive"
+          });
         }
-      } else {
-        failedScenes.push(sceneIndex + 1);
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === sceneIndex) {
-            return { ...p, generationError: result.errorMessage };
-          }
-          return p;
-        }));
-        
-        toast({
-          title: `Fehler bei Szene ${sceneIndex + 1}`,
-          description: result.errorMessage,
-          variant: "destructive"
-        });
+      }
+      
+      // Convert the last successful image to base64 for the next batch
+      if (lastSuccessfulImageUrl) {
+        try {
+          const response = await fetch(lastSuccessfulImageUrl);
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const dataUrl = reader.result as string;
+              const base64Data = dataUrl.split(',')[1];
+              if (base64Data) resolve(base64Data);
+              else reject(new Error('No base64 data'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          lastGeneratedImageBase64 = base64;
+        } catch (error) {
+          console.warn('Could not convert generated image to base64 for reference:', error);
+        }
       }
     }
     
