@@ -698,135 +698,97 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           });
         }
         
+        // Unterschiedliche Prompts für erste Szene vs. Folgeszenen
+        const isFirstScene = sceneIndex === 0;
+        
         // Text-Prompt NACH den Bildern - mit expliziter Referenz auf "die obigen Bilder"
         promptParts.push({
-            text: `🔴🔴🔴 HÖCHSTE PRIORITÄT - REFERENZBILD-PFLICHT 🔴🔴🔴
+            text: `${isFirstScene ? `🔴🔴🔴 HÖCHSTE PRIORITÄT - REFERENZBILD-PFLICHT 🔴🔴🔴
 
-${characterBase64Images.length > 0 ? `DIE OBIGEN ${characterBase64Images.length} BILDER ZEIGEN DEN EXAKTEN CHARAKTER DEN DU VERWENDEN MUSST!
+DIE OBIGEN BILDER ZEIGEN DEN EXAKTEN CHARAKTER DEN DU VERWENDEN MUSST!
 
 ⚠️ ABSOLUTE PFLICHT - KEINE AUSNAHMEN:
 Diese Referenzbilder sind BINDEND. Du darfst KEIN anderes Aussehen generieren!
 Die Person im generierten Bild MUSS zu 100% wie die Person in den Referenzbildern aussehen!
 
 📌 DU MUSST FOLGENDES PIXEL FÜR PIXEL KOPIEREN:
-1. GESICHT: Exakt dieselben Augen (Farbe, Form, Größe, Abstand), Nase, Lippen, Gesichtsform, Wangenknochen, Kinn - KEINE ABWEICHUNG!
+1. GESICHT: Exakt dieselben Augen (Farbe, Form, Größe, Abstand), Nase, Lippen, Gesichtsform
 2. HAUTFARBE: Identischer Hautton wie im Referenzbild
-3. HAARE: Exakte Farbe, Länge, Textur und Schnitt - NICHT verändern!
+3. HAARE: Exakte Farbe, Länge, Textur und Schnitt
 4. KÖRPERBAU: Identische Statur und Proportionen
-5. BESONDERE MERKMALE: ALLE Sommersprossen, Muttermale, Narben etc. EXAKT übernehmen
-6. AUGENBRAUEN: Form und Dichte IDENTISCH
-7. OHREN, HÄNDE, FINGER: IDENTISCH zur Referenz
+5. BESONDERE MERKMALE: ALLE Sommersprossen, Muttermale, Narben etc.
 
-🎯 TEST: Wenn man das generierte Bild NEBEN das Referenzbild legt, muss es zu 100% DIESELBE PERSON sein - nicht ähnlich, DIESELBE!
-
-✅ EINZIG ERLAUBTE ÄNDERUNGEN (alles andere VERBOTEN):
+✅ EINZIG ERLAUBTE ÄNDERUNGEN:
 - Pose und Körperhaltung: NEU passend zur Szene
-- Gesichtsausdruck/Emotion: Passend zur Handlung (aber Gesichtszüge bleiben IDENTISCH!)
 - Kleidung: Passend zur Szene
-- Kamerawinkel: Kann variieren
-` : ''}
+` : `🔴 CHARAKTER-KONTINUITÄT - VORHERIGE SZENE ALS REFERENZ 🔴
+
+DAS OBIGE BILD ZEIGT DIE VORHERIGE SZENE DERSELBEN STORY!
+Du MUSST denselben Charakter mit IDENTISCHEM Aussehen weiterführen:
+- Gesichtszüge, Hautfarbe, Haare: EXAKT WIE IN DER VORHERIGEN SZENE
+- Nur Pose, Kleidung und Handlung ändern sich passend zur neuen Szene
+`}
 
 Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
 
 SZENEN-BESCHREIBUNG:
 "${storyText}"
 
-KRITISCH - SCHLÜSSELSZENE MIT KLARER HANDLUNG:
-Diese Szene MUSS einen EINDEUTIGEN, ERKENNBAREN MOMENT zeigen!
-- Was TUT die Person GENAU in diesem Moment? (konkrete Aktion!)
-- Welche Bewegung führt sie gerade aus?
-- Was hält sie in den Händen oder womit interagiert sie?
-- Welche Emotion zeigt ihr Gesicht in diesem Augenblick?
-Die Handlung muss SOFORT erkennbar sein - als würde man ein Standbild aus einem Film sehen!
+🎬 DIESE SZENE MUSS EINZIGARTIG UND KLAR ERKENNBAR SEIN:
+- Jede Szene ist eine NEUE visuelle Interpretation
+- Die Handlung muss SOFORT erkennbar sein
+- Der Kamerawinkel definiert die Perspektive dieser spezifischen Szene
 
-KAMERA-EINSTELLUNGEN:
+KAMERA-EINSTELLUNGEN (EXAKT EINHALTEN):
 - Kamerawinkel: ${point.cameraAngle || 'dynamisch und cineastisch'}
 - Shot-Typ: ${point.shotType || 'passend zur Szene'}
+- Das Bild MUSS aus GENAU diesem Winkel aufgenommen sein!
 
-${previousScenePrompt ? `VORHERIGE SZENE (für Style-Kontinuität):
-"${previousScenePrompt.substring(0, 500)}..."
+${previousScenePrompt ? `STIL-REFERENZ (vorherige Szene):
+"${previousScenePrompt.substring(0, 400)}..."
+Der visuelle Stil bleibt konsistent, aber Handlung und Kamerawinkel sind NEU!` : ''}
 
-WICHTIG: Der visuelle Stil MUSS mit der vorherigen Szene übereinstimmen, aber die HANDLUNG und POSE sind KOMPLETT NEU!` : 'Dies ist Szene 1 - etabliere einen einzigartigen visuellen Stil.'}
+ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 600 Wörter):
 
-ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 800 Wörter):
-
-1. SCHLÜSSELMOMENT & HANDLUNG (150+ Wörter) - DER WICHTIGSTE TEIL!:
+1. SCHLÜSSELMOMENT & HANDLUNG (120+ Wörter):
    - Welche KONKRETE AKTION führt die Person GENAU JETZT aus?
-   - Was machen ihre Hände? Was halten sie, worauf zeigen sie, was berühren sie?
-   - Welche Körperbewegung ist eingefroren in diesem Moment?
-   - Welche Emotion ist auf dem Gesicht ablesbar?
-   - Welche Interaktion mit Objekten oder der Umgebung findet statt?
-   - Dieser Moment muss so konkret sein, dass ein Betrachter SOFORT versteht was passiert!
+   - Was machen ihre Hände? Was interagiert sie mit?
+   - Welche Emotion zeigt ihr Gesicht?
+   - Diese Szene muss EINDEUTIG und UNVERWECHSELBAR sein!
 
-2. PERSON/CHARAKTER (150+ Wörter):
-   - Gesichtszüge: EXAKT WIE IM REFERENZBILD - beschreibe was du siehst!
-   - Haare: Farbe und Textur EXAKT wie in Referenz
-   - Hautton: IDENTISCH zum Referenzbild
-   - Aktueller Ausdruck: Welche Emotion, Blickrichtung, Mundstellung passend zur HANDLUNG
-   - Körperhaltung: Aktive Pose die zur Handlung passt - KEINE statische Pose!
-   - Kleidung: SZENEN-PASSEND - Material, Farbe, wie sie sich bei der Bewegung verhält
-   - Hände: KRITISCH - Was tun die Hände in diesem Moment? Greifen, zeigen, halten?
+2. PERSON/CHARAKTER (100+ Wörter):
+   - Gesichtszüge: EXAKT WIE IM REFERENZBILD
+   - Aktuelle Pose: Passend zur beschriebenen Handlung
+   - Kleidung: Szenenpassend
 
-3. UMGEBUNG & HINTERGRUND (150+ Wörter):
-   - Ort: Innen/Außen, spezifische Location, architektonische Details
-   - Atmosphäre: Tageszeit, Wetter, Jahreszeit
-   - Objekte im Vordergrund: Was ist nahe der Kamera?
-   - Objekte im Mittelgrund: Was umgibt die Person?
-   - Objekte im Hintergrund: Was ist in der Ferne sichtbar?
-   - Bodenbelag/Untergrund: Textur, Material, Zustand
-   - Requisiten: Gegenstände die zur Story beitragen
+3. UMGEBUNG & HINTERGRUND (100+ Wörter):
+   - Spezifische Location mit Details
+   - Atmosphäre und Lichtstimmung
+   - Objekte die zur Story beitragen
 
-4. BELEUCHTUNG (100+ Wörter):
-   - Hauptlichtquelle: Position, Intensität, Farbe, Art (Sonnenlicht, Neon, Kerzen etc.)
-   - Füllicht: Wo kommen sekundäre Lichtquellen her?
-   - Gegenlicht/Rim Light: Konturen und Silhouetten
-   - Schatten: Härte, Richtung, wo sie fallen
-   - Reflexionen: Auf Haut, in Augen, auf glänzenden Oberflächen
-   - Atmosphärisches Licht: Volumetrisches Licht, Staubpartikel, Nebel
+4. BELEUCHTUNG & FARBPALETTE (80+ Wörter):
+   - Lichtquellen und Schatten
+   - Dominante Farben und Stimmung
 
-5. FARBPALETTE & STIMMUNG (80+ Wörter):
-   - Dominante Farben: Welche 3-4 Hauptfarben?
-   - Color Grading: Warm/Kalt, Sättigung, Kontrast
-   - Emotionale Farbsymbolik: Was vermitteln die Farben?
-   - Farbkontraste: Komplementärfarben, Akzente
+5. TECHNISCHE DETAILS (80+ Wörter):
+   - EXAKTER Kamerawinkel wie in KAMERA-EINSTELLUNGEN definiert
+   - Brennweite und Tiefenschärfe
+   - Bildkomposition
 
-6. TECHNISCHE DETAILS (80+ Wörter):
-   - Kamera: Brennweite, Tiefenschärfe, Fokuspunkt
-   - Bildkomposition: Drittel-Regel, Führungslinien, Symmetrie/Asymmetrie
-   - Perspektive: Augenhöhe, Vogel-, Froschperspektive
-   - Bewegungsunschärfe: Falls relevant
-   - Filmkorn/Textur: Ästhetischer Look
-
-7. KLEINE DETAILS (100+ Wörter):
-   - Mikrodetails auf der Haut: Poren, feine Härchen, Glanz
-   - Stoffdetails: Nähte, Knöpfe, Reißverschlüsse, Abnutzung
-   - Umgebungsdetails: Staub, Wassertropfen, Blätter, Rauch
-   - Lichtreflexe in den Augen (Catchlights)
-   - Subtile Bewegungen: Wehende Haare, flatternder Stoff
-   - Texturkontraste: Glatt vs. Rau, Matt vs. Glänzend
-
-8. STIL-REFERENZEN (50+ Wörter):
-   - Filmische Referenzen: "Im Stil von [Regisseur/Film]"
-   - Fotografische Ästhetik: Portrait, Editorial, Cinematic
-   - Künstlerische Einflüsse
-
-REGELN:
-- NUR EINE PERSON im Bild (DIE PERSON AUS DEN REFERENZBILDERN!)
+KRITISCHE REGELN:
+- NUR EINE PERSON im Bild
 - KEIN Text, Wasserzeichen oder Rahmen
-- Format: WIDESCREEN 16:9 cineastisches Breitbild (Querformat)
-- Qualität: Fotorealistisch, 4K, höchste Detailstufe
-- Schreibe den Prompt als zusammenhängenden, fließenden Text
-- Auf Deutsch
-- Mindestens 800 Wörter
+- 🚫 ABSOLUT KEINE SCHWARZEN RÄNDER - Bild füllt 100% des Rahmens!
+- Format: WIDESCREEN 16:9 (Querformat, KEINE Letterboxing!)
+- Qualität: Fotorealistisch, 4K
+- EINZIGARTIGE SZENE - nicht generisch!
 
-WICHTIG: Beginne deine Antwort mit einer kurzen Szenen-Überschrift (max 6-8 Wörter) in der Form:
-TITEL: [Kurze prägnante Beschreibung der Szene]
+WICHTIG: Beginne mit:
+TITEL: [Max 6-8 Wörter]
+BESCHREIBUNG: [2-3 Sätze was passiert]
 
-Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
-BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
-
-Dann folgt der detaillierte Bild-Prompt.`
-          });
+Dann der detaillierte Bild-Prompt.`
+        });
         
         const promptGenerationRequest = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -892,40 +854,47 @@ Dann folgt der detaillierte Bild-Prompt.`
           });
         }
         
-        // Text-Prompt NACH den Bildern mit expliziter Referenz
-        const imagePromptText = `🔴🔴🔴 ABSOLUT KRITISCH - REFERENZBILDER SIND BINDEND 🔴🔴🔴
+        // Text-Prompt - unterschiedlich für erste Szene vs. Folgeszenen
+        const imagePromptText = (sceneIndex === 0)
+          ? `🔴 REFERENZBILDER SIND BINDEND - ERSTE SZENE 🔴
 
-DIE OBIGEN BILDER ZEIGEN DIE EXAKTE PERSON DIE DU GENERIEREN MUSST!
+DIE OBIGEN BILDER ZEIGEN DEN EXAKTEN CHARAKTER!
 
-⚠️ CHECKLISTE VOR DER GENERIERUNG - PRÜFE JEDEN PUNKT:
-☑️ Gesichtszüge: IDENTISCH zum Referenzbild (Augen, Nase, Lippen, Gesichtsform)
-☑️ Hautfarbe: IDENTISCH zum Referenzbild
-☑️ Haarfarbe & Stil: IDENTISCH zum Referenzbild
-☑️ Körperbau: IDENTISCH zum Referenzbild
-☑️ Besondere Merkmale: ALLE vom Referenzbild übernommen
+CHARAKTER-CHECKLISTE:
+☑️ Gesichtszüge: IDENTISCH zum Referenzbild
+☑️ Hautfarbe, Haare, Körperbau: IDENTISCH
+☑️ Nur Pose und Kleidung sind NEU
 
-🚫 VERBOTEN: Ein anderes Aussehen zu generieren!
-✅ ERLAUBT: Nur Pose und Kleidung dürfen neu sein!
-
-CRITICAL FORMAT CONSTRAINTS:
-- OUTPUT FORMAT: WIDESCREEN 16:9 aspect ratio (cinematic landscape)
-- EXACTLY ONE person (the person from the reference images!)
-- ONE SINGLE COMPLETE IMAGE - NO collages, grids, or multiple images
-- NO photo strips, NO side-by-side comparisons, NO split screens
-- ABSOLUT KEINE SCHWARZEN RÄNDER - das Bild muss den gesamten Rahmen ausfüllen!
-- KEINE Letterboxing-Effekte oder schwarze Balken oben/unten/links/rechts!
+FORMAT-REGELN:
+✅ WIDESCREEN 16:9 - Bild füllt 100% des Rahmens
+✅ EINE Person, EIN vollständiges Bild
+🚫 KEINE schwarzen Ränder, KEIN Letterboxing
+🚫 KEINE Collagen, Gitter oder Split-Screens
 
 ${detailedImagePrompt}
 
 FINALE ANFORDERUNGEN:
-- EINE Person - 100% IDENTISCHES AUSSEHEN wie im Referenzbild
-- NUR die POSE ist neu - passend zur Szenenhandlung
-- EINZIGARTIGE SZENE die DEUTLICH die beschriebene Handlung zeigt
-- Der KAMERAWINKEL muss EXAKT der Szenenbeschreibung entsprechen
-- KEIN SCHWARZER RAND - Bild füllt 100% des Rahmens aus
-- WIDESCREEN 16:9 cineastisches Format
-- Fotorealistische Qualität
-- Ultra high resolution`;
+- EINZIGARTIGE SZENE mit KLARER HANDLUNG
+- Kamerawinkel EXAKT wie beschrieben
+- Fotorealistisch, 4K, Ultra HD`
+          : `🔴 CHARAKTER-KONTINUITÄT - FOLGESZENE 🔴
+
+DAS OBIGE BILD ZEIGT DIE VORHERIGE SZENE!
+Der Charakter MUSS IDENTISCH bleiben - nur Pose/Handlung ändert sich.
+
+FORMAT-REGELN:
+✅ WIDESCREEN 16:9 - Bild füllt 100% des Rahmens
+✅ EINE Person, EIN vollständiges Bild  
+🚫 KEINE schwarzen Ränder, KEIN Letterboxing
+🚫 KEINE Collagen, Gitter oder Split-Screens
+
+${detailedImagePrompt}
+
+FINALE ANFORDERUNGEN:
+- NEUE EINZIGARTIGE SZENE - visuell anders als vorherige!
+- Kamerawinkel EXAKT wie beschrieben
+- Charakter bleibt konsistent
+- Fotorealistisch, 4K, Ultra HD`;
 
         parts.push({ text: imagePromptText });
 
@@ -986,43 +955,29 @@ FINALE ANFORDERUNGEN:
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Du bist ein Elite-Regisseur für KI-Video-Generierung. Erstelle einen FOKUSSIERTEN Video-Animations-Prompt auf Deutsch.
+                  text: `Erstelle einen PRÄZISEN Video-Animations-Prompt auf Deutsch für diese Szene.
 
-SZENEN-BESCHREIBUNG:
-"${storyText}"
+SZENE: "${storyText}"
 
-DETAILLIERTER BILD-PROMPT (als Basis):
-"${detailedImagePrompt.substring(0, 800)}..."
+STRIKTE REGELN - KEINE AUSNAHMEN:
+1. GENAU EINE Kameraeinstellung (z.B. Close-Up, Medium Shot, Wide Shot)
+2. GENAU EINE Kamerabewegung (z.B. langsamer Zoom-in, sanfter Schwenk nach rechts, Dolly-forward)
+3. KEINE Schnitte, KEINE Szenenwechsel
 
-WICHTIGE EINSCHRÄNKUNG: Der Video-Prompt muss auf EINE EINZIGE KAMERAEINSTELLUNG und EINE KAMERABEWEGUNG begrenzt sein!
+STRUKTUR (ca. 100 Wörter):
 
-ERSTELLE EINEN VIDEO-PROMPT MIT FOLGENDEN ELEMENTEN (ca. 150 Wörter):
+KAMERA: [Eine Einstellung] mit [einer Bewegung] - beschreibe Start, Bewegungsrichtung, Geschwindigkeit, Ende.
 
-1. KAMERAEINSTELLUNG & BEWEGUNG (60 Wörter):
-   - EINE feste Kameraposition (z.B. Close-Up, Medium Shot, Wide Shot)
-   - EINE Kamerabewegung (z.B. langsamer Zoom, sanfter Schwenk, Dolly-in)
-   - Geschwindigkeit der Bewegung
-   - Start- und Endpunkt der Bewegung
+ANIMATION: Subtile Bewegungen des Charakters (Atmung, Blickrichtung, kleine Gesten). Was bewegt sich im Bild?
 
-2. CHARAKTER-ANIMATION (50 Wörter):
-   - Subtile Bewegungen des Charakters passend zur Szene
-   - Gesichtsausdruck und Blickrichtung
-   - Kleine Gesten oder Bewegungen
+ATMOSPHÄRE: Bewegte Umgebungselemente (wehende Haare, Lichtflackern, Partikel). Stimmung.
 
-3. ATMOSPHÄRE (40 Wörter):
-   - Bewegte Umgebungselemente (Wind, Licht, Partikel)
-   - Stimmung und Timing
-
-REGELN:
-- NUR EINE Kameraeinstellung, KEINE Schnitte
-- NUR EINE Kamerabewegung
-- Zusammenhängender, fließender Text auf Deutsch
-- Antworte NUR mit dem Video-Prompt, keine Einleitung.`
+Antworte NUR mit dem Video-Prompt, keine Einleitung oder Erklärung.`
                 }]
               }],
               generationConfig: {
-                temperature: 0.85,
-                maxOutputTokens: 800
+                temperature: 0.7,
+                maxOutputTokens: 400
               }
             })
           }
