@@ -912,13 +912,17 @@ CRITICAL FORMAT CONSTRAINTS:
 - EXACTLY ONE person (the person from the reference images!)
 - ONE SINGLE COMPLETE IMAGE - NO collages, grids, or multiple images
 - NO photo strips, NO side-by-side comparisons, NO split screens
+- ABSOLUT KEINE SCHWARZEN RÄNDER - das Bild muss den gesamten Rahmen ausfüllen!
+- KEINE Letterboxing-Effekte oder schwarze Balken oben/unten/links/rechts!
 
 ${detailedImagePrompt}
 
 FINALE ANFORDERUNGEN:
 - EINE Person - 100% IDENTISCHES AUSSEHEN wie im Referenzbild
 - NUR die POSE ist neu - passend zur Szenenhandlung
-- KLARE SCHLÜSSELSZENE mit erkennbarer Handlung
+- EINZIGARTIGE SZENE die DEUTLICH die beschriebene Handlung zeigt
+- Der KAMERAWINKEL muss EXAKT der Szenenbeschreibung entsprechen
+- KEIN SCHWARZER RAND - Bild füllt 100% des Rahmens aus
 - WIDESCREEN 16:9 cineastisches Format
 - Fotorealistische Qualität
 - Ultra high resolution`;
@@ -982,50 +986,38 @@ FINALE ANFORDERUNGEN:
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Du bist ein Elite-Regisseur für KI-Video-Generierung. Erstelle einen EXTREM DETAILLIERTEN Video-Animations-Prompt auf Deutsch.
+                  text: `Du bist ein Elite-Regisseur für KI-Video-Generierung. Erstelle einen FOKUSSIERTEN Video-Animations-Prompt auf Deutsch.
 
 SZENEN-BESCHREIBUNG:
 "${storyText}"
 
 DETAILLIERTER BILD-PROMPT (als Basis):
-"${detailedImagePrompt.substring(0, 1000)}..."
+"${detailedImagePrompt.substring(0, 800)}..."
 
-ERSTELLE EINEN VIDEO-PROMPT MIT FOLGENDEN ELEMENTEN (mindestens 300 Wörter):
+WICHTIGE EINSCHRÄNKUNG: Der Video-Prompt muss auf EINE EINZIGE KAMERAEINSTELLUNG und EINE KAMERABEWEGUNG begrenzt sein!
 
-1. KAMERABEWEGUNG (80+ Wörter):
-   - Startposition der Kamera
-   - Bewegungsart: Schwenk, Fahrt, Dolly, Crane, Steadicam, Handkamera
-   - Geschwindigkeit und Rhythmus der Bewegung
-   - Endposition der Kamera
-   - Fokusverschiebungen während der Bewegung
+ERSTELLE EINEN VIDEO-PROMPT MIT FOLGENDEN ELEMENTEN (ca. 150 Wörter):
 
-2. CHARAKTER-ANIMATION (80+ Wörter):
-   - Genaue Bewegungsabläufe des Charakters
-   - Gesichtsanimation: Wie verändert sich der Ausdruck?
-   - Kopfbewegungen und Blickrichtung
-   - Körperbewegungen: Arme, Hände, Schultern
-   - Atmung und subtile Körpersprache
-   - Interaktion mit der Umgebung
+1. KAMERAEINSTELLUNG & BEWEGUNG (60 Wörter):
+   - EINE feste Kameraposition (z.B. Close-Up, Medium Shot, Wide Shot)
+   - EINE Kamerabewegung (z.B. langsamer Zoom, sanfter Schwenk, Dolly-in)
+   - Geschwindigkeit der Bewegung
+   - Start- und Endpunkt der Bewegung
 
-3. UMGEBUNGS-ANIMATION (60+ Wörter):
-   - Bewegte Elemente im Hintergrund
-   - Lichtveränderungen während der Szene
-   - Atmosphärische Effekte: Wind, Blätter, Staub, Rauch
-   - Schatten die sich bewegen
+2. CHARAKTER-ANIMATION (50 Wörter):
+   - Subtile Bewegungen des Charakters passend zur Szene
+   - Gesichtsausdruck und Blickrichtung
+   - Kleine Gesten oder Bewegungen
 
-4. TIMING & TEMPO (40+ Wörter):
-   - Gesamtdauer der Szene
-   - Langsame vs. schnelle Momente
-   - Dramatische Pausen
-   - Climax-Punkt der Bewegung
+3. ATMOSPHÄRE (40 Wörter):
+   - Bewegte Umgebungselemente (Wind, Licht, Partikel)
+   - Stimmung und Timing
 
-5. EMOTIONALER BOGEN (40+ Wörter):
-   - Wie entwickelt sich die Stimmung?
-   - Spannung, Entspannung, Höhepunkt
-   - Musikalische Untermalung (Vorschlag)
-
-Schreibe den Prompt als zusammenhängenden, fließenden Text auf Deutsch.
-Antworte NUR mit dem Video-Prompt, keine Einleitung.`
+REGELN:
+- NUR EINE Kameraeinstellung, KEINE Schnitte
+- NUR EINE Kamerabewegung
+- Zusammenhängender, fließender Text auf Deutsch
+- Antworte NUR mit dem Video-Prompt, keine Einleitung.`
                 }]
               }],
               generationConfig: {
@@ -1113,7 +1105,7 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
     let failedScenes: number[] = [];
     const PARALLEL_COUNT = 2; // Generate 2 images at once
     
-    // Track the last successfully generated image for use as 3rd reference
+    // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
     
     // Process scenes in batches of 2 (parallel within batch, sequential between batches)
@@ -1124,21 +1116,27 @@ Antworte NUR mit dem Video-Prompt, keine Einleitung.`
       // Update UI to show which scenes are being generated
       setGeneratingStoryImageIndex(batchStart);
       
-      // Build reference images array for this batch: uploaded images + last generated image (if available)
-      const batchReferenceImages = [...characterBase64Images];
-      if (lastGeneratedImageBase64) {
-        batchReferenceImages.push(lastGeneratedImageBase64);
-      }
-      
-      // Generate batch in parallel
+      // Generate batch in parallel - each scene gets its own reference images
       const batchPromises = batchIndices.map(async (sceneIndex) => {
         const point = storyPoints[sceneIndex];
         const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
         
+        // REFERENZBILD-LOGIK:
+        // - Szene 1 (Index 0): Nutzt die hochgeladenen Referenzbilder
+        // - Ab Szene 2: Nutzt NUR das letzte generierte Bild als Referenz
+        let sceneReferenceImages: string[];
+        if (sceneIndex === 0) {
+          // Erste Szene: Upload-Referenzbilder verwenden
+          sceneReferenceImages = [...characterBase64Images];
+        } else {
+          // Folgende Szenen: Nur das letzte generierte Bild verwenden
+          sceneReferenceImages = lastGeneratedImageBase64 ? [lastGeneratedImageBase64] : [...characterBase64Images];
+        }
+        
         const result = await generateSingleStoryScene(
           sceneIndex,
           point,
-          batchReferenceImages,
+          sceneReferenceImages,
           previousScenePrompt,
           3 // Max 3 retries
         );
