@@ -4819,9 +4819,9 @@ Beispiel einer korrekten Antwort:
                         />
                         
                         {/* Centered popup card */}
-                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
+                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 pointer-events-none overflow-visible">
                           <div 
-                            className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
+                            className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
                           >
                             {/* Header */}
                             <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-5 py-3">
