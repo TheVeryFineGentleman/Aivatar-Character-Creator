@@ -1672,11 +1672,20 @@ NUR DAS JSON, keine Erklärung!`
     }));
   };
 
-  // Regenerate a single failed story scene
+  // Regenerate a single failed story scene with automatic 5x retry and prompt regeneration
   const regenerateSingleStoryScene = async (sceneIndex: number) => {
     if (!apiKey || regeneratingPointIndex !== null) return;
     
+    const MAX_RETRY_ATTEMPTS = 5;
     setRegeneratingPointIndex(sceneIndex);
+    
+    // Clear previous error
+    setStoryPoints(prev => prev.map((p, idx) => {
+      if (idx === sceneIndex) {
+        return { ...p, generationError: undefined };
+      }
+      return p;
+    }));
     
     const point = storyPoints[sceneIndex];
     const storyText = point.versions[point.currentVersion];
@@ -1685,7 +1694,6 @@ NUR DAS JSON, keine Erklärung!`
     const characterBase64Images: string[] = [];
     for (const imageUrl of storyReferenceImages) {
       try {
-        // Fetch the image URL and convert to base64
         const response = await fetch(imageUrl);
         const blob = await response.blob();
         const base64 = await new Promise<string>((resolve, reject) => {
@@ -1709,15 +1717,34 @@ NUR DAS JSON, keine Erklärung!`
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
     
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    let lastError = "";
+    let success = false;
     
-    try {
-      // STEP 1: Generate image prompt WITH reference images
-      const promptParts: any[] = [
-        {
-          text: `Erstelle einen DETAILLIERTEN Bild-Prompt auf Deutsch für folgende Szene:
+    // Retry loop with prompt regeneration
+    for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS && !success; attempt++) {
+      // Update UI to show current attempt
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return { ...p, generationError: attempt > 1 ? `Versuch ${attempt}/${MAX_RETRY_ATTEMPTS}...` : undefined };
+        }
+        return p;
+      }));
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      
+      try {
+        // Use simplified prompt after 2 failed attempts
+        const useSimplifiedPrompt = attempt > 2;
+        
+        // STEP 1: Generate NEW image prompt WITH reference images
+        const promptParts: any[] = [
+          {
+            text: useSimplifiedPrompt 
+              ? `Create a simple, clear image prompt for this scene: "${storyText}". 
+                 Focus on: one person, simple background, clear action. 
+                 Format: 16:9 widescreen. Keep it short and direct.`
+              : `Erstelle einen DETAILLIERTEN Bild-Prompt auf Deutsch für folgende Szene:
 
 "${storyText}"
 
@@ -1745,198 +1772,219 @@ BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
 
 Dann folgt der detaillierte Bild-Prompt.
 Beschreibe: Person (EXAKT wie in den Referenzbildern), Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person. Format: WIDESCREEN 16:9 cineastisches Breitbild.`
+          }
+        ];
+        
+        for (const base64Data of characterBase64Images) {
+          promptParts.push({
+            inlineData: { mimeType: "image/png", data: base64Data }
+          });
         }
-      ];
-      
-      // Add ALL reference images for the AI to analyze
-      for (const base64Data of characterBase64Images) {
-        promptParts.push({
-          inlineData: {
-            mimeType: "image/png",
-            data: base64Data,
-          },
-        });
-      }
-      
-      const promptResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{
-              parts: promptParts
-            }],
-            generationConfig: { temperature: 0.85, maxOutputTokens: 1500 }
-          })
+        
+        const promptResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{ parts: promptParts }],
+              generationConfig: { temperature: useSimplifiedPrompt ? 0.5 : 0.85, maxOutputTokens: 1500 }
+            })
+          }
+        );
+        
+        if (!promptResponse.ok) {
+          throw new Error(getErrorMessageFromStatus(promptResponse.status, "Prompt"));
         }
-      );
-      
-      if (!promptResponse.ok) {
-        throw new Error(getErrorMessageFromStatus(promptResponse.status, "Prompt"));
-      }
-      
-      const promptData = await promptResponse.json();
-      const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || storyText;
-      
-      // Extract scene title from response
-      let sceneTitle = "";
-      let sceneDescription = "";
-      let detailedImagePrompt = "";
-      
-      const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
-      if (titleMatch) {
-        sceneTitle = titleMatch[1].trim();
-      } else {
-        sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
-      }
-      
-      // Extract scene description from response
-      const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
-      if (descriptionMatch) {
-        sceneDescription = descriptionMatch[1].trim();
-      } else {
-        sceneDescription = storyText;
-      }
-      
-      // Extract detailed prompt (everything after BESCHREIBUNG block)
-      detailedImagePrompt = fullPromptResponse
-        .replace(/^TITEL:\s*.+?\n?/im, '')
-        .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
-        .trim();
-      
-      // STEP 2: Generate image
-      const parts: any[] = [{ text: `CRITICAL FORMAT: Generate a SQUARE 1:1 aspect ratio image (same width and height).
+        
+        const promptData = await promptResponse.json();
+        const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || storyText;
+        
+        let sceneTitle = "";
+        let sceneDescription = "";
+        let detailedImagePrompt = "";
+        
+        const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
+        if (titleMatch) {
+          sceneTitle = titleMatch[1].trim();
+        } else {
+          sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
+        }
+        
+        const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
+        if (descriptionMatch) {
+          sceneDescription = descriptionMatch[1].trim();
+        } else {
+          sceneDescription = storyText;
+        }
+        
+        detailedImagePrompt = fullPromptResponse
+          .replace(/^TITEL:\s*.+?\n?/im, '')
+          .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
+          .trim();
+        
+        // STEP 2: Generate image with the new prompt
+        const parts: any[] = [{ 
+          text: useSimplifiedPrompt
+            ? `Generate ONE person from the reference image. Scene: ${storyText.substring(0, 200)}. 
+               Simple background. 16:9 widescreen format. High quality photo. NO collages.`
+            : `CRITICAL FORMAT: Generate a WIDESCREEN 16:9 aspect ratio image.
 Study the reference images - replicate the EXACT same person with identical features.
 
 ${detailedImagePrompt}
 
-STRICT: ONE person only (matching reference images), SQUARE 1:1 format, NO collages.` }];
-      
-      for (const base64Data of characterBase64Images) {
-        parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
-      }
-      
-      if (previousSceneImage) {
-        try {
-          const response = await fetch(previousSceneImage);
-          const blob = await response.blob();
-          const reader = new FileReader();
-          const prevBase64 = await new Promise<string>((resolve) => {
-            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-            reader.readAsDataURL(blob);
-          });
-          parts.push({ inlineData: { mimeType: "image/jpeg", data: prevBase64 } });
-        } catch (e) {
-          console.warn("Could not add previous scene as reference:", e);
+STRICT: ONE person only (matching reference images), 16:9 WIDESCREEN format, NO collages.`
+        }];
+        
+        for (const base64Data of characterBase64Images) {
+          parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+        }
+        
+        if (previousSceneImage) {
+          try {
+            const response = await fetch(previousSceneImage);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            const prevBase64 = await new Promise<string>((resolve) => {
+              reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+              reader.readAsDataURL(blob);
+            });
+            parts.push({ inlineData: { mimeType: "image/jpeg", data: prevBase64 } });
+          } catch (e) {
+            console.warn("Could not add previous scene as reference:", e);
+          }
+        }
+        
+        const imageResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{ role: "user", parts }],
+              generationConfig: { 
+                responseModalities: ["IMAGE", "TEXT"],
+                imageConfig: { aspectRatio: "16:9" }
+              }
+            })
+          }
+        );
+        
+        if (!imageResponse.ok) {
+          throw new Error(getErrorMessageFromStatus(imageResponse.status, "Bild"));
+        }
+        
+        const imageData = await imageResponse.json();
+        const candidates = imageData.candidates ?? [];
+        let generatedImageUrl = "";
+        
+        // Check for safety/content blocks
+        const finishReason = candidates[0]?.finishReason;
+        if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
+          throw new Error(`Bild blockiert (${finishReason})`);
+        }
+        
+        if (candidates.length > 0) {
+          const partsOut = candidates[0]?.content?.parts ?? [];
+          const imagePart = partsOut.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
+          if (imagePart) {
+            const base64 = imagePart.inlineData.data;
+            const mimeType = imagePart.inlineData.mimeType || "image/png";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+            const blob = new Blob([bytes], { type: mimeType });
+            generatedImageUrl = URL.createObjectURL(blob);
+          }
+        }
+        
+        if (!generatedImageUrl) {
+          throw new Error("Kein Bild generiert");
+        }
+        
+        // STEP 3: Generate video prompt
+        const videoResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Erstelle einen Video-Animations-Prompt auf Deutsch für: "${storyText}". Beschreibe Kamerabewegung, Charakter-Animation, Umgebung. Mindestens 200 Wörter.`
+                }]
+              }],
+              generationConfig: { temperature: 0.85, maxOutputTokens: 600 }
+            })
+          }
+        );
+        
+        let videoPrompt = "";
+        if (videoResponse.ok) {
+          const vpData = await videoResponse.json();
+          videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        }
+        
+        // Success! Update story point
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === sceneIndex) {
+            return {
+              ...p,
+              generatedImage: generatedImageUrl,
+              detailedImagePrompt,
+              videoPrompt,
+              sceneTitle,
+              sceneDescription,
+              generationError: undefined
+            };
+          }
+          return p;
+        }));
+        
+        success = true;
+        toast({ 
+          title: `Szene ${sceneIndex + 1} generiert!`,
+          description: attempt > 1 ? `Erfolgreich nach ${attempt} Versuchen.` : undefined
+        });
+        
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        if (error instanceof Error) {
+          lastError = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
+        } else {
+          lastError = "Unbekannter Fehler";
+        }
+        
+        console.warn(`Szene ${sceneIndex + 1} Versuch ${attempt}/${MAX_RETRY_ATTEMPTS} fehlgeschlagen:`, lastError);
+        
+        // Wait before next attempt (except on last attempt)
+        if (attempt < MAX_RETRY_ATTEMPTS) {
+          await new Promise(resolve => setTimeout(resolve, 2000 + attempt * 1000));
         }
       }
-      
-      const imageResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{ role: "user", parts }],
-            generationConfig: { 
-              responseModalities: ["IMAGE", "TEXT"],
-              imageConfig: {
-                aspectRatio: "16:9",
-              },
-            }
-          })
-        }
-      );
-      
-      if (!imageResponse.ok) {
-        throw new Error(getErrorMessageFromStatus(imageResponse.status, "Bild"));
-      }
-      
-      const imageData = await imageResponse.json();
-      const candidates = imageData.candidates ?? [];
-      let generatedImageUrl = "";
-      
-      if (candidates.length > 0) {
-        const partsOut = candidates[0]?.content?.parts ?? [];
-        const imagePart = partsOut.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
-        if (imagePart) {
-          const base64 = imagePart.inlineData.data;
-          const mimeType = imagePart.inlineData.mimeType || "image/png";
-          const binary = atob(base64);
-          const bytes = new Uint8Array(binary.length);
-          for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-          const blob = new Blob([bytes], { type: mimeType });
-          generatedImageUrl = URL.createObjectURL(blob);
-        }
-      }
-      
-      if (!generatedImageUrl) {
-        throw new Error("Kein Bild generiert");
-      }
-      
-      // STEP 3: Generate video prompt
-      const videoResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Erstelle einen Video-Animations-Prompt auf Deutsch für: "${storyText}". Beschreibe Kamerabewegung, Charakter-Animation, Umgebung. Mindestens 200 Wörter.`
-              }]
-            }],
-            generationConfig: { temperature: 0.85, maxOutputTokens: 600 }
-          })
-        }
-      );
-      
-      let videoPrompt = "";
-      if (videoResponse.ok) {
-        const vpData = await videoResponse.json();
-        videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-      }
-      
-      // Update story point
-      setStoryPoints(prev => prev.map((p, idx) => {
-        if (idx === sceneIndex) {
-          return {
-            ...p,
-            generatedImage: generatedImageUrl,
-            detailedImagePrompt,
-            videoPrompt,
-            sceneTitle,
-            sceneDescription,
-            generationError: undefined
-          };
-        }
-        return p;
-      }));
-      
-      toast({ title: `Szene ${sceneIndex + 1} generiert!` });
-      
-    } catch (error) {
-      let errorMessage = "Unbekannter Fehler";
-      if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
-      }
-      
-      setStoryPoints(prev => prev.map((p, idx) => {
-        if (idx === sceneIndex) {
-          return { ...p, generationError: errorMessage };
-        }
-        return p;
-      }));
-      
-      toast({ title: `Fehler bei Szene ${sceneIndex + 1}`, description: errorMessage, variant: "destructive" });
-    } finally {
-      clearTimeout(timeoutId);
-      setRegeneratingPointIndex(null);
     }
+    
+    // All attempts failed
+    if (!success) {
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return { ...p, generationError: `Fehlgeschlagen nach ${MAX_RETRY_ATTEMPTS} Versuchen: ${lastError}` };
+        }
+        return p;
+      }));
+      
+      toast({ 
+        title: `Szene ${sceneIndex + 1} fehlgeschlagen`, 
+        description: `Nach ${MAX_RETRY_ATTEMPTS} Versuchen: ${lastError}`, 
+        variant: "destructive" 
+      });
+    }
+    
+    setRegeneratingPointIndex(null);
   };
 
   const handleSuggestionClick = (suggestion: string, index: number) => {
@@ -5239,23 +5287,60 @@ Beispiel einer korrekten Antwort:
                                   </div>
                                 </>
                               ) : point.generationError ? (
-                                <div className="bg-destructive/10 rounded-lg p-3 flex-1 flex flex-col items-center justify-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
-                                    <AlertCircle className="w-5 h-5 text-destructive" />
+                                <div className={cn(
+                                  "rounded-lg p-3 flex-1 flex flex-col items-center justify-center gap-3 border-2 transition-colors",
+                                  regeneratingPointIndex === index 
+                                    ? "bg-primary/10 border-primary/30" 
+                                    : point.generationError.includes("Versuch") 
+                                      ? "bg-muted/30 border-border/30"
+                                      : "bg-destructive/15 border-destructive/40"
+                                )}>
+                                  <div className={cn(
+                                    "w-12 h-12 rounded-full flex items-center justify-center",
+                                    regeneratingPointIndex === index 
+                                      ? "bg-primary/20" 
+                                      : point.generationError.includes("Versuch")
+                                        ? "bg-muted/50"
+                                        : "bg-destructive/20"
+                                  )}>
+                                    {regeneratingPointIndex === index || point.generationError.includes("Versuch") ? (
+                                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                    ) : (
+                                      <AlertCircle className="w-6 h-6 text-destructive" />
+                                    )}
                                   </div>
-                                  <p className="text-xs text-destructive text-center max-w-[180px]">
-                                    {point.generationError}
-                                  </p>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs h-7 border-destructive/30 hover:bg-destructive/10"
-                                    onClick={() => regenerateSingleStoryScene(index)}
-                                    disabled={regeneratingPointIndex !== null}
-                                  >
-                                    <RefreshCw className="w-3 h-3 mr-1" />
-                                    Erneut versuchen
-                                  </Button>
+                                  <div className="text-center">
+                                    <p className={cn(
+                                      "text-xs font-medium",
+                                      regeneratingPointIndex === index || point.generationError.includes("Versuch")
+                                        ? "text-primary"
+                                        : "text-destructive"
+                                    )}>
+                                      {regeneratingPointIndex === index 
+                                        ? "Generiere neu..."
+                                        : point.generationError.includes("Fehlgeschlagen") 
+                                          ? "Generierung fehlgeschlagen"
+                                          : point.generationError
+                                      }
+                                    </p>
+                                    {point.generationError.includes("Fehlgeschlagen") && (
+                                      <p className="text-xs text-muted-foreground mt-1 max-w-[180px]">
+                                        {point.generationError.replace(/^Fehlgeschlagen nach \d+ Versuchen: /, '')}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {!regeneratingPointIndex && !point.generationError.includes("Versuch") && (
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="text-xs h-8 px-4"
+                                      onClick={() => regenerateSingleStoryScene(index)}
+                                      disabled={regeneratingPointIndex !== null}
+                                    >
+                                      <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                                      Neu generieren (5 Versuche)
+                                    </Button>
+                                  )}
                                 </div>
                               ) : (
                                 <div className="flex-1 flex flex-col p-2">
