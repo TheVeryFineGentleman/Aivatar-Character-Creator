@@ -664,69 +664,7 @@ REGELN:
   };
   
   // Helper function to add shot label to generated image
-  const addShotLabelToImage = async (imageUrl: string, shotType: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx) {
-          resolve(imageUrl); // Return original if canvas fails
-          return;
-        }
-        
-        // Draw original image
-        ctx.drawImage(img, 0, 0);
-        
-        // Format shot type for display
-        const shotLabel = shotType
-          .split('-')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        
-        // Configure label style
-        const padding = 12;
-        const fontSize = Math.max(16, img.width * 0.02);
-        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-        const textMetrics = ctx.measureText(shotLabel);
-        const textWidth = textMetrics.width;
-        const textHeight = fontSize;
-        
-        // Position: bottom right with margin
-        const margin = 20;
-        const labelX = img.width - textWidth - padding * 2 - margin;
-        const labelY = img.height - textHeight - padding * 2 - margin;
-        
-        // Draw semi-transparent black background with rounded corners
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        const borderRadius = 6;
-        ctx.beginPath();
-        ctx.roundRect(labelX, labelY, textWidth + padding * 2, textHeight + padding * 2, borderRadius);
-        ctx.fill();
-        
-        // Draw white text
-        ctx.fillStyle = 'white';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(shotLabel, labelX + padding, labelY + padding + textHeight / 2);
-        
-        // Convert canvas to blob URL
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const newUrl = URL.createObjectURL(blob);
-            resolve(newUrl);
-          } else {
-            resolve(imageUrl);
-          }
-        }, 'image/png');
-      };
-      img.onerror = () => resolve(imageUrl);
-      img.src = imageUrl;
-    });
-  };
+  // Shot type labels are now CSS overlays only - no longer baked into images
   
   // Clear all storyboard content
   const clearAllStoryboard = () => {
@@ -1583,16 +1521,8 @@ NUR DAS JSON, keine Erklärung!`
         if (result.success) {
           sceneSuccess = true;
           
-          // Add shot label to the generated image
-          let finalImageUrl = result.generatedImageUrl;
-          const shotType = storyPoints[sceneIndex]?.shotType;
-          if (finalImageUrl && shotType) {
-            try {
-              finalImageUrl = await addShotLabelToImage(finalImageUrl, shotType);
-            } catch (e) {
-              console.warn('Could not add shot label to image:', e);
-            }
-          }
+          // Store the original image URL without any labels baked in
+          const finalImageUrl = result.generatedImageUrl;
           
           setStoryPoints(prev => prev.map((p, idx) => {
             if (idx === sceneIndex) {
@@ -5317,6 +5247,12 @@ Beispiel einer korrekten Antwort:
                                       alt={`Szene ${index + 1}`}
                                       className="max-w-full max-h-full object-contain"
                                     />
+                                    {/* Shot type label as CSS overlay - not baked into image */}
+                                    {point.shotType && (
+                                      <div className="absolute bottom-2 right-2 bg-black/85 text-white text-xs font-bold px-2.5 py-1 rounded-md pointer-events-none">
+                                        {point.shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                      </div>
+                                    )}
                                     {generatingStoryImageIndex === index && (
                                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -5512,12 +5448,18 @@ Beispiel einer korrekten Antwort:
                                     Generiertes Bild
                                   </label>
                                   <div className="relative rounded-lg overflow-hidden bg-muted/20">
-                                    <div className="aspect-square flex items-center justify-center">
+                                    <div className="aspect-square flex items-center justify-center relative">
                                       <img 
                                         src={storyPoints[expandedStoryPointIndex].generatedImage} 
                                         alt={`Szene ${expandedStoryPointIndex + 1}`}
                                         className="max-w-full max-h-full object-contain"
                                       />
+                                      {/* Shot type label as CSS overlay - not baked into image */}
+                                      {storyPoints[expandedStoryPointIndex].shotType && (
+                                        <div className="absolute bottom-3 right-3 bg-black/85 text-white text-sm font-bold px-3 py-1.5 rounded-md pointer-events-none">
+                                          {storyPoints[expandedStoryPointIndex].shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
