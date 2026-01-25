@@ -316,26 +316,26 @@ const Index = () => {
     };
   }, []);
   const CAMERA_ANGLE_OPTIONS = [
-    { value: "random", label: "Zufällig" },
-    { value: "frontal", label: "Frontal" },
-    { value: "seitlich", label: "Seitlich" },
-    { value: "von-oben", label: "Von oben" },
-    { value: "von-unten", label: "Von unten" },
-    { value: "ueber-schulter", label: "Über die Schulter" },
-    { value: "dutch-angle", label: "Dutch Angle" },
-    { value: "vogelperspektive", label: "Vogelperspektive" },
-    { value: "froschperspektive", label: "Froschperspektive" }
+    { value: "random", label: "Zufällig", description: "Die KI wählt einen passenden Kamerawinkel zur Szene" },
+    { value: "frontal", label: "Frontal", description: "Kamera direkt vor der Person auf Augenhöhe, Blick geht direkt in die Kamera. Zeigt das Gesicht vollständig von vorne, symmetrische Komposition." },
+    { value: "seitlich", label: "Seitlich", description: "Kamera im 90-Grad-Winkel zur Person (Profilansicht). Zeigt das Profil des Gesichts, Nase und Kinn sind im Fokus, dramatische Silhouette möglich." },
+    { value: "von-oben", label: "Von oben", description: "Kamera oberhalb der Person, schräg nach unten gerichtet (High Angle). Die Person erscheint kleiner, verletzlicher oder unterlegen. Boden/Umgebung um die Person herum sichtbar." },
+    { value: "von-unten", label: "Von unten", description: "Kamera unterhalb der Person, schräg nach oben gerichtet (Low Angle). Die Person wirkt mächtig, dominant oder heroisch. Decke/Himmel im Hintergrund sichtbar." },
+    { value: "ueber-schulter", label: "Über die Schulter", description: "Kamera hinter einer Person, blickt über deren Schulter auf das Geschehen. Typisch für Dialogszenen, zeigt Schulter/Kopfhintergrund im Vordergrund unscharf." },
+    { value: "dutch-angle", label: "Dutch Angle", description: "Kamera ist seitlich geneigt (10-45 Grad), Horizont ist schräg. Erzeugt Unruhe, Spannung, Desorientierung oder psychologische Instabilität." },
+    { value: "vogelperspektive", label: "Vogelperspektive", description: "Kamera direkt von oben (Bird's Eye View), fast senkrecht nach unten. Zeigt die Person von oben, Kopf/Schultern dominant, Umgebungslayout erkennbar." },
+    { value: "froschperspektive", label: "Froschperspektive", description: "Kamera auf Bodenhöhe oder tiefer (Worm's Eye View), extrem nach oben gerichtet. Starke Verzerrung, Person ragt empor, sehr dramatisch und imposant." }
   ];
 
   const SHOT_TYPE_OPTIONS = [
-    { value: "extreme-close-up", label: "Extreme Close-Up" },
-    { value: "close-up", label: "Close-Up" },
-    { value: "medium-close-up", label: "Medium Close-Up" },
-    { value: "medium-shot", label: "Medium Shot" },
-    { value: "medium-long-shot", label: "Medium Long Shot" },
-    { value: "full-shot", label: "Full Shot" },
-    { value: "long-shot", label: "Long Shot" },
-    { value: "extreme-long-shot", label: "Extreme Long Shot" }
+    { value: "extreme-close-up", label: "Extreme Close-Up", description: "Zeigt nur ein Detail: Augen, Mund, oder Hand. Füllt den gesamten Bildschirm mit diesem Detail. Extrem intim, zeigt feinste Emotionen oder wichtige Objekte." },
+    { value: "close-up", label: "Close-Up", description: "Zeigt das Gesicht von Kinn bis Stirn. Schultern können angedeutet sein. Fokus auf Gesichtsausdruck und Emotionen, Hintergrund minimal oder unscharf." },
+    { value: "medium-close-up", label: "Medium Close-Up", description: "Zeigt Kopf und Schultern bis zur Brust. Mehr Kontext als Close-Up, aber immer noch Fokus auf Gesicht. Typisch für Interviews oder Dialoge." },
+    { value: "medium-shot", label: "Medium Shot", description: "Zeigt Person von Hüfte aufwärts (Cowboy Shot). Oberkörper, Arme und Hände sichtbar. Balance zwischen Gesicht und Körpersprache, Umgebung angedeutet." },
+    { value: "medium-long-shot", label: "Medium Long Shot", description: "Zeigt Person von Knien aufwärts. Mehr Körpersprache sichtbar, Beine teilweise im Bild. Interaktion mit unmittelbarer Umgebung erkennbar." },
+    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis Fuß mit etwas Raum drumherum. Volle Körperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
+    { value: "long-shot", label: "Long Shot", description: "Person im ganzen Körper, mit viel Umgebung drumherum (Wide Shot). Person ist kleiner im Bild, Landschaft/Raum dominiert. Zeigt Location und Atmosphäre." },
+    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer großen Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
   ];
 
   const handleSceneAssistant = async () => {
@@ -362,11 +362,11 @@ AKTUELLE SZENE:
 NUTZERANWEISUNG:
 "${sceneAssistantInput.trim() || 'Optimiere die Szene für maximale visuelle Wirkung'}"
 
-VERFÜGBARE KAMERAWINKEL (wähle genau einen value):
-${CAMERA_ANGLE_OPTIONS.map(o => `- "${o.value}": ${o.label}`).join('\n')}
+VERFÜGBARE KAMERAWINKEL (wähle genau einen value, Beschreibung hilft dir bei der Wahl):
+${CAMERA_ANGLE_OPTIONS.map(o => `- "${o.value}": ${o.label} - ${o.description}`).join('\n')}
 
-VERFÜGBARE SHOT-TYPEN (wähle genau einen value):
-${SHOT_TYPE_OPTIONS.map(o => `- "${o.value}": ${o.label}`).join('\n')}
+VERFÜGBARE SHOT-TYPEN (wähle genau einen value, Beschreibung hilft dir bei der Wahl):
+${SHOT_TYPE_OPTIONS.map(o => `- "${o.value}": ${o.label} - ${o.description}`).join('\n')}
 
 Antworte NUR mit einem validen JSON-Objekt in diesem Format:
 {
@@ -1074,10 +1074,19 @@ SZENEN-BESCHREIBUNG:
 - Die Handlung muss SOFORT erkennbar sein
 - Der Kamerawinkel definiert die Perspektive dieser spezifischen Szene
 
-KAMERA-EINSTELLUNGEN (EXAKT EINHALTEN):
-- Kamerawinkel: ${point.cameraAngle || 'dynamisch und cineastisch'}
-- Shot-Typ: ${point.shotType || 'passend zur Szene'}
-- Das Bild MUSS aus GENAU diesem Winkel aufgenommen sein!
+📷 KAMERA-EINSTELLUNGEN (STRIKT EINZUHALTEN - DEFINIERT DAS BILD!):
+
+KAMERAWINKEL - ${point.cameraAngle ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || point.cameraAngle : 'dynamisch'}:
+${point.cameraAngle && point.cameraAngle !== 'random' 
+  ? `→ ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description || 'Wähle einen passenden Winkel'}`
+  : '→ Wähle einen dynamischen, zur Szene passenden Kamerawinkel'}
+
+SHOT-TYP - ${point.shotType ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || point.shotType : 'passend zur Szene'}:
+${point.shotType 
+  ? `→ ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description || 'Wähle einen passenden Shot-Typ'}`
+  : '→ Wähle einen zur Handlung passenden Shot-Typ'}
+
+⚠️ DIESE KAMERA-VORGABEN SIND ABSOLUT BINDEND! Das Bild MUSS exakt aus diesem Winkel mit dieser Bildgröße aufgenommen sein!
 
 ${previousScenePrompt ? `STIL-REFERENZ (vorherige Szene):
 "${previousScenePrompt.substring(0, 400)}..."
@@ -1195,16 +1204,27 @@ Dann der detaillierte Bild-Prompt.`
         
         if (useSimplifiedPrompt) {
           // VEREINFACHTER FALLBACK-PROMPT für schwierige Fälle
+          const cameraDesc = point.cameraAngle && point.cameraAngle !== 'random' 
+            ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description || ''
+            : '';
+          const shotDesc = point.shotType 
+            ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description || ''
+            : '';
+          
           imagePromptText = sceneIndex === 0
             ? `Generate a photorealistic image of the person shown in the reference image above.
 Scene: ${storyText.substring(0, 200)}
-Style: Professional photography, 16:9 widescreen, high quality.
-Important: The person must look exactly like in the reference image. Simple background.`
+${cameraDesc ? `Camera angle: ${cameraDesc}` : ''}
+${shotDesc ? `Shot type: ${shotDesc}` : ''}
+Style: Professional photography, 16:9 widescreen, high quality. NO text overlays or labels in the image.
+Important: The person must look exactly like in the reference image.`
             : `Generate the NEXT scene of this story. The previous scene is shown above.
 Keep 40% from reference: The person's face and appearance.
 Create 60% new: New scene, new action, new environment.
 Scene: ${storyText.substring(0, 200)}
-Style: Professional photography, 16:9 widescreen, high quality.
+${cameraDesc ? `Camera angle: ${cameraDesc}` : ''}
+${shotDesc ? `Shot type: ${shotDesc}` : ''}
+Style: Professional photography, 16:9 widescreen, high quality. NO text overlays or labels in the image.
 Important: Same person, completely different scene and action.`;
         } else {
           imagePromptText = (sceneIndex === 0)
@@ -1217,17 +1237,29 @@ CHARAKTER-CHECKLISTE:
 ☑️ Hautfarbe, Haare, Körperbau: IDENTISCH
 ☑️ Nur Pose und Kleidung sind NEU
 
+📷 KAMERA-VORGABEN (STRIKT EINHALTEN!):
+${point.cameraAngle && point.cameraAngle !== 'random' 
+  ? `KAMERAWINKEL: ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label}
+→ ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description}`
+  : 'KAMERAWINKEL: Wähle einen dynamischen, passenden Winkel'}
+
+${point.shotType 
+  ? `SHOT-TYP: ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label}
+→ ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description}`
+  : 'SHOT-TYP: Wähle einen zur Handlung passenden Shot-Typ'}
+
 FORMAT-REGELN:
 ✅ WIDESCREEN 16:9 - Bild füllt 100% des Rahmens
 ✅ EINE Person, EIN vollständiges Bild
 🚫 KEINE schwarzen Ränder, KEIN Letterboxing
 🚫 KEINE Collagen, Gitter oder Split-Screens
+🚫 KEIN Text oder Beschriftung im Bild!
 
 ${detailedImagePrompt}
 
 FINALE ANFORDERUNGEN:
 - EINZIGARTIGE SZENE mit KLARER HANDLUNG
-- Kamerawinkel EXAKT wie beschrieben
+- Kamerawinkel und Shot-Typ EXAKT wie oben beschrieben!
 - Fotorealistisch, 4K, Ultra HD`
             : `🔴 NÄCHSTE SZENE DER STORY - PROGRESSION 🔴
 
@@ -1241,6 +1273,17 @@ DER CHARAKTER:
 - Gesichtszüge IDENTISCH zum vorherigen Bild
 - Alles andere DARF sich ändern (Kleidung, Position, Ausdruck)
 
+📷 KAMERA-VORGABEN (STRIKT EINHALTEN!):
+${point.cameraAngle && point.cameraAngle !== 'random' 
+  ? `KAMERAWINKEL: ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label}
+→ ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description}`
+  : 'KAMERAWINKEL: Wähle einen dynamischen, passenden Winkel'}
+
+${point.shotType 
+  ? `SHOT-TYP: ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label}
+→ ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description}`
+  : 'SHOT-TYP: Wähle einen zur Handlung passenden Shot-Typ'}
+
 DIE NEUE SZENE:
 ${detailedImagePrompt}
 
@@ -1249,10 +1292,12 @@ FORMAT-REGELN:
 ✅ EINE Person, EIN vollständiges Bild  
 🚫 KEINE schwarzen Ränder, KEIN Letterboxing
 🚫 KEINE Collagen, Gitter oder Split-Screens
+🚫 KEIN Text oder Beschriftung im Bild!
 
 FINALE ANFORDERUNGEN:
 - KOMPLETT NEUE SZENE - visuell deutlich anders als vorherige!
 - NEUE Umgebung, NEUE Handlung, NEUE Atmosphäre
+- Kamerawinkel und Shot-Typ EXAKT wie oben beschrieben!
 - Nur der Charakter bleibt erkennbar
 - Fotorealistisch, 4K, Ultra HD`;
         }
