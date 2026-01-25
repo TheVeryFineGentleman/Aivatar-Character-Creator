@@ -4671,7 +4671,7 @@ Beispiel einer korrekten Antwort:
                           placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                           value={customPrompt}
                           onChange={(e) => handleCustomPromptChange(e.target.value)}
-                          className="flex-1 min-h-[100px] h-[100px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                          className="min-h-[124px] h-[124px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                         />
                       </div>
                       
@@ -4747,7 +4747,7 @@ Beispiel einer korrekten Antwort:
                             {/* Spacer to balance the label */}
                             <div className="w-24" />
                           </div>
-                          <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[100px]">
+                          <div className="p-3 rounded-lg border border-border/50 bg-muted/30 h-[124px]">
                             <Textarea
                               placeholder={
                                 aiAssistantTarget === "prompt" 
