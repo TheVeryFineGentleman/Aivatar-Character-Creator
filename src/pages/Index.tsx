@@ -1154,7 +1154,8 @@ Dann der detaillierte Bild-Prompt.`
 Scene: ${storyText.substring(0, 200)}
 ${cameraDesc ? `Camera angle: ${cameraDesc}` : ''}
 ${shotDesc ? `Shot type: ${shotDesc}` : ''}
-Style: Professional photography, 16:9 widescreen, high quality. NO text overlays or labels in the image.
+Style: Professional photography, high quality. NO text overlays or labels in the image.
+🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
 Important: The person must look exactly like in the reference image.`
             : `Generate the NEXT scene of this story. The previous scene is shown above.
 Keep 40% from reference: The person's face and appearance.
@@ -1162,7 +1163,8 @@ Create 60% new: New scene, new action, new environment.
 Scene: ${storyText.substring(0, 200)}
 ${cameraDesc ? `Camera angle: ${cameraDesc}` : ''}
 ${shotDesc ? `Shot type: ${shotDesc}` : ''}
-Style: Professional photography, 16:9 widescreen, high quality. NO text overlays or labels in the image.
+Style: Professional photography, high quality. NO text overlays or labels in the image.
+🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
 Important: Same person, completely different scene and action.`;
         } else {
           imagePromptText = (sceneIndex === 0)
@@ -1187,9 +1189,10 @@ ${point.shotType
   : 'SHOT-TYP: Wähle einen zur Handlung passenden Shot-Typ'}
 
 FORMAT-REGELN:
-✅ WIDESCREEN 16:9 - Bild füllt 100% des Rahmens
+✅ Bild füllt 100% des Rahmens - KOMPLETTE FLÄCHE NUTZEN!
 ✅ EINE Person, EIN vollständiges Bild
-🚫 KEINE schwarzen Ränder, KEIN Letterboxing
+🚫 ABSOLUT KEINE SCHWARZEN RÄNDER - das ist KRITISCH!
+🚫 KEIN Letterboxing, KEINE schwarzen Balken oben/unten/links/rechts!
 🚫 KEINE Collagen, Gitter oder Split-Screens
 🚫 KEIN Text oder Beschriftung im Bild!
 
@@ -1226,9 +1229,10 @@ DIE NEUE SZENE:
 ${detailedImagePrompt}
 
 FORMAT-REGELN:
-✅ WIDESCREEN 16:9 - Bild füllt 100% des Rahmens
+✅ Bild füllt 100% des Rahmens - KOMPLETTE FLÄCHE NUTZEN!
 ✅ EINE Person, EIN vollständiges Bild  
-🚫 KEINE schwarzen Ränder, KEIN Letterboxing
+🚫 ABSOLUT KEINE SCHWARZEN RÄNDER - das ist KRITISCH!
+🚫 KEIN Letterboxing, KEINE schwarzen Balken oben/unten/links/rechts!
 🚫 KEINE Collagen, Gitter oder Split-Screens
 🚫 KEIN Text oder Beschriftung im Bild!
 
@@ -1803,13 +1807,17 @@ Beschreibe: Person (EXAKT wie in den Referenzbildern), Umgebung, Beleuchtung, Fa
         const parts: any[] = [{ 
           text: useSimplifiedPrompt
             ? `Generate ONE person from the reference image. Scene: ${storyText.substring(0, 200)}. 
-               Simple background. 16:9 widescreen format. High quality photo. NO collages.`
-            : `CRITICAL FORMAT: Generate a WIDESCREEN 16:9 aspect ratio image.
-Study the reference images - replicate the EXACT same person with identical features.
+               Simple background. High quality photo. NO collages.
+               🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`
+            : `Study the reference images - replicate the EXACT same person with identical features.
 
 ${detailedImagePrompt}
 
-STRICT: ONE person only (matching reference images), 16:9 WIDESCREEN format, NO collages.`
+STRICT RULES:
+- ONE person only (matching reference images)
+- NO collages or multiple images
+- 🚫 ABSOLUTELY NO BLACK BORDERS - image must fill 100% of the frame!
+- 🚫 NO letterboxing, NO black bars on any side!`
         }];
         
         for (const base64Data of characterBase64Images) {
@@ -2224,10 +2232,10 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
       
       // Use custom prompt if provided
       if (customPromptText && customPromptText.trim()) {
-        prompt = `${customPromptText}. ${formatText}. Ultra high resolution.`;
+        prompt = `${customPromptText}. Ultra high resolution. 🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
       } else {
         // Simplified prompt - only view angle and shot type
-        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}, ${formatText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
+        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution. 🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
@@ -2256,6 +2264,8 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
+- 🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
+- 🚫 NO letterboxing, NO black bars on any side (top, bottom, left, right)!
 
 Create a professional photoshoot of the person from the reference image(s). 
 - ONLY ONE PERSON must appear in the entire image
@@ -2264,7 +2274,6 @@ Create a professional photoshoot of the person from the reference image(s).
 - Dress them in random clothing
 - Use random, varied poses (standing, sitting, leaning, walking, etc.)
 ${cameraAngleInstruction}
-- Format: ${formatText}
 - ${shotText}
 ${skinText}
 Ultra high resolution, maintain style consistency with reference image(s).`;
@@ -2301,6 +2310,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               contents: [{ role: "user", parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
+                imageConfig: {
+                  aspectRatio: formatOption?.ratio || "1:1",
+                },
               },
             }),
           }
@@ -2842,7 +2854,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const randomExpression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
       
       // Build the main prompt
-      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality, ${formatText}. Ultra high resolution.`;
+      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality. Ultra high resolution. 🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame! 🚫 NO letterboxing, NO black bars on any side!`;
       
       // Combine base prompt with custom prompt
       const fullPrompt = `${basePrompt}\n\nADDITIONAL REQUIREMENTS: ${customPrompt}`;
