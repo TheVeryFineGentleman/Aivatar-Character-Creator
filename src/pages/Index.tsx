@@ -3699,8 +3699,7 @@ REGELN FÜR SCENE (nur wenn scenery):
         });
       }
       
-      // Clear input after successful generation
-      setCustomPromptChatInput("");
+      // Keep the input text for further iterations
     } catch (error) {
       console.error("Custom prompt generation error:", error);
       toast({
@@ -3825,7 +3824,7 @@ Beispiel einer korrekten Antwort:
       if (suggestion) {
         // Directly apply to scene description
         setSceneDescription(suggestion);
-        setCustomPromptChatInput("");
+        // Keep the input text for further iterations
         
         // Ensure scenery is selected
         if (selectedBackground !== "scenery") {
@@ -4524,12 +4523,12 @@ Beispiel einer korrekten Antwort:
               }`}>
                 <div className="space-y-3">
                   {/* Textarea with AI button next to it */}
-                  <div className="flex gap-3 items-start max-w-3xl">
+                  <div className="flex gap-3 items-start w-fit">
                     <Textarea
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[100px] w-full max-w-[600px] resize-none flex-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[80px] w-[calc(3*120px+2*4px)] resize-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
                   </div>
@@ -4672,7 +4671,7 @@ Beispiel einer korrekten Antwort:
                           placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                           value={customPrompt}
                           onChange={(e) => handleCustomPromptChange(e.target.value)}
-                          className="flex-1 min-h-[120px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                          className="flex-1 min-h-[100px] h-[100px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                         />
                       </div>
                       
@@ -4748,7 +4747,7 @@ Beispiel einer korrekten Antwort:
                             {/* Spacer to balance the label */}
                             <div className="w-24" />
                           </div>
-                          <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
+                          <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[100px]">
                             <Textarea
                               placeholder={
                                 aiAssistantTarget === "prompt" 
@@ -4759,7 +4758,7 @@ Beispiel einer korrekten Antwort:
                               }
                               value={customPromptChatInput}
                               onChange={(e) => setCustomPromptChatInput(e.target.value)}
-                              className="h-full min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                              className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
