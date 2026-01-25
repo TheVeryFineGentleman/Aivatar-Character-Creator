@@ -4677,7 +4677,7 @@ Beispiel einer korrekten Antwort:
                       
                       {/* Center: Generate Buttons - For PREMIUM and FULL plans */}
                       {(authData.planCode === "FULL" || authData.planCode === "PREMIUM") && (
-                        <div className="flex flex-col gap-2 pt-7">
+                        <div className="flex flex-col gap-2 pt-9">
                           {/* Main button - transfers prompt to left */}
                           <Button
                             onClick={handleGenerateCustomPromptWithAI}
