@@ -4638,7 +4638,7 @@ Beispiel einer korrekten Antwort:
                       {/* Left: Prompt Output */}
                       <div className="flex-1 flex flex-col">
                         {/* Header with Version Navigation */}
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-2 h-7">
                           <Label htmlFor="custom-prompt-input">Custom Image Prompt</Label>
                           {customPromptVersions.length > 0 && (
                             <div className="flex items-center gap-1">
@@ -4707,7 +4707,7 @@ Beispiel einer korrekten Antwort:
                       {(authData.planCode === "FULL" || authData.planCode === "PREMIUM") && (
                         <div className="flex-1 flex flex-col">
                           {/* Header with label left and segmented control centered */}
-                          <div className="flex items-center mb-2">
+                          <div className="flex items-center mb-2 h-7">
                             <div className="flex items-center gap-1.5 w-24">
                               <Sparkles className="w-4 h-4 text-muted-foreground" />
                               <Label className="text-muted-foreground">KI-Assistent</Label>
