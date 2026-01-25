@@ -5249,7 +5249,7 @@ Beispiel einer korrekten Antwort:
                                     />
                                     {/* Shot type label as CSS overlay - not baked into image */}
                                     {point.shotType && (
-                                      <div className="absolute bottom-2 right-2 bg-black/85 text-white text-xs font-bold px-2.5 py-1 rounded-md pointer-events-none">
+                                      <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none">
                                         {point.shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                       </div>
                                     )}
