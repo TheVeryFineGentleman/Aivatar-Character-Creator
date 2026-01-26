@@ -974,103 +974,96 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Unterschiedliche Prompts für erste Szene vs. Folgeszenen
         const isFirstScene = sceneIndex === 0;
         
-        // Text-Prompt NACH den Bildern - mit expliziter Referenz auf "die obigen Bilder"
-        promptParts.push({
-            text: `${isFirstScene ? `🔴🔴🔴 HÖCHSTE PRIORITÄT - REFERENZBILD-PFLICHT 🔴🔴🔴
+        // OPTIMIZED English prompt - concise, positive formulations, no emojis
+        const cameraAngleInfo = point.cameraAngle && point.cameraAngle !== 'random'
+          ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)
+          : null;
+        const shotTypeInfo = point.shotType
+          ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)
+          : null;
+        
+        const promptText = isFirstScene
+          ? `REFERENCE IMAGES ABOVE: These show the EXACT character to replicate.
 
-DIE OBIGEN BILDER ZEIGEN DEN EXAKTEN CHARAKTER DEN DU VERWENDEN MUSST!
+ROLE: Expert image prompt engineer for AI image generation.
 
-⚠️ ABSOLUTE PFLICHT - KEINE AUSNAHMEN:
-Diese Referenzbilder sind BINDEND. Du darfst KEIN anderes Aussehen generieren!
-Die Person im generierten Bild MUSS zu 100% wie die Person in den Referenzbildern aussehen!
+CHARACTER REQUIREMENTS (from reference images):
+- Face: Replicate exact facial features, eye color/shape, nose, lips
+- Skin: Match exact skin tone
+- Hair: Same color, length, texture, style
+- Body: Same build and proportions
+- Distinguishing marks: Copy all freckles, moles, beauty marks
 
-📌 DU MUSST FOLGENDES PIXEL FÜR PIXEL KOPIEREN:
-1. GESICHT: Exakt dieselben Augen (Farbe, Form, Größe, Abstand), Nase, Lippen, Gesichtsform
-2. HAUTFARBE: Identischer Hautton wie im Referenzbild
-3. HAARE: Exakte Farbe, Länge, Textur und Schnitt
-4. KÖRPERBAU: Identische Statur und Proportionen
-5. BESONDERE MERKMALE: ALLE Sommersprossen, Muttermale, Narben etc.
+ALLOWED TO CHANGE: Pose, clothing, expression (to fit scene)
 
-✅ EINZIG ERLAUBTE ÄNDERUNGEN:
-- Pose und Körperhaltung: NEU passend zur Szene
-- Kleidung: Passend zur Szene
-` : `🔴 CHARAKTER-KONTINUITÄT - VORHERIGE SZENE ALS REFERENZ 🔴
-
-DAS OBIGE BILD ZEIGT DIE VORHERIGE SZENE DERSELBEN STORY!
-Du MUSST denselben Charakter mit IDENTISCHEM Aussehen weiterführen:
-- Gesichtszüge, Hautfarbe, Haare: EXAKT WIE IN DER VORHERIGEN SZENE
-- Nur Pose, Kleidung und Handlung ändern sich passend zur neuen Szene
-`}
-
-Du bist ein Elite-Prompt-Engineer für KI-Bildgenerierung. Erstelle einen EXTREM DETAILLIERTEN Bild-Prompt auf Deutsch.
-
-SZENEN-BESCHREIBUNG:
+SCENE TO GENERATE:
 "${storyText}"
 
-🎬 DIESE SZENE MUSS EINZIGARTIG UND KLAR ERKENNBAR SEIN:
-- Jede Szene ist eine NEUE visuelle Interpretation
-- Die Handlung muss SOFORT erkennbar sein
-- Der Kamerawinkel definiert die Perspektive dieser spezifischen Szene
+CAMERA SPECIFICATIONS:
+- Angle: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic, scene-appropriate'}
+- Shot: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate framing'}
 
-📷 KAMERA-EINSTELLUNGEN (STRIKT EINZUHALTEN - DEFINIERT DAS BILD!):
+CREATE A DETAILED IMAGE PROMPT (400+ words) with these sections:
+1. KEY MOMENT: What specific action is happening? Hand positions, interactions, facial emotion.
+2. CHARACTER: Appearance matching reference, current pose, scene-appropriate clothing.
+3. ENVIRONMENT: Specific location, atmosphere, lighting mood.
+4. LIGHTING: Light sources, shadows, color palette.
+5. TECHNICAL: Exact camera angle as specified, focal length, depth of field.
 
-KAMERAWINKEL - ${point.cameraAngle ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || point.cameraAngle : 'dynamisch'}:
-${point.cameraAngle && point.cameraAngle !== 'random' 
-  ? `→ ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description || 'Wähle einen passenden Winkel'}`
-  : '→ Wähle einen dynamischen, zur Szene passenden Kamerawinkel'}
+OUTPUT RULES:
+- Single person only, single complete image
+- Full-bleed image filling entire frame edge-to-edge
+- Photorealistic, 4K quality, professional photography
+- No text, watermarks, borders, or letterboxing
 
-SHOT-TYP - ${point.shotType ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || point.shotType : 'passend zur Szene'}:
-${point.shotType 
-  ? `→ ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description || 'Wähle einen passenden Shot-Typ'}`
-  : '→ Wähle einen zur Handlung passenden Shot-Typ'}
+Start with:
+TITEL: [6-8 words]
+BESCHREIBUNG: [2-3 sentences]
 
-⚠️ DIESE KAMERA-VORGABEN SIND ABSOLUT BINDEND! Das Bild MUSS exakt aus diesem Winkel mit dieser Bildgröße aufgenommen sein!
+Then the detailed prompt.`
+          : `REFERENCE IMAGE ABOVE: Previous scene of the same story.
 
-${previousScenePrompt ? `STIL-REFERENZ (vorherige Szene):
-"${previousScenePrompt.substring(0, 400)}..."
-Der visuelle Stil bleibt konsistent, aber Handlung und Kamerawinkel sind NEU!` : ''}
+ROLE: Continue this visual story with the NEXT scene.
 
-ERSTELLE EINEN PROMPT MIT FOLGENDEN ABSCHNITTEN (mindestens 600 Wörter):
+CHARACTER CONTINUITY (40%):
+- Keep: Face, skin tone, hair, body type IDENTICAL to reference
+- The person must be recognizable as the same character
 
-1. SCHLÜSSELMOMENT & HANDLUNG (120+ Wörter):
-   - Welche KONKRETE AKTION führt die Person GENAU JETZT aus?
-   - Was machen ihre Hände? Was interagiert sie mit?
-   - Welche Emotion zeigt ihr Gesicht?
-   - Diese Szene muss EINDEUTIG und UNVERWECHSELBAR sein!
+NEW CONTENT (60%):
+- Change: Environment, action, pose, clothing, lighting, atmosphere
+- This must be a visually DISTINCT new scene
 
-2. PERSON/CHARAKTER (100+ Wörter):
-   - Gesichtszüge: EXAKT WIE IM REFERENZBILD
-   - Aktuelle Pose: Passend zur beschriebenen Handlung
-   - Kleidung: Szenenpassend
+SCENE TO GENERATE:
+"${storyText}"
 
-3. UMGEBUNG & HINTERGRUND (100+ Wörter):
-   - Spezifische Location mit Details
-   - Atmosphäre und Lichtstimmung
-   - Objekte die zur Story beitragen
+CAMERA SPECIFICATIONS:
+- Angle: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic, scene-appropriate'}
+- Shot: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate framing'}
 
-4. BELEUCHTUNG & FARBPALETTE (80+ Wörter):
-   - Lichtquellen und Schatten
-   - Dominante Farben und Stimmung
+${previousScenePrompt ? `STYLE REFERENCE (previous scene excerpt):
+"${previousScenePrompt.substring(0, 300)}..."
+Maintain visual style consistency while creating NEW content.` : ''}
 
-5. TECHNISCHE DETAILS (80+ Wörter):
-   - EXAKTER Kamerawinkel wie in KAMERA-EINSTELLUNGEN definiert
-   - Brennweite und Tiefenschärfe
-   - Bildkomposition
+CREATE A DETAILED IMAGE PROMPT (400+ words) covering:
+1. KEY ACTION: What is happening now? Specific gestures, interactions.
+2. CHARACTER: Same person, new pose and expression.
+3. NEW ENVIRONMENT: Different setting from previous scene.
+4. LIGHTING: New mood and atmosphere.
+5. CAMERA: Exact specifications as defined above.
 
-KRITISCHE REGELN:
-- NUR EINE PERSON im Bild
-- KEIN Text, Wasserzeichen oder Rahmen
-- 🚫 ABSOLUT KEINE SCHWARZEN RÄNDER - Bild füllt 100% des Rahmens!
-- Format: WIDESCREEN 16:9 (Querformat, KEINE Letterboxing!)
-- Qualität: Fotorealistisch, 4K
-- EINZIGARTIGE SZENE - nicht generisch!
+OUTPUT RULES:
+- Single person only, single complete image
+- Full-bleed image filling entire frame edge-to-edge
+- Photorealistic, 4K quality
+- No text, watermarks, borders, or letterboxing
 
-WICHTIG: Beginne mit:
-TITEL: [Max 6-8 Wörter]
-BESCHREIBUNG: [2-3 Sätze was passiert]
+Start with:
+TITEL: [6-8 words]
+BESCHREIBUNG: [2-3 sentences]
 
-Dann der detaillierte Bild-Prompt.`
-        });
+Then the detailed prompt.`;
+
+        promptParts.push({ text: promptText });
         
         const promptGenerationRequest = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -1083,9 +1076,15 @@ Dann der detaillierte Bild-Prompt.`
                 parts: promptParts
               }],
               generationConfig: {
-                temperature: 0.85,
-                maxOutputTokens: 2000
-              }
+                temperature: 0.75,
+                maxOutputTokens: 1500
+              },
+              safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+              ]
             })
           }
         );
@@ -1141,7 +1140,7 @@ Dann der detaillierte Bild-Prompt.`
         let imagePromptText: string;
         
         if (useSimplifiedPrompt) {
-          // VEREINFACHTER FALLBACK-PROMPT für schwierige Fälle
+          // ULTRA-SIMPLIFIED FALLBACK for difficult cases - minimal, clean English
           const cameraDesc = point.cameraAngle && point.cameraAngle !== 'random' 
             ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description || ''
             : '';
@@ -1150,98 +1149,60 @@ Dann der detaillierte Bild-Prompt.`
             : '';
           
           imagePromptText = sceneIndex === 0
-            ? `Generate a photorealistic image of the person shown in the reference image above.
-Scene: ${storyText.substring(0, 200)}
-${cameraDesc ? `Camera angle: ${cameraDesc}` : ''}
-${shotDesc ? `Shot type: ${shotDesc}` : ''}
-Style: Professional photography, high quality. NO text overlays or labels in the image.
-🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
-Important: The person must look exactly like in the reference image.`
-            : `Generate the NEXT scene of this story. The previous scene is shown above.
-Keep 40% from reference: The person's face and appearance.
-Create 60% new: New scene, new action, new environment.
-Scene: ${storyText.substring(0, 200)}
-${cameraDesc ? `Camera angle: ${cameraDesc}` : ''}
-${shotDesc ? `Shot type: ${shotDesc}` : ''}
-Style: Professional photography, high quality. NO text overlays or labels in the image.
-🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
-Important: Same person, completely different scene and action.`;
+            ? `Photorealistic image of the person from reference above.
+Scene: ${storyText.substring(0, 150)}
+${cameraDesc ? `Camera: ${cameraDesc}` : ''}
+${shotDesc ? `Shot: ${shotDesc}` : ''}
+Professional photography, 4K. Single person, full-bleed image, no borders.`
+            : `Next scene - same person from reference, new environment and action.
+Scene: ${storyText.substring(0, 150)}
+${cameraDesc ? `Camera: ${cameraDesc}` : ''}
+${shotDesc ? `Shot: ${shotDesc}` : ''}
+Professional photography, 4K. Single person, full-bleed image, no borders.`;
         } else {
+          // OPTIMIZED English prompts - concise, positive formulations
+          const cameraAngleInfo = point.cameraAngle && point.cameraAngle !== 'random'
+            ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)
+            : null;
+          const shotTypeInfo = point.shotType
+            ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)
+            : null;
+          
           imagePromptText = (sceneIndex === 0)
-            ? `🔴 REFERENZBILDER SIND BINDEND - ERSTE SZENE 🔴
+            ? `REFERENCE IMAGES ABOVE: Exact character to replicate.
 
-DIE OBIGEN BILDER ZEIGEN DEN EXAKTEN CHARAKTER!
+CHARACTER MATCHING:
+- Replicate exact facial features, skin tone, hair, body type
+- Only change pose and clothing for scene
 
-CHARAKTER-CHECKLISTE:
-☑️ Gesichtszüge: IDENTISCH zum Referenzbild
-☑️ Hautfarbe, Haare, Körperbau: IDENTISCH
-☑️ Nur Pose und Kleidung sind NEU
+CAMERA: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic angle'}
+SHOT: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate'}
 
-📷 KAMERA-VORGABEN (STRIKT EINHALTEN!):
-${point.cameraAngle && point.cameraAngle !== 'random' 
-  ? `KAMERAWINKEL: ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label}
-→ ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description}`
-  : 'KAMERAWINKEL: Wähle einen dynamischen, passenden Winkel'}
-
-${point.shotType 
-  ? `SHOT-TYP: ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label}
-→ ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description}`
-  : 'SHOT-TYP: Wähle einen zur Handlung passenden Shot-Typ'}
-
-FORMAT-REGELN:
-✅ Bild füllt 100% des Rahmens - KOMPLETTE FLÄCHE NUTZEN!
-✅ EINE Person, EIN vollständiges Bild
-🚫 ABSOLUT KEINE SCHWARZEN RÄNDER - das ist KRITISCH!
-🚫 KEIN Letterboxing, KEINE schwarzen Balken oben/unten/links/rechts!
-🚫 KEINE Collagen, Gitter oder Split-Screens
-🚫 KEIN Text oder Beschriftung im Bild!
-
+SCENE CONTENT:
 ${detailedImagePrompt}
 
-FINALE ANFORDERUNGEN:
-- EINZIGARTIGE SZENE mit KLARER HANDLUNG
-- Kamerawinkel und Shot-Typ EXAKT wie oben beschrieben!
-- Fotorealistisch, 4K, Ultra HD`
-            : `🔴 NÄCHSTE SZENE DER STORY - PROGRESSION 🔴
+OUTPUT SPECIFICATIONS:
+- Single person, single complete photograph
+- Full-bleed image filling entire frame edge-to-edge
+- Photorealistic, 4K, professional photography quality
+- No text, watermarks, or borders`
+            : `REFERENCE ABOVE: Previous scene of same story.
 
-Das obige Bild zeigt die VORHERIGE Szene. Generiere jetzt die NÄCHSTE Szene.
+CHARACTER CONTINUITY (40%): Same face, skin, hair, body
+NEW CONTENT (60%): New environment, action, pose, lighting
 
-WICHTIG - BALANCE ZWISCHEN KONTINUITÄT UND NEUEM:
-🔹 40% BEHALTEN: Charakter-Erscheinung (Gesicht, Haare, Hautfarbe, Körperbau)
-🔹 60% NEU: Szene, Umgebung, Handlung, Pose, Kamerawinkel, Beleuchtung
+CAMERA: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic angle'}
+SHOT: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate'}
 
-DER CHARAKTER:
-- Gesichtszüge IDENTISCH zum vorherigen Bild
-- Alles andere DARF sich ändern (Kleidung, Position, Ausdruck)
-
-📷 KAMERA-VORGABEN (STRIKT EINHALTEN!):
-${point.cameraAngle && point.cameraAngle !== 'random' 
-  ? `KAMERAWINKEL: ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label}
-→ ${CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description}`
-  : 'KAMERAWINKEL: Wähle einen dynamischen, passenden Winkel'}
-
-${point.shotType 
-  ? `SHOT-TYP: ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label}
-→ ${SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description}`
-  : 'SHOT-TYP: Wähle einen zur Handlung passenden Shot-Typ'}
-
-DIE NEUE SZENE:
+NEW SCENE:
 ${detailedImagePrompt}
 
-FORMAT-REGELN:
-✅ Bild füllt 100% des Rahmens - KOMPLETTE FLÄCHE NUTZEN!
-✅ EINE Person, EIN vollständiges Bild  
-🚫 ABSOLUT KEINE SCHWARZEN RÄNDER - das ist KRITISCH!
-🚫 KEIN Letterboxing, KEINE schwarzen Balken oben/unten/links/rechts!
-🚫 KEINE Collagen, Gitter oder Split-Screens
-🚫 KEIN Text oder Beschriftung im Bild!
-
-FINALE ANFORDERUNGEN:
-- KOMPLETT NEUE SZENE - visuell deutlich anders als vorherige!
-- NEUE Umgebung, NEUE Handlung, NEUE Atmosphäre
-- Kamerawinkel und Shot-Typ EXAKT wie oben beschrieben!
-- Nur der Charakter bleibt erkennbar
-- Fotorealistisch, 4K, Ultra HD`;
+OUTPUT SPECIFICATIONS:
+- Single person, single complete photograph
+- Full-bleed image filling entire frame edge-to-edge
+- Visually distinct from previous scene
+- Photorealistic, 4K quality
+- No text, watermarks, or borders`;
         }
 
         parts.push({ text: imagePromptText });
@@ -1260,6 +1221,12 @@ FINALE ANFORDERUNGEN:
                   aspectRatio: "16:9",
                 },
               },
+              safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+              ]
             }),
           }
         );
