@@ -982,86 +982,40 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)
           : null;
         
+        // OPTIMIZED PROMPT GENERATOR - Shorter, focused on essential details
         const promptText = isFirstScene
-          ? `REFERENCE IMAGES ABOVE: These show the EXACT character to replicate.
+          ? `REFERENCE IMAGES: These show the exact person to recreate.
 
-ROLE: Expert image prompt engineer for AI image generation.
-
-CHARACTER REQUIREMENTS (from reference images):
-- Face: Replicate exact facial features, eye color/shape, nose, lips
-- Skin: Match exact skin tone
-- Hair: Same color, length, texture, style
-- Body: Same build and proportions
-- Distinguishing marks: Copy all freckles, moles, beauty marks
-
-ALLOWED TO CHANGE: Pose, clothing, expression (to fit scene)
-
-SCENE TO GENERATE:
+Create a detailed image description for this scene:
 "${storyText}"
 
-CAMERA SPECIFICATIONS:
-- Angle: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic, scene-appropriate'}
-- Shot: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate framing'}
+${cameraAngleInfo ? `Camera: ${cameraAngleInfo.label}` : ''}${shotTypeInfo ? ` | Shot: ${shotTypeInfo.label}` : ''}
 
-CREATE A DETAILED IMAGE PROMPT (400+ words) with these sections:
-1. KEY MOMENT: What specific action is happening? Hand positions, interactions, facial emotion.
-2. CHARACTER: Appearance matching reference, current pose, scene-appropriate clothing.
-3. ENVIRONMENT: Specific location, atmosphere, lighting mood.
-4. LIGHTING: Light sources, shadows, color palette.
-5. TECHNICAL: Exact camera angle as specified, focal length, depth of field.
+Include in your response:
+1. TITEL: [Short scene title, 6-8 words]
+2. BESCHREIBUNG: [2-3 sentence summary]
+3. Detailed scene description (200-300 words) covering:
+   - Character pose and expression
+   - Environment and lighting
+   - Mood and atmosphere
 
-OUTPUT RULES:
-- Single person only, single complete image
-- Full-bleed image filling entire frame edge-to-edge
-- Photorealistic, 4K quality, professional photography
-- No text, watermarks, borders, or letterboxing
+Keep the person's appearance identical to reference photos.`
+          : `REFERENCE IMAGE: Previous scene from same story.
 
-Start with:
-TITEL: [6-8 words]
-BESCHREIBUNG: [2-3 sentences]
-
-Then the detailed prompt.`
-          : `REFERENCE IMAGE ABOVE: Previous scene of the same story.
-
-ROLE: Continue this visual story with the NEXT scene.
-
-CHARACTER CONTINUITY (40%):
-- Keep: Face, skin tone, hair, body type IDENTICAL to reference
-- The person must be recognizable as the same character
-
-NEW CONTENT (60%):
-- Change: Environment, action, pose, clothing, lighting, atmosphere
-- This must be a visually DISTINCT new scene
-
-SCENE TO GENERATE:
+Create a detailed image description for the NEXT scene:
 "${storyText}"
 
-CAMERA SPECIFICATIONS:
-- Angle: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic, scene-appropriate'}
-- Shot: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate framing'}
+${cameraAngleInfo ? `Camera: ${cameraAngleInfo.label}` : ''}${shotTypeInfo ? ` | Shot: ${shotTypeInfo.label}` : ''}
 
-${previousScenePrompt ? `STYLE REFERENCE (previous scene excerpt):
-"${previousScenePrompt.substring(0, 300)}..."
-Maintain visual style consistency while creating NEW content.` : ''}
+Include in your response:
+1. TITEL: [Short scene title, 6-8 words]
+2. BESCHREIBUNG: [2-3 sentence summary]
+3. Detailed scene description (200-300 words) covering:
+   - Same person, new pose and action
+   - New environment (different from previous)
+   - New lighting and mood
 
-CREATE A DETAILED IMAGE PROMPT (400+ words) covering:
-1. KEY ACTION: What is happening now? Specific gestures, interactions.
-2. CHARACTER: Same person, new pose and expression.
-3. NEW ENVIRONMENT: Different setting from previous scene.
-4. LIGHTING: New mood and atmosphere.
-5. CAMERA: Exact specifications as defined above.
-
-OUTPUT RULES:
-- Single person only, single complete image
-- Full-bleed image filling entire frame edge-to-edge
-- Photorealistic, 4K quality
-- No text, watermarks, borders, or letterboxing
-
-Start with:
-TITEL: [6-8 words]
-BESCHREIBUNG: [2-3 sentences]
-
-Then the detailed prompt.`;
+The person must look identical to the reference image.`;
 
         promptParts.push({ text: promptText });
         
@@ -1139,71 +1093,36 @@ Then the detailed prompt.`;
         // Bei useSimplifiedPrompt: Vereinfachter Prompt für bessere Erfolgsrate
         let imagePromptText: string;
         
-        if (useSimplifiedPrompt) {
-          // ULTRA-SIMPLIFIED FALLBACK for difficult cases - minimal, clean English
-          const cameraDesc = point.cameraAngle && point.cameraAngle !== 'random' 
-            ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.description || ''
-            : '';
-          const shotDesc = point.shotType 
-            ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.description || ''
-            : '';
-          
-          imagePromptText = sceneIndex === 0
-            ? `Photorealistic image of the person from reference above.
-Scene: ${storyText.substring(0, 150)}
-${cameraDesc ? `Camera: ${cameraDesc}` : ''}
-${shotDesc ? `Shot: ${shotDesc}` : ''}
-Professional photography, 4K. Single person, full-bleed image, no borders.`
-            : `Next scene - same person from reference, new environment and action.
-Scene: ${storyText.substring(0, 150)}
-${cameraDesc ? `Camera: ${cameraDesc}` : ''}
-${shotDesc ? `Shot: ${shotDesc}` : ''}
-Professional photography, 4K. Single person, full-bleed image, no borders.`;
-        } else {
-          // OPTIMIZED English prompts - concise, positive formulations
-          const cameraAngleInfo = point.cameraAngle && point.cameraAngle !== 'random'
-            ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)
-            : null;
-          const shotTypeInfo = point.shotType
-            ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)
-            : null;
-          
-          imagePromptText = (sceneIndex === 0)
-            ? `REFERENCE IMAGES ABOVE: Exact character to replicate.
+        // ULTRA-OPTIMIZED PROMPTS - Short, direct, positive-only
+        // Key insight: Gemini Image works best with concise, clear instructions
+        const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
+          ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || ''
+          : '';
+        const shotLabel = point.shotType
+          ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
+          : '';
+        
+        // Extract only the core scene description (first 200 chars max)
+        const coreScene = useSimplifiedPrompt 
+          ? storyText.substring(0, 120)
+          : detailedImagePrompt.substring(0, 250);
+        
+        // FIRST-TRY OPTIMIZED: Ultra-concise, positive formulations only
+        imagePromptText = (sceneIndex === 0)
+          ? `Create photorealistic image of person shown in reference photos.
 
-CHARACTER MATCHING:
-- Replicate exact facial features, skin tone, hair, body type
-- Only change pose and clothing for scene
+Match exactly: face, eyes, skin tone, hair color and style, body type.
+${coreScene}
 
-CAMERA: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic angle'}
-SHOT: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate'}
+${cameraLabel ? `Camera angle: ${cameraLabel}.` : ''}${shotLabel ? ` Shot type: ${shotLabel}.` : ''}
+Single person. Full-bleed 16:9 image. Professional 4K photography.`
+          : `Continue story with same person from reference image.
 
-SCENE CONTENT:
-${detailedImagePrompt}
+Keep identical: face, skin, hair, body proportions.
+New scene: ${coreScene}
 
-OUTPUT SPECIFICATIONS:
-- Single person, single complete photograph
-- Full-bleed image filling entire frame edge-to-edge
-- Photorealistic, 4K, professional photography quality
-- No text, watermarks, or borders`
-            : `REFERENCE ABOVE: Previous scene of same story.
-
-CHARACTER CONTINUITY (40%): Same face, skin, hair, body
-NEW CONTENT (60%): New environment, action, pose, lighting
-
-CAMERA: ${cameraAngleInfo ? `${cameraAngleInfo.label} - ${cameraAngleInfo.description}` : 'Dynamic angle'}
-SHOT: ${shotTypeInfo ? `${shotTypeInfo.label} - ${shotTypeInfo.description}` : 'Scene-appropriate'}
-
-NEW SCENE:
-${detailedImagePrompt}
-
-OUTPUT SPECIFICATIONS:
-- Single person, single complete photograph
-- Full-bleed image filling entire frame edge-to-edge
-- Visually distinct from previous scene
-- Photorealistic, 4K quality
-- No text, watermarks, or borders`;
-        }
+${cameraLabel ? `Camera angle: ${cameraLabel}.` : ''}${shotLabel ? ` Shot type: ${shotLabel}.` : ''}
+Single person. Full-bleed 16:9 image. Professional 4K photography.`;
 
         parts.push({ text: imagePromptText });
 
