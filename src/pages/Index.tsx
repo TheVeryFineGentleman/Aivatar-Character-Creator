@@ -1071,7 +1071,15 @@ The person must look identical to the reference image.`;
           .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
           .trim();
 
-        if (!detailedImagePrompt) {
+        // CRITICAL: Check if AI returned an error/refusal instead of a prompt
+        const refusalPatterns = [
+          /I'm sorry/i, /I cannot/i, /I am unable/i, /I can't/i, 
+          /cannot fulfill/i, /unable to/i, /not able to/i
+        ];
+        const isRefusal = refusalPatterns.some(pattern => detailedImagePrompt.match(pattern));
+        
+        if (!detailedImagePrompt || isRefusal) {
+          console.warn(`Prompt generator returned refusal/empty, using storyText instead`);
           detailedImagePrompt = storyText;
         }
 
