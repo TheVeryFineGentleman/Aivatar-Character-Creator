@@ -947,8 +947,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     },
     characterBase64Images: string[],
     previousScenePrompt: string | null,
-    maxRetries: number = 3,
-    useSimplifiedPrompt: boolean = false
+    maxRetries: number = 3
   ): Promise<{ success: boolean; generatedImageUrl?: string; detailedImagePrompt?: string; videoPrompt?: string; sceneTitle?: string; sceneDescription?: string; errorMessage?: string; veo3CameraMovement?: string; veo3StartState?: string; veo3Motion?: string; veo3EndState?: string }> => {
     const storyText = point.versions[point.currentVersion];
     
@@ -1102,17 +1101,32 @@ The person must look identical to the reference image.`;
           ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
           : '';
         
-        // Scene text extraction (compact version)
-        
-        // ULTRA-COMPACT: Max 50 words for highest success rate
+        // PROGRESSIVE PROMPT SHORTENING based on attempt number
+        // Attempt 1: ~40 words, Attempt 2: ~25 words, Attempt 3: ~15 words
         const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
-        const shortScene = useSimplifiedPrompt 
-          ? storyText.substring(0, 80) 
-          : detailedImagePrompt.substring(0, 100);
         
-        imagePromptText = (sceneIndex === 0)
-          ? `Photo of reference person. Exact face, skin, hair. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`
-          : `Same person from reference. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`;
+        let shortScene: string;
+        if (attempt === 1) {
+          // First attempt: Full prompt (~40 words max)
+          shortScene = detailedImagePrompt.substring(0, 100);
+          imagePromptText = (sceneIndex === 0)
+            ? `Photo of reference person. Exact face, skin, hair. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`
+            : `Same person from reference. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`;
+        } else if (attempt === 2) {
+          // Second attempt: Shorter prompt (~25 words)
+          shortScene = storyText.substring(0, 60);
+          imagePromptText = (sceneIndex === 0)
+            ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
+            : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
+        } else {
+          // Third attempt: Ultra-minimal (~12 words)
+          shortScene = storyText.substring(0, 30);
+          imagePromptText = (sceneIndex === 0)
+            ? `Reference person. ${shortScene}. 16:9.`
+            : `Same person. ${shortScene}. 16:9.`;
+        }
+        
+        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
 
         parts.push({ text: imagePromptText });
 
@@ -1171,10 +1185,10 @@ The person must look identical to the reference image.`;
           const finishMessage = candidates[0]?.finishMessage;
           
           if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
-            console.warn(`API response for scene ${sceneIndex + 1}:`, { finishReason, finishMessage });
-            throw new Error(`Szene ${sceneIndex + 1}: Bild konnte nicht generiert werden (${finishReason}). Versuche einen vereinfachten Prompt.`);
+            console.warn(`API response for scene ${sceneIndex + 1} attempt ${attempt}:`, { finishReason, finishMessage });
+            throw new Error(`Bild blockiert (${finishReason})`);
           }
-          throw new Error(`Szene ${sceneIndex + 1}: Kein Bild generiert`);
+          throw new Error(`Kein Bild generiert`);
         }
 
         // STEP 3: Generate Veo3-optimized video prompt AFTER image is generated
@@ -1271,7 +1285,7 @@ NUR DAS JSON, keine Erklärung!`
         return {
           success: true,
           generatedImageUrl,
-          detailedImagePrompt,
+          detailedImagePrompt: imagePromptText,
           videoPrompt,
           sceneTitle,
           sceneDescription,
@@ -1286,8 +1300,9 @@ NUR DAS JSON, keine Erklärung!`
         console.error(`Attempt ${attempt}/${maxRetries} failed for scene ${sceneIndex + 1}:`, error);
         
         if (attempt < maxRetries) {
-          // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Brief pause before retry with shorter prompt
+          console.log(`Retrying scene ${sceneIndex + 1} with shorter prompt...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
           continue;
         }
         
@@ -1295,7 +1310,7 @@ NUR DAS JSON, keine Erklärung!`
         let errorMessage = "Unbekannter Fehler";
         if (error instanceof Error) {
           if (error.name === 'AbortError') {
-            errorMessage = `Szene ${sceneIndex + 1}: Zeitüberschreitung (2 Min.)`;
+            errorMessage = `Zeitüberschreitung (2 Min.)`;
           } else {
             errorMessage = error.message;
           }
@@ -1340,7 +1355,8 @@ NUR DAS JSON, keine Erklärung!`
     
     let successCount = 0;
     let failedScenes: number[] = [];
-    // NO AUTOMATIC RETRIES - fail immediately and let user retry manually with improved prompt
+    // AUTOMATIC RETRIES with progressively shorter prompts (3 attempts per scene)
+    const MAX_AUTO_RETRIES = 3;
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
@@ -1377,20 +1393,15 @@ NUR DAS JSON, keine Erklärung!`
         }
       }
       
-      // Single attempt - no automatic retries
-      console.log(`Szene ${sceneIndex + 1}: Generierung...`);
-      
-      // Check if this scene already failed before (user clicked retry)
-      const previousError = storyPoints[sceneIndex]?.generationError;
-      const useSimplifiedPrompt = !!previousError; // Use simplified prompt on manual retry
+      // AUTOMATIC RETRIES with progressive prompt shortening
+      console.log(`Szene ${sceneIndex + 1}: Generierung mit ${MAX_AUTO_RETRIES} max. Versuchen...`);
       
       const result = await generateSingleStoryScene(
         sceneIndex,
         point,
         sceneReferenceImages,
         previousScenePrompt,
-        1, // Single attempt only
-        useSimplifiedPrompt
+        MAX_AUTO_RETRIES // 3 attempts with progressively shorter prompts
       );
       
       if (result.success) {
@@ -1440,12 +1451,14 @@ NUR DAS JSON, keine Erklärung!`
         }
         
         toast({
-          title: `Szene ${sceneIndex + 1} fertig`,
-          description: `${successCount}/${storyPoints.length} Szenen generiert.`
+          title: `Szene ${sceneIndex + 1} ✓`,
+          description: `${successCount}/${storyPoints.length} - Starte nächste Szene...`
         });
         
+        // IMMEDIATELY continue to next scene (no delay needed - the loop does this automatically)
+        
       } else {
-        // IMMEDIATE FAILURE - no automatic retries
+        // ALL RETRIES FAILED - stop here
         failedScenes.push(sceneIndex + 1);
         const errorMessage = result.errorMessage || "Unbekannter Fehler";
         
@@ -1457,8 +1470,8 @@ NUR DAS JSON, keine Erklärung!`
         }));
         
         toast({
-          title: `Szene ${sceneIndex + 1} fehlgeschlagen`,
-          description: `${errorMessage}. Klicke "Erneut" für kompakteren Prompt.`,
+          title: `Szene ${sceneIndex + 1} fehlgeschlagen nach ${MAX_AUTO_RETRIES} Versuchen`,
+          description: `${errorMessage}`,
           variant: "destructive"
         });
         
