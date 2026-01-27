@@ -1102,27 +1102,17 @@ The person must look identical to the reference image.`;
           ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
           : '';
         
-        // Extract only the core scene description (first 200 chars max)
-        const coreScene = useSimplifiedPrompt 
-          ? storyText.substring(0, 120)
-          : detailedImagePrompt.substring(0, 250);
+        // Scene text extraction (compact version)
         
-        // FIRST-TRY OPTIMIZED: Ultra-concise, positive formulations only
+        // ULTRA-COMPACT: Max 50 words for highest success rate
+        const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
+        const shortScene = useSimplifiedPrompt 
+          ? storyText.substring(0, 80) 
+          : detailedImagePrompt.substring(0, 100);
+        
         imagePromptText = (sceneIndex === 0)
-          ? `Create photorealistic image of person shown in reference photos.
-
-Match exactly: face, eyes, skin tone, hair color and style, body type.
-${coreScene}
-
-${cameraLabel ? `Camera angle: ${cameraLabel}.` : ''}${shotLabel ? ` Shot type: ${shotLabel}.` : ''}
-Single person. Full-bleed 16:9 image. Professional 4K photography.`
-          : `Continue story with same person from reference image.
-
-Keep identical: face, skin, hair, body proportions.
-New scene: ${coreScene}
-
-${cameraLabel ? `Camera angle: ${cameraLabel}.` : ''}${shotLabel ? ` Shot type: ${shotLabel}.` : ''}
-Single person. Full-bleed 16:9 image. Professional 4K photography.`;
+          ? `Photo of reference person. Exact face, skin, hair. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`
+          : `Same person from reference. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`;
 
         parts.push({ text: imagePromptText });
 
