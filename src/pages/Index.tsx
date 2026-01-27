@@ -1109,29 +1109,35 @@ The person must look identical to the reference image.`;
           ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
           : '';
         
-        // PROGRESSIVE PROMPT SHORTENING based on attempt number
-        // Attempt 1: ~40 words, Attempt 2: ~25 words, Attempt 3: ~15 words
+        // AGGRESSIVE PROGRESSIVE PROMPT SHORTENING based on attempt number
+        // Each retry uses a COMPLETELY DIFFERENT prompt strategy
         const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
         
-        let shortScene: string;
+        // Extract just the first action verb or noun from scene
+        const extractKeywords = (text: string, maxWords: number) => {
+          return text.split(/\s+/).slice(0, maxWords).join(' ');
+        };
+        
         if (attempt === 1) {
-          // First attempt: Full prompt (~40 words max)
-          shortScene = detailedImagePrompt.substring(0, 100);
+          // First attempt: Standard prompt (~35 words max)
+          const shortScene = detailedImagePrompt.substring(0, 80);
           imagePromptText = (sceneIndex === 0)
-            ? `Photo of reference person. Exact face, skin, hair. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`
-            : `Same person from reference. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 4K, 16:9.`;
+            ? `Photo of reference person. Exact face, skin, hair. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 16:9.`
+            : `Same person from reference. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 16:9.`;
         } else if (attempt === 2) {
-          // Second attempt: Shorter prompt (~25 words)
-          shortScene = storyText.substring(0, 60);
+          // Second attempt: Simplified scene description (~20 words)
+          const keywords = extractKeywords(storyText, 8);
           imagePromptText = (sceneIndex === 0)
-            ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
-            : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
+            ? `Reference person portrait. ${keywords}. Cinematic 16:9.`
+            : `Same person. ${keywords}. Cinematic 16:9.`;
+        } else if (attempt === 3) {
+          // Third attempt: Ultra-minimal generic prompt (~10 words)
+          imagePromptText = (sceneIndex === 0)
+            ? `Reference person in scene. Professional photo. 16:9.`
+            : `Same person, different pose. Professional photo. 16:9.`;
         } else {
-          // Third attempt: Ultra-minimal (~12 words)
-          shortScene = storyText.substring(0, 30);
-          imagePromptText = (sceneIndex === 0)
-            ? `Reference person. ${shortScene}. 16:9.`
-            : `Same person. ${shortScene}. 16:9.`;
+          // Fourth+ attempt: Absolute minimum
+          imagePromptText = `Person portrait. 16:9 aspect ratio.`;
         }
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
@@ -1308,9 +1314,14 @@ NUR DAS JSON, keine Erklärung!`
         console.error(`Attempt ${attempt}/${maxRetries} failed for scene ${sceneIndex + 1}:`, error);
         
         if (attempt < maxRetries) {
-          // Brief pause before retry with shorter prompt
-          console.log(`Retrying scene ${sceneIndex + 1} with shorter prompt...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Brief pause before retry with DIFFERENT shorter prompt
+          console.log(`🔄 Szene ${sceneIndex + 1}: Versuch ${attempt} fehlgeschlagen, starte Versuch ${attempt + 1} mit kürzerem Prompt...`);
+          // Show toast about retry
+          toast({
+            title: `Szene ${sceneIndex + 1} - Versuch ${attempt}/${maxRetries} fehlgeschlagen`,
+            description: `Wiederhole automatisch mit kürzerem Prompt...`,
+          });
+          await new Promise(resolve => setTimeout(resolve, 1500));
           continue;
         }
         
@@ -1363,8 +1374,8 @@ NUR DAS JSON, keine Erklärung!`
     
     let successCount = 0;
     let failedScenes: number[] = [];
-    // AUTOMATIC RETRIES with progressively shorter prompts (3 attempts per scene)
-    const MAX_AUTO_RETRIES = 3;
+    // AUTOMATIC RETRIES with progressively shorter prompts (4 attempts per scene)
+    const MAX_AUTO_RETRIES = 4;
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
