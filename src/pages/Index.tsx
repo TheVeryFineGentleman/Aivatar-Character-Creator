@@ -1340,7 +1340,7 @@ NUR DAS JSON, keine Erklärung!`
     
     let successCount = 0;
     let failedScenes: number[] = [];
-    const MAX_SCENE_ATTEMPTS = 5; // Maximum attempts per scene (including fallback)
+    // NO AUTOMATIC RETRIES - fail immediately and let user retry manually with improved prompt
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
@@ -1377,112 +1377,88 @@ NUR DAS JSON, keine Erklärung!`
         }
       }
       
-      let sceneSuccess = false;
-      let sceneAttempt = 0;
-      let lastError = "";
+      // Single attempt - no automatic retries
+      console.log(`Szene ${sceneIndex + 1}: Generierung...`);
       
-      // Keep trying this scene until it succeeds or we exhaust all attempts
-      while (!sceneSuccess && sceneAttempt < MAX_SCENE_ATTEMPTS) {
-        sceneAttempt++;
-        console.log(`Szene ${sceneIndex + 1}: Versuch ${sceneAttempt}/${MAX_SCENE_ATTEMPTS}`);
-        
-        // On later attempts, try with simplified prompt
-        const useSimplifiedPrompt = sceneAttempt > 2;
-        
-        const result = await generateSingleStoryScene(
-          sceneIndex,
-          point,
-          sceneReferenceImages,
-          previousScenePrompt,
-          1, // Only 1 internal retry per attempt (we handle retries in this loop)
-          useSimplifiedPrompt
-        );
-        
-        if (result.success) {
-          sceneSuccess = true;
-          
-          // Store the original image URL without any labels baked in
-          const finalImageUrl = result.generatedImageUrl;
-          
-          setStoryPoints(prev => prev.map((p, idx) => {
-            if (idx === sceneIndex) {
-              return {
-                ...p,
-                generatedImage: finalImageUrl,
-                detailedImagePrompt: result.detailedImagePrompt,
-                videoPrompt: result.videoPrompt,
-                sceneTitle: result.sceneTitle,
-                sceneDescription: result.sceneDescription,
-                veo3CameraMovement: result.veo3CameraMovement,
-                veo3StartState: result.veo3StartState,
-                veo3Motion: result.veo3Motion,
-                veo3EndState: result.veo3EndState,
-                generationError: undefined
-              };
-            }
-            return p;
-          }));
-          successCount++;
-          
-          // Convert this image to base64 for the next scene
-          if (result.generatedImageUrl) {
-            try {
-              const response = await fetch(result.generatedImageUrl);
-              const blob = await response.blob();
-              const base64 = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  const dataUrl = reader.result as string;
-                  const base64Data = dataUrl.split(',')[1];
-                  if (base64Data) resolve(base64Data);
-                  else reject(new Error('No base64 data'));
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              lastGeneratedImageBase64 = base64;
-            } catch (error) {
-              console.warn('Could not convert generated image to base64 for reference:', error);
-            }
-          }
-          
-          toast({
-            title: `Szene ${sceneIndex + 1} fertig`,
-            description: `${sceneAttempt > 1 ? `Nach ${sceneAttempt} Versuchen. ` : ''}${successCount}/${storyPoints.length} Szenen generiert.`
-          });
-          
-        } else {
-          lastError = result.errorMessage || "Unbekannter Fehler";
-          console.warn(`Szene ${sceneIndex + 1} Versuch ${sceneAttempt} fehlgeschlagen:`, lastError);
-          
-          // Update UI to show current error (will be cleared on success)
-          setStoryPoints(prev => prev.map((p, idx) => {
-            if (idx === sceneIndex) {
-              return { ...p, generationError: `Versuch ${sceneAttempt}/${MAX_SCENE_ATTEMPTS}: ${lastError}` };
-            }
-            return p;
-          }));
-          
-          // Wait before next attempt
-          if (sceneAttempt < MAX_SCENE_ATTEMPTS) {
-            await new Promise(resolve => setTimeout(resolve, 3000));
-          }
-        }
-      }
+      // Check if this scene already failed before (user clicked retry)
+      const previousError = storyPoints[sceneIndex]?.generationError;
+      const useSimplifiedPrompt = !!previousError; // Use simplified prompt on manual retry
       
-      // If scene completely failed after all attempts
-      if (!sceneSuccess) {
-        failedScenes.push(sceneIndex + 1);
+      const result = await generateSingleStoryScene(
+        sceneIndex,
+        point,
+        sceneReferenceImages,
+        previousScenePrompt,
+        1, // Single attempt only
+        useSimplifiedPrompt
+      );
+      
+      if (result.success) {
+        // Store the original image URL without any labels baked in
+        const finalImageUrl = result.generatedImageUrl;
+        
         setStoryPoints(prev => prev.map((p, idx) => {
           if (idx === sceneIndex) {
-            return { ...p, generationError: `Endgültig fehlgeschlagen: ${lastError}` };
+            return {
+              ...p,
+              generatedImage: finalImageUrl,
+              detailedImagePrompt: result.detailedImagePrompt,
+              videoPrompt: result.videoPrompt,
+              sceneTitle: result.sceneTitle,
+              sceneDescription: result.sceneDescription,
+              veo3CameraMovement: result.veo3CameraMovement,
+              veo3StartState: result.veo3StartState,
+              veo3Motion: result.veo3Motion,
+              veo3EndState: result.veo3EndState,
+              generationError: undefined
+            };
+          }
+          return p;
+        }));
+        successCount++;
+        
+        // Convert this image to base64 for the next scene
+        if (result.generatedImageUrl) {
+          try {
+            const response = await fetch(result.generatedImageUrl);
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                const base64Data = dataUrl.split(',')[1];
+                if (base64Data) resolve(base64Data);
+                else reject(new Error('No base64 data'));
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            lastGeneratedImageBase64 = base64;
+          } catch (error) {
+            console.warn('Could not convert generated image to base64 for reference:', error);
+          }
+        }
+        
+        toast({
+          title: `Szene ${sceneIndex + 1} fertig`,
+          description: `${successCount}/${storyPoints.length} Szenen generiert.`
+        });
+        
+      } else {
+        // IMMEDIATE FAILURE - no automatic retries
+        failedScenes.push(sceneIndex + 1);
+        const errorMessage = result.errorMessage || "Unbekannter Fehler";
+        
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === sceneIndex) {
+            return { ...p, generationError: errorMessage };
           }
           return p;
         }));
         
         toast({
           title: `Szene ${sceneIndex + 1} fehlgeschlagen`,
-          description: `Nach ${MAX_SCENE_ATTEMPTS} Versuchen abgebrochen. Generierung wird gestoppt.`,
+          description: `${errorMessage}. Klicke "Erneut" für kompakteren Prompt.`,
           variant: "destructive"
         });
         
@@ -1527,11 +1503,10 @@ NUR DAS JSON, keine Erklärung!`
     }));
   };
 
-  // Regenerate a single failed story scene with automatic 5x retry and prompt regeneration
+  // Regenerate a single failed story scene - NO AUTO RETRY, use SIMPLIFIED prompt immediately
   const regenerateSingleStoryScene = async (sceneIndex: number) => {
     if (!apiKey || regeneratingPointIndex !== null) return;
     
-    const MAX_RETRY_ATTEMPTS = 5;
     setRegeneratingPointIndex(sceneIndex);
     
     // Clear previous error
@@ -1570,275 +1545,144 @@ NUR DAS JSON, keine Erklärung!`
     
     // Get previous scene's image for style reference
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
-    const previousScenePrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.detailedImagePrompt : null;
     
-    let lastError = "";
-    let success = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
     
-    // Retry loop with prompt regeneration
-    for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS && !success; attempt++) {
-      // Update UI to show current attempt
+    try {
+      // ALWAYS use ultra-simplified prompt on manual retry - maximum 30 words
+      const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
+        ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || ''
+        : '';
+      const shotLabel = point.shotType
+        ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
+        : '';
+      const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
+      
+      // Ultra-minimal prompt - just the essentials (max ~30 words)
+      const shortScene = storyText.substring(0, 60);
+      const imagePromptText = sceneIndex === 0
+        ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
+        : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
+      
+      console.log(`Regenerating scene ${sceneIndex + 1} with ultra-compact prompt:`, imagePromptText);
+      
+      // Build image parts - reference images FIRST
+      const parts: any[] = [];
+      for (const base64Data of characterBase64Images) {
+        parts.push({ inlineData: { mimeType: "image/png", data: base64Data } });
+      }
+      
+      // Add previous scene image if available (for continuity)
+      if (previousSceneImage) {
+        try {
+          const response = await fetch(previousSceneImage);
+          const blob = await response.blob();
+          const prevBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+            reader.readAsDataURL(blob);
+          });
+          parts.push({ inlineData: { mimeType: "image/jpeg", data: prevBase64 } });
+        } catch (e) {
+          console.warn("Could not add previous scene as reference:", e);
+        }
+      }
+      
+      // Text prompt LAST
+      parts.push({ text: imagePromptText });
+      
+      const imageResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{ role: "user", parts }],
+            generationConfig: { 
+              responseModalities: ["IMAGE", "TEXT"],
+              imageConfig: { aspectRatio: "16:9" }
+            },
+            safetySettings: [
+              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+            ]
+          })
+        }
+      );
+      
+      clearTimeout(timeoutId);
+      
+      if (!imageResponse.ok) {
+        throw new Error(getErrorMessageFromStatus(imageResponse.status, "Bild"));
+      }
+      
+      const imageData = await imageResponse.json();
+      const candidates = imageData.candidates ?? [];
+      let generatedImageUrl = "";
+      
+      // Check for safety/content blocks
+      const finishReason = candidates[0]?.finishReason;
+      if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
+        throw new Error(`Bild blockiert (${finishReason})`);
+      }
+      
+      if (candidates.length > 0) {
+        const partsOut = candidates[0]?.content?.parts ?? [];
+        const imagePart = partsOut.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
+        if (imagePart) {
+          const base64 = imagePart.inlineData.data;
+          const mimeType = imagePart.inlineData.mimeType || "image/png";
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+          const blob = new Blob([bytes], { type: mimeType });
+          generatedImageUrl = URL.createObjectURL(blob);
+        }
+      }
+      
+      if (!generatedImageUrl) {
+        throw new Error("Kein Bild generiert");
+      }
+      
+      // Success! Update story point
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
-          return { ...p, generationError: attempt > 1 ? `Versuch ${attempt}/${MAX_RETRY_ATTEMPTS}...` : undefined };
+          return {
+            ...p,
+            generatedImage: generatedImageUrl,
+            detailedImagePrompt: imagePromptText,
+            generationError: undefined
+          };
         }
         return p;
       }));
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      toast({ title: `Szene ${sceneIndex + 1} generiert!` });
       
-      try {
-        // Use simplified prompt after 2 failed attempts
-        const useSimplifiedPrompt = attempt > 2;
-        
-        // STEP 1: Generate NEW image prompt WITH reference images
-        const promptParts: any[] = [
-          {
-            text: useSimplifiedPrompt 
-              ? `Create a simple, clear image prompt for this scene: "${storyText}". 
-                 Focus on: one person, simple background, clear action. 
-                 Format: 16:9 widescreen. Keep it short and direct.`
-              : `Erstelle einen DETAILLIERTEN Bild-Prompt auf Deutsch für folgende Szene:
-
-"${storyText}"
-
-${characterBase64Images.length > 0 ? `WICHTIG: Du erhältst ${characterBase64Images.length} Referenzbild(er) der Hauptperson.
-Analysiere diese Bilder SORGFÄLTIG und beschreibe die Person mit EXAKTEN Details:
-- Gesichtszüge: Augenfarbe, Augenform, Augenbrauen, Nasenform, Lippenform, Gesichtsform
-- Hautfarbe und -textur (genauer Hautton)
-- Haare: exakte Farbe, Länge, Textur, Stil
-- Körperbau und Erscheinungsbild
-- Besondere Merkmale (Sommersprossen, Muttermale, etc.)
-
-DEINE PERSONENBESCHREIBUNG MUSS EXAKT AUF DIE PERSON IN DEN REFERENZBILDERN PASSEN!
-` : ''}
-
-Kamerawinkel: ${point.cameraAngle || 'dynamisch'}
-Shot-Typ: ${point.shotType || 'passend zur Szene'}
-
-${previousScenePrompt ? `Stil wie vorherige Szene: "${previousScenePrompt.substring(0, 300)}..."` : ''}
-
-WICHTIG: Beginne deine Antwort mit einer kurzen Szenen-Überschrift (max 6-8 Wörter) in der Form:
-TITEL: [Kurze prägnante Beschreibung der Szene]
-
-Dann gib eine kurze Szenenbeschreibung (2-3 Sätze) in der Form:
-BESCHREIBUNG: [Kurze Zusammenfassung was in dieser Szene passiert]
-
-Dann folgt der detaillierte Bild-Prompt.
-Beschreibe: Person (EXAKT wie in den Referenzbildern), Umgebung, Beleuchtung, Farben, technische Details. Mindestens 400 Wörter. NUR EINE Person. Format: WIDESCREEN 16:9 cineastisches Breitbild.`
-          }
-        ];
-        
-        for (const base64Data of characterBase64Images) {
-          promptParts.push({
-            inlineData: { mimeType: "image/png", data: base64Data }
-          });
-        }
-        
-        const promptResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{ parts: promptParts }],
-              generationConfig: { temperature: useSimplifiedPrompt ? 0.5 : 0.85, maxOutputTokens: 1500 }
-            })
-          }
-        );
-        
-        if (!promptResponse.ok) {
-          throw new Error(getErrorMessageFromStatus(promptResponse.status, "Prompt"));
-        }
-        
-        const promptData = await promptResponse.json();
-        const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || storyText;
-        
-        let sceneTitle = "";
-        let sceneDescription = "";
-        let detailedImagePrompt = "";
-        
-        const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
-        if (titleMatch) {
-          sceneTitle = titleMatch[1].trim();
-        } else {
-          sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
-        }
-        
-        const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
-        if (descriptionMatch) {
-          sceneDescription = descriptionMatch[1].trim();
-        } else {
-          sceneDescription = storyText;
-        }
-        
-        detailedImagePrompt = fullPromptResponse
-          .replace(/^TITEL:\s*.+?\n?/im, '')
-          .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
-          .trim();
-        
-        // STEP 2: Generate image with the new prompt
-        const parts: any[] = [{ 
-          text: useSimplifiedPrompt
-            ? `Generate ONE person from the reference image. Scene: ${storyText.substring(0, 200)}. 
-               Simple background. High quality photo. NO collages.
-               🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`
-            : `Study the reference images - replicate the EXACT same person with identical features.
-
-${detailedImagePrompt}
-
-STRICT RULES:
-- ONE person only (matching reference images)
-- NO collages or multiple images
-- 🚫 ABSOLUTELY NO BLACK BORDERS - image must fill 100% of the frame!
-- 🚫 NO letterboxing, NO black bars on any side!`
-        }];
-        
-        for (const base64Data of characterBase64Images) {
-          parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
-        }
-        
-        if (previousSceneImage) {
-          try {
-            const response = await fetch(previousSceneImage);
-            const blob = await response.blob();
-            const reader = new FileReader();
-            const prevBase64 = await new Promise<string>((resolve) => {
-              reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-              reader.readAsDataURL(blob);
-            });
-            parts.push({ inlineData: { mimeType: "image/jpeg", data: prevBase64 } });
-          } catch (e) {
-            console.warn("Could not add previous scene as reference:", e);
-          }
-        }
-        
-        const imageResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{ role: "user", parts }],
-              generationConfig: { 
-                responseModalities: ["IMAGE", "TEXT"],
-                imageConfig: { aspectRatio: "16:9" }
-              }
-            })
-          }
-        );
-        
-        if (!imageResponse.ok) {
-          throw new Error(getErrorMessageFromStatus(imageResponse.status, "Bild"));
-        }
-        
-        const imageData = await imageResponse.json();
-        const candidates = imageData.candidates ?? [];
-        let generatedImageUrl = "";
-        
-        // Check for safety/content blocks
-        const finishReason = candidates[0]?.finishReason;
-        if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
-          throw new Error(`Bild blockiert (${finishReason})`);
-        }
-        
-        if (candidates.length > 0) {
-          const partsOut = candidates[0]?.content?.parts ?? [];
-          const imagePart = partsOut.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
-          if (imagePart) {
-            const base64 = imagePart.inlineData.data;
-            const mimeType = imagePart.inlineData.mimeType || "image/png";
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-            const blob = new Blob([bytes], { type: mimeType });
-            generatedImageUrl = URL.createObjectURL(blob);
-          }
-        }
-        
-        if (!generatedImageUrl) {
-          throw new Error("Kein Bild generiert");
-        }
-        
-        // STEP 3: Generate video prompt
-        const videoResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: `Erstelle einen Video-Animations-Prompt auf Deutsch für: "${storyText}". Beschreibe Kamerabewegung, Charakter-Animation, Umgebung. Mindestens 200 Wörter.`
-                }]
-              }],
-              generationConfig: { temperature: 0.85, maxOutputTokens: 600 }
-            })
-          }
-        );
-        
-        let videoPrompt = "";
-        if (videoResponse.ok) {
-          const vpData = await videoResponse.json();
-          videoPrompt = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-        }
-        
-        // Success! Update story point
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === sceneIndex) {
-            return {
-              ...p,
-              generatedImage: generatedImageUrl,
-              detailedImagePrompt,
-              videoPrompt,
-              sceneTitle,
-              sceneDescription,
-              generationError: undefined
-            };
-          }
-          return p;
-        }));
-        
-        success = true;
-        toast({ 
-          title: `Szene ${sceneIndex + 1} generiert!`,
-          description: attempt > 1 ? `Erfolgreich nach ${attempt} Versuchen.` : undefined
-        });
-        
-      } catch (error) {
-        clearTimeout(timeoutId);
-        
-        if (error instanceof Error) {
-          lastError = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
-        } else {
-          lastError = "Unbekannter Fehler";
-        }
-        
-        console.warn(`Szene ${sceneIndex + 1} Versuch ${attempt}/${MAX_RETRY_ATTEMPTS} fehlgeschlagen:`, lastError);
-        
-        // Wait before next attempt (except on last attempt)
-        if (attempt < MAX_RETRY_ATTEMPTS) {
-          await new Promise(resolve => setTimeout(resolve, 2000 + attempt * 1000));
-        }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      let errorMessage = "Unbekannter Fehler";
+      if (error instanceof Error) {
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
       }
-    }
-    
-    // All attempts failed
-    if (!success) {
+      
+      console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
+      
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
-          return { ...p, generationError: `Fehlgeschlagen nach ${MAX_RETRY_ATTEMPTS} Versuchen: ${lastError}` };
+          return { ...p, generationError: errorMessage };
         }
         return p;
       }));
       
       toast({ 
         title: `Szene ${sceneIndex + 1} fehlgeschlagen`, 
-        description: `Nach ${MAX_RETRY_ATTEMPTS} Versuchen: ${lastError}`, 
+        description: errorMessage, 
         variant: "destructive" 
       });
     }
@@ -2052,14 +1896,7 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     retryCount: number = 0,
     useSimplifiedPrompt: boolean = false
   ): Promise<string | null> => {
-    const MAX_RETRIES = 3;
-    const ABSOLUTE_MAX_ATTEMPTS = 5; // Prevent infinite loops on any device
-    
-    // CRITICAL: Absolute safety limit - prevent infinite loops
-    if (retryCount >= ABSOLUTE_MAX_ATTEMPTS) {
-      console.error(`❌ ABSOLUTE_MAX_ATTEMPTS (${ABSOLUTE_MAX_ATTEMPTS}) reached for image ${index + 1} - stopping immediately`);
-      return null;
-    }
+    // NO AUTO RETRY - fail immediately on error
     
     try {
       // Determine camera angle - use selected angle or cycle through angles if random
@@ -2246,18 +2083,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // Check for IMAGE_OTHER error (model couldn't generate from reference)
       if (candidates[0]?.finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        
-        if (retryCount < MAX_RETRIES) {
-          console.log(`🔄 Retrying image ${index + 1} (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
-          updateSlotSafe(index, { status: "loading", progress: 30, retrying: true });
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
-        } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
-          console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
-          updateSlotSafe(index, { status: "loading", progress: 40, retrying: true });
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
-        }
+        // NO AUTO RETRY - return null immediately
         return null;
       }
 
@@ -2297,33 +2123,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       console.error("❌ No image in response for image", index + 1);
       console.error("❌ Response structure did not match expected format");
       
-      // Retry if we haven't exceeded max retries
-      if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Retrying image ${index + 1} (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
-        
-        // Update slot to show retry status
-        updateSlotSafe(index, { 
-          status: "loading", 
-          progress: 30,
-          retrying: true 
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
-      } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
-        // Final attempt with simplified prompt
-        console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt...`);
-        
-        updateSlotSafe(index, { 
-          status: "loading", 
-          progress: 40,
-          retrying: true 
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
-      }
-      
+      // NO AUTO RETRY - return null immediately
       return null;
     } catch (error) {
       console.error(`❌ Error generating image ${index}:`, error);
@@ -2336,33 +2136,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         console.error("⚠️ POSSIBLE CORS ERROR - Direct API call from browser may be blocked!");
       }
       
-      // Retry if we haven't exceeded max retries
-      if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Retrying image ${index + 1} after error (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
-        
-        // Update slot to show retry status
-        updateSlotSafe(index, { 
-          status: "loading", 
-          progress: 30,
-          retrying: true 
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1);
-      } else if (retryCount === MAX_RETRIES && !useSimplifiedPrompt) {
-        // Final attempt with simplified prompt
-        console.log(`🔄 Final attempt for image ${index + 1} with simplified prompt after error...`);
-        
-        updateSlotSafe(index, { 
-          status: "loading", 
-          progress: 40,
-          retrying: true 
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return generateSingleImage(index, apiKey, base64Images, background, numberOfImages, selectedFormat, selectedShot, customPromptText, angle, retryCount + 1, true);
-      }
-      
+      // NO AUTO RETRY - return null immediately
       return null;
     }
   };
