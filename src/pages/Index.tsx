@@ -1127,34 +1127,35 @@ The person must look identical to the reference image.`;
           return words.join(' ');
         };
         
-        // PROGRESSIVE RETRY TACTICS - each is completely different
+        // PROGRESSIVE RETRY TACTICS - ALL USE REFERENCE IMAGES for character consistency
+        // Each tactic simplifies the TEXT prompt but ALWAYS includes reference images
         if (attempt === 1) {
-          // TACTIC 1: Standard scene-focused prompt
-          const sceneDesc = extractSafeKeywords(detailedImagePrompt, 20);
-          imagePromptText = `SCENE: ${sceneDesc}. Character from reference photo. ${cameraShot}. Cinematic 16:9.`;
+          // TACTIC 1: Full scene description with character instruction
+          const sceneDesc = extractSafeKeywords(detailedImagePrompt, 15);
+          imagePromptText = `Generate image of the EXACT SAME PERSON from reference photo in this scene: ${sceneDesc}. Copy face, hair, body exactly. ${cameraShot}. Cinematic 16:9.`;
         } else if (attempt === 2) {
-          // TACTIC 2: Ultra-short, English only, no complex descriptions
-          const keywords = extractSafeKeywords(storyText, 6);
-          imagePromptText = `Photo of person. Scene: ${keywords}. Professional cinematography.`;
+          // TACTIC 2: Simplified scene, strong character emphasis
+          const keywords = extractSafeKeywords(storyText, 8);
+          imagePromptText = `Photo: SAME PERSON as in reference. Scene: ${keywords}. Match face and body from reference image exactly.`;
         } else if (attempt === 3) {
-          // TACTIC 3: Generic portrait with minimal scene context
-          imagePromptText = `Professional portrait photo. Person looking at camera. Studio lighting. Clean background. 16:9 format.`;
+          // TACTIC 3: Minimal scene, maximum character focus
+          imagePromptText = `Create photo of THIS EXACT PERSON from reference image. Professional portrait. Copy all features from reference: face, hair, eyes, body type. 16:9.`;
         } else if (attempt === 4) {
-          // TACTIC 4: Completely generic - just describe a safe scene
-          imagePromptText = `A person standing in a modern environment. Natural lighting. Wide shot. Professional photography.`;
+          // TACTIC 4: Pure character recreation with neutral setting
+          imagePromptText = `Recreate the person from the reference photo. Same face, same hair, same features. Simple background. Portrait style.`;
         } else if (attempt === 5) {
-          // TACTIC 5: Art style instead of photo
-          imagePromptText = `Digital art portrait of a person. Soft lighting. Neutral background. Artistic style.`;
+          // TACTIC 5: Direct instruction for character matching
+          imagePromptText = `Generate: Same person as reference. Copy facial features exactly. Neutral environment. Professional lighting.`;
         } else {
-          // TACTIC 6: Absolute minimum - just a portrait
-          imagePromptText = `Portrait. Person. 16:9.`;
+          // TACTIC 6: Ultra-simple character instruction
+          imagePromptText = `Same person from reference photo. Portrait. 16:9.`;
         }
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
 
-        // TACTIC 3-6: Skip reference images entirely for safer generation
-        const useReferenceImages = attempt <= 2;
-        const imageParts = useReferenceImages ? parts : [{ text: imagePromptText }];
+        // CRITICAL: ALWAYS use reference images to maintain character consistency
+        // Reference images are ALWAYS included - never skip them
+        parts.push({ text: imagePromptText });
         
         // Progressive safety settings - more permissive for later attempts
         const getSafetySettings = (attemptNum: number) => {
@@ -1166,7 +1167,7 @@ The person must look identical to the reference image.`;
               { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
             ];
           } else {
-            // More relaxed for generic prompts
+            // More relaxed for simpler prompts
             return [
               { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
               { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -1176,7 +1177,7 @@ The person must look identical to the reference image.`;
           }
         };
         
-        console.log(`Attempt ${attempt}: Using ${useReferenceImages ? 'reference images' : 'text-only'} mode`);
+        console.log(`Attempt ${attempt}: ALWAYS using reference images for character consistency`);
 
         const imageResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -1185,7 +1186,7 @@ The person must look identical to the reference image.`;
             headers: { "Content-Type": "application/json" },
             signal: controller.signal,
             body: JSON.stringify({
-              contents: [{ role: "user", parts: useReferenceImages ? parts : [{ text: imagePromptText }] }],
+              contents: [{ role: "user", parts: parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
                 imageConfig: {
