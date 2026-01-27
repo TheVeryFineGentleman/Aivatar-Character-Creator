@@ -1109,35 +1109,37 @@ The person must look identical to the reference image.`;
           ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
           : '';
         
-        // AGGRESSIVE PROGRESSIVE PROMPT SHORTENING based on attempt number
-        // Each retry uses a COMPLETELY DIFFERENT prompt strategy
+        // SCENE-FOCUSED PROMPTS - Reference is ONLY for character & style
+        // The SCENE DESCRIPTION is the primary focus, not the reference image
         const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
         
-        // Extract just the first action verb or noun from scene
+        // Extract keywords for fallback
         const extractKeywords = (text: string, maxWords: number) => {
           return text.split(/\s+/).slice(0, maxWords).join(' ');
         };
         
+        // CRITICAL: Scene description is PRIMARY, reference is secondary (only for character look & style)
         if (attempt === 1) {
-          // First attempt: Standard prompt (~35 words max)
-          const shortScene = detailedImagePrompt.substring(0, 80);
+          // First attempt: Full scene focus with character reference
+          const sceneDesc = detailedImagePrompt.substring(0, 120);
           imagePromptText = (sceneIndex === 0)
-            ? `Photo of reference person. Exact face, skin, hair. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 16:9.`
-            : `Same person from reference. ${shortScene}${cameraShot ? ` ${cameraShot}.` : ''} 16:9.`;
+            ? `SCENE: ${sceneDesc}. Character: Copy ONLY face, hair, body type from reference. Style: Match reference image aesthetic.${cameraShot ? ` ${cameraShot}.` : ''} 16:9 cinematic.`
+            : `SCENE: ${sceneDesc}. Same character as reference (face, hair, body). New pose, new environment.${cameraShot ? ` ${cameraShot}.` : ''} 16:9 cinematic.`;
         } else if (attempt === 2) {
-          // Second attempt: Simplified scene description (~20 words)
-          const keywords = extractKeywords(storyText, 8);
+          // Second attempt: Shorter scene, clear separation
+          const sceneDesc = storyText.substring(0, 80);
           imagePromptText = (sceneIndex === 0)
-            ? `Reference person portrait. ${keywords}. Cinematic 16:9.`
-            : `Same person. ${keywords}. Cinematic 16:9.`;
+            ? `${sceneDesc}. Person from reference image in this scene. Copy face and style only. 16:9.`
+            : `${sceneDesc}. Same person, new scene. 16:9.`;
         } else if (attempt === 3) {
-          // Third attempt: Ultra-minimal generic prompt (~10 words)
+          // Third attempt: Keywords only
+          const keywords = extractKeywords(storyText, 10);
           imagePromptText = (sceneIndex === 0)
-            ? `Reference person in scene. Professional photo. 16:9.`
-            : `Same person, different pose. Professional photo. 16:9.`;
+            ? `${keywords}. Reference person style. 16:9.`
+            : `${keywords}. Same person. 16:9.`;
         } else {
           // Fourth+ attempt: Absolute minimum
-          imagePromptText = `Person portrait. 16:9 aspect ratio.`;
+          imagePromptText = `${extractKeywords(storyText, 5)}. Portrait. 16:9.`;
         }
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
