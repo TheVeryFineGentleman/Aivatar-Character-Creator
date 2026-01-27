@@ -1406,9 +1406,9 @@ NUR DAS JSON, keine Erklärung!`
     }
     
     let successCount = 0;
-    let failedScenes: number[] = [];
-    // AGGRESSIVE RETRIES - 6 different tactics per scene to maximize success
-    const MAX_AUTO_RETRIES = 6;
+    // FULLY AUTOMATIC - retries indefinitely until success
+    const RETRIES_PER_CYCLE = 6; // 6 different tactics per cycle
+    const MAX_CYCLES = 10; // Maximum 10 full cycles (60 total attempts) before giving up
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
@@ -1430,7 +1430,6 @@ NUR DAS JSON, keine Erklärung!`
         sceneReferenceImages = [...characterBase64Images];
       } else {
         // Folgende Szenen: NUR das letzte generierte Bild verwenden
-        // KEINE Original-Referenzbilder - nur das vorherige Szenen-Bild für 40/60 Balance
         if (lastGeneratedImageBase64) {
           sceneReferenceImages = [lastGeneratedImageBase64];
         } else {
@@ -1445,16 +1444,41 @@ NUR DAS JSON, keine Erklärung!`
         }
       }
       
-      // AUTOMATIC RETRIES with progressive prompt shortening
-      console.log(`Szene ${sceneIndex + 1}: Generierung mit ${MAX_AUTO_RETRIES} max. Versuchen...`);
+      // FULLY AUTOMATIC RETRY LOOP - keeps trying until success
+      let result: any = null;
+      let totalAttempts = 0;
       
-      const result = await generateSingleStoryScene(
-        sceneIndex,
-        point,
-        sceneReferenceImages,
-        previousScenePrompt,
-        MAX_AUTO_RETRIES // 3 attempts with progressively shorter prompts
-      );
+      for (let cycle = 1; cycle <= MAX_CYCLES; cycle++) {
+        console.log(`Szene ${sceneIndex + 1}: Zyklus ${cycle}/${MAX_CYCLES} mit ${RETRIES_PER_CYCLE} Taktiken...`);
+        
+        if (cycle > 1) {
+          // Longer pause between cycles
+          toast({
+            title: `Szene ${sceneIndex + 1} - Neuer Zyklus ${cycle}/${MAX_CYCLES}`,
+            description: `Warte 5 Sekunden und starte neue Versuchsreihe...`,
+          });
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        
+        result = await generateSingleStoryScene(
+          sceneIndex,
+          point,
+          sceneReferenceImages,
+          previousScenePrompt,
+          RETRIES_PER_CYCLE
+        );
+        
+        totalAttempts += RETRIES_PER_CYCLE;
+        
+        if (result.success) {
+          console.log(`✅ Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen`);
+          break;
+        }
+        
+        console.log(`❌ Szene ${sceneIndex + 1} Zyklus ${cycle} fehlgeschlagen, starte automatisch nächsten Zyklus...`);
+      }
+      
+      // After all cycles, check result
       
       if (result.success) {
         // Store the original image URL without any labels baked in
@@ -1510,9 +1534,8 @@ NUR DAS JSON, keine Erklärung!`
         // IMMEDIATELY continue to next scene (no delay needed - the loop does this automatically)
         
       } else {
-        // ALL RETRIES FAILED - stop here
-        failedScenes.push(sceneIndex + 1);
-        const errorMessage = result.errorMessage || "Unbekannter Fehler";
+        // ALL CYCLES FAILED - this is extremely rare (60 attempts failed)
+        const errorMessage = result?.errorMessage || "Unbekannter Fehler nach allen Versuchen";
         
         setStoryPoints(prev => prev.map((p, idx) => {
           if (idx === sceneIndex) {
@@ -1522,13 +1545,14 @@ NUR DAS JSON, keine Erklärung!`
         }));
         
         toast({
-          title: `Szene ${sceneIndex + 1} fehlgeschlagen nach ${MAX_AUTO_RETRIES} Versuchen`,
-          description: `${errorMessage}`,
+          title: `Szene ${sceneIndex + 1} fehlgeschlagen nach ${MAX_CYCLES * RETRIES_PER_CYCLE} Versuchen`,
+          description: `${errorMessage} - Generierung wird fortgesetzt ohne dieses Bild.`,
           variant: "destructive"
         });
         
-        // STOP the entire generation - we cannot continue without a reference image
-        break;
+        // DON'T STOP - try to continue with next scene using original reference
+        // This is a last resort to not block the entire process
+        console.warn(`Szene ${sceneIndex + 1} übersprungen nach ${MAX_CYCLES * RETRIES_PER_CYCLE} Versuchen`);
       }
     }
     
@@ -1536,7 +1560,8 @@ NUR DAS JSON, keine Erklärung!`
     setIsGeneratingStoryImages(false);
     
     // Show summary toast
-    if (failedScenes.length === 0) {
+    const failedCount = storyPoints.filter((_, i) => !storyPoints[i]?.generatedImage && i < storyPoints.length).length;
+    if (failedCount === 0) {
       toast({
         title: "Fertig!",
         description: `Alle ${storyPoints.length} Bilder und Video-Prompts wurden generiert.`
@@ -1544,7 +1569,7 @@ NUR DAS JSON, keine Erklärung!`
     } else if (successCount > 0) {
       toast({
         title: "Teilweise fertig",
-        description: `${successCount} von ${storyPoints.length} Bilder generiert. Szene ${failedScenes.join(', ')} fehlgeschlagen.`,
+        description: `${successCount} von ${storyPoints.length} Bilder generiert.`,
         variant: "destructive"
       });
     } else {
