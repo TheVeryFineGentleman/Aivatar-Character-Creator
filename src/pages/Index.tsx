@@ -1083,25 +1083,11 @@ The person must look identical to the reference image.`;
           detailedImagePrompt = storyText;
         }
 
-        // STEP 2: Generate image - BILDER ZUERST für maximale Charakter-Treue
+        // STEP 2: Generate image - TEXT PROMPT ZUERST (wie beim Posen-Generator)
+        // Der Posen-Generator funktioniert gut weil Text VOR Bildern kommt
         const parts: any[] = [];
         
-        // Referenzbilder ZUERST einfügen - das Modell sieht sie VOR dem Prompt
-        for (const base64Data of characterBase64Images) {
-          parts.push({
-            inlineData: {
-              mimeType: "image/png",
-              data: base64Data,
-            },
-          });
-        }
-        
-        // Text-Prompt - unterschiedlich für erste Szene vs. Folgeszenen
-        // Bei useSimplifiedPrompt: Vereinfachter Prompt für bessere Erfolgsrate
-        let imagePromptText: string;
-        
-        // ULTRA-AGGRESSIVE RETRY STRATEGY - 6 different tactics to avoid IMAGE_OTHER
-        // Each attempt uses a completely different approach
+        // Camera/Shot labels for prompt
         const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
           ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || ''
           : '';
@@ -1110,9 +1096,8 @@ The person must look identical to the reference image.`;
           : '';
         const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
         
-        // Extract keywords for fallback - removes problematic words
+        // Extract safe keywords - removes problematic words
         const extractSafeKeywords = (text: string, maxWords: number) => {
-          // Remove potentially problematic words
           const cleaned = text
             .replace(/\b(tot|sterben|blut|waffe|gewalt|nackt|sex|kind|mord|krieg)\b/gi, '')
             .replace(/\s+/g, ' ')
@@ -1120,42 +1105,45 @@ The person must look identical to the reference image.`;
           return cleaned.split(/\s+/).slice(0, maxWords).join(' ');
         };
         
-        // Translate key scene elements to English for better API compatibility
-        const translateToSafeEnglish = (text: string) => {
-          // Simple keyword extraction - just nouns and adjectives
-          const words = text.split(/\s+/).slice(0, 8);
-          return words.join(' ');
-        };
+        // PROGRESSIVE RETRY TACTICS - different approaches for each attempt
+        let imagePromptText: string;
         
-        // PROGRESSIVE RETRY TACTICS - ALL USE REFERENCE IMAGES for character consistency
-        // Each tactic simplifies the TEXT prompt but ALWAYS includes reference images
         if (attempt === 1) {
-          // TACTIC 1: Full scene description with character instruction
+          // TACTIC 1: Scene description with strong character instruction
           const sceneDesc = extractSafeKeywords(detailedImagePrompt, 15);
-          imagePromptText = `Generate image of the EXACT SAME PERSON from reference photo in this scene: ${sceneDesc}. Copy face, hair, body exactly. ${cameraShot}. Cinematic 16:9.`;
+          imagePromptText = `Professional photoshoot: Create image of the EXACT SAME PERSON shown in the reference photos. Scene: ${sceneDesc}. ${cameraShot}. Match the exact style, realism level, art style, lighting quality from reference images. Ultra high resolution. 16:9.`;
         } else if (attempt === 2) {
-          // TACTIC 2: Simplified scene, strong character emphasis
+          // TACTIC 2: Simpler scene, strong character emphasis  
           const keywords = extractSafeKeywords(storyText, 8);
-          imagePromptText = `Photo: SAME PERSON as in reference. Scene: ${keywords}. Match face and body from reference image exactly.`;
+          imagePromptText = `Professional photo: BLEND AND MIX features from ALL reference images. Scene: ${keywords}. ${cameraShot}. Studio lighting, high-end photography. 16:9.`;
         } else if (attempt === 3) {
-          // TACTIC 3: Minimal scene, maximum character focus
-          imagePromptText = `Create photo of THIS EXACT PERSON from reference image. Professional portrait. Copy all features from reference: face, hair, eyes, body type. 16:9.`;
+          // TACTIC 3: Focus on reference matching
+          imagePromptText = `Create a professional portrait of the EXACT PERSON from the reference images. Copy all facial features, hair style, body type exactly. ${cameraShot}. Natural lighting, cinematic quality. 16:9.`;
         } else if (attempt === 4) {
-          // TACTIC 4: Pure character recreation with neutral setting
-          imagePromptText = `Recreate the person from the reference photo. Same face, same hair, same features. Simple background. Portrait style.`;
+          // TACTIC 4: Character recreation with neutral setting
+          imagePromptText = `Recreate the person from the reference photos with same face, same hair, same features. Simple elegant background. ${cameraShot}. Professional portrait lighting.`;
         } else if (attempt === 5) {
-          // TACTIC 5: Direct instruction for character matching
-          imagePromptText = `Generate: Same person as reference. Copy facial features exactly. Neutral environment. Professional lighting.`;
+          // TACTIC 5: Direct simple instruction
+          imagePromptText = `Generate portrait: Same person as in reference images. Copy facial features exactly. ${cameraShot}. Neutral environment, professional lighting.`;
         } else {
-          // TACTIC 6: Ultra-simple character instruction
-          imagePromptText = `Same person from reference photo. Portrait. 16:9.`;
+          // TACTIC 6: Ultra-minimal
+          imagePromptText = `Same person from reference photos. Professional portrait. ${cameraShot}. 16:9.`;
         }
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
 
-        // CRITICAL: ALWAYS use reference images to maintain character consistency
-        // Reference images are ALWAYS included - never skip them
+        // TEXT PROMPT ZUERST (wie beim funktionierenden Posen-Generator)
         parts.push({ text: imagePromptText });
+        
+        // DANN die Referenzbilder (IMMER für Charakter-Konsistenz)
+        for (const base64Data of characterBase64Images) {
+          parts.push({
+            inlineData: {
+              mimeType: "image/png",
+              data: base64Data,
+            },
+          });
+        }
         
         // Progressive safety settings - more permissive for later attempts
         const getSafetySettings = (attemptNum: number) => {
