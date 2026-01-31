@@ -981,50 +981,52 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Scene description (short version)
         const sceneDesc = extractSafeKeywords(storyText, 20);
         
-        // === SAME PROMPT STRUCTURE AS POSE GENERATOR ===
-        // Professional photoshoot format that works reliably
-        let imagePromptText: string;
-        const isFirstScene = sceneIndex === 0;
+        // === EXACT SAME STRUCTURE AS POSE GENERATOR ===
+        // This version removes safetySettings and uses identical prompt structure
         
-        if (attempt === 1) {
-          // Standard prompt - similar to pose generator
-          imagePromptText = isFirstScene
-            ? `Professional photoshoot with EXACTLY ONE person only. Scene: ${sceneDesc}. ${cameraShot}. Match the exact style, realism level, art style, lighting quality from the reference images. Ultra high resolution. 16:9 aspect ratio.`
-            : `Professional photoshoot with EXACTLY ONE person only - SAME PERSON as in the reference image. Scene: ${sceneDesc}. ${cameraShot}. Match the exact style and appearance from reference. Ultra high resolution. 16:9 aspect ratio.`;
-        } else if (attempt === 2) {
-          // Simpler prompt
-          imagePromptText = `Professional photo: ONE person from reference image. ${sceneDesc}. ${cameraShot}. High quality, 16:9.`;
-        } else if (attempt === 3) {
-          // Focus on character consistency
-          imagePromptText = `Portrait of the EXACT PERSON from reference. ${cameraShot}. Natural lighting, cinematic. 16:9.`;
-        } else if (attempt === 4) {
-          // Generic portrait
-          imagePromptText = `Same person as reference. Simple elegant scene. ${cameraShot}. Professional lighting.`;
-        } else if (attempt === 5) {
-          // Minimal
-          imagePromptText = `Portrait matching reference person. ${cameraShot}. Studio quality.`;
-        } else {
-          // Ultra-minimal
-          imagePromptText = `Same person from reference. Professional photo. 16:9.`;
-        }
+        // Get shot type text
+        const shotOption = SHOT_OPTIONS.find(s => s.id === point.shotType);
+        const shotText = shotOption?.label || "full body shot";
         
-        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
+        // Build prompt EXACTLY like pose generator - no safety settings!
+        const basePrompt = `CRITICAL CONSTRAINTS: 
+- Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
+- Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
+- NO photo strips, NO side-by-side comparisons, NO split screens.
+- 🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
+- 🚫 NO letterboxing, NO black bars on any side (top, bottom, left, right)!
 
-        // === EXACT SAME PAYLOAD STRUCTURE AS POSE GENERATOR ===
-        // TEXT FIRST, then reference images - this order is critical!
-        const parts: any[] = [
+Create a professional photoshoot of the person from the reference image(s).
+- Scene context: ${storyText}
+- ONLY ONE PERSON must appear in the entire image
+- ONLY ONE COMPLETE IMAGE - not a collage or collection of images
+- Use the scene description for background and setting
+- Use random, varied poses matching the scene
+${cameraShot ? `- Camera: ${cameraShot}` : '- Use a cinematic camera angle'}
+- ${shotText}
+Ultra high resolution, maintain style consistency with reference image(s). 16:9 aspect ratio.`;
+        
+        const imagePromptText = attempt <= 3 ? basePrompt : 
+          `Professional photo of the person from reference. Scene: ${extractSafeKeywords(storyText, 15)}. ${cameraShot || 'Cinematic'}. ${shotText}. 16:9.`;
+        
+        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: ${imagePromptText.split(' ').length} words, ${characterBase64Images.length} reference images`);
+
+        // === EXACT SAME PAYLOAD AS POSE GENERATOR ===
+        // Clean base64 images (remove data URL prefix if present)
+        const cleanBase64Images = characterBase64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
+        
+        // Build parts array: text FIRST, then reference images
+        const parts = [
           { text: imagePromptText },
-          // Add ALL reference images as inline data (same as pose generator)
-          ...characterBase64Images.map(base64Data => ({
+          ...cleanBase64Images.map(base64Data => ({
             inlineData: {
               mimeType: "image/png",
               data: base64Data,
             },
           })),
         ];
-        
-        console.log(`Attempt ${attempt}: Using ${characterBase64Images.length} reference images`);
 
+        // === NO safetySettings - exactly like pose generator ===
         const imageResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
           {
@@ -1039,18 +1041,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
                   aspectRatio: "16:9",
                 },
               },
-              // Same safety settings progression as before
-              safetySettings: attempt <= 2 ? [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-              ] : [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-              ]
+              // NO safetySettings - pose generator doesn't use them and works fine
             }),
           }
         );
@@ -1195,18 +1186,29 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
+    console.log(`📸 Loading ${storyReferenceImages.length} story reference images...`);
+    
     for (const imageUrl of storyReferenceImages) {
       try {
+        console.log(`  Fetching: ${imageUrl.substring(0, 50)}...`);
         // Fetch the image URL and convert to base64
         const response = await fetch(imageUrl);
+        if (!response.ok) {
+          console.error(`  ❌ Failed to fetch image: ${response.status}`);
+          continue;
+        }
         const blob = await response.blob();
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const result = reader.result as string;
             const base64Data = result.split(',')[1];
-            if (base64Data) resolve(base64Data);
-            else reject(new Error('No base64 data'));
+            if (base64Data) {
+              console.log(`  ✅ Loaded ${Math.round(base64Data.length / 1024)}KB`);
+              resolve(base64Data);
+            } else {
+              reject(new Error('No base64 data'));
+            }
           };
           reader.onerror = reject;
           reader.readAsDataURL(blob);
@@ -1215,6 +1217,19 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       } catch (error) {
         console.error('Error converting story reference image to base64:', error);
       }
+    }
+    
+    console.log(`📸 Successfully loaded ${characterBase64Images.length}/${storyReferenceImages.length} reference images`);
+    
+    // CRITICAL: If no reference images loaded, show error and stop
+    if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
+      toast({
+        title: "Fehler: Keine Referenzbilder",
+        description: "Die hochgeladenen Referenzbilder konnten nicht geladen werden. Bitte lade sie erneut hoch.",
+        variant: "destructive"
+      });
+      setIsGeneratingStoryImages(false);
+      return;
     }
     
     let successCount = 0;
