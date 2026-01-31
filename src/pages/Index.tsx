@@ -957,59 +957,65 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
       const timeoutId = setTimeout(() => controller.abort(), 120000);
       
       try {
-        // Camera/Shot labels for prompt
-        const cameraAngleInfo = point.cameraAngle && point.cameraAngle !== 'random'
-          ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)
-          : null;
-        const shotTypeInfo = point.shotType
-          ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)
-          : null;
-        
-        const cameraLabel = cameraAngleInfo?.label || '';
-        const shotLabel = shotTypeInfo?.label || '';
-        const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
-        
-        // Extract safe keywords - removes problematic words
-        const extractSafeKeywords = (text: string, maxWords: number) => {
-          const cleaned = text
-            .replace(/\b(tot|sterben|blut|waffe|gewalt|nackt|sex|kind|mord|krieg)\b/gi, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-          return cleaned.split(/\s+/).slice(0, maxWords).join(' ');
-        };
-        
-        // Scene description (short version)
-        const sceneDesc = extractSafeKeywords(storyText, 20);
-        
-        // === EXACT SAME STRUCTURE AS POSE GENERATOR ===
-        // This version removes safetySettings and uses identical prompt structure
+        // === ULTRA-COMPACT PROMPTS - EXACTLY LIKE POSE GENERATOR ===
+        // The pose generator works reliably because it uses SHORT prompts (under 50 words)
         
         // Get shot type text
         const shotOption = SHOT_OPTIONS.find(s => s.id === point.shotType);
         const shotText = shotOption?.label || "full body shot";
         
-        // Build prompt EXACTLY like pose generator - no safety settings!
-        const basePrompt = `CRITICAL CONSTRAINTS: 
-- Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
-- Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
-- NO photo strips, NO side-by-side comparisons, NO split screens.
-- 🚫 ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
-- 🚫 NO letterboxing, NO black bars on any side (top, bottom, left, right)!
-
-Create a professional photoshoot of the person from the reference image(s).
-- Scene context: ${storyText}
-- ONLY ONE PERSON must appear in the entire image
-- ONLY ONE COMPLETE IMAGE - not a collage or collection of images
-- Use the scene description for background and setting
-- Use random, varied poses matching the scene
-${cameraShot ? `- Camera: ${cameraShot}` : '- Use a cinematic camera angle'}
-- ${shotText}
-Ultra high resolution, maintain style consistency with reference image(s). 16:9 aspect ratio.`;
+        // Camera angle
+        const cameraAngleInfo = point.cameraAngle && point.cameraAngle !== 'random'
+          ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)
+          : null;
+        const cameraText = cameraAngleInfo?.label || "cinematic angle";
         
-        const imagePromptText = attempt <= 3 ? basePrompt : 
-          `Professional photo of the person from reference. Scene: ${extractSafeKeywords(storyText, 15)}. ${cameraShot || 'Cinematic'}. ${shotText}. 16:9.`;
+        // Extract ONLY 5-8 safe keywords from story text for scene setting
+        const extractSceneKeywords = (text: string): string => {
+          // Remove problematic words
+          const cleaned = text
+            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schießen|erschießen|töten|leiche)\b/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          // Extract just 5-8 keywords for scene atmosphere
+          const words = cleaned.split(/\s+/).slice(0, 8).join(' ');
+          return words || "indoor scene";
+        };
         
-        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: ${imagePromptText.split(' ').length} words, ${characterBase64Images.length} reference images`);
+        const sceneKeywords = extractSceneKeywords(storyText);
+        
+        // ===== TACTICAL PROMPT ROTATION (6 tactics) =====
+        // Each tactic uses a different prompt structure to avoid IMAGE_OTHER
+        let imagePromptText: string;
+        
+        switch (attempt) {
+          case 1:
+            // Tactic 1: Standard pose generator format - ultra compact
+            imagePromptText = `Professional photoshoot, ONE person from reference, ${sceneKeywords}, ${cameraText}, ${shotText}. Match reference style. 16:9. No borders.`;
+            break;
+          case 2:
+            // Tactic 2: Even shorter - minimal keywords
+            imagePromptText = `Photo of person from reference. Scene: ${sceneKeywords}. ${shotText}. 16:9.`;
+            break;
+          case 3:
+            // Tactic 3: Focus on character identity
+            imagePromptText = `Professional portrait matching reference person exactly. Background: ${sceneKeywords}. ${shotText}. High resolution. 16:9.`;
+            break;
+          case 4:
+            // Tactic 4: Ultra minimal - just essential words
+            imagePromptText = `Single person portrait, ${shotText}, cinematic, 16:9.`;
+            break;
+          case 5:
+            // Tactic 5: Studio style
+            imagePromptText = `Studio photoshoot of reference person. Natural lighting. ${shotText}. 16:9.`;
+            break;
+          default:
+            // Tactic 6: Absolute minimum
+            imagePromptText = `Person from reference. Portrait. ${shotText}. 16:9.`;
+            break;
+        }
+        
+        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs)`);
 
         // === EXACT SAME PAYLOAD AS POSE GENERATOR ===
         // Clean base64 images (remove data URL prefix if present)
