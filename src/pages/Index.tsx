@@ -930,7 +930,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
     }
   };
 
-  // Helper function to generate a single story scene with retries
+  // Helper function to generate a single story scene - ALIGNED WITH POSE GENERATOR
+  // Uses the SAME payload structure that works in pose generation: TEXT FIRST, then images
   const generateSingleStoryScene = async (
     sceneIndex: number,
     point: {
@@ -956,24 +957,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
       const timeoutId = setTimeout(() => controller.abort(), 120000);
       
       try {
-        // STEP 1: Generate ultra-detailed image prompt WITH reference images
-        // REFERENZBILDER ZUERST - damit das Modell sie als primäre Vorlage behandelt
-        const promptParts: any[] = [];
-        
-        // Bilder ZUERST einfügen - das Modell sieht sie vor dem Text
-        for (const base64Data of characterBase64Images) {
-          promptParts.push({
-            inlineData: {
-              mimeType: "image/png",
-              data: base64Data,
-            },
-          });
-        }
-        
-        // Unterschiedliche Prompts für erste Szene vs. Folgeszenen
-        const isFirstScene = sceneIndex === 0;
-        
-        // OPTIMIZED English prompt - concise, positive formulations, no emojis
+        // Camera/Shot labels for prompt
         const cameraAngleInfo = point.cameraAngle && point.cameraAngle !== 'random'
           ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)
           : null;
@@ -981,119 +965,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)
           : null;
         
-        // OPTIMIZED PROMPT GENERATOR - Shorter, focused on essential details
-        const promptText = isFirstScene
-          ? `REFERENCE IMAGES: These show the exact person to recreate.
-
-Create a detailed image description for this scene:
-"${storyText}"
-
-${cameraAngleInfo ? `Camera: ${cameraAngleInfo.label}` : ''}${shotTypeInfo ? ` | Shot: ${shotTypeInfo.label}` : ''}
-
-Include in your response:
-1. TITEL: [Short scene title, 6-8 words]
-2. BESCHREIBUNG: [2-3 sentence summary]
-3. Detailed scene description (200-300 words) covering:
-   - Character pose and expression
-   - Environment and lighting
-   - Mood and atmosphere
-
-Keep the person's appearance identical to reference photos.`
-          : `REFERENCE IMAGE: Previous scene from same story.
-
-Create a detailed image description for the NEXT scene:
-"${storyText}"
-
-${cameraAngleInfo ? `Camera: ${cameraAngleInfo.label}` : ''}${shotTypeInfo ? ` | Shot: ${shotTypeInfo.label}` : ''}
-
-Include in your response:
-1. TITEL: [Short scene title, 6-8 words]
-2. BESCHREIBUNG: [2-3 sentence summary]
-3. Detailed scene description (200-300 words) covering:
-   - Same person, new pose and action
-   - New environment (different from previous)
-   - New lighting and mood
-
-The person must look identical to the reference image.`;
-
-        promptParts.push({ text: promptText });
-        
-        const promptGenerationRequest = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{
-                parts: promptParts
-              }],
-              generationConfig: {
-                temperature: 0.75,
-                maxOutputTokens: 1500
-              },
-              safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-              ]
-            })
-          }
-        );
-
-        if (!promptGenerationRequest.ok) {
-          throw new Error(getErrorMessageFromStatus(promptGenerationRequest.status, `Szene ${sceneIndex + 1} (Prompt)`));
-        }
-
-        let detailedImagePrompt = "";
-        let sceneTitle = "";
-        let sceneDescription = "";
-        const promptData = await promptGenerationRequest.json();
-        const fullPromptResponse = promptData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-        
-        const titleMatch = fullPromptResponse.match(/^TITEL:\s*(.+?)(?:\n|$)/im);
-        if (titleMatch) {
-          sceneTitle = titleMatch[1].trim();
-        } else {
-          sceneTitle = storyText.split(/[.!?]/)[0].substring(0, 50).trim();
-        }
-        
-        const descriptionMatch = fullPromptResponse.match(/BESCHREIBUNG:\s*(.+?)(?:\n\n|$)/is);
-        if (descriptionMatch) {
-          sceneDescription = descriptionMatch[1].trim();
-        } else {
-          sceneDescription = storyText;
-        }
-        
-        detailedImagePrompt = fullPromptResponse
-          .replace(/^TITEL:\s*.+?\n?/im, '')
-          .replace(/BESCHREIBUNG:\s*.+?(?:\n\n|$)/is, '')
-          .trim();
-
-        // CRITICAL: Check if AI returned an error/refusal instead of a prompt
-        const refusalPatterns = [
-          /I'm sorry/i, /I cannot/i, /I am unable/i, /I can't/i, 
-          /cannot fulfill/i, /unable to/i, /not able to/i
-        ];
-        const isRefusal = refusalPatterns.some(pattern => detailedImagePrompt.match(pattern));
-        
-        if (!detailedImagePrompt || isRefusal) {
-          console.warn(`Prompt generator returned refusal/empty, using storyText instead`);
-          detailedImagePrompt = storyText;
-        }
-
-        // STEP 2: Generate image - TEXT PROMPT ZUERST (wie beim Posen-Generator)
-        // Der Posen-Generator funktioniert gut weil Text VOR Bildern kommt
-        const parts: any[] = [];
-        
-        // Camera/Shot labels for prompt
-        const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
-          ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || ''
-          : '';
-        const shotLabel = point.shotType
-          ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
-          : '';
+        const cameraLabel = cameraAngleInfo?.label || '';
+        const shotLabel = shotTypeInfo?.label || '';
         const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
         
         // Extract safe keywords - removes problematic words
@@ -1105,67 +978,52 @@ The person must look identical to the reference image.`;
           return cleaned.split(/\s+/).slice(0, maxWords).join(' ');
         };
         
-        // PROGRESSIVE RETRY TACTICS - different approaches for each attempt
+        // Scene description (short version)
+        const sceneDesc = extractSafeKeywords(storyText, 20);
+        
+        // === SAME PROMPT STRUCTURE AS POSE GENERATOR ===
+        // Professional photoshoot format that works reliably
         let imagePromptText: string;
+        const isFirstScene = sceneIndex === 0;
         
         if (attempt === 1) {
-          // TACTIC 1: Scene description with strong character instruction
-          const sceneDesc = extractSafeKeywords(detailedImagePrompt, 15);
-          imagePromptText = `Professional photoshoot: Create image of the EXACT SAME PERSON shown in the reference photos. Scene: ${sceneDesc}. ${cameraShot}. Match the exact style, realism level, art style, lighting quality from reference images. Ultra high resolution. 16:9.`;
+          // Standard prompt - similar to pose generator
+          imagePromptText = isFirstScene
+            ? `Professional photoshoot with EXACTLY ONE person only. Scene: ${sceneDesc}. ${cameraShot}. Match the exact style, realism level, art style, lighting quality from the reference images. Ultra high resolution. 16:9 aspect ratio.`
+            : `Professional photoshoot with EXACTLY ONE person only - SAME PERSON as in the reference image. Scene: ${sceneDesc}. ${cameraShot}. Match the exact style and appearance from reference. Ultra high resolution. 16:9 aspect ratio.`;
         } else if (attempt === 2) {
-          // TACTIC 2: Simpler scene, strong character emphasis  
-          const keywords = extractSafeKeywords(storyText, 8);
-          imagePromptText = `Professional photo: BLEND AND MIX features from ALL reference images. Scene: ${keywords}. ${cameraShot}. Studio lighting, high-end photography. 16:9.`;
+          // Simpler prompt
+          imagePromptText = `Professional photo: ONE person from reference image. ${sceneDesc}. ${cameraShot}. High quality, 16:9.`;
         } else if (attempt === 3) {
-          // TACTIC 3: Focus on reference matching
-          imagePromptText = `Create a professional portrait of the EXACT PERSON from the reference images. Copy all facial features, hair style, body type exactly. ${cameraShot}. Natural lighting, cinematic quality. 16:9.`;
+          // Focus on character consistency
+          imagePromptText = `Portrait of the EXACT PERSON from reference. ${cameraShot}. Natural lighting, cinematic. 16:9.`;
         } else if (attempt === 4) {
-          // TACTIC 4: Character recreation with neutral setting
-          imagePromptText = `Recreate the person from the reference photos with same face, same hair, same features. Simple elegant background. ${cameraShot}. Professional portrait lighting.`;
+          // Generic portrait
+          imagePromptText = `Same person as reference. Simple elegant scene. ${cameraShot}. Professional lighting.`;
         } else if (attempt === 5) {
-          // TACTIC 5: Direct simple instruction
-          imagePromptText = `Generate portrait: Same person as in reference images. Copy facial features exactly. ${cameraShot}. Neutral environment, professional lighting.`;
+          // Minimal
+          imagePromptText = `Portrait matching reference person. ${cameraShot}. Studio quality.`;
         } else {
-          // TACTIC 6: Ultra-minimal
-          imagePromptText = `Same person from reference photos. Professional portrait. ${cameraShot}. 16:9.`;
+          // Ultra-minimal
+          imagePromptText = `Same person from reference. Professional photo. 16:9.`;
         }
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words)`);
 
-        // TEXT PROMPT ZUERST (wie beim funktionierenden Posen-Generator)
-        parts.push({ text: imagePromptText });
-        
-        // DANN die Referenzbilder (IMMER für Charakter-Konsistenz)
-        for (const base64Data of characterBase64Images) {
-          parts.push({
+        // === EXACT SAME PAYLOAD STRUCTURE AS POSE GENERATOR ===
+        // TEXT FIRST, then reference images - this order is critical!
+        const parts: any[] = [
+          { text: imagePromptText },
+          // Add ALL reference images as inline data (same as pose generator)
+          ...characterBase64Images.map(base64Data => ({
             inlineData: {
               mimeType: "image/png",
               data: base64Data,
             },
-          });
-        }
+          })),
+        ];
         
-        // Progressive safety settings - more permissive for later attempts
-        const getSafetySettings = (attemptNum: number) => {
-          if (attemptNum <= 2) {
-            return [
-              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-            ];
-          } else {
-            // More relaxed for simpler prompts
-            return [
-              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-            ];
-          }
-        };
-        
-        console.log(`Attempt ${attempt}: ALWAYS using reference images for character consistency`);
+        console.log(`Attempt ${attempt}: Using ${characterBase64Images.length} reference images`);
 
         const imageResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -1174,26 +1032,44 @@ The person must look identical to the reference image.`;
             headers: { "Content-Type": "application/json" },
             signal: controller.signal,
             body: JSON.stringify({
-              contents: [{ role: "user", parts: parts }],
+              contents: [{ role: "user", parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
                 imageConfig: {
                   aspectRatio: "16:9",
                 },
               },
-              safetySettings: getSafetySettings(attempt)
+              // Same safety settings progression as before
+              safetySettings: attempt <= 2 ? [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+              ] : [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+              ]
             }),
           }
         );
 
         if (!imageResponse.ok) {
-          throw new Error(getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1} (Bild)`));
+          throw new Error(getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1}`));
         }
 
         let generatedImageUrl = "";
         const imageData = await imageResponse.json();
         const candidates = imageData.candidates ?? [];
+        
         if (candidates.length > 0) {
+          // Check for IMAGE_OTHER error
+          if (candidates[0]?.finishReason === "IMAGE_OTHER" || candidates[0]?.finishReason === "SAFETY") {
+            console.warn(`Scene ${sceneIndex + 1} attempt ${attempt}: ${candidates[0]?.finishReason}`);
+            throw new Error(`Bild blockiert (${candidates[0]?.finishReason})`);
+          }
+          
           const partsOut = candidates[0]?.content?.parts ?? [];
           const imagePart = partsOut.find(
             (p: any) => p.inlineData && typeof p.inlineData.data === "string" && p.inlineData.mimeType?.startsWith("image/")
@@ -1212,105 +1088,60 @@ The person must look identical to the reference image.`;
         }
         
         if (!generatedImageUrl) {
-          // Check for specific API error messages
-          const finishReason = candidates[0]?.finishReason;
-          const finishMessage = candidates[0]?.finishMessage;
-          
-          if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
-            console.warn(`API response for scene ${sceneIndex + 1} attempt ${attempt}:`, { finishReason, finishMessage });
-            throw new Error(`Bild blockiert (${finishReason})`);
-          }
           throw new Error(`Kein Bild generiert`);
         }
 
-        // STEP 3: Generate Veo3-optimized video prompt AFTER image is generated
-        // This prompt is structured specifically for Gemini Veo3 video generation
-        const previousVideoPrompt = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.videoPrompt : null;
-        const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
-        
-        // Get list of already used camera movements to ensure variety
-        const usedMovements = storyPoints
-          .slice(0, sceneIndex)
-          .map(p => p.veo3CameraMovement)
-          .filter(Boolean);
-        
-        const availableMovements = VEO3_CAMERA_MOVEMENTS
-          .filter(m => !usedMovements.includes(m.id))
-          .map(m => `- "${m.id}": ${m.label} (${m.description})`);
-        
-        const videoPromptResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: `Du erstellst einen VEO3-OPTIMIERTEN Video-Prompt für die Szene.
-
-SZENE ${sceneIndex + 1}: "${storyText}"
-
-BILDPROMPT (was im Startframe zu sehen ist):
-"${detailedImagePrompt.substring(0, 500)}..."
-
-${previousEndState ? `ÜBERGANG VON VORHERIGER SZENE:
-Die letzte Szene endete mit: "${previousEndState}"
-Deine Szene sollte nahtlos daran anknüpfen.` : 'Dies ist die ERSTE Szene - sie eröffnet die Geschichte.'}
-
-VERFÜGBARE KAMERABEWEGUNGEN (wähle EINE die noch nicht verwendet wurde):
-${availableMovements.length > 0 ? availableMovements.join('\n') : VEO3_CAMERA_MOVEMENTS.map(m => `- "${m.id}": ${m.label}`).join('\n')}
-
-${usedMovements.length > 0 ? `BEREITS VERWENDETE BEWEGUNGEN (NICHT erneut verwenden): ${usedMovements.join(', ')}` : ''}
-
-ANTWORTE NUR MIT EINEM JSON-OBJEKT:
-{
-  "cameraMovement": "eine der verfügbaren Bewegungs-IDs",
-  "startState": "2-3 Sätze: Was EXAKT ist im Startframe zu sehen? Beschreibe die Position der Person, ihren Gesichtsausdruck, ihre Haltung, die Umgebung.",
-  "motion": "3-4 Sätze: Was BEWEGT sich während der 5-Sekunden-Szene? Beschreibe: 1) Kamerabewegung (Richtung, Geschwindigkeit), 2) Bewegung der Person (Gesten, Kopfdrehung, Atmung), 3) Umgebungsbewegung (wehende Haare, Lichtänderung, Partikel)",
-  "endState": "2 Sätze: Wo endet die Szene? Beschreibe den finalen Frame für nahtlosen Übergang zur nächsten Szene.",
-  "fullPrompt": "Der VOLLSTÄNDIGE Video-Prompt für Veo3 in 100-150 Wörtern. Format: [Kamerabewegung]. [Startbeschreibung]. [Aktion und Bewegung]. Gimbal-stabilized, 16:9 cinematic, smooth motion."
-}
-
-NUR DAS JSON, keine Erklärung!`
-                }]
-              }],
-              generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 800
-              }
-            })
-          }
-        );
-
+        // Generate Veo3 video prompt after successful image generation
         let videoPrompt = "";
         let veo3CameraMovement = "";
         let veo3StartState = "";
         let veo3Motion = "";
         let veo3EndState = "";
         
-        if (videoPromptResponse.ok) {
-          const vpData = await videoPromptResponse.json();
-          const vpText = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        try {
+          const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
+          const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
+          const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
           
-          // Parse JSON response
-          try {
-            const jsonMatch = vpText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0]);
-              veo3CameraMovement = parsed.cameraMovement || "";
-              veo3StartState = parsed.startState || "";
-              veo3Motion = parsed.motion || "";
-              veo3EndState = parsed.endState || "";
-              videoPrompt = parsed.fullPrompt || "";
-            } else {
-              // Fallback: use raw text as video prompt
+          const videoPromptResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: controller.signal,
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{
+                    text: `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"
+${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
+Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
+Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`
+                  }]
+                }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+              })
+            }
+          );
+          
+          if (videoPromptResponse.ok) {
+            const vpData = await videoPromptResponse.json();
+            const vpText = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+            try {
+              const jsonMatch = vpText.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                veo3CameraMovement = parsed.cameraMovement || "";
+                veo3StartState = parsed.startState || "";
+                veo3Motion = parsed.motion || "";
+                veo3EndState = parsed.endState || "";
+                videoPrompt = parsed.fullPrompt || "";
+              }
+            } catch (e) {
               videoPrompt = vpText;
             }
-          } catch (e) {
-            console.warn("Could not parse Veo3 JSON response, using raw text:", e);
-            videoPrompt = vpText;
           }
+        } catch (e) {
+          console.warn("Video prompt generation failed:", e);
         }
 
         clearTimeout(timeoutId);
@@ -1319,8 +1150,8 @@ NUR DAS JSON, keine Erklärung!`
           generatedImageUrl,
           detailedImagePrompt: imagePromptText,
           videoPrompt,
-          sceneTitle,
-          sceneDescription,
+          sceneTitle: storyText.split(/[.!?]/)[0].substring(0, 50).trim(),
+          sceneDescription: storyText,
           veo3CameraMovement,
           veo3StartState,
           veo3Motion,
@@ -1332,29 +1163,21 @@ NUR DAS JSON, keine Erklärung!`
         console.error(`Attempt ${attempt}/${maxRetries} failed for scene ${sceneIndex + 1}:`, error);
         
         if (attempt < maxRetries) {
-          // PROGRESSIVE DELAY - longer waits for later attempts
-          const delayMs = attempt <= 2 ? 2000 : attempt <= 4 ? 3000 : 4000;
-          console.log(`🔄 Szene ${sceneIndex + 1}: Versuch ${attempt} fehlgeschlagen, starte Versuch ${attempt + 1} (neue Taktik) in ${delayMs/1000}s...`);
+          const delayMs = attempt <= 2 ? 2000 : 3000;
+          console.log(`🔄 Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
           
-          // Detailed retry info
-          const tactics = ['Standard-Prompt', 'Kurz-Englisch', 'Generic Portrait', 'Safe Scene', 'Art Style', 'Minimal'];
           toast({
             title: `Szene ${sceneIndex + 1} - Versuch ${attempt}/${maxRetries}`,
-            description: `Wechsle zu Taktik: ${tactics[attempt] || 'Minimal'}`,
+            description: `Wechsle zu einfacherem Prompt...`,
           });
           
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
         }
         
-        // All retries exhausted
         let errorMessage = "Unbekannter Fehler";
         if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            errorMessage = `Zeitüberschreitung (2 Min.)`;
-          } else {
-            errorMessage = error.message;
-          }
+          errorMessage = error.name === 'AbortError' ? `Zeitüberschreitung (2 Min.)` : error.message;
         }
         
         return { success: false, errorMessage };
