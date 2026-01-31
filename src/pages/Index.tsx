@@ -970,52 +970,82 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           : null;
         const cameraText = cameraAngleInfo?.label || "cinematic angle";
         
-        // Extract ONLY 5-8 safe keywords from story text for scene setting
+        // === GERMAN TO ENGLISH TRANSLATION MAP ===
+        const germanToEnglish: Record<string, string> = {
+          // Locations
+          "ballsaal": "ballroom", "villa": "villa", "wald": "forest", "strand": "beach",
+          "garten": "garden", "zimmer": "room", "haus": "house", "schloss": "castle",
+          "straße": "street", "stadt": "city", "dorf": "village", "büro": "office",
+          "küche": "kitchen", "wohnzimmer": "living room", "schlafzimmer": "bedroom",
+          "keller": "basement", "dachboden": "attic", "terrasse": "terrace", "balkon": "balcony",
+          "park": "park", "see": "lake", "meer": "ocean", "berg": "mountain", "tal": "valley",
+          "fluss": "river", "brücke": "bridge", "turm": "tower", "kirche": "church",
+          "restaurant": "restaurant", "café": "cafe", "bar": "bar", "hotel": "hotel",
+          "bahnhof": "train station", "flughafen": "airport", "hafen": "harbor",
+          // Atmosphere
+          "gedämpft": "dim lighting", "dunkel": "dark", "hell": "bright", "warm": "warm",
+          "kalt": "cold", "neblig": "foggy", "sonnig": "sunny", "regnerisch": "rainy",
+          "abend": "evening", "nacht": "night", "morgen": "morning", "mittag": "noon",
+          "dämmung": "dusk", "stimmungsvoll": "atmospheric", "romantisch": "romantic",
+          "geheimnisvoll": "mysterious", "elegant": "elegant", "rustikal": "rustic",
+          "modern": "modern", "alt": "old", "antik": "antique", "luxuriös": "luxurious",
+          // Common words
+          "und": "and", "mit": "with", "in": "in", "auf": "on", "unter": "under",
+          "neben": "beside", "vor": "before", "hinter": "behind", "über": "above",
+          "ist": "", "sind": "", "war": "", "waren": "", "wird": "", "werden": "",
+          "der": "", "die": "", "das": "", "ein": "", "eine": "", "einem": "", "einer": "",
+        };
+        
+        // Extract ONLY 5 safe ENGLISH keywords from story text
         const extractSceneKeywords = (text: string): string => {
-          // Remove problematic words
-          const cleaned = text
-            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schießen|erschießen|töten|leiche)\b/gi, '')
+          // 1. Remove ALL problematic words (German)
+          let cleaned = text
+            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schießen|erschießen|töten|leiche|tod|opfer|kampf|angriff|verletzt|schmerz|angst|panik|terror|gefahr)\b/gi, '')
+            .toLowerCase()
+            .replace(/[.,!?;:'"()[\]{}]/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
-          // Extract just 5-8 keywords for scene atmosphere
-          const words = cleaned.split(/\s+/).slice(0, 8).join(' ');
-          return words || "indoor scene";
+          
+          // 2. Translate German words to English
+          for (const [de, en] of Object.entries(germanToEnglish)) {
+            cleaned = cleaned.replace(new RegExp(`\\b${de}\\b`, 'gi'), en);
+          }
+          
+          // 3. Remove any remaining German articles/filler and empty strings
+          cleaned = cleaned
+            .split(/\s+/)
+            .filter(word => word.length > 2 && !/^(der|die|das|ein|eine|und|oder|aber|von|zu|bei|nach|für|mit|aus|über|unter|durch|gegen|ohne|um|an|auf|in|als|wie|so|wenn|weil|dass|ob|doch|noch|schon|auch|nur|sehr|ganz|immer|wieder|hier|dort|jetzt|dann|da)$/i.test(word))
+            .join(' ');
+          
+          // 4. Keep only first 5 words
+          const words = cleaned.split(/\s+/).filter(w => w.length > 0).slice(0, 5).join(' ');
+          
+          // 5. Fallback if nothing left
+          return words.trim() || "indoor scene";
         };
         
         const sceneKeywords = extractSceneKeywords(storyText);
         
-        // ===== TACTICAL PROMPT ROTATION (6 tactics) =====
-        // Each tactic uses a different prompt structure to avoid IMAGE_OTHER
+        // ===== TACTICAL PROMPT ROTATION (3 tactics) - POSE GENERATOR FORMAT =====
+        // Simplified to 3 tactics matching pose generator's reliable structure
         let imagePromptText: string;
         
         switch (attempt) {
           case 1:
-            // Tactic 1: Standard pose generator format - ultra compact
-            imagePromptText = `Professional photoshoot, ONE person from reference, ${sceneKeywords}, ${cameraText}, ${shotText}. Match reference style. 16:9. No borders.`;
+            // Tactic 1: EXACT Pose Generator format
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only, ${cameraText}, ${sceneKeywords}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
             break;
           case 2:
-            // Tactic 2: Even shorter - minimal keywords
-            imagePromptText = `Photo of person from reference. Scene: ${sceneKeywords}. ${shotText}. 16:9.`;
-            break;
-          case 3:
-            // Tactic 3: Focus on character identity
-            imagePromptText = `Professional portrait matching reference person exactly. Background: ${sceneKeywords}. ${shotText}. High resolution. 16:9.`;
-            break;
-          case 4:
-            // Tactic 4: Ultra minimal - just essential words
-            imagePromptText = `Single person portrait, ${shotText}, cinematic, 16:9.`;
-            break;
-          case 5:
-            // Tactic 5: Studio style
-            imagePromptText = `Studio photoshoot of reference person. Natural lighting. ${shotText}. 16:9.`;
+            // Tactic 2: Shorter variant without scene keywords
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only, ${cameraText}, ${shotText}. Match the exact style from the reference images. Ultra high resolution.`;
             break;
           default:
-            // Tactic 6: Absolute minimum
-            imagePromptText = `Person from reference. Portrait. ${shotText}. 16:9.`;
+            // Tactic 3: Minimal fallback - just essential elements
+            imagePromptText = `Professional portrait of ONE person from reference. ${shotText}. Cinematic. 16:9.`;
             break;
         }
         
-        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs)`);
+        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
 
         // === EXACT SAME PAYLOAD AS POSE GENERATOR ===
         // Clean base64 images (remove data URL prefix if present)
@@ -1240,8 +1270,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     
     let successCount = 0;
     // FULLY AUTOMATIC - retries indefinitely until success
-    const RETRIES_PER_CYCLE = 6; // 6 different tactics per cycle
-    const MAX_CYCLES = 10; // Maximum 10 full cycles (60 total attempts) before giving up
+    const RETRIES_PER_CYCLE = 3; // 3 retries per cycle (reduced from 6)
+    const MAX_CYCLES = 3; // Maximum 3 cycles (9 total attempts) - matches pose generator behavior
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
