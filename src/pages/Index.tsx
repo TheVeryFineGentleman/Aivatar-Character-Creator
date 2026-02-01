@@ -1026,22 +1026,78 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         
         const sceneKeywords = extractSceneKeywords(storyText);
         
-        // ===== SINGLE PROMPT - SAME PROMPT FOR ALL RETRIES =====
+        // ===== COMPLETELY DIFFERENT PROMPT FOR EACH RETRY =====
         // Build detailed camera description - beschreibt genau was zu sehen ist
         const cameraAngleDetail = cameraAngleInfo?.description || "standard eye-level perspective";
         const shotDetail = shotOption?.description || "showing the full body of the subject";
         
-        // Detaillierte Kamera-Beschreibung für präzise Replikation
-        const cameraDescription = `The camera is positioned ${cameraText.toLowerCase()}, ${cameraAngleDetail}. The shot is framed as a ${shotText.toLowerCase()}, ${shotDetail}.`;
+        // Arrays mit verschiedenen Formulierungen für maximale Variation
+        const openingVariants = [
+          "Professional photoshoot featuring EXACTLY ONE person only",
+          "High-end editorial photograph showing a SINGLE person",
+          "Cinematic still with ONE individual only",
+          "Fashion photography capturing a SOLO subject",
+          "Studio-quality image of ONE person exclusively",
+          "Premium portrait photography with EXACTLY ONE subject",
+          "Artistic photograph showcasing a SINGLE individual",
+          "Commercial photography featuring ONE person alone",
+          "Magazine-quality shot with EXACTLY ONE subject",
+          "Professional studio capture of a SOLO person"
+        ];
         
-        // Style/Character consistency prompt - KEIN "nächste Szene", sondern gleicher Style/Charakter
-        const styleConsistency = "Copy ONLY the face, hair, and body type from the reference images. Match the exact visual style, art style, realism level, lighting quality, and color grading from the reference.";
+        const cameraDescVariants = [
+          `Shot from ${cameraText.toLowerCase()}, ${cameraAngleDetail}. Framed as ${shotText.toLowerCase()}, ${shotDetail}`,
+          `Camera at ${cameraText.toLowerCase()} position, ${cameraAngleDetail}. Composition: ${shotText.toLowerCase()}, ${shotDetail}`,
+          `Photographed ${cameraText.toLowerCase()}, with ${cameraAngleDetail}. Frame: ${shotText.toLowerCase()}, ${shotDetail}`,
+          `Captured from ${cameraText.toLowerCase()}, achieving ${cameraAngleDetail}. Shot type: ${shotText.toLowerCase()}, ${shotDetail}`,
+          `${cameraText} perspective, ${cameraAngleDetail}. ${shotText} composition, ${shotDetail}`
+        ];
         
-        // Key moment instruction - zeige den Schlüsselmoment der Szene, einzigartig und unterschiedlich zur vorherigen
-        const keyMomentInstruction = `Capture the KEY MOMENT of this scene: Show the most dramatic, important action or emotion described. The image must visualize the pivotal moment of: ${sceneKeywords}. CRITICAL: This scene must be UNIQUE and DISTINCTLY DIFFERENT from the previous scene - new pose, new environment, new composition. Do NOT replicate or resemble the previous image.`;
+        const sceneDescVariants = [
+          `Depict the pivotal moment: ${sceneKeywords}. Create something ENTIRELY NEW - fresh pose, different environment, unique composition`,
+          `Visualize this key scene: ${sceneKeywords}. Make it COMPLETELY DISTINCT - original stance, new setting, different framing`,
+          `Show the dramatic highlight: ${sceneKeywords}. This must be TOTALLY DIFFERENT - unprecedented pose, fresh backdrop, new angle`,
+          `Capture the essence of: ${sceneKeywords}. Generate something WHOLLY UNIQUE - never-seen-before arrangement, new atmosphere`,
+          `Illustrate the core moment: ${sceneKeywords}. Create an ENTIRELY ORIGINAL composition - different pose, new environment, fresh perspective`
+        ];
         
-        // ALWAYS use the same prompt - no tactical rotation
-        const imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${keyMomentInstruction} ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
+        const styleVariants = [
+          "Replicate ONLY face, hair, body from reference. Match visual style, lighting, color grading exactly",
+          "Copy facial features, hairstyle, physique from refs. Maintain exact art style and lighting quality",
+          "Mirror the person's face, hair, build from references. Keep consistent visual aesthetic and color palette",
+          "Preserve face, hair, body type from reference images. Match realism level, lighting, and style",
+          "Use reference for face/hair/body ONLY. Maintain same artistic style, light quality, color treatment"
+        ];
+        
+        const closingVariants = [
+          "Ultra high resolution",
+          "Maximum image quality",
+          "Extremely detailed, sharp focus",
+          "Crystal clear, high definition",
+          "Photorealistic, premium quality"
+        ];
+        
+        // Wähle basierend auf attempt-Nummer verschiedene Kombinationen
+        const openingIdx = (attempt - 1) % openingVariants.length;
+        const cameraIdx = (attempt - 1) % cameraDescVariants.length;
+        const sceneIdx = (attempt - 1) % sceneDescVariants.length;
+        const styleIdx = (attempt - 1) % styleVariants.length;
+        const closingIdx = (attempt - 1) % closingVariants.length;
+        
+        // Zusätzliche Variation: Reihenfolge der Elemente ändern
+        const orderVariant = (attempt - 1) % 3;
+        let imagePromptText: string;
+        
+        if (orderVariant === 0) {
+          // Standard: Opening, Scene, Camera, Style, Closing
+          imagePromptText = `${openingVariants[openingIdx]}. ${sceneDescVariants[sceneIdx]}. ${cameraDescVariants[cameraIdx]}. ${styleVariants[styleIdx]}. ${closingVariants[closingIdx]}.`;
+        } else if (orderVariant === 1) {
+          // Alt: Scene first, then Opening, Camera, Style, Closing
+          imagePromptText = `${sceneDescVariants[sceneIdx]}. ${openingVariants[openingIdx]}. ${cameraDescVariants[cameraIdx]}. ${styleVariants[styleIdx]}. ${closingVariants[closingIdx]}.`;
+        } else {
+          // Alt: Camera first, Scene, Opening, Style, Closing
+          imagePromptText = `${cameraDescVariants[cameraIdx]}. ${sceneDescVariants[sceneIdx]}. ${openingVariants[openingIdx]}. ${styleVariants[styleIdx]}. ${closingVariants[closingIdx]}.`;
+        }
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
 
