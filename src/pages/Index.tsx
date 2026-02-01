@@ -1026,8 +1026,43 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         
         const sceneKeywords = extractSceneKeywords(storyText);
         
-        // ===== SIMPLIFIED PROMPT - JUST ACTION + REFERENCE IMAGE =====
-        // Einfacher Prompt: Beschreibe nur die Aktion, Referenzbild liefert den Charakter
+        // ===== DETAILED CAMERA/SHOT DESCRIPTIONS =====
+        const shotTypeDescriptions: Record<string, string> = {
+          "extreme-close-up": "EXTREME CLOSE-UP SHOT: Frame shows only a tiny detail - one eye, lips, or fingernail fills 95% of the frame. Hyper-detailed skin texture, pores, and microscopic details visible. Ultra-macro photography style.",
+          "close-up": "CLOSE-UP SHOT: Face fills 80% of the frame. Focus on facial features - eyes, nose, mouth clearly visible with fine details. Skin texture, eyelashes, and subtle expressions are prominent. Head and upper shoulders only.",
+          "medium-close-up": "MEDIUM CLOSE-UP: Head and chest visible, frame cuts at mid-chest. Face takes up 50-60% of frame. Clear facial expression with some body language context. Professional portrait framing.",
+          "medium-shot": "MEDIUM SHOT: Person visible from waist up. Full torso, arms, and head in frame. Balance between facial expression and body language. Standard conversational framing.",
+          "medium-full-shot": "MEDIUM FULL SHOT: Person visible from knees up. Most of the body in frame, showing posture and gesture while keeping face readable. Also called 'American shot'.",
+          "full-shot": "FULL SHOT: Entire body from head to feet fills the frame. Complete body language visible. Person takes up 70-80% of frame height. Clear view of clothing and stance.",
+          "long-shot": "LONG SHOT: Full body with significant environment around them. Person takes up 40-50% of frame height. Context and setting become important. Wide environmental framing.",
+          "extreme-long-shot": "EXTREME LONG SHOT: Vast landscape or environment dominates. Person is small in frame (10-20% height), establishing location and scale. Epic, cinematic wide view."
+        };
+        
+        const cameraAngleDescriptions: Record<string, string> = {
+          "eye-level": "EYE LEVEL ANGLE: Camera at same height as subject's eyes. Neutral, natural perspective. No dramatic distortion.",
+          "low-angle": "LOW ANGLE: Camera positioned below subject looking upward. Makes subject appear powerful, dominant, larger. Slight upward tilt.",
+          "high-angle": "HIGH ANGLE: Camera positioned above subject looking down. Makes subject appear smaller, vulnerable, or submissive. Downward perspective.",
+          "bird-eye": "BIRD'S EYE VIEW: Camera directly above looking straight down. 90-degree top-down perspective. Subject seen from directly overhead.",
+          "worm-eye": "WORM'S EYE VIEW: Camera at ground level looking straight up. Extreme low angle, sky or ceiling visible. Very dramatic and imposing.",
+          "dutch-angle": "DUTCH ANGLE: Camera tilted 15-45 degrees on its axis. Creates unease, tension, or dynamic energy. Diagonal horizon line.",
+          "over-shoulder": "OVER-THE-SHOULDER: Camera behind one person's shoulder, looking at the subject. Creates intimacy and connection. Partial shoulder/head in foreground."
+        };
+        
+        // Get the scene's camera settings
+        const scenePoint = storyPoints[sceneIndex];
+        const selectedShotType = scenePoint?.shotType || "";
+        const selectedCameraAngle = scenePoint?.cameraAngle || "";
+        
+        // Build camera instruction
+        let cameraInstruction = "";
+        if (selectedShotType && shotTypeDescriptions[selectedShotType]) {
+          cameraInstruction += shotTypeDescriptions[selectedShotType] + " ";
+        }
+        if (selectedCameraAngle && cameraAngleDescriptions[selectedCameraAngle]) {
+          cameraInstruction += cameraAngleDescriptions[selectedCameraAngle];
+        }
+        
+        // ===== SIMPLIFIED PROMPT - ACTION + REFERENCE IMAGE + CAMERA =====
         const actionVariants = [
           `The person from the reference image is: ${sceneKeywords}`,
           `Show the person from the reference doing: ${sceneKeywords}`,
@@ -1037,7 +1072,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         ];
         
         const actionIdx = (attempt - 1) % actionVariants.length;
-        const imagePromptText = `${actionVariants[actionIdx]}. Professional photography, ultra high resolution.`;
+        const cameraSection = cameraInstruction ? `\n\nCAMERA FRAMING INSTRUCTIONS:\n${cameraInstruction}` : "";
+        const imagePromptText = `${actionVariants[actionIdx]}. Professional photography, ultra high resolution.${cameraSection}`;
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
 
