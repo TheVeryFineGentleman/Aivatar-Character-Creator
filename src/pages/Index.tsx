@@ -848,10 +848,20 @@ Viel Spaß beim Erstellen deines Videos!
   const regenerateStoryPoint = async (index: number) => {
     if (!apiKey || regeneratingPointIndex !== null) return;
     
+    const point = storyPoints[index];
+    
+    // Check if this scene already has a generated image
+    if (point.generatedImage) {
+      // Image exists → regenerate image using regenerateSingleStoryScene
+      await regenerateSingleStoryScene(index);
+      return;
+    }
+    
+    // No image yet → only regenerate text
     setRegeneratingPointIndex(index);
     setRegeneratingCardIndex(index); // Start flip-away animation
     try {
-      const currentPoint = storyPoints[index].versions[storyPoints[index].currentVersion];
+      const currentPoint = point.versions[point.currentVersion];
       const prevPoint = index > 0 ? storyPoints[index - 1].versions[storyPoints[index - 1].currentVersion] : null;
       const nextPoint = index < storyPoints.length - 1 ? storyPoints[index + 1].versions[storyPoints[index + 1].currentVersion] : null;
       
@@ -887,14 +897,15 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (text) {
-          setStoryPoints(prev => prev.map((point, i) => {
+          setStoryPoints(prev => prev.map((p, i) => {
             if (i === index) {
               return {
-                versions: [...point.versions, text],
-                currentVersion: point.versions.length
+                ...p,
+                versions: [...p.versions, text],
+                currentVersion: p.versions.length
               };
             }
-            return point;
+            return p;
           }));
           // Trigger flip-back animation for this card
           setRegeneratingCardIndex(null);
