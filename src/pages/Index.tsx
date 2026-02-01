@@ -1030,18 +1030,21 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Simplified to 3 tactics matching pose generator's reliable structure
         let imagePromptText: string;
         
+        // Build camera description sentence
+        const cameraDescription = `Camera positioned at ${cameraText.toLowerCase()}, framed as ${shotText.toLowerCase()}, capturing the scene.`;
+        
         switch (attempt) {
           case 1:
-            // Tactic 1: EXACT Pose Generator format
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only, ${cameraText}, ${sceneKeywords}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
+            // Tactic 1: EXACT Pose Generator format with camera description
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} Scene shows: ${sceneKeywords}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
             break;
           case 2:
             // Tactic 2: Shorter variant without scene keywords
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only, ${cameraText}, ${shotText}. Match the exact style from the reference images. Ultra high resolution.`;
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} Match the exact style from the reference images. Ultra high resolution.`;
             break;
           default:
             // Tactic 3: Minimal fallback - just essential elements
-            imagePromptText = `Professional portrait of ONE person from reference. ${shotText}. Cinematic. 16:9.`;
+            imagePromptText = `Professional portrait of ONE person from reference. ${cameraDescription} Cinematic. 16:9.`;
             break;
         }
         
