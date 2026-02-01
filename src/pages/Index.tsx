@@ -1521,6 +1521,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     if (!apiKey || regeneratingPointIndex !== null) return;
     
     setRegeneratingPointIndex(sceneIndex);
+    setRegeneratingCardIndex(sceneIndex); // Start flip-away animation
     
     // Clear previous error
     setStoryPoints(prev => prev.map((p, idx) => {
@@ -1674,6 +1675,12 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         return p;
       }));
       
+      // Trigger flip-back animation
+      setRegeneratingCardIndex(null);
+      setJustFinishedIndex(sceneIndex);
+      setFlippedCards(prev => new Set(prev).add(sceneIndex));
+      setTimeout(() => setJustFinishedIndex(null), 700);
+      
       toast({ title: `Szene ${sceneIndex + 1} generiert!` });
       
     } catch (error) {
@@ -1698,9 +1705,13 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         description: errorMessage, 
         variant: "destructive" 
       });
+    } finally {
+      // Always reset animation state on error too
+      if (regeneratingCardIndex === sceneIndex) {
+        setRegeneratingCardIndex(null);
+      }
+      setRegeneratingPointIndex(null);
     }
-    
-    setRegeneratingPointIndex(null);
   };
 
   const handleSuggestionClick = (suggestion: string, index: number) => {
