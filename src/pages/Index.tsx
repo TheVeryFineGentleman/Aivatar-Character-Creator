@@ -1282,9 +1282,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     }
     
     let successCount = 0;
-    // FULLY AUTOMATIC - retries indefinitely until success
-    const RETRIES_PER_CYCLE = 3; // 3 retries per cycle (reduced from 6)
-    const MAX_CYCLES = 3; // Maximum 3 cycles (9 total attempts) - matches pose generator behavior
+    // FULLY AUTOMATIC - retries INDEFINITELY until success (no max limit)
+    const RETRIES_PER_CYCLE = 3; // 3 retries per cycle
     
     // Track the last successfully generated image for use as reference for next scenes
     let lastGeneratedImageBase64: string | null = null;
@@ -1319,20 +1318,23 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         }
       }
       
-      // FULLY AUTOMATIC RETRY LOOP - keeps trying until success
+      // INFINITE RETRY LOOP - keeps trying until success (no max cycles)
       let result: any = null;
       let totalAttempts = 0;
+      let cycleNumber = 0;
       
-      for (let cycle = 1; cycle <= MAX_CYCLES; cycle++) {
-        console.log(`Szene ${sceneIndex + 1}: Zyklus ${cycle}/${MAX_CYCLES} mit ${RETRIES_PER_CYCLE} Taktiken...`);
+      while (!result?.success) {
+        cycleNumber++;
+        console.log(`Szene ${sceneIndex + 1}: Zyklus ${cycleNumber} mit ${RETRIES_PER_CYCLE} Taktiken...`);
         
-        if (cycle > 1) {
-          // Longer pause between cycles
+        if (cycleNumber > 1) {
+          // Longer pause between cycles - increases with each failed cycle
+          const waitTime = Math.min(5 + (cycleNumber - 1) * 2, 15); // 5s, 7s, 9s, ... max 15s
           toast({
-            title: `Szene ${sceneIndex + 1} - Neuer Zyklus ${cycle}/${MAX_CYCLES}`,
-            description: `Warte 5 Sekunden und starte neue Versuchsreihe...`,
+            title: `Szene ${sceneIndex + 1} - Neuer Versuch ${cycleNumber}`,
+            description: `Warte ${waitTime} Sekunden und starte neue Versuchsreihe...`,
           });
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
         }
         
         result = await generateSingleStoryScene(
@@ -1346,89 +1348,63 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         totalAttempts += RETRIES_PER_CYCLE;
         
         if (result.success) {
-          console.log(`✅ Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen`);
+          console.log(`✅ Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen (Zyklus ${cycleNumber})`);
           break;
         }
         
-        console.log(`❌ Szene ${sceneIndex + 1} Zyklus ${cycle} fehlgeschlagen, starte automatisch nächsten Zyklus...`);
+        console.log(`❌ Szene ${sceneIndex + 1} Zyklus ${cycleNumber} fehlgeschlagen, starte automatisch nächsten Zyklus...`);
       }
       
-      // After all cycles, check result
+      // Success guaranteed at this point (loop only exits on success)
+      // Store the original image URL without any labels baked in
+      const finalImageUrl = result.generatedImageUrl;
       
-      if (result.success) {
-        // Store the original image URL without any labels baked in
-        const finalImageUrl = result.generatedImageUrl;
-        
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === sceneIndex) {
-            return {
-              ...p,
-              generatedImage: finalImageUrl,
-              detailedImagePrompt: result.detailedImagePrompt,
-              videoPrompt: result.videoPrompt,
-              sceneTitle: result.sceneTitle,
-              sceneDescription: result.sceneDescription,
-              veo3CameraMovement: result.veo3CameraMovement,
-              veo3StartState: result.veo3StartState,
-              veo3Motion: result.veo3Motion,
-              veo3EndState: result.veo3EndState,
-              generationError: undefined
-            };
-          }
-          return p;
-        }));
-        successCount++;
-        
-        // Convert this image to base64 for the next scene
-        if (result.generatedImageUrl) {
-          try {
-            const response = await fetch(result.generatedImageUrl);
-            const blob = await response.blob();
-            const base64 = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                const dataUrl = reader.result as string;
-                const base64Data = dataUrl.split(',')[1];
-                if (base64Data) resolve(base64Data);
-                else reject(new Error('No base64 data'));
-              };
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-            lastGeneratedImageBase64 = base64;
-          } catch (error) {
-            console.warn('Could not convert generated image to base64 for reference:', error);
-          }
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return {
+            ...p,
+            generatedImage: finalImageUrl,
+            detailedImagePrompt: result.detailedImagePrompt,
+            videoPrompt: result.videoPrompt,
+            sceneTitle: result.sceneTitle,
+            sceneDescription: result.sceneDescription,
+            veo3CameraMovement: result.veo3CameraMovement,
+            veo3StartState: result.veo3StartState,
+            veo3Motion: result.veo3Motion,
+            veo3EndState: result.veo3EndState,
+            generationError: undefined
+          };
         }
-        
-        toast({
-          title: `Szene ${sceneIndex + 1} ✓`,
-          description: `${successCount}/${storyPoints.length} - Starte nächste Szene...`
-        });
-        
-        // IMMEDIATELY continue to next scene (no delay needed - the loop does this automatically)
-        
-      } else {
-        // ALL CYCLES FAILED - this is extremely rare (60 attempts failed)
-        const errorMessage = result?.errorMessage || "Unbekannter Fehler nach allen Versuchen";
-        
-        setStoryPoints(prev => prev.map((p, idx) => {
-          if (idx === sceneIndex) {
-            return { ...p, generationError: errorMessage };
-          }
-          return p;
-        }));
-        
-        toast({
-          title: `Szene ${sceneIndex + 1} fehlgeschlagen nach ${MAX_CYCLES * RETRIES_PER_CYCLE} Versuchen`,
-          description: `${errorMessage} - Generierung wird fortgesetzt ohne dieses Bild.`,
-          variant: "destructive"
-        });
-        
-        // DON'T STOP - try to continue with next scene using original reference
-        // This is a last resort to not block the entire process
-        console.warn(`Szene ${sceneIndex + 1} übersprungen nach ${MAX_CYCLES * RETRIES_PER_CYCLE} Versuchen`);
+        return p;
+      }));
+      successCount++;
+      
+      // Convert this image to base64 for the next scene
+      if (result.generatedImageUrl) {
+        try {
+          const response = await fetch(result.generatedImageUrl);
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const dataUrl = reader.result as string;
+              const base64Data = dataUrl.split(',')[1];
+              if (base64Data) resolve(base64Data);
+              else reject(new Error('No base64 data'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          lastGeneratedImageBase64 = base64;
+        } catch (error) {
+          console.warn('Could not convert generated image to base64 for reference:', error);
+        }
       }
+      
+      toast({
+        title: `Szene ${sceneIndex + 1} ✓`,
+        description: `${successCount}/${storyPoints.length} - Starte nächste Szene...`
+      });
     }
     
     setGeneratingStoryImageIndex(null);
