@@ -1073,18 +1073,78 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
           cameraInstruction += cameraAngleDescriptions[selectedCameraAngle];
         }
         
-        // ===== SIMPLIFIED PROMPT - ACTION + REFERENCE IMAGE + CAMERA =====
+        // ===== EXTRACT MAIN LOCATION FROM STORY =====
+        // The main location/setting stays consistent across all scenes
+        const extractMainLocation = (fullStory: string): string => {
+          const locationKeywords = [
+            // Outdoor locations
+            "forest", "wald", "beach", "strand", "mountain", "berg", "city", "stadt", "village", "dorf",
+            "desert", "wüste", "jungle", "dschungel", "ocean", "meer", "lake", "see", "river", "fluss",
+            "garden", "garten", "park", "meadow", "wiese", "field", "feld", "valley", "tal",
+            // Indoor locations
+            "castle", "schloss", "burg", "cave", "höhle", "temple", "tempel", "palace", "palast",
+            "house", "haus", "mansion", "villa", "church", "kirche", "library", "bibliothek",
+            "hospital", "krankenhaus", "school", "schule", "office", "büro", "factory", "fabrik",
+            "museum", "theater", "restaurant", "hotel", "bar", "club", "arena", "stadium", "station",
+            // Fantasy/Sci-Fi
+            "spaceship", "raumschiff", "space station", "raumstation", "planet", "moon", "mond",
+            "dungeon", "kerker", "tower", "turm", "fortress", "festung", "ruins", "ruinen"
+          ];
+          
+          const storyLower = fullStory.toLowerCase();
+          for (const loc of locationKeywords) {
+            if (storyLower.includes(loc)) {
+              // Return English version
+              const translations: Record<string, string> = {
+                "wald": "forest", "strand": "beach", "berg": "mountain", "stadt": "city", "dorf": "village",
+                "wüste": "desert", "dschungel": "jungle", "meer": "ocean", "see": "lake", "fluss": "river",
+                "garten": "garden", "wiese": "meadow", "feld": "field", "tal": "valley",
+                "schloss": "castle", "burg": "castle", "höhle": "cave", "tempel": "temple", "palast": "palace",
+                "haus": "house", "kirche": "church", "bibliothek": "library", "krankenhaus": "hospital",
+                "schule": "school", "büro": "office", "fabrik": "factory",
+                "raumschiff": "spaceship", "raumstation": "space station", "mond": "moon",
+                "kerker": "dungeon", "turm": "tower", "festung": "fortress", "ruinen": "ruins"
+              };
+              return translations[loc] || loc;
+            }
+          }
+          return "indoor location";
+        };
+        
+        // Sub-locations within the main location for variety
+        const getSubLocationVariants = (mainLoc: string): string[] => {
+          const subLocations: Record<string, string[]> = {
+            "city": ["on a busy street corner", "in a quiet alley", "at the city square", "on a rooftop", "near a fountain", "under street lights", "by the old buildings", "at a cafe terrace"],
+            "forest": ["near a large oak tree", "by a small stream", "in a sunlit clearing", "among tall pines", "on a mossy rock", "at the forest edge", "under dense canopy", "near fallen logs"],
+            "cave": ["near the entrance", "in a crystal chamber", "by underground water", "in a narrow passage", "at a large cavern", "near glowing minerals", "in the deep darkness", "at a rock formation"],
+            "castle": ["in the great hall", "on the battlements", "in the courtyard", "by the throne", "in the dungeon", "on the tower stairs", "in the chapel", "at the gates"],
+            "beach": ["at the water's edge", "on the sandy dunes", "near palm trees", "by the rocks", "at sunset shore", "on the pier", "near the cliffs", "in shallow waves"],
+            "mountain": ["on a rocky ledge", "at the summit", "in a mountain pass", "by a waterfall", "near snow line", "on a grassy slope", "at base camp", "in a mountain cave"],
+            "house": ["in the living room", "by the window", "in the kitchen", "on the stairs", "in the garden", "at the front door", "in the bedroom", "on the balcony"],
+            "temple": ["at the altar", "in the main hall", "by stone pillars", "in the meditation room", "at the entrance", "near sacred statues", "in the inner sanctum", "at the courtyard"],
+            "spaceship": ["on the bridge", "in the cargo bay", "at the viewport", "in the corridor", "at the control panel", "in the engine room", "at the airlock", "in the crew quarters"],
+            "default": ["in a different area", "at another spot", "in a new section", "at a different angle", "in another corner", "at a new position", "from another view", "at a fresh location"]
+          };
+          return subLocations[mainLoc] || subLocations["default"];
+        };
+        
+        const mainLocation = extractMainLocation(storyText);
+        const subLocationVariants = getSubLocationVariants(mainLocation);
+        const subLocation = subLocationVariants[(sceneIndex + attempt) % subLocationVariants.length];
+        
+        // ===== SIMPLIFIED PROMPT - ACTION + CONSISTENT LOCATION + CAMERA =====
         const actionVariants = [
-          `The person from the reference image is: ${sceneKeywords}`,
-          `Show the person from the reference doing: ${sceneKeywords}`,
-          `The reference person performing: ${sceneKeywords}`,
-          `Capture the reference person: ${sceneKeywords}`,
-          `The same person as reference: ${sceneKeywords}`
+          `The person from the reference image ${subLocation} in a ${mainLocation}: ${sceneKeywords}`,
+          `Show the person from the reference ${subLocation} within the ${mainLocation}: ${sceneKeywords}`,
+          `The reference person ${subLocation} of the ${mainLocation}: ${sceneKeywords}`,
+          `Capture the reference person ${subLocation} in this ${mainLocation}: ${sceneKeywords}`,
+          `The same person as reference, now ${subLocation} in the ${mainLocation}: ${sceneKeywords}`
         ];
         
         const actionIdx = (attempt - 1) % actionVariants.length;
         const cameraSection = cameraInstruction ? `\n\nCAMERA FRAMING INSTRUCTIONS:\n${cameraInstruction}` : "";
-        const imagePromptText = `${actionVariants[actionIdx]}. Professional photography, ultra high resolution.${cameraSection}`;
+        const locationContext = `\n\nLOCATION CONTEXT: All scenes take place in the same ${mainLocation}. This specific scene is ${subLocation}. Maintain visual consistency with the overall ${mainLocation} setting.`;
+        const imagePromptText = `${actionVariants[actionIdx]}. Professional photography, ultra high resolution.${locationContext}${cameraSection}`;
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
 
