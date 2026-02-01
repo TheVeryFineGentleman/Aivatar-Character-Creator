@@ -1037,8 +1037,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Style/Character consistency prompt - KEIN "nächste Szene", sondern gleicher Style/Charakter
         const styleConsistency = "Copy ONLY the face, hair, and body type from the reference images. Match the exact visual style, art style, realism level, lighting quality, and color grading from the reference.";
         
-        // Key moment instruction - zeige den Schlüsselmoment der Szene
-        const keyMomentInstruction = `Capture the KEY MOMENT of this scene: Show the most dramatic, important action or emotion described. The image must visualize the pivotal moment of: ${sceneKeywords}.`;
+        // Key moment instruction - zeige den Schlüsselmoment der Szene, einzigartig und unterschiedlich zur vorherigen
+        const keyMomentInstruction = `Capture the KEY MOMENT of this scene: Show the most dramatic, important action or emotion described. The image must visualize the pivotal moment of: ${sceneKeywords}. CRITICAL: This scene must be UNIQUE and DISTINCTLY DIFFERENT from the previous scene - new pose, new environment, new composition. Do NOT replicate or resemble the previous image.`;
         
         // ALWAYS use the same prompt - no tactical rotation
         const imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${keyMomentInstruction} ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
