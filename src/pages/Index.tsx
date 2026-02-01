@@ -1026,78 +1026,18 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         
         const sceneKeywords = extractSceneKeywords(storyText);
         
-        // ===== COMPLETELY DIFFERENT PROMPT FOR EACH RETRY =====
-        // Build detailed camera description - beschreibt genau was zu sehen ist
-        const cameraAngleDetail = cameraAngleInfo?.description || "standard eye-level perspective";
-        const shotDetail = shotOption?.description || "showing the full body of the subject";
-        
-        // Arrays mit verschiedenen Formulierungen für maximale Variation
-        const openingVariants = [
-          "Professional photoshoot featuring EXACTLY ONE person only",
-          "High-end editorial photograph showing a SINGLE person",
-          "Cinematic still with ONE individual only",
-          "Fashion photography capturing a SOLO subject",
-          "Studio-quality image of ONE person exclusively",
-          "Premium portrait photography with EXACTLY ONE subject",
-          "Artistic photograph showcasing a SINGLE individual",
-          "Commercial photography featuring ONE person alone",
-          "Magazine-quality shot with EXACTLY ONE subject",
-          "Professional studio capture of a SOLO person"
+        // ===== SIMPLIFIED PROMPT - JUST ACTION + REFERENCE IMAGE =====
+        // Einfacher Prompt: Beschreibe nur die Aktion, Referenzbild liefert den Charakter
+        const actionVariants = [
+          `The person from the reference image is: ${sceneKeywords}`,
+          `Show the person from the reference doing: ${sceneKeywords}`,
+          `The reference person performing: ${sceneKeywords}`,
+          `Capture the reference person: ${sceneKeywords}`,
+          `The same person as reference: ${sceneKeywords}`
         ];
         
-        const cameraDescVariants = [
-          `Shot from ${cameraText.toLowerCase()}, ${cameraAngleDetail}. Framed as ${shotText.toLowerCase()}, ${shotDetail}`,
-          `Camera at ${cameraText.toLowerCase()} position, ${cameraAngleDetail}. Composition: ${shotText.toLowerCase()}, ${shotDetail}`,
-          `Photographed ${cameraText.toLowerCase()}, with ${cameraAngleDetail}. Frame: ${shotText.toLowerCase()}, ${shotDetail}`,
-          `Captured from ${cameraText.toLowerCase()}, achieving ${cameraAngleDetail}. Shot type: ${shotText.toLowerCase()}, ${shotDetail}`,
-          `${cameraText} perspective, ${cameraAngleDetail}. ${shotText} composition, ${shotDetail}`
-        ];
-        
-        const sceneDescVariants = [
-          `Depict the pivotal moment: ${sceneKeywords}. Create something ENTIRELY NEW - fresh pose, different environment, unique composition`,
-          `Visualize this key scene: ${sceneKeywords}. Make it COMPLETELY DISTINCT - original stance, new setting, different framing`,
-          `Show the dramatic highlight: ${sceneKeywords}. This must be TOTALLY DIFFERENT - unprecedented pose, fresh backdrop, new angle`,
-          `Capture the essence of: ${sceneKeywords}. Generate something WHOLLY UNIQUE - never-seen-before arrangement, new atmosphere`,
-          `Illustrate the core moment: ${sceneKeywords}. Create an ENTIRELY ORIGINAL composition - different pose, new environment, fresh perspective`
-        ];
-        
-        const styleVariants = [
-          "Replicate ONLY face, hair, body from reference. Match visual style, lighting, color grading exactly",
-          "Copy facial features, hairstyle, physique from refs. Maintain exact art style and lighting quality",
-          "Mirror the person's face, hair, build from references. Keep consistent visual aesthetic and color palette",
-          "Preserve face, hair, body type from reference images. Match realism level, lighting, and style",
-          "Use reference for face/hair/body ONLY. Maintain same artistic style, light quality, color treatment"
-        ];
-        
-        const closingVariants = [
-          "Ultra high resolution",
-          "Maximum image quality",
-          "Extremely detailed, sharp focus",
-          "Crystal clear, high definition",
-          "Photorealistic, premium quality"
-        ];
-        
-        // Wähle basierend auf attempt-Nummer verschiedene Kombinationen
-        const openingIdx = (attempt - 1) % openingVariants.length;
-        const cameraIdx = (attempt - 1) % cameraDescVariants.length;
-        const sceneIdx = (attempt - 1) % sceneDescVariants.length;
-        const styleIdx = (attempt - 1) % styleVariants.length;
-        const closingIdx = (attempt - 1) % closingVariants.length;
-        
-        // Zusätzliche Variation: Reihenfolge der Elemente ändern
-        const orderVariant = (attempt - 1) % 3;
-        let imagePromptText: string;
-        
-        if (orderVariant === 0) {
-          // Standard: Opening, Scene, Camera, Style, Closing
-          imagePromptText = `${openingVariants[openingIdx]}. ${sceneDescVariants[sceneIdx]}. ${cameraDescVariants[cameraIdx]}. ${styleVariants[styleIdx]}. ${closingVariants[closingIdx]}.`;
-        } else if (orderVariant === 1) {
-          // Alt: Scene first, then Opening, Camera, Style, Closing
-          imagePromptText = `${sceneDescVariants[sceneIdx]}. ${openingVariants[openingIdx]}. ${cameraDescVariants[cameraIdx]}. ${styleVariants[styleIdx]}. ${closingVariants[closingIdx]}.`;
-        } else {
-          // Alt: Camera first, Scene, Opening, Style, Closing
-          imagePromptText = `${cameraDescVariants[cameraIdx]}. ${sceneDescVariants[sceneIdx]}. ${openingVariants[openingIdx]}. ${styleVariants[styleIdx]}. ${closingVariants[closingIdx]}.`;
-        }
+        const actionIdx = (attempt - 1) % actionVariants.length;
+        const imagePromptText = `${actionVariants[actionIdx]}. Professional photography, ultra high resolution.`;
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
 
@@ -1337,27 +1277,11 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       // Update UI to show which scene is being generated
       setGeneratingStoryImageIndex(sceneIndex);
       
-      // REFERENZBILD-LOGIK (VERBESSERT):
-      // - Szene 1: Nutzt die hochgeladenen Referenzbilder
-      // - Ab Szene 2: Nutzt BEIDE - Original-Referenzbilder UND das letzte generierte Bild
-      //   -> Original für Style/Charakter-Konsistenz
-      //   -> Letzte Szene für narrative Kontinuität
-      let sceneReferenceImages: string[];
-      if (sceneIndex === 0) {
-        // Erste Szene: Upload-Referenzbilder verwenden
-        sceneReferenceImages = [...characterBase64Images];
-      } else {
-        // Folgende Szenen: BEIDE Referenzbilder für maximale Konsistenz
-        if (lastGeneratedImageBase64) {
-          // Erst die Original-Referenzbilder (für Style/Charakter), dann letzte Szene (für Kontinuität)
-          sceneReferenceImages = [...characterBase64Images, lastGeneratedImageBase64];
-          console.log(`Szene ${sceneIndex + 1}: Verwende ${characterBase64Images.length} Original-Refs + 1 letzte Szene = ${sceneReferenceImages.length} Referenzbilder`);
-        } else {
-          // Fallback - nur Original-Referenzbilder wenn keine vorherige Szene
-          console.warn(`Szene ${sceneIndex + 1}: Kein vorheriges Bild vorhanden - verwende nur Original-Referenzbilder`);
-          sceneReferenceImages = [...characterBase64Images];
-        }
-      }
+      // VEREINFACHTE REFERENZBILD-LOGIK:
+      // Jede Szene verwendet NUR die ursprünglichen Referenzbilder von oben
+      // Keine vorherige Szene mehr als Referenz
+      const sceneReferenceImages = [...characterBase64Images];
+      console.log(`Szene ${sceneIndex + 1}: Verwende ${sceneReferenceImages.length} Original-Referenzbilder`);
       
       // INFINITE RETRY LOOP - keeps trying until success (no max cycles)
       let result: any = null;
