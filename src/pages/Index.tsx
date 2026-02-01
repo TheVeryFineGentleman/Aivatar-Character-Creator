@@ -1557,7 +1557,9 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       }
     }
     
-    // Get previous scene's image for style reference
+    // Get current scene's existing image for style/continuity reference (if regenerating)
+    const currentSceneImage = point.generatedImage || null;
+    // Also get previous scene's image for additional context
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
@@ -1587,8 +1589,25 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         parts.push({ inlineData: { mimeType: "image/png", data: base64Data } });
       }
       
-      // Add previous scene image if available (for continuity)
-      if (previousSceneImage) {
+      // Add CURRENT scene's existing image as reference (for regeneration continuity)
+      if (currentSceneImage) {
+        try {
+          const response = await fetch(currentSceneImage);
+          const blob = await response.blob();
+          const currentBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+            reader.readAsDataURL(blob);
+          });
+          parts.push({ inlineData: { mimeType: "image/jpeg", data: currentBase64 } });
+          console.log(`Added current scene image as reference for regeneration`);
+        } catch (e) {
+          console.warn("Could not add current scene as reference:", e);
+        }
+      }
+      
+      // Add previous scene image if available (for additional continuity)
+      if (previousSceneImage && previousSceneImage !== currentSceneImage) {
         try {
           const response = await fetch(previousSceneImage);
           const blob = await response.blob();
