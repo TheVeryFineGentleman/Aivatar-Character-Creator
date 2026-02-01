@@ -1040,18 +1040,21 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Style/Character consistency prompt - KEIN "nächste Szene", sondern gleicher Style/Charakter
         const styleConsistency = "Copy ONLY the face, hair, and body type from the reference images. Match the exact visual style, art style, realism level, lighting quality, and color grading from the reference.";
         
+        // Key moment instruction - zeige den Schlüsselmoment der Szene
+        const keyMomentInstruction = `Capture the KEY MOMENT of this scene: Show the most dramatic, important action or emotion described. The image must visualize the pivotal moment of: ${sceneKeywords}.`;
+        
         switch (attempt) {
           case 1:
-            // Tactic 1: Full prompt with detailed camera + style consistency
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} Scene setting: ${sceneKeywords}. ${styleConsistency} Ultra high resolution.`;
+            // Tactic 1: Full prompt with key moment + detailed camera + style consistency
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${keyMomentInstruction} ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
             break;
           case 2:
-            // Tactic 2: Shorter variant without scene keywords
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
+            // Tactic 2: Shorter variant - key moment without detailed keywords
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. Show the most important moment of this scene. ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
             break;
           default:
             // Tactic 3: Minimal fallback - just essential elements
-            imagePromptText = `Professional portrait of ONE person. ${cameraDescription} Same character and style as reference. Cinematic. 16:9.`;
+            imagePromptText = `Professional portrait of ONE person in a key dramatic moment. ${cameraDescription} Same character and style as reference. Cinematic. 16:9.`;
             break;
         }
         
