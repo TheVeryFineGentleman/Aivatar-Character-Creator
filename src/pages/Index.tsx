@@ -1026,10 +1026,7 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         
         const sceneKeywords = extractSceneKeywords(storyText);
         
-        // ===== TACTICAL PROMPT ROTATION (3 tactics) - POSE GENERATOR FORMAT =====
-        // Simplified to 3 tactics matching pose generator's reliable structure
-        let imagePromptText: string;
-        
+        // ===== SINGLE PROMPT - SAME PROMPT FOR ALL RETRIES =====
         // Build detailed camera description - beschreibt genau was zu sehen ist
         const cameraAngleDetail = cameraAngleInfo?.description || "standard eye-level perspective";
         const shotDetail = shotOption?.description || "showing the full body of the subject";
@@ -1043,20 +1040,8 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Key moment instruction - zeige den Schlüsselmoment der Szene
         const keyMomentInstruction = `Capture the KEY MOMENT of this scene: Show the most dramatic, important action or emotion described. The image must visualize the pivotal moment of: ${sceneKeywords}.`;
         
-        switch (attempt) {
-          case 1:
-            // Tactic 1: Full prompt with key moment + detailed camera + style consistency
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${keyMomentInstruction} ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
-            break;
-          case 2:
-            // Tactic 2: Shorter variant - key moment without detailed keywords
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. Show the most important moment of this scene. ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
-            break;
-          default:
-            // Tactic 3: Minimal fallback - just essential elements
-            imagePromptText = `Professional portrait of ONE person in a key dramatic moment. ${cameraDescription} Same character and style as reference. Cinematic. 16:9.`;
-            break;
-        }
+        // ALWAYS use the same prompt - no tactical rotation
+        const imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${keyMomentInstruction} ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
 
