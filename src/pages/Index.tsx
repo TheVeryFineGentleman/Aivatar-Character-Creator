@@ -1030,21 +1030,28 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         // Simplified to 3 tactics matching pose generator's reliable structure
         let imagePromptText: string;
         
-        // Build camera description sentence
-        const cameraDescription = `Camera positioned at ${cameraText.toLowerCase()}, framed as ${shotText.toLowerCase()}, capturing the scene.`;
+        // Build detailed camera description - beschreibt genau was zu sehen ist
+        const cameraAngleDetail = cameraAngleInfo?.description || "standard eye-level perspective";
+        const shotDetail = shotOption?.description || "showing the full body of the subject";
+        
+        // Detaillierte Kamera-Beschreibung für präzise Replikation
+        const cameraDescription = `The camera is positioned ${cameraText.toLowerCase()}, ${cameraAngleDetail}. The shot is framed as a ${shotText.toLowerCase()}, ${shotDetail}.`;
+        
+        // Style/Character consistency prompt - KEIN "nächste Szene", sondern gleicher Style/Charakter
+        const styleConsistency = "Copy ONLY the face, hair, and body type from the reference images. Match the exact visual style, art style, realism level, lighting quality, and color grading from the reference.";
         
         switch (attempt) {
           case 1:
-            // Tactic 1: EXACT Pose Generator format with camera description
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} Scene shows: ${sceneKeywords}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution.`;
+            // Tactic 1: Full prompt with detailed camera + style consistency
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} Scene setting: ${sceneKeywords}. ${styleConsistency} Ultra high resolution.`;
             break;
           case 2:
             // Tactic 2: Shorter variant without scene keywords
-            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} Match the exact style from the reference images. Ultra high resolution.`;
+            imagePromptText = `Professional photoshoot with EXACTLY ONE person only. ${cameraDescription} ${styleConsistency} Ultra high resolution.`;
             break;
           default:
             // Tactic 3: Minimal fallback - just essential elements
-            imagePromptText = `Professional portrait of ONE person from reference. ${cameraDescription} Cinematic. 16:9.`;
+            imagePromptText = `Professional portrait of ONE person. ${cameraDescription} Same character and style as reference. Cinematic. 16:9.`;
             break;
         }
         
@@ -1287,26 +1294,25 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       // Update UI to show which scene is being generated
       setGeneratingStoryImageIndex(sceneIndex);
       
-      // REFERENZBILD-LOGIK:
-      // - Szene 1 (Index 0): Nutzt die hochgeladenen Referenzbilder
-      // - Ab Szene 2: Nutzt NUR das letzte generierte Bild als Referenz
+      // REFERENZBILD-LOGIK (VERBESSERT):
+      // - Szene 1: Nutzt die hochgeladenen Referenzbilder
+      // - Ab Szene 2: Nutzt BEIDE - Original-Referenzbilder UND das letzte generierte Bild
+      //   -> Original für Style/Charakter-Konsistenz
+      //   -> Letzte Szene für narrative Kontinuität
       let sceneReferenceImages: string[];
       if (sceneIndex === 0) {
         // Erste Szene: Upload-Referenzbilder verwenden
         sceneReferenceImages = [...characterBase64Images];
       } else {
-        // Folgende Szenen: NUR das letzte generierte Bild verwenden
+        // Folgende Szenen: BEIDE Referenzbilder für maximale Konsistenz
         if (lastGeneratedImageBase64) {
-          sceneReferenceImages = [lastGeneratedImageBase64];
+          // Erst die Original-Referenzbilder (für Style/Charakter), dann letzte Szene (für Kontinuität)
+          sceneReferenceImages = [...characterBase64Images, lastGeneratedImageBase64];
+          console.log(`Szene ${sceneIndex + 1}: Verwende ${characterBase64Images.length} Original-Refs + 1 letzte Szene = ${sceneReferenceImages.length} Referenzbilder`);
         } else {
-          // Fehler - vorherige Szene hat kein Bild generiert
-          console.error(`Szene ${sceneIndex + 1}: Kein vorheriges Bild vorhanden - Generierung wird abgebrochen`);
-          toast({
-            title: "Fehler",
-            description: `Szene ${sceneIndex + 1} kann nicht generiert werden, da Szene ${sceneIndex} kein Bild hat.`,
-            variant: "destructive"
-          });
-          break;
+          // Fallback - nur Original-Referenzbilder wenn keine vorherige Szene
+          console.warn(`Szene ${sceneIndex + 1}: Kein vorheriges Bild vorhanden - verwende nur Original-Referenzbilder`);
+          sceneReferenceImages = [...characterBase64Images];
         }
       }
       
