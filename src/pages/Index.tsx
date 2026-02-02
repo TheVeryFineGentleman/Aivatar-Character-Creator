@@ -306,10 +306,12 @@ const Index = () => {
   // Scene Edit Popup - Tab-based UI state
   const [sceneEditTab, setSceneEditTab] = useState<"content" | "image" | "video">("content");
   
-  // AI Assistant update targets
-  const [sceneAiUpdateText, setSceneAiUpdateText] = useState(true);
-  const [sceneAiUpdateCamera, setSceneAiUpdateCamera] = useState(true);
-  const [sceneAiRegenerateImage, setSceneAiRegenerateImage] = useState(false);
+  // AI Assistant update mode: "text" = nur Text & Kamera, "image" = nur Bild neu, "both" = beides
+  const [sceneAiMode, setSceneAiMode] = useState<"text" | "image" | "both">("text");
+  
+  // Derived values for backward compatibility
+  const sceneAiUpdateText = sceneAiMode === "text" || sceneAiMode === "both";
+  const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
 
   // Browser compatibility check on mount
   useEffect(() => {
@@ -454,7 +456,7 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
     if (!apiKey || expandedStoryPointIndex === null) return;
     
     // 1. Text & Kamera optimieren (wenn ausgewählt)
-    if (sceneAiUpdateText || sceneAiUpdateCamera) {
+    if (sceneAiUpdateText) {
       await handleSceneAssistant();
     }
     
@@ -5996,25 +5998,31 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                                   <span className="text-sm text-muted-foreground">KI-Assistent</span>
                                 </div>
                                 <div className="flex-1 flex justify-center">
-                                  <div className="flex items-center gap-3">
-                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                      <Checkbox 
-                                        id="update-text"
-                                        checked={sceneAiUpdateText}
-                                        onCheckedChange={(checked) => setSceneAiUpdateText(checked === true)}
-                                        className="h-4 w-4"
-                                      />
-                                      <span className="text-sm">Text & Kamera</span>
-                                    </label>
-                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                      <Checkbox 
-                                        id="regen-image"
-                                        checked={sceneAiRegenerateImage}
-                                        onCheckedChange={(checked) => setSceneAiRegenerateImage(checked === true)}
-                                        className="h-4 w-4"
-                                      />
-                                      <span className="text-sm">+ Bild neu</span>
-                                    </label>
+                                  <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+                                    <Button
+                                      variant={sceneAiMode === "text" ? "default" : "ghost"}
+                                      size="sm"
+                                      className={`h-6 px-2 text-xs ${sceneAiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                                      onClick={() => setSceneAiMode("text")}
+                                    >
+                                      Text & Kamera
+                                    </Button>
+                                    <Button
+                                      variant={sceneAiMode === "image" ? "default" : "ghost"}
+                                      size="sm"
+                                      className={`h-6 px-2 text-xs ${sceneAiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                                      onClick={() => setSceneAiMode("image")}
+                                    >
+                                      Bild neu
+                                    </Button>
+                                    <Button
+                                      variant={sceneAiMode === "both" ? "default" : "ghost"}
+                                      size="sm"
+                                      className={`h-6 px-2 text-xs ${sceneAiMode === "both" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                                      onClick={() => setSceneAiMode("both")}
+                                    >
+                                      Beides
+                                    </Button>
                                   </div>
                                 </div>
                                 {/* Spacer to balance + loading indicator */}
