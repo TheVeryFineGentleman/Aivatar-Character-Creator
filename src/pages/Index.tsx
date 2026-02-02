@@ -2251,21 +2251,39 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               customPromptText
             );
 
-            // First set progress to 100% while keeping loading state
-            setImageSlots((prev) => {
-              const updated = [...prev];
-              if (index >= updated.length) return prev;
-              updated[index] = { ...updated[index], progress: 100 };
-              return updated;
+            // Animate progress quickly from current value to 100%
+            const animateTo100 = () => new Promise<void>(resolve => {
+              let currentProgress = 90;
+              const animationInterval = setInterval(() => {
+                currentProgress += 5;
+                if (currentProgress >= 100) {
+                  currentProgress = 100;
+                  clearInterval(animationInterval);
+                  setImageSlots((prev) => {
+                    const updated = [...prev];
+                    if (index < updated.length) {
+                      updated[index] = { ...updated[index], progress: 100 };
+                    }
+                    return updated;
+                  });
+                  setTimeout(resolve, 150); // Short pause at 100%
+                } else {
+                  setImageSlots((prev) => {
+                    const updated = [...prev];
+                    if (index < updated.length) {
+                      updated[index] = { ...updated[index], progress: currentProgress };
+                    }
+                    return updated;
+                  });
+                }
+              }, 50); // Fast animation: 50ms per step
             });
 
-            // Wait a moment so user can see 100% before showing the image
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await animateTo100();
 
             // Now update with the actual result
             setImageSlots((prev) => {
               const updated = [...prev];
-              // Safety check: ensure index is valid
               if (index >= updated.length) {
                 console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
                 return prev;
@@ -2641,11 +2659,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const blob = new Blob([byteArray], { type: mimeType });
           const imageUrl = URL.createObjectURL(blob);
           
-          // First set progress to 100% while keeping loading state
-          updateSlotSafe(newIndex, { progress: 100 });
+          // Animate progress quickly from current to 100%
+          for (let p = 90; p <= 100; p += 5) {
+            updateSlotSafe(newIndex, { progress: p });
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
           
-          // Wait a moment so user can see 100% before showing the image
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Short pause at 100%
+          await new Promise(resolve => setTimeout(resolve, 150));
           
           updateSlotSafe(newIndex, { status: "completed", imageUrl, progress: 100 });
           
