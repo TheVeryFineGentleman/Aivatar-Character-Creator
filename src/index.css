@@ -547,3 +547,30 @@ All colors MUST be HSL.
   animation-delay: 0.15s;
   opacity: 0;
 }
+
+/* Image flip animation for regeneration */
+@keyframes image-flip-out {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes image-flip-in {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+.animate-image-flip-out {
+  animation: image-flip-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-image-flip-in {
+  animation: image-flip-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

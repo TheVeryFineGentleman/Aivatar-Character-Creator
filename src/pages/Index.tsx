@@ -5129,15 +5129,44 @@ Beispiel einer korrekten Antwort:
                             <div className="p-3 flex-1 flex flex-col">
                               {point.generatedImage ? (
                                 <>
-                                  {/* Generated Image - object-contain for no cropping */}
-                                  <div className="relative rounded-lg overflow-hidden bg-muted/10 flex-1 transition-all duration-500 animate-in slide-in-from-top-4 w-full flex items-center justify-center group/image">
-                                    <img 
-                                      src={point.generatedImage} 
-                                      alt={`Szene ${index + 1}`}
-                                      className="max-w-full max-h-full object-contain"
-                                    />
-                                    {/* Shot type label as CSS overlay - not baked into image */}
-                                    {point.shotType && (
+                                  {/* Generated Image with flip animation for regeneration */}
+                                  <div 
+                                    className="relative rounded-lg overflow-hidden bg-muted/10 h-[160px] w-full group/image"
+                                    style={{ perspective: '600px' }}
+                                  >
+                                    {/* Image flip container */}
+                                    <div 
+                                      className={cn(
+                                        "w-full h-full",
+                                        generatingStoryImageIndex === index && "animate-image-flip-out"
+                                      )}
+                                      style={{ 
+                                        transformStyle: 'preserve-3d',
+                                      }}
+                                    >
+                                      {/* Front - the actual image */}
+                                      <div 
+                                        className="absolute inset-0 flex items-center justify-center"
+                                        style={{ backfaceVisibility: 'hidden' }}
+                                      >
+                                        <img 
+                                          src={point.generatedImage} 
+                                          alt={`Szene ${index + 1}`}
+                                          className="max-w-full max-h-full object-contain"
+                                        />
+                                      </div>
+                                      {/* Back - loader during regeneration */}
+                                      <div 
+                                        className="absolute inset-0 bg-gradient-to-br from-muted/80 to-muted/60 flex items-center justify-center"
+                                        style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                                      >
+                                        <div className="w-12 h-12 rounded-full bg-background/50 flex items-center justify-center border border-border/30">
+                                          <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {/* Shot type label */}
+                                    {point.shotType && generatingStoryImageIndex !== index && (
                                       <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
                                         {point.shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                       </div>
@@ -5166,17 +5195,35 @@ Beispiel einer korrekten Antwort:
                                         )}
                                       </Button>
                                     </div>
-                                    {generatingStoryImageIndex === index && (
-                                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-30">
-                                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                                      </div>
-                                    )}
                                   </div>
-                                  {/* Scene summary - read only (short version for cards) */}
-                                  <div className="mt-3 bg-muted/30 rounded-lg p-2.5 border border-border/20">
-                                    <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">
-                                      {point.summary || point.sceneDescription || point.versions[point.currentVersion]}
-                                    </p>
+                                  
+                                  {/* Scene info area - use remaining space */}
+                                  <div className="mt-2 flex-1 flex flex-col gap-2">
+                                    {/* Scene summary */}
+                                    <div className="bg-muted/30 rounded-lg p-2.5 border border-border/20 flex-1">
+                                      <p className="text-sm text-foreground/80 leading-relaxed line-clamp-4">
+                                        {point.summary || point.sceneDescription || point.versions[point.currentVersion]}
+                                      </p>
+                                    </div>
+                                    
+                                    {/* Metadata tags */}
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {point.cameraAngle && (
+                                        <span className="inline-flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                          📷 {point.cameraAngle}
+                                        </span>
+                                      )}
+                                      {point.emotion && (
+                                        <span className="inline-flex items-center gap-1 text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">
+                                          😊 {point.emotion}
+                                        </span>
+                                      )}
+                                      {point.keyAction && (
+                                        <span className="inline-flex items-center gap-1 text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                                          🎯 {point.keyAction.length > 15 ? point.keyAction.slice(0, 15) + '...' : point.keyAction}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </>
                               ) : point.generationError ? (
