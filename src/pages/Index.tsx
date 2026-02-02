@@ -5368,46 +5368,58 @@ Beispiel einer korrekten Antwort:
                                           className="max-w-full max-h-full object-contain"
                                         />
                                       </div>
-                                      {/* Back - loader during image-only regeneration */}
+                                      {/* Back - decorative pattern like card back */}
                                       <div 
-                                        className="absolute inset-0 bg-gradient-to-br from-muted/80 to-muted/60 flex items-center justify-center"
+                                        className="absolute inset-0 bg-background rounded-lg overflow-hidden"
                                         style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                                       >
-                                        <div className="w-12 h-12 rounded-full bg-background/50 flex items-center justify-center border border-border/30">
-                                          <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                        {/* Decorative pattern */}
+                                        <div className="absolute inset-0 opacity-[0.07]">
+                                          <div className="absolute top-2 left-2 w-10 h-10 border-2 border-foreground rounded-full" />
+                                          <div className="absolute top-4 left-4 w-6 h-6 border-2 border-foreground rounded-full" />
+                                          <div className="absolute bottom-2 right-2 w-12 h-12 border-2 border-foreground rounded-full" />
+                                          <div className="absolute bottom-5 right-5 w-6 h-6 border-2 border-foreground rounded-full" />
+                                        </div>
+                                        {/* Center loader */}
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
+                                            {justFinishedImageOnlyIndex === index ? (
+                                              <Check className="w-6 h-6 text-primary animate-scale-in" />
+                                            ) : (
+                                              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
                                     {/* Shot type label */}
-                                    {point.shotType && generatingStoryImageIndex !== index && (
+                                    {point.shotType && generatingStoryImageIndex !== index && !regeneratingImageOnlyIndex && (
                                       <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
                                         {point.shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                       </div>
                                     )}
-                                    {/* Quick Action Overlay on hover - IMAGE ONLY regeneration */}
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
-                                      <Button 
-                                        size="icon" 
-                                        variant="secondary" 
-                                        className="h-9 w-9 rounded-full shadow-lg"
-                                        onClick={(e) => { e.stopPropagation(); setExpandedStoryPointIndex(index); }}
-                                      >
-                                        <Maximize2 className="w-4 h-4" />
-                                      </Button>
-                                      <Button 
-                                        size="icon" 
-                                        variant="secondary" 
-                                        className="h-9 w-9 rounded-full shadow-lg"
-                                        onClick={(e) => { e.stopPropagation(); regenerateImageOnly(index); }}
-                                        disabled={regeneratingPointIndex !== null}
-                                      >
-                                        {regeneratingImageOnlyIndex === index ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
+                                    {/* Quick Action Overlay on hover - hidden during regeneration */}
+                                    {regeneratingImageOnlyIndex !== index && (
+                                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
+                                        <Button 
+                                          size="icon" 
+                                          variant="secondary" 
+                                          className="h-9 w-9 rounded-full shadow-lg"
+                                          onClick={(e) => { e.stopPropagation(); setExpandedStoryPointIndex(index); }}
+                                        >
+                                          <Maximize2 className="w-4 h-4" />
+                                        </Button>
+                                        <Button 
+                                          size="icon" 
+                                          variant="secondary" 
+                                          className="h-9 w-9 rounded-full shadow-lg"
+                                          onClick={(e) => { e.stopPropagation(); regenerateImageOnly(index); }}
+                                          disabled={regeneratingPointIndex !== null}
+                                        >
                                           <RefreshCw className="w-4 h-4" />
-                                        )}
-                                      </Button>
-                                    </div>
+                                        </Button>
+                                      </div>
+                                    )}
                                   </div>
                                   
                                   {/* Scene summary - compact */}
