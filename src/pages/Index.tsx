@@ -5135,11 +5135,12 @@ Beispiel einer korrekten Antwort:
                                     className="relative rounded-lg overflow-hidden bg-muted/10 h-[160px] w-full group/image"
                                     style={{ perspective: '600px' }}
                                   >
-                                    {/* Image flip container */}
+                                    {/* Image flip container - only image flips during regeneration */}
                                     <div 
                                       className={cn(
-                                        "w-full h-full",
-                                        generatingStoryImageIndex === index && "animate-image-flip-out"
+                                        "w-full h-full transition-transform duration-500",
+                                        regeneratingPointIndex === index && "animate-image-flip-out",
+                                        justFinishedIndex === index && "animate-image-flip-in"
                                       )}
                                       style={{ 
                                         transformStyle: 'preserve-3d',
