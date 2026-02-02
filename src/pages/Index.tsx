@@ -5020,59 +5020,19 @@ Beispiel einer korrekten Antwort:
                       >
                         {storyPoints.map((point, index) => (
                           <div 
-                            key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
+                            key={`${storyboardAnimationKey}-${index}`}
                             className={cn(
                               "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[295px]",
-                              regeneratingCardIndex === index 
-                                ? "animate-storyboard-flip-away" 
-                                : justFinishedIndex === index 
-                                  ? "animate-storyboard-flip-back" 
-                                  : (storyboardAnimationKey > 0 && !flippedCards.has(index)) ? "animate-storyboard-appear opacity-0" : ""
+                              (storyboardAnimationKey > 0 && !flippedCards.has(index)) ? "animate-storyboard-appear opacity-0" : ""
                             )}
                             style={{ 
-                              animationDelay: (regeneratingCardIndex === index || justFinishedIndex === index) ? '0ms' : `${index * 120}ms`, 
-                              animationFillMode: 'both',
-                              transformStyle: 'preserve-3d'
+                              animationDelay: `${index * 120}ms`, 
+                              animationFillMode: 'both'
                             }}
                           >
-                            {/* Card Back - decorative */}
+                            {/* Card - no flip animation on the card itself */}
                             <div 
-                              className="absolute inset-0 bg-background rounded-xl border border-border/40 shadow-lg overflow-hidden"
-                              style={{ 
-                                backfaceVisibility: 'hidden',
-                                WebkitBackfaceVisibility: 'hidden',
-                                transform: 'rotateX(180deg)'
-                              }}
-                            >
-                              {/* Decorative pattern */}
-                              <div className="absolute inset-0 opacity-[0.07]">
-                                <div className="absolute top-4 left-4 w-16 h-16 border-2 border-foreground rounded-full" />
-                                <div className="absolute top-8 left-8 w-12 h-12 border-2 border-foreground rounded-full" />
-                                <div className="absolute bottom-4 right-4 w-20 h-20 border-2 border-foreground rounded-full" />
-                                <div className="absolute bottom-10 right-10 w-10 h-10 border-2 border-foreground rounded-full" />
-                              </div>
-                              {/* Center icon - shows loader during regeneration, checkmark when done */}
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
-                                  {justFinishedIndex === index ? (
-                                    <Check className="w-8 h-8 text-primary animate-scale-in" />
-                                  ) : regeneratingCardIndex === index ? (
-                                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                                  ) : (
-                                    <Sparkles className="w-8 h-8 text-muted-foreground/50" />
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            {/* Card Front */}
-                            <div 
-                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30"
-                              style={{ 
-                                backfaceVisibility: 'hidden',
-                                WebkitBackfaceVisibility: 'hidden',
-                                transform: 'rotateX(0deg)',
-                                transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
-                              }}
+                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
                             >
                             {/* Scene number header bar with controls */}
                             <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-4 py-2.5">
