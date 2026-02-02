@@ -3584,38 +3584,82 @@ Beispiel einer korrekten Antwort:
       return;
     }
 
+    // Show progress for large downloads
+    const isLargeDownload = completedImages.length > 10;
+    if (isLargeDownload) {
+      toast({
+        title: "Download wird vorbereitet...",
+        description: `${completedImages.length} Bilder werden verarbeitet`,
+      });
+    }
+
+    const createdUrls: string[] = []; // Track URLs for cleanup
+    
     try {
       const zip = new JSZip();
       const isBasic = !isPro;
+      const BATCH_SIZE = 5; // Process in smaller batches to prevent memory overflow
       
+      // Get indices of completed images
+      const completedIndices: number[] = [];
       for (let i = 0; i < imageSlots.length; i++) {
-        const slot = imageSlots[i];
-        if (slot.status === "completed" && slot.imageUrl) {
-          let imageData: Blob;
+        if (imageSlots[i].status === "completed" && imageSlots[i].imageUrl) {
+          completedIndices.push(i);
+        }
+      }
+      
+      // Process in batches
+      for (let batchStart = 0; batchStart < completedIndices.length; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, completedIndices.length);
+        const batchIndices = completedIndices.slice(batchStart, batchEnd);
+        
+        // Process batch in parallel
+        await Promise.all(batchIndices.map(async (i) => {
+          const slot = imageSlots[i];
+          if (!slot.imageUrl) return;
           
-          if (isBasic) {
-            // Basic users get lower resolution
-            try {
-              const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
-              const response = await fetch(resizedUrl);
-              imageData = await response.blob();
-            } catch (error) {
-              console.error("Resize failed, using original:", error);
+          try {
+            let imageData: Blob;
+            
+            if (isBasic) {
+              // Basic users get lower resolution
+              try {
+                const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
+                createdUrls.push(resizedUrl); // Track for cleanup
+                const response = await fetch(resizedUrl);
+                imageData = await response.blob();
+              } catch (error) {
+                console.error("Resize failed, using original:", error);
+                const response = await fetch(slot.imageUrl);
+                imageData = await response.blob();
+              }
+            } else {
               const response = await fetch(slot.imageUrl);
               imageData = await response.blob();
             }
-          } else {
-            const response = await fetch(slot.imageUrl);
-            imageData = await response.blob();
+            
+            zip.file(`character-${i + 1}.png`, imageData);
+          } catch (err) {
+            console.error(`Failed to process image ${i + 1}:`, err);
           }
-          
-          zip.file(`character-${i + 1}.png`, imageData);
-        }
+        }));
+        
+        // Force garbage collection opportunity between batches
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
-      const zipBlob = await zip.generateAsync({ type: "blob" });
+      // Generate ZIP with compression to reduce memory
+      const zipBlob = await zip.generateAsync({ 
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 }
+      });
+      
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      createdUrls.push(downloadUrl); // Track for cleanup
+      
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(zipBlob);
+      link.href = downloadUrl;
       link.download = "character-images.zip";
       document.body.appendChild(link);
       link.click();
@@ -3629,9 +3673,23 @@ Beispiel einer korrekten Antwort:
       console.error("Download error:", error);
       toast({
         title: "Download fehlgeschlagen",
-        description: "ZIP-Datei konnte nicht erstellt werden",
+        description: error instanceof Error && error.message.includes("memory") 
+          ? "Zu wenig Speicher - versuche weniger Bilder"
+          : "ZIP-Datei konnte nicht erstellt werden",
         variant: "destructive",
       });
+    } finally {
+      // CRITICAL: Clean up all created blob URLs to prevent memory leaks
+      setTimeout(() => {
+        createdUrls.forEach(url => {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        });
+        console.log(`🧹 Cleaned up ${createdUrls.length} blob URLs after download`);
+      }, 1000); // Delay cleanup to ensure download starts
     }
   };
 
