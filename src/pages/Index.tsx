@@ -284,7 +284,9 @@ const Index = () => {
   const [isClosingPopup, setIsClosingPopup] = useState(false);
   const [storyboardAnimationKey, setStoryboardAnimationKey] = useState(0);
   const [regeneratingCardIndex, setRegeneratingCardIndex] = useState<number | null>(null);
+  const [regeneratingImageOnlyIndex, setRegeneratingImageOnlyIndex] = useState<number | null>(null); // Only image flips, not card
   const [justFinishedIndex, setJustFinishedIndex] = useState<number | null>(null);
+  const [justFinishedImageOnlyIndex, setJustFinishedImageOnlyIndex] = useState<number | null>(null); // For image-only flip back
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [isGeneratingStoryImages, setIsGeneratingStoryImages] = useState(false);
   const [generatingStoryImageIndex, setGeneratingStoryImageIndex] = useState<number | null>(null);
@@ -1812,6 +1814,215 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       if (regeneratingCardIndex === sceneIndex) {
         setRegeneratingCardIndex(null);
       }
+      setRegeneratingPointIndex(null);
+    }
+  };
+
+  // Regenerate image only (image flips, not the card) - used by hover overlay button
+  const regenerateImageOnly = async (sceneIndex: number) => {
+    if (!apiKey || regeneratingPointIndex !== null) return;
+    
+    setRegeneratingPointIndex(sceneIndex);
+    setRegeneratingImageOnlyIndex(sceneIndex); // Only image flips
+    
+    // Clear previous error
+    setStoryPoints(prev => prev.map((p, idx) => {
+      if (idx === sceneIndex) {
+        return { ...p, generationError: undefined };
+      }
+      return p;
+    }));
+    
+    const point = storyPoints[sceneIndex];
+    const storyText = point.versions[point.currentVersion];
+    
+    // Get character reference images from STORY reference images (URLs) as base64
+    const characterBase64Images: string[] = [];
+    for (const imageUrl of storyReferenceImages) {
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (base64Data) resolve(base64Data);
+            else reject(new Error('No base64 data'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        characterBase64Images.push(base64);
+      } catch (error) {
+        console.error('Error converting story reference image to base64:', error);
+      }
+    }
+    
+    // Get current scene's existing image for style/continuity reference (if regenerating)
+    const currentSceneImage = point.generatedImage || null;
+    // Also get previous scene's image for additional context
+    const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    
+    try {
+      // Use same ultra-simplified prompt style as regenerateSingleStoryScene
+      const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
+        ? point.cameraAngle.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        : '';
+      const shotLabel = point.shotType
+        ? point.shotType.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        : '';
+      const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
+      
+      // Ultra-minimal prompt - just the essentials
+      const shortScene = storyText.substring(0, 60);
+      const imagePromptText = sceneIndex === 0
+        ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
+        : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
+
+      // Build multimodal content array
+      const contentParts: Array<{ type: string; text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+      
+      // Text prompt first
+      contentParts.push({ type: "text", text: imagePromptText });
+      
+      // Add character references
+      for (const base64 of characterBase64Images) {
+        contentParts.push({
+          type: "inline_data",
+          inlineData: { mimeType: "image/jpeg", data: base64 }
+        });
+      }
+      
+      // Add previous scene image for continuity
+      if (previousSceneImage) {
+        try {
+          const response = await fetch(previousSceneImage);
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              const base64Data = result.split(',')[1];
+              if (base64Data) resolve(base64Data);
+              else reject(new Error('No base64 data'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          contentParts.push({
+            type: "inline_data",
+            inlineData: { mimeType: "image/jpeg", data: base64 }
+          });
+        } catch (error) {
+          console.error('Error converting previous scene image:', error);
+        }
+      }
+      
+      // Add current scene image for style reference
+      if (currentSceneImage) {
+        try {
+          const response = await fetch(currentSceneImage);
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              const base64Data = result.split(',')[1];
+              if (base64Data) resolve(base64Data);
+              else reject(new Error('No base64 data'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          contentParts.push({
+            type: "inline_data",
+            inlineData: { mimeType: "image/jpeg", data: base64 }
+          });
+        } catch (error) {
+          console.error('Error converting current scene image:', error);
+        }
+      }
+
+      const requestBody = {
+        model: "google/gemini-2.5-flash-image",
+        messages: [{ role: "user", content: contentParts }],
+        modalities: ["image", "text"],
+        temperature: 0.75
+      };
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      
+      if (!imageData) {
+        throw new Error("Kein Bild in der Antwort");
+      }
+
+      const generatedImageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`;
+      
+      // Update storypoint with new image
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return {
+            ...p,
+            generatedImage: generatedImageUrl,
+            detailedImagePrompt: imagePromptText,
+            generationError: undefined
+          };
+        }
+        return p;
+      }));
+      
+      // Trigger image flip-back animation (not card)
+      setRegeneratingImageOnlyIndex(null);
+      setJustFinishedImageOnlyIndex(sceneIndex);
+      setTimeout(() => setJustFinishedImageOnlyIndex(null), 700);
+      
+      toast({ title: `Szene ${sceneIndex + 1} Bild regeneriert!` });
+      
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      let errorMessage = "Unbekannter Fehler";
+      if (error instanceof Error) {
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
+      }
+      
+      console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
+      
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === sceneIndex) {
+          return { ...p, generationError: errorMessage };
+        }
+        return p;
+      }));
+      
+      toast({ 
+        title: `Szene ${sceneIndex + 1} fehlgeschlagen`, 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
+    } finally {
+      setRegeneratingImageOnlyIndex(null);
       setRegeneratingPointIndex(null);
     }
   };
@@ -5020,19 +5231,59 @@ Beispiel einer korrekten Antwort:
                       >
                         {storyPoints.map((point, index) => (
                           <div 
-                            key={`${storyboardAnimationKey}-${index}`}
+                            key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
                               "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[295px]",
-                              (storyboardAnimationKey > 0 && !flippedCards.has(index)) ? "animate-storyboard-appear opacity-0" : ""
+                              regeneratingCardIndex === index 
+                                ? "animate-storyboard-flip-away" 
+                                : justFinishedIndex === index 
+                                  ? "animate-storyboard-flip-back" 
+                                  : (storyboardAnimationKey > 0 && !flippedCards.has(index)) ? "animate-storyboard-appear opacity-0" : ""
                             )}
                             style={{ 
-                              animationDelay: `${index * 120}ms`, 
-                              animationFillMode: 'both'
+                              animationDelay: (regeneratingCardIndex === index || justFinishedIndex === index) ? '0ms' : `${index * 120}ms`, 
+                              animationFillMode: 'both',
+                              transformStyle: 'preserve-3d'
                             }}
                           >
-                            {/* Card - no flip animation on the card itself */}
+                            {/* Card Back - decorative (shown during card flip) */}
                             <div 
-                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
+                              className="absolute inset-0 bg-background rounded-xl border border-border/40 shadow-lg overflow-hidden"
+                              style={{ 
+                                backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                                transform: 'rotateX(180deg)'
+                              }}
+                            >
+                              {/* Decorative pattern */}
+                              <div className="absolute inset-0 opacity-[0.07]">
+                                <div className="absolute top-4 left-4 w-16 h-16 border-2 border-foreground rounded-full" />
+                                <div className="absolute top-8 left-8 w-12 h-12 border-2 border-foreground rounded-full" />
+                                <div className="absolute bottom-4 right-4 w-20 h-20 border-2 border-foreground rounded-full" />
+                                <div className="absolute bottom-10 right-10 w-10 h-10 border-2 border-foreground rounded-full" />
+                              </div>
+                              {/* Center icon */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
+                                  {justFinishedIndex === index ? (
+                                    <Check className="w-8 h-8 text-primary animate-scale-in" />
+                                  ) : regeneratingCardIndex === index ? (
+                                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                                  ) : (
+                                    <Sparkles className="w-8 h-8 text-muted-foreground/50" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {/* Card Front */}
+                            <div 
+                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30"
+                              style={{ 
+                                backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                                transform: 'rotateX(0deg)',
+                                transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
+                              }}
                             >
                             {/* Scene number header bar with controls */}
                             <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-4 py-2.5">
@@ -5099,8 +5350,8 @@ Beispiel einer korrekten Antwort:
                                     <div 
                                       className={cn(
                                         "w-full h-full transition-transform duration-500",
-                                        regeneratingPointIndex === index && "animate-image-flip-out",
-                                        justFinishedIndex === index && "animate-image-flip-in"
+                                        regeneratingImageOnlyIndex === index && "animate-image-flip-out",
+                                        justFinishedImageOnlyIndex === index && "animate-image-flip-in"
                                       )}
                                       style={{ 
                                         transformStyle: 'preserve-3d',
@@ -5117,7 +5368,7 @@ Beispiel einer korrekten Antwort:
                                           className="max-w-full max-h-full object-contain"
                                         />
                                       </div>
-                                      {/* Back - loader during regeneration */}
+                                      {/* Back - loader during image-only regeneration */}
                                       <div 
                                         className="absolute inset-0 bg-gradient-to-br from-muted/80 to-muted/60 flex items-center justify-center"
                                         style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
@@ -5133,7 +5384,7 @@ Beispiel einer korrekten Antwort:
                                         {point.shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                       </div>
                                     )}
-                                    {/* Quick Action Overlay on hover */}
+                                    {/* Quick Action Overlay on hover - IMAGE ONLY regeneration */}
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
                                       <Button 
                                         size="icon" 
@@ -5147,10 +5398,10 @@ Beispiel einer korrekten Antwort:
                                         size="icon" 
                                         variant="secondary" 
                                         className="h-9 w-9 rounded-full shadow-lg"
-                                        onClick={(e) => { e.stopPropagation(); regenerateSingleStoryScene(index); }}
+                                        onClick={(e) => { e.stopPropagation(); regenerateImageOnly(index); }}
                                         disabled={regeneratingPointIndex !== null}
                                       >
-                                        {regeneratingPointIndex === index ? (
+                                        {regeneratingImageOnlyIndex === index ? (
                                           <Loader2 className="w-4 h-4 animate-spin" />
                                         ) : (
                                           <RefreshCw className="w-4 h-4" />
