@@ -5915,8 +5915,8 @@ Beispiel einer korrekten Antwort:
                                     </Select>
                                   </div>
                                   
-                                  {/* Structured Veo3 Details */}
-                                  <div className="grid grid-cols-1 gap-3">
+                                  {/* Structured Veo3 Details - 3 columns */}
+                                  <div className="grid grid-cols-3 gap-3">
                                     <div className="space-y-1">
                                       <label className="text-xs font-medium text-muted-foreground">Start-Frame</label>
                                       <Textarea
@@ -5928,12 +5928,12 @@ Beispiel einer korrekten Antwort:
                                             i === idx ? { ...p, veo3StartState: newText } : p
                                           ));
                                         }}
-                                        className="text-xs bg-background/50 min-h-[60px] resize-none"
-                                        placeholder="Was ist im Startframe zu sehen?"
+                                        className="text-xs bg-background/50 min-h-[80px] resize-none"
+                                        placeholder="Startframe..."
                                       />
                                     </div>
                                     <div className="space-y-1">
-                                      <label className="text-xs font-medium text-muted-foreground">Bewegung/Aktion</label>
+                                      <label className="text-xs font-medium text-muted-foreground">Bewegung</label>
                                       <Textarea
                                         value={storyPoints[expandedStoryPointIndex].veo3Motion || ""}
                                         onChange={(e) => {
@@ -5943,8 +5943,8 @@ Beispiel einer korrekten Antwort:
                                             i === idx ? { ...p, veo3Motion: newText } : p
                                           ));
                                         }}
-                                        className="text-xs bg-background/50 min-h-[60px] resize-none"
-                                        placeholder="Welche Bewegung findet statt?"
+                                        className="text-xs bg-background/50 min-h-[80px] resize-none"
+                                        placeholder="Bewegung..."
                                       />
                                     </div>
                                     <div className="space-y-1">
@@ -5958,8 +5958,8 @@ Beispiel einer korrekten Antwort:
                                             i === idx ? { ...p, veo3EndState: newText } : p
                                           ));
                                         }}
-                                        className="text-xs bg-background/50 min-h-[60px] resize-none"
-                                        placeholder="Wie endet die Szene?"
+                                        className="text-xs bg-background/50 min-h-[80px] resize-none"
+                                        placeholder="Endframe..."
                                       />
                                     </div>
                                   </div>
