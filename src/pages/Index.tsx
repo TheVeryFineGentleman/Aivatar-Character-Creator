@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5301,7 +5302,7 @@ Beispiel einer korrekten Antwort:
                   )}
 
                   {/* Expanded Card Popup Modal - Tab-based UI */}
-                  {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && (
+                  {expandedStoryPointIndex !== null && storyPoints[expandedStoryPointIndex] && createPortal(
                       <>
                         {/* Backdrop with blur */}
                         <div 
@@ -5832,7 +5833,8 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                             </div>
                           </div>
                         </div>
-                      </>
+                      </>,
+                    document.body
                     )}
                 </div>
               </div>
