@@ -2251,7 +2251,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               customPromptText
             );
 
-            // Update with result - ensure index exists
+            // First set progress to 100% while keeping loading state
+            setImageSlots((prev) => {
+              const updated = [...prev];
+              if (index >= updated.length) return prev;
+              updated[index] = { ...updated[index], progress: 100 };
+              return updated;
+            });
+
+            // Wait a moment so user can see 100% before showing the image
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Now update with the actual result
             setImageSlots((prev) => {
               const updated = [...prev];
               // Safety check: ensure index is valid
@@ -2629,6 +2640,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const byteArray = new Uint8Array(byteNumbers);
           const blob = new Blob([byteArray], { type: mimeType });
           const imageUrl = URL.createObjectURL(blob);
+          
+          // First set progress to 100% while keeping loading state
+          updateSlotSafe(newIndex, { progress: 100 });
+          
+          // Wait a moment so user can see 100% before showing the image
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           updateSlotSafe(newIndex, { status: "completed", imageUrl, progress: 100 });
           
