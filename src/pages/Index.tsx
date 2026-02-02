@@ -1183,16 +1183,18 @@ SCENE SETTING:
 Location: ${globalMainLocation}, specifically ${sceneSpecificArea}.
 ${storyText}
 
-CHARACTER IDENTITY (copy ONLY these from reference image):
-- Face: exact facial features, face shape, skin tone
-- Hair: exact color, style, length  
+CHARACTER IDENTITY (MUST copy ALL of these from reference image):
+- Face: exact facial features, face shape, skin tone, freckles, scars
+- Hair: exact color, style, length, texture
 - Body: same body type and proportions
 - Age: same approximate age
+- Clothing & Accessories: COPY the outfit, helmet, glasses, hat, jewelry, uniform, armor - everything the person is wearing
+- Distinguishing features: tattoos, piercings, makeup, any unique physical traits
 
-CHARACTER POSE (DO NOT copy from reference - create NEW pose for this scene):
+CHARACTER POSE (create a NEW pose for this scene - do NOT copy the body position from reference):
 Action: ${sceneKeyAction}
 Expression: ${sceneEmotion}
-IMPORTANT: Create a completely NEW pose that fits this scene. Ignore the pose in the reference image.
+The person must wear the SAME clothing/accessories as in the reference, but in a NEW body position fitting this scene.
 
 TECHNICAL REQUIREMENTS:
 - Exactly ONE person in the image
