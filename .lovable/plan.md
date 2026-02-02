@@ -1,92 +1,130 @@
 
 
-# Plan: Verbessertes Layout für den KI-Assistenten im Detail-Popup
+# Plan: Klarere Funktionalität für den Story-KI-Assistenten
 
 ## Problem-Analyse
 
-Das aktuelle Layout hat folgende Schwächen:
-1. **Textarea zu lang** - Die Textbox erstreckt sich über die volle Breite (max-w-4xl ≈ 896px), was unproportional wirkt
-2. **Verschwendeter vertikaler Platz** - Die Struktur ist vertikal gestapelt statt horizontal optimiert
-3. **Unruhiges Layout** - Mehrere Trennlinien und Abstände fragmentieren den Bereich
+Das Segmented Control im Story-Detail-Popup hat verwirrende Labels und eine unklare Wirkung:
 
-## Neues Layout-Konzept
+| Aktuelles Label | Was es tut | Erwartete Wirkung (vermutet) |
+|-----------------|-----------|------------------------------|
+| "Text & Kamera" | Optimiert nur den Szenentext + Kamera-Einstellungen | Unklar, evtl. erwartet: bearbeitet den Text |
+| "Bild neu" | Generiert nur das Bild neu | Unklar, evtl. erwartet: ändert das Bild |
+| "Beides" | Text optimieren + Bild neu generieren | Evtl. zu viel/zu wenig? |
+
+**Kernproblem:** Die Labels im Posen-Generator ("Prompt", "Hintergrund", "Beides") beschreiben, welches **Textfeld** betroffen ist. Die Labels im Story-Builder beschreiben aber verschiedene **Aktionen** - das ist ein konzeptuell anderer Ansatz und deshalb verwirrend.
+
+## Lösungsvorschlag: Konsistente Terminologie und klare Funktionsbeschreibungen
+
+### Option A: Labels klarer machen (minimale Änderung)
+
+Bessere Labels verwenden, die genau beschreiben, was passiert:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  ✨ KI-Assistent                                                            │
+│                                                                             │
+│        [Nur Text optimieren] [Nur Bild regenerieren] [Text + Bild]          │
+│                                                                             │
+│  ┌─────────────────────────────────────┐    ┌──────┐                        │
+│  │  "Mache es dramatischer..."         │    │  ✨  │                        │
+│  └─────────────────────────────────────┘    └──────┘                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Option B: Layout wie beim Posen-Generator (empfohlen)
+
+Den Button links neben der Textarea platzieren (statt rechts) und die Logik so gestalten, dass der Pfeil die Richtung anzeigt:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ✨ KI-Assistent                  [Text] [Bild] [Beides]                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌──────────────────────────────────────┐   ☑ Text & Kamera                 │
-│  │                                      │   ☑ + Bild neu                    │
-│  │  Textarea (begrenzte Breite)         │                                   │
-│  │  2-3 Zeilen hoch                     │   [✨ Anpassen]                   │
-│  │                                      │                                   │
-│  └──────────────────────────────────────┘                                   │
+│  ┌──────┐  ┌──────────────────────────────────────────────────────────────┐ │
+│  │  →   │  │  "Mache es dramatischer..."                                  │ │
+│  └──────┘  └──────────────────────────────────────────────────────────────┘ │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Vorteile:**
-- Textarea ist links, max 60% Breite - nicht mehr "lang gezogen"
-- Checkboxen und Button rechts daneben - spart vertikalen Platz
-- Kompakteres, aufgeräumteres Erscheinungsbild
-- Alle Steuerelemente auf einen Blick sichtbar
+**Aber:** Im Story-Builder gibt es kein "Ziel-Textfeld" links wie beim Posen-Generator. Die Aktionen sind fundamentale Prozesse (Text optimieren / Bild generieren), nicht Textfeld-Transfers.
 
-## Betroffene Dateien
+## Empfohlene Lösung
+
+### 1. Klarere Labels für das Segmented Control
+
+| Alter Text | Neuer Text | Bedeutung |
+|------------|------------|-----------|
+| "Text & Kamera" | "Text optimieren" | Optimiert Beschreibung, Kamerawinkel, Shot-Typ basierend auf der Eingabe |
+| "Bild neu" | "Bild regenerieren" | Generiert das Bild zur Szene neu |
+| "Beides" | "Text + Bild" | Führt beide Aktionen nacheinander aus |
+
+### 2. Tooltips für jedes Segment hinzufügen
+
+Jeder Button bekommt ein `title`-Attribut, das erklärt, was genau passiert:
+
+```tsx
+<Button
+  title="Optimiert den Szenentext, Kamerawinkel und Shot-Typ basierend auf deiner Anweisung"
+  ...
+>
+  Text optimieren
+</Button>
+```
+
+### 3. Button-Icon ändern
+
+Statt dem generischen `Sparkles`-Icon könnte der Button kontextabhängig ein passendes Icon zeigen:
+- Bei "Text optimieren": Sparkles oder MessageSquare
+- Bei "Bild regenerieren": RefreshCw oder Image
+- Bei "Text + Bild": Sparkles (alles zusammen)
+
+## Betroffene Datei
 
 | Datei | Änderung |
 |-------|----------|
-| `src/pages/Index.tsx` | KI-Assistent Bereich neu strukturieren (Zeilen 5990-6049) |
+| `src/pages/Index.tsx` | Segmented Control Labels und Tooltips anpassen (Zeilen 6001-6025) |
 
 ## Technische Umsetzung
 
 ```tsx
-{/* KI-Assistent - horizontales Layout */}
-<div className="border-t border-border/30 p-4 bg-muted/10 flex-shrink-0">
-  <div className="flex items-center gap-2 mb-3">
-    <Sparkles className="w-4 h-4 text-primary" />
-    <span className="text-sm font-medium">KI-Assistent</span>
-    {isGeneratingSceneAssistant && (
-      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-    )}
-  </div>
-  
-  {/* Horizontales Layout: Textarea links, Controls rechts */}
-  <div className="flex gap-4 items-start">
-    {/* Textarea - begrenzte Breite */}
-    <Textarea
-      value={sceneAssistantInput}
-      onChange={(e) => setSceneAssistantInput(e.target.value)}
-      placeholder="z.B. 'Mache es dramatischer'..."
-      className="text-sm min-h-[70px] max-h-[70px] bg-background/50 resize-none flex-1 max-w-md"
-      disabled={isGeneratingSceneAssistant}
-      onKeyDown={...}
-    />
-    
-    {/* Controls rechts */}
-    <div className="flex flex-col gap-2 min-w-[140px]">
-      <label className="flex items-center gap-1.5 cursor-pointer">
-        <Checkbox checked={sceneAiUpdateText} ... />
-        <span className="text-sm">Text & Kamera</span>
-      </label>
-      <label className="flex items-center gap-1.5 cursor-pointer">
-        <Checkbox checked={sceneAiRegenerateImage} ... />
-        <span className="text-sm">+ Bild neu</span>
-      </label>
-      <Button size="sm" onClick={handleUnifiedSceneAssistant} ...>
-        <Sparkles className="w-4 h-4" />
-        Anpassen
-      </Button>
-    </div>
-  </div>
+{/* Segmented Control mit klareren Labels */}
+<div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+  <Button
+    variant={sceneAiMode === "text" ? "default" : "ghost"}
+    size="sm"
+    className={`h-6 px-2 text-xs ${sceneAiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`}
+    onClick={() => setSceneAiMode("text")}
+    title="Optimiert den Szenentext, Kamerawinkel und Shot-Typ"
+  >
+    Text optimieren
+  </Button>
+  <Button
+    variant={sceneAiMode === "image" ? "default" : "ghost"}
+    size="sm"
+    className={`h-6 px-2 text-xs ${sceneAiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`}
+    onClick={() => setSceneAiMode("image")}
+    title="Generiert das Bild zur Szene neu"
+  >
+    Bild regenerieren
+  </Button>
+  <Button
+    variant={sceneAiMode === "both" ? "default" : "ghost"}
+    size="sm"
+    className={`h-6 px-2 text-xs ${sceneAiMode === "both" ? "" : "text-muted-foreground hover:text-foreground"}`}
+    onClick={() => setSceneAiMode("both")}
+    title="Optimiert erst den Text, dann regeneriert das Bild"
+  >
+    Text + Bild
+  </Button>
 </div>
 ```
 
-## Zusammenfassung der Änderungen
+## Zusammenfassung
 
-1. **Horizontales Layout** statt vertikalem Stack
-2. **Textarea max-w-md** (~448px) statt voller Breite
-3. **Feste Höhe** (70px) für konsistentes Erscheinungsbild
-4. **Checkboxen vertikal gestapelt** rechts neben der Textarea
-5. **Button direkt unter den Checkboxen** - alles kompakt gruppiert
+1. **"Text & Kamera" → "Text optimieren"** - klarer, was optimiert wird
+2. **"Bild neu" → "Bild regenerieren"** - konsistent mit "Regenerieren" im restlichen UI
+3. **"Beides" → "Text + Bild"** - zeigt die Reihenfolge der Aktionen
+4. **Tooltips hinzufügen** - erklärt bei Hover genau, was jede Option macht
 
