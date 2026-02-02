@@ -1,87 +1,92 @@
 
-# Plan: Vergrößern-Button wechselt automatisch zum Bild-Tab + Übersichtlicherer KI-Assistent
 
-## Übersicht
-Zwei Verbesserungen am Story-Detail-Popup:
-1. Beim Klick auf den Vergrößern-Button (Maximize2) über einem Szenen-Bild wird automatisch zum "Bild"-Tab gewechselt
-2. Der KI-Assistent am unteren Rand des Popups wird übersichtlicher und kompakter gestaltet
+# Plan: Verbessertes Layout für den KI-Assistenten im Detail-Popup
 
-## Änderungen
+## Problem-Analyse
 
-### 1. Automatischer Tab-Wechsel beim Vergrößern
+Das aktuelle Layout hat folgende Schwächen:
+1. **Textarea zu lang** - Die Textbox erstreckt sich über die volle Breite (max-w-4xl ≈ 896px), was unproportional wirkt
+2. **Verschwendeter vertikaler Platz** - Die Struktur ist vertikal gestapelt statt horizontal optimiert
+3. **Unruhiges Layout** - Mehrere Trennlinien und Abstände fragmentieren den Bereich
 
-**Aktuelles Verhalten:**
-- Klick auf Maximize2-Button öffnet das Popup im aktuell aktiven Tab (Standard: "Inhalt")
+## Neues Layout-Konzept
 
-**Neues Verhalten:**
-- Klick auf Maximize2-Button öffnet das Popup UND wechselt automatisch zum "Bild"-Tab
-- So sieht der Nutzer direkt das vergrößerte Bild
-
-**Technische Umsetzung:**
-- Im onClick-Handler des Maximize2-Buttons zusätzlich `setSceneEditTab("image")` aufrufen
-
-### 2. Übersichtlicherer KI-Assistent
-
-**Aktuelles Layout:**
 ```text
-┌──────────────────────────────────┐
-│ ✨ KI-Assistent                 🔄 │
-├──────────────────────────────────┤
-│ [Textarea 60px Höhe]             │
-├──────────────────────────────────┤
-│ Aktualisieren: [☑ Text] [☑ Bild] │
-├──────────────────────────────────┤
-│ [🔘 Szene anpassen - volle Breite]│
-└──────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ✨ KI-Assistent                                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────────────────────────┐   ☑ Text & Kamera                 │
+│  │                                      │   ☑ + Bild neu                    │
+│  │  Textarea (begrenzte Breite)         │                                   │
+│  │  2-3 Zeilen hoch                     │   [✨ Anpassen]                   │
+│  │                                      │                                   │
+│  └──────────────────────────────────────┘                                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Neues Layout - Kompakter und klarer:**
-```text
-┌──────────────────────────────────┐
-│ ✨ KI-Assistent                  │
-│                                  │
-│ [Textarea mit Placeholder]       │
-│                                  │
-│ ☑ Text & Kamera  ☑ + Bild neu  ▶│
-└──────────────────────────────────┘
-```
-
-**Verbesserungen:**
-- Checkboxen und Button in einer Zeile kombiniert (flexibler Abstand)
-- Button wird kleiner (Icon-only oder kompakt mit Text)
-- Weniger vertikaler Platz benötigt
-- Klarere visuelle Hierarchie durch weniger Trennungen
+**Vorteile:**
+- Textarea ist links, max 60% Breite - nicht mehr "lang gezogen"
+- Checkboxen und Button rechts daneben - spart vertikalen Platz
+- Kompakteres, aufgeräumteres Erscheinungsbild
+- Alle Steuerelemente auf einen Blick sichtbar
 
 ## Betroffene Dateien
 
 | Datei | Änderung |
 |-------|----------|
-| `src/pages/Index.tsx` | Maximize2 onClick-Handler + KI-Assistent UI-Refactoring |
+| `src/pages/Index.tsx` | KI-Assistent Bereich neu strukturieren (Zeilen 5990-6049) |
 
-## Technische Details
+## Technische Umsetzung
 
 ```tsx
-// 1. Maximize2-Button anpassen (Zeile ~5408)
-onClick={(e) => { 
-  e.stopPropagation(); 
-  setExpandedStoryPointIndex(index); 
-  setSceneEditTab("image"); // NEU: Wechsle zum Bild-Tab
-}}
-
-// 2. KI-Assistent kompakter gestalten (Zeilen ~5990-6057)
-// Checkboxen und Button in einer Zeile mit flex-wrap
-<div className="flex items-center gap-2 flex-wrap">
-  <label className="flex items-center gap-1.5">
-    <Checkbox ... />
-    <span>Text & Kamera</span>
-  </label>
-  <label className="flex items-center gap-1.5">
-    <Checkbox ... />
-    <span>+ Bild neu</span>
-  </label>
-  <div className="flex-1" /> {/* Spacer */}
-  <Button size="sm">
-    <Sparkles /> Anpassen
-  </Button>
+{/* KI-Assistent - horizontales Layout */}
+<div className="border-t border-border/30 p-4 bg-muted/10 flex-shrink-0">
+  <div className="flex items-center gap-2 mb-3">
+    <Sparkles className="w-4 h-4 text-primary" />
+    <span className="text-sm font-medium">KI-Assistent</span>
+    {isGeneratingSceneAssistant && (
+      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+    )}
+  </div>
+  
+  {/* Horizontales Layout: Textarea links, Controls rechts */}
+  <div className="flex gap-4 items-start">
+    {/* Textarea - begrenzte Breite */}
+    <Textarea
+      value={sceneAssistantInput}
+      onChange={(e) => setSceneAssistantInput(e.target.value)}
+      placeholder="z.B. 'Mache es dramatischer'..."
+      className="text-sm min-h-[70px] max-h-[70px] bg-background/50 resize-none flex-1 max-w-md"
+      disabled={isGeneratingSceneAssistant}
+      onKeyDown={...}
+    />
+    
+    {/* Controls rechts */}
+    <div className="flex flex-col gap-2 min-w-[140px]">
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <Checkbox checked={sceneAiUpdateText} ... />
+        <span className="text-sm">Text & Kamera</span>
+      </label>
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <Checkbox checked={sceneAiRegenerateImage} ... />
+        <span className="text-sm">+ Bild neu</span>
+      </label>
+      <Button size="sm" onClick={handleUnifiedSceneAssistant} ...>
+        <Sparkles className="w-4 h-4" />
+        Anpassen
+      </Button>
+    </div>
+  </div>
 </div>
 ```
+
+## Zusammenfassung der Änderungen
+
+1. **Horizontales Layout** statt vertikalem Stack
+2. **Textarea max-w-md** (~448px) statt voller Breite
+3. **Feste Höhe** (70px) für konsistentes Erscheinungsbild
+4. **Checkboxen vertikal gestapelt** rechts neben der Textarea
+5. **Button direkt unter den Checkboxen** - alles kompakt gruppiert
+
