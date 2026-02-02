@@ -5309,8 +5309,8 @@ Beispiel einer korrekten Antwort:
                           onClick={handleCloseExpandedCard}
                         />
                         
-                        {/* Centered popup card */}
-                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 pointer-events-none overflow-visible">
+                        {/* Top-anchored popup card - grows downward only */}
+                        <div className="fixed inset-x-0 top-0 z-[110] flex items-start justify-center pt-8 pb-6 pointer-events-none overflow-y-auto max-h-screen">
                           <div 
                             className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
                           >
