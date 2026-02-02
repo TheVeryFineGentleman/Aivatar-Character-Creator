@@ -5310,9 +5310,9 @@ Beispiel einer korrekten Antwort:
                         />
                         
                         {/* Top-anchored popup card - grows downward only */}
-                        <div className="fixed inset-x-0 top-0 z-[110] flex items-start justify-center pt-8 pb-6 pointer-events-none overflow-y-auto max-h-screen">
+                        <div className="fixed inset-x-0 top-0 bottom-0 z-[110] flex items-start justify-center pt-8 pb-6 px-6 pointer-events-none overflow-y-auto">
                           <div 
-                            className={`bg-gradient-to-b from-background to-background/95 rounded-xl border border-border/40 shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col pointer-events-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
+                            className={`bg-background rounded-xl border border-border/40 shadow-2xl w-full max-w-4xl flex flex-col pointer-events-auto mx-auto ${isClosingPopup ? 'animate-popup-out' : 'animate-popup-in'}`}
                           >
                             {/* Header */}
                             <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-5 py-3 flex-shrink-0">
