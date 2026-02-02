@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -5360,8 +5361,8 @@ Beispiel einer korrekten Antwort:
                               </Tabs>
                             </div>
                             
-                            {/* Tab Content */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            {/* Tab Content - fixed min-height to prevent jumping */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px]">
                               {/* CONTENT TAB */}
                               {sceneEditTab === "content" && (
                                 <>
@@ -5760,27 +5761,30 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                                 }}
                               />
                               
-                              {/* Update target checkboxes */}
-                              <div className="flex flex-wrap items-center gap-4 text-xs">
-                                <span className="text-muted-foreground">Was aktualisieren?</span>
-                                <label className="flex items-center gap-1.5 cursor-pointer">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={sceneAiUpdateText}
-                                    onChange={(e) => setSceneAiUpdateText(e.target.checked)}
-                                    className="w-3.5 h-3.5 rounded border-border"
-                                  />
-                                  <span>Text & Kamera</span>
-                                </label>
-                                <label className="flex items-center gap-1.5 cursor-pointer">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={sceneAiRegenerateImage}
-                                    onChange={(e) => setSceneAiRegenerateImage(e.target.checked)}
-                                    className="w-3.5 h-3.5 rounded border-border"
-                                  />
-                                  <span>Bild neu generieren</span>
-                                </label>
+                              {/* Update target checkboxes - improved styling */}
+                              <div className="flex items-center gap-1 p-2 bg-background/50 rounded-lg border border-border/30">
+                                <span className="text-xs text-muted-foreground mr-2">Aktualisieren:</span>
+                                <div className="flex items-center gap-3">
+                                  <label className="flex items-center gap-2 cursor-pointer px-2.5 py-1.5 rounded-md hover:bg-muted/50 transition-colors">
+                                    <Checkbox 
+                                      id="update-text"
+                                      checked={sceneAiUpdateText}
+                                      onCheckedChange={(checked) => setSceneAiUpdateText(checked === true)}
+                                      className="h-4 w-4"
+                                    />
+                                    <span className="text-sm font-medium">Text & Kamera</span>
+                                  </label>
+                                  <div className="w-px h-5 bg-border/50" />
+                                  <label className="flex items-center gap-2 cursor-pointer px-2.5 py-1.5 rounded-md hover:bg-muted/50 transition-colors">
+                                    <Checkbox 
+                                      id="regen-image"
+                                      checked={sceneAiRegenerateImage}
+                                      onCheckedChange={(checked) => setSceneAiRegenerateImage(checked === true)}
+                                      className="h-4 w-4"
+                                    />
+                                    <span className="text-sm font-medium">+ Bild neu</span>
+                                  </label>
+                                </div>
                               </div>
                               
                               <Button 
