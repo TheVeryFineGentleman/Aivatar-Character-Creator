@@ -5021,7 +5021,7 @@ Beispiel einer korrekten Antwort:
                           <div 
                             key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[345px]",
+                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[280px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
@@ -5197,33 +5197,11 @@ Beispiel einer korrekten Antwort:
                                     </div>
                                   </div>
                                   
-                                  {/* Scene info area - use remaining space */}
-                                  <div className="mt-2 flex-1 flex flex-col gap-2">
-                                    {/* Scene summary */}
-                                    <div className="bg-muted/30 rounded-lg p-2.5 border border-border/20 flex-1">
-                                      <p className="text-sm text-foreground/80 leading-relaxed line-clamp-4">
-                                        {point.summary || point.sceneDescription || point.versions[point.currentVersion]}
-                                      </p>
-                                    </div>
-                                    
-                                    {/* Metadata tags */}
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {point.cameraAngle && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                                          📷 {point.cameraAngle}
-                                        </span>
-                                      )}
-                                      {point.emotion && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                                          😊 {point.emotion}
-                                        </span>
-                                      )}
-                                      {point.keyAction && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                                          🎯 {point.keyAction.length > 15 ? point.keyAction.slice(0, 15) + '...' : point.keyAction}
-                                        </span>
-                                      )}
-                                    </div>
+                                  {/* Scene summary - compact */}
+                                  <div className="mt-2 bg-muted/30 rounded-lg p-2 border border-border/20">
+                                    <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
+                                      {point.summary || point.sceneDescription || point.versions[point.currentVersion]}
+                                    </p>
                                   </div>
                                 </>
                               ) : point.generationError ? (
@@ -5408,8 +5386,8 @@ Beispiel einer korrekten Antwort:
                               </Tabs>
                             </div>
                             
-                            {/* Tab Content - fixed min-height to prevent jumping */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px]">
+                            {/* Tab Content - fixed height to prevent jumping when switching tabs */}
+                            <div className="overflow-y-auto p-4 space-y-4 h-[420px]">
                               {/* CONTENT TAB */}
                               {sceneEditTab === "content" && (
                                 <>
