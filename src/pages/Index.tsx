@@ -6004,24 +6004,27 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                                       size="sm"
                                       className={`h-6 px-2 text-xs ${sceneAiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`}
                                       onClick={() => setSceneAiMode("text")}
+                                      title="Optimiert den Szenentext, Kamerawinkel und Shot-Typ basierend auf deiner Anweisung"
                                     >
-                                      Text & Kamera
+                                      Text optimieren
                                     </Button>
                                     <Button
                                       variant={sceneAiMode === "image" ? "default" : "ghost"}
                                       size="sm"
                                       className={`h-6 px-2 text-xs ${sceneAiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`}
                                       onClick={() => setSceneAiMode("image")}
+                                      title="Generiert das Bild zur Szene neu"
                                     >
-                                      Bild neu
+                                      Bild regenerieren
                                     </Button>
                                     <Button
                                       variant={sceneAiMode === "both" ? "default" : "ghost"}
                                       size="sm"
                                       className={`h-6 px-2 text-xs ${sceneAiMode === "both" ? "" : "text-muted-foreground hover:text-foreground"}`}
                                       onClick={() => setSceneAiMode("both")}
+                                      title="Optimiert erst den Text, dann regeneriert das Bild"
                                     >
-                                      Beides
+                                      Text + Bild
                                     </Button>
                                   </div>
                                 </div>
