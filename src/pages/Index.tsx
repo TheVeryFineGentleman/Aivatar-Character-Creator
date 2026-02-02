@@ -5386,8 +5386,8 @@ Beispiel einer korrekten Antwort:
                               </Tabs>
                             </div>
                             
-                            {/* Tab Content - fixed height to prevent jumping when switching tabs */}
-                            <div className="overflow-y-auto p-4 space-y-4 h-[420px]">
+                            {/* Tab Content - grows downward, no scrolling */}
+                            <div className="p-4 space-y-4">
                               {/* CONTENT TAB */}
                               {sceneEditTab === "content" && (
                                 <>
