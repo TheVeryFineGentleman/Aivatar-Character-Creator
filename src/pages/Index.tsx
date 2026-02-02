@@ -5987,66 +5987,72 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                               )}
                             </div>
                             
-                            {/* Persistent AI Assistant at bottom - horizontal layout */}
+                            {/* Persistent AI Assistant at bottom - styled like pose generator */}
                             <div className="border-t border-border/30 p-4 bg-muted/10 flex-shrink-0">
-                              <div className="flex items-center gap-2 mb-3">
-                                <Sparkles className="w-4 h-4 text-primary" />
-                                <span className="text-sm font-medium">KI-Assistent</span>
-                                {isGeneratingSceneAssistant && (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                                )}
+                              {/* Header with label left and options centered */}
+                              <div className="flex items-center mb-2 h-7">
+                                <div className="flex items-center gap-1.5 w-24">
+                                  <Sparkles className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">KI-Assistent</span>
+                                </div>
+                                <div className="flex-1 flex justify-center">
+                                  <div className="flex items-center gap-3">
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                      <Checkbox 
+                                        id="update-text"
+                                        checked={sceneAiUpdateText}
+                                        onCheckedChange={(checked) => setSceneAiUpdateText(checked === true)}
+                                        className="h-4 w-4"
+                                      />
+                                      <span className="text-sm">Text & Kamera</span>
+                                    </label>
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                      <Checkbox 
+                                        id="regen-image"
+                                        checked={sceneAiRegenerateImage}
+                                        onCheckedChange={(checked) => setSceneAiRegenerateImage(checked === true)}
+                                        className="h-4 w-4"
+                                      />
+                                      <span className="text-sm">+ Bild neu</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                {/* Spacer to balance + loading indicator */}
+                                <div className="w-24 flex justify-end">
+                                  {isGeneratingSceneAssistant && (
+                                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                  )}
+                                </div>
                               </div>
                               
-                              {/* Horizontales Layout: Textarea links, Controls rechts */}
-                              <div className="flex gap-4 items-start">
-                                <Textarea
-                                  value={sceneAssistantInput}
-                                  onChange={(e) => setSceneAssistantInput(e.target.value)}
-                                  placeholder="z.B. 'Mache es dramatischer'..."
-                                  className="text-sm min-h-[70px] max-h-[70px] bg-background/50 resize-none flex-1 max-w-md"
-                                  disabled={isGeneratingSceneAssistant}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                      e.preventDefault();
-                                      handleUnifiedSceneAssistant();
-                                    }
-                                  }}
-                                />
-                                
-                                {/* Controls rechts */}
-                                <div className="flex flex-col gap-2 min-w-[140px]">
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <Checkbox 
-                                      id="update-text"
-                                      checked={sceneAiUpdateText}
-                                      onCheckedChange={(checked) => setSceneAiUpdateText(checked === true)}
-                                      className="h-4 w-4"
-                                    />
-                                    <span className="text-sm">Text & Kamera</span>
-                                  </label>
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <Checkbox 
-                                      id="regen-image"
-                                      checked={sceneAiRegenerateImage}
-                                      onCheckedChange={(checked) => setSceneAiRegenerateImage(checked === true)}
-                                      className="h-4 w-4"
-                                    />
-                                    <span className="text-sm">+ Bild neu</span>
-                                  </label>
-                                  <Button 
-                                    size="sm"
-                                    className="gap-1.5 mt-1"
-                                    onClick={handleUnifiedSceneAssistant}
-                                    disabled={isGeneratingSceneAssistant || regeneratingPointIndex !== null}
-                                  >
-                                    {isGeneratingSceneAssistant ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Sparkles className="w-4 h-4" />
-                                    )}
-                                    Anpassen
-                                  </Button>
+                              {/* Textarea box + button side by side */}
+                              <div className="flex gap-3 items-stretch">
+                                <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[100px]">
+                                  <Textarea
+                                    value={sceneAssistantInput}
+                                    onChange={(e) => setSceneAssistantInput(e.target.value)}
+                                    placeholder="z.B. 'Mache es dramatischer' oder 'Ändere zu Nahaufnahme'..."
+                                    className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                                    disabled={isGeneratingSceneAssistant}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleUnifiedSceneAssistant();
+                                      }
+                                    }}
+                                  />
                                 </div>
+                                <Button 
+                                  className="h-[100px] w-12 rounded-lg"
+                                  onClick={handleUnifiedSceneAssistant}
+                                  disabled={isGeneratingSceneAssistant || regeneratingPointIndex !== null || !sceneAssistantInput.trim()}
+                                >
+                                  {isGeneratingSceneAssistant ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                  ) : (
+                                    <Sparkles className="w-5 h-5" />
+                                  )}
+                                </Button>
                               </div>
                             </div>
                           </div>
