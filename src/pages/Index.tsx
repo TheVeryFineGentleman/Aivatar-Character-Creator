@@ -250,6 +250,9 @@ const Index = () => {
   
   // Storyboard state
   const [storyPointCount, setStoryPointCount] = useState(4);
+  // Global main location for unified storyboard setting
+  const [storyboardMainLocation, setStoryboardMainLocation] = useState<string>("");
+  
   const [storyPoints, setStoryPoints] = useState<Array<{
     versions: string[];
     currentVersion: number;
@@ -257,6 +260,10 @@ const Index = () => {
     detailedDescription?: string; // Full detailed scene description
     cameraAngle?: string;
     shotType?: string;
+    // NEW: Structured scene data for improved image generation
+    specificArea?: string;      // Specific area within mainLocation (e.g. "living room" in a "house")
+    keyAction?: string;         // The ONE key action/gesture (e.g. "leans pensively at window")
+    emotion?: string;           // Visible emotion (e.g. "melancholic", "hopeful")
     generatedImage?: string;
     detailedImagePrompt?: string;
     videoPrompt?: string;
@@ -569,26 +576,43 @@ WICHTIGE REGELN:
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Du bist ein professioneller Drehbuchautor und Storyboard-Experte. Basierend auf dieser Story-Idee: "${storyIdea}"
+                text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
-Generiere genau ${storyPointCount} aufeinanderfolgende Szenen für ein visuelles Storyboard.
+STORY-IDEE: "${storyIdea}"
 
-WICHTIG: Antworte NUR mit einem validen JSON-Array in diesem exakten Format:
-[
-  {
-    "summary": "Kurze 1-Satz-Zusammenfassung der Szene (max. 20 Wörter)",
-    "detailedDescription": "Ausführliche, detaillierte Beschreibung der Szene (4-6 Sätze). Beschreibe: Setting, Atmosphäre, Beleuchtung, was der Charakter tut, Emotionen, wichtige visuelle Details. Schreibe im gleichen sprachlichen Stil wie alle anderen Szenen.",
-    "cameraAngle": "frontal|seitlich|von-oben|von-unten|ueber-schulter|dutch-angle|vogelperspektive|froschperspektive",
-    "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-long-shot|full-shot|long-shot|extreme-long-shot"
-  }
-]
+WICHTIGSTE REGEL - RÄUMLICHE EINHEIT:
+Definiere ZUERST einen HAUPTORT für die gesamte Geschichte. 
+ALLE ${storyPointCount} Szenen spielen an diesem EINEN Ort.
+Variiere nur den BEREICH innerhalb des Ortes.
+
+Beispiel: Hauptort = "eine alte Villa am See"
+- Szene 1: Im Eingangsbereich der Villa
+- Szene 2: Im Wohnzimmer mit Blick auf den See  
+- Szene 3: Auf der Terrasse der Villa
+
+WICHTIG: Antworte NUR mit diesem validen JSON-Format:
+{
+  "mainLocation": "Der Hauptort der gesamten Geschichte (z.B. 'eine moderne Stadtwohnung', 'ein altes Landhaus')",
+  "scenes": [
+    {
+      "summary": "1-Satz Zusammenfassung (max. 15 Wörter)",
+      "specificArea": "Welcher Bereich des Hauptorts (z.B. 'im Flur', 'auf dem Balkon', 'in der Küche')",
+      "keyAction": "Die EINE zentrale Aktion/Gestik der Person (z.B. 'lehnt nachdenklich am Fenster', 'sitzt zusammengesunken auf der Couch', 'steht mit verschränkten Armen')",
+      "emotion": "Die sichtbare Emotion (z.B. 'melancholisch', 'hoffnungsvoll', 'nachdenklich', 'entschlossen')",
+      "detailedDescription": "Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut, wichtige Details",
+      "cameraAngle": "eye-level|low-angle|high-angle|dutch-angle|over-shoulder|bird-eye|worm-eye",
+      "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-full-shot|full-shot|long-shot|extreme-long-shot"
+    }
+  ]
+}
 
 REGELN:
-- Jede Szene muss visuell umsetzbar sein
-- Die Szenen müssen logisch aufeinander aufbauen und eine zusammenhängende Geschichte erzählen
-- Wähle Kamerawinkel und Shot-Typ passend zur Stimmung jeder Szene
-- Der sprachliche Stil muss über alle Szenen hinweg konsistent sein
-- Antworte NUR mit dem JSON-Array, keine zusätzlichen Erklärungen. Auf Deutsch.`
+- Jede Szene hat EINE klare Aktion/Gestik
+- Die Szenen bauen logisch aufeinander auf
+- Der Hauptort bleibt IMMER gleich, nur der Bereich wechselt
+- NUR realistische Szenarien, keine Fantasy oder Magie
+- Emotionen müssen visuell darstellbar sein
+- Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen`
               }]
             }],
             generationConfig: {
@@ -603,17 +627,26 @@ REGELN:
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          // Extract JSON from response
-          const jsonMatch = text.match(/\[[\s\S]*\]/);
-          if (jsonMatch) {
+          // Extract JSON object from response (new format with mainLocation)
+          const jsonObjectMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonObjectMatch) {
             try {
-              const scenes = JSON.parse(jsonMatch[0]);
+              const parsed = JSON.parse(jsonObjectMatch[0]);
+              const mainLocation = parsed.mainLocation || "";
+              const scenes = parsed.scenes || [];
+              
               if (Array.isArray(scenes) && scenes.length > 0) {
+                // Store main location globally for image generation
+                setStoryboardMainLocation(mainLocation);
+                
                 setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
                   versions: [scene.detailedDescription || scene.summary || ""],
                   currentVersion: 0,
                   summary: scene.summary || "",
                   detailedDescription: scene.detailedDescription || "",
+                  specificArea: scene.specificArea || "",
+                  keyAction: scene.keyAction || "",
+                  emotion: scene.emotion || "",
                   cameraAngle: scene.cameraAngle || "",
                   shotType: scene.shotType || ""
                 })));
@@ -1133,21 +1166,43 @@ Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
         const subLocationVariants = getSubLocationVariants(mainLocation);
         const subLocation = subLocationVariants[(sceneIndex + attempt) % subLocationVariants.length];
         
-        // ===== SIMPLIFIED PROMPT - ACTION + CONSISTENT LOCATION + CAMERA =====
-        const actionVariants = [
-          `The person from the reference image ${subLocation} in a ${mainLocation}: ${sceneKeywords}`,
-          `Show the person from the reference ${subLocation} within the ${mainLocation}: ${sceneKeywords}`,
-          `The reference person ${subLocation} of the ${mainLocation}: ${sceneKeywords}`,
-          `Capture the reference person ${subLocation} in this ${mainLocation}: ${sceneKeywords}`,
-          `The same person as reference, now ${subLocation} in the ${mainLocation}: ${sceneKeywords}`
-        ];
+        // ===== NEW STRUCTURED PROMPT - CHARACTER IDENTITY + SCENE-SPECIFIC POSE =====
+        // Use the structured scene data (keyAction, emotion, specificArea) from storyboard generation
+        // scenePoint already defined above for camera settings
+        const sceneKeyAction = scenePoint?.keyAction || sceneKeywords;
+        const sceneEmotion = scenePoint?.emotion || "neutral";
+        const sceneSpecificArea = scenePoint?.specificArea || subLocation;
+        const globalMainLocation = storyboardMainLocation || mainLocation;
         
-        const actionIdx = (attempt - 1) % actionVariants.length;
-        const cameraSection = cameraInstruction ? `\n\nCAMERA FRAMING INSTRUCTIONS:\n${cameraInstruction}` : "";
-        const locationContext = `\n\nLOCATION CONTEXT: All scenes take place in the same ${mainLocation}. This specific scene is ${subLocation}. Maintain visual consistency with the overall ${mainLocation} setting.`;
-        const imagePromptText = `${actionVariants[actionIdx]}. Professional photography, ultra high resolution.${locationContext}${cameraSection}`;
+        // Build the new structured image prompt
+        const imagePromptText = `
+MANDATORY CAMERA FRAMING (follow exactly):
+${cameraInstruction || "Standard eye-level, medium shot framing."}
+
+SCENE SETTING:
+Location: ${globalMainLocation}, specifically ${sceneSpecificArea}.
+${storyText}
+
+CHARACTER IDENTITY (copy ONLY these from reference image):
+- Face: exact facial features, face shape, skin tone
+- Hair: exact color, style, length  
+- Body: same body type and proportions
+- Age: same approximate age
+
+CHARACTER POSE (DO NOT copy from reference - create NEW pose for this scene):
+Action: ${sceneKeyAction}
+Expression: ${sceneEmotion}
+IMPORTANT: Create a completely NEW pose that fits this scene. Ignore the pose in the reference image.
+
+TECHNICAL REQUIREMENTS:
+- Exactly ONE person in the image
+- Single cohesive image, NO collage or split screen
+- Ultra high resolution photography
+- Match lighting and atmosphere to the scene description
+- 16:9 aspect ratio
+`.trim();
         
-        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: "${imagePromptText}" (${imagePromptText.split(' ').length} words, ${characterBase64Images.length} refs, keywords: "${sceneKeywords}")`);
+        console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: Structured prompt with keyAction="${sceneKeyAction}", emotion="${sceneEmotion}", location="${globalMainLocation}/${sceneSpecificArea}"`);
 
         // === EXACT SAME PAYLOAD AS POSE GENERATOR ===
         // Clean base64 images (remove data URL prefix if present)
