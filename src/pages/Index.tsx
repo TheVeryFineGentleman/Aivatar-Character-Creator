@@ -448,18 +448,19 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Du bist ein kreativer Story-Autor. Basierend auf der Nutzeranfrage, erstelle eine fesselnde Story-Idee.
+                text: `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Basierend auf der Nutzeranfrage, erstelle eine fesselnde Story-Idee.
 
 NUTZERANFRAGE:
-"${storyAiAssistantInput.trim() || 'Erstelle eine kreative Story-Idee'}"
+"${storyAiAssistantInput.trim() || 'Erstelle eine realistische Story-Idee'}"
 ${existingIdeaContext}
 
-REGELN:
+WICHTIGE REGELN:
 - Erstelle eine klare, prägnante Story-Idee (1-3 Sätze)
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
+- Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Die Idee sollte visuell umsetzbar sein für ein Storyboard
 - Schreibe auf Deutsch
-- Antworte NUR mit der Story-Idee selbst, keine Einleitungen oder Erklärungen
-- Die Idee sollte interessant und emotional ansprechend sein`
+- Antworte NUR mit der Story-Idee selbst, keine Einleitungen oder Erklärungen`
               }]
             }],
             generationConfig: {
@@ -1759,11 +1760,17 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Generiere genau 3 kreative, kurze Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
+                text: `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
 
-Beispiele für gute Ideen:
-- "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt."
-- "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln."
+WICHTIG: NUR realistische, lebensnahe Geschichten! KEINE Fantasy, Magie, übernatürlichen Elemente, Sci-Fi oder unrealistische Szenarien.
+
+Gute Beispiele (realistisch, alltäglich):
+- "Eine Frau trifft nach 10 Jahren ihren Jugendfreund zufällig im Supermarkt."
+- "Ein Student muss sich zwischen seinem Traumjob und seiner Beziehung entscheiden."
+- "Eine ältere Dame findet einen verlorenen Brief, der ihr Leben verändert."
+
+SCHLECHTE Beispiele (NICHT verwenden):
+- Magische Cafés, Zeitreisen, Superhelden, Zauberer, sprechende Tiere, Portale
 
 Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
