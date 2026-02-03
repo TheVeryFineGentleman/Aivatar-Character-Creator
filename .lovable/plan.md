@@ -1,130 +1,286 @@
 
 
-# Plan: Klarere Funktionalität für den Story-KI-Assistenten
+# Plan: Neues Layout für Story-Detail-Popup nach Referenzdesign
 
-## Problem-Analyse
+## Zieldesign (aus Referenzbildern)
 
-Das Segmented Control im Story-Detail-Popup hat verwirrende Labels und eine unklare Wirkung:
+Das neue Layout hat eine klare, nummerierte Struktur mit zwei Hauptvarianten:
 
-| Aktuelles Label | Was es tut | Erwartete Wirkung (vermutet) |
-|-----------------|-----------|------------------------------|
-| "Text & Kamera" | Optimiert nur den Szenentext + Kamera-Einstellungen | Unklar, evtl. erwartet: bearbeitet den Text |
-| "Bild neu" | Generiert nur das Bild neu | Unklar, evtl. erwartet: ändert das Bild |
-| "Beides" | Text optimieren + Bild neu generieren | Evtl. zu viel/zu wenig? |
-
-**Kernproblem:** Die Labels im Posen-Generator ("Prompt", "Hintergrund", "Beides") beschreiben, welches **Textfeld** betroffen ist. Die Labels im Story-Builder beschreiben aber verschiedene **Aktionen** - das ist ein konzeptuell anderer Ansatz und deshalb verwirrend.
-
-## Lösungsvorschlag: Konsistente Terminologie und klare Funktionsbeschreibungen
-
-### Option A: Labels klarer machen (minimale Änderung)
-
-Bessere Labels verwenden, die genau beschreiben, was passiert:
-
+### Desktop-Ansicht (2 Spalten)
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ✨ KI-Assistent                                                            │
-│                                                                             │
-│        [Nur Text optimieren] [Nur Bild regenerieren] [Text + Bild]          │
-│                                                                             │
-│  ┌─────────────────────────────────────┐    ┌──────┐                        │
-│  │  "Mache es dramatischer..."         │    │  ✨  │                        │
-│  └─────────────────────────────────────┘    └──────┘                        │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│  ⬤ Inhalt    + Bild    📹 Video                                    [X]        │
+├──────────────────────────────────────┬─────────────────────────────────────────┤
+│  LINKE SPALTE (Bearbeitung)          │  RECHTE SPALTE (Ergebnis)              │
+│                                      │                                         │
+│  ● 1. Was passiert in dieser Szene?  │  ⬤ Ergebnis dieser Szene               │
+│  ┌───────────────────────────────┐   │  ┌─────────────────────────────────┐    │
+│  │ Zusammenfassung:              │   │  │                                 │    │
+│  │ "Hektische Cafébesucher..."   │   │  │        [GENERIERTES BILD]       │    │
+│  └───────────────────────────────┘   │  │                                 │    │
+│  📖 Detaillierte Szenen-Beschreibung │  └─────────────────────────────────┘    │
+│  ┌───────────────────────────────┐   │  [Unruhig] [Close-Up] [Von oben] [...]  │
+│  │ "Im Hintergrund und an..."    │   │                                         │
+│  └───────────────────────────────┘   │  ✨ Aktualisiert nach letzter Änderung  │
+│                                      │                                         │
+│  ● 2. Handlung & Beteiligte          │  [↻ Vorschau neu] [👍 Als final]        │
+│  Schlüsselaktion [▼]    Bereich [▼]  │  [← Änderungen verwerfen]               │
+│                                      │                                         │
+│  ● 3. Emotion & Wirkung              │  ┌─────────────────────────────────┐    │
+│  Emotion [▼]                         │  │ 📺 Szenen-Übersicht              │    │
+│                                      │  │ "Mache es dramatischer..."       │    │
+│  ● 4. Kamera & Bildsprache           │  │ [Text][Kamera][Bild neu][Beides] │    │
+│  [Ruhig] [Dynamisch] [Intim] [...]   │  └─────────────────────────────────┘    │
+│  Kamerawinkel [▼]   Shot-Typ [▼]     │                                         │
+│                                      │                                         │
+├──────────────────────────────────────┴─────────────────────────────────────────┤
+│  📺 Szenen-Übersicht (Thumbnail-Leiste aller Szenen)                           │
+│  [Szene 1] [Szene 2] [Szene 3] ...                                             │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Option B: Layout wie beim Posen-Generator (empfohlen)
+## Hauptänderungen
 
-Den Button links neben der Textarea platzieren (statt rechts) und die Logik so gestalten, dass der Pfeil die Richtung anzeigt:
+### 1. Nummerierte Sektionen mit Icons
+Jeder Bereich hat eine klare Nummer und ein Icon:
+- **1. Was passiert in dieser Szene?** - Zusammenfassung + Detailbeschreibung
+- **2. Handlung & Beteiligte** - Schlüsselaktion + Bereich (als Dropdowns)
+- **3. Emotion & Wirkung** - Emotion-Auswahl
+- **4. Kamera & Bildsprache** - Mood-Tags + Kamera-Dropdowns + Bild-Vorschau
+- **5. KI-Anweisungen & Feinjustierung** - Szenen-Übersicht
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ✨ KI-Assistent                  [Text] [Bild] [Beides]                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────┐  ┌──────────────────────────────────────────────────────────────┐ │
-│  │  →   │  │  "Mache es dramatischer..."                                  │ │
-│  └──────┘  └──────────────────────────────────────────────────────────────┘ │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### 2. Zwei-Spalten-Layout (Desktop)
+- **Links**: Alle Bearbeitungsfelder (Text, Metadaten)
+- **Rechts**: Bild-Vorschau mit Status und Aktions-Buttons
 
-**Aber:** Im Story-Builder gibt es kein "Ziel-Textfeld" links wie beim Posen-Generator. Die Aktionen sind fundamentale Prozesse (Text optimieren / Bild generieren), nicht Textfeld-Transfers.
+### 3. Neue Aktions-Buttons beim Bild
+- "Vorschau neu generieren"
+- "Als final übernehmen" (grün)
+- "Änderungen verwerfen"
 
-## Empfohlene Lösung
+### 4. Mood-Tags
+Auswählbare Stimmungs-Chips: "Ruhig", "Dynamisch", "Intim", "Beobachtend"
 
-### 1. Klarere Labels für das Segmented Control
+### 5. Bild-Tags unterhalb des generierten Bildes
+Zeigt die aktuellen Einstellungen: Emotion, Shot-Typ, Kamerawinkel, Bewegung
 
-| Alter Text | Neuer Text | Bedeutung |
-|------------|------------|-----------|
-| "Text & Kamera" | "Text optimieren" | Optimiert Beschreibung, Kamerawinkel, Shot-Typ basierend auf der Eingabe |
-| "Bild neu" | "Bild regenerieren" | Generiert das Bild zur Szene neu |
-| "Beides" | "Text + Bild" | Führt beide Aktionen nacheinander aus |
+### 6. Szenen-Übersicht am unteren Rand
+Horizontale Thumbnail-Leiste aller Szenen mit Shot-Typ-Labels
 
-### 2. Tooltips für jedes Segment hinzufügen
+### 7. KI-Assistent (4 Modi)
+Die Mode-Buttons werden zu:
+- "Text" (nur Text optimieren)
+- "Kamera" (nur Kamera-Einstellungen)
+- "Bild neu" (nur Bild regenerieren)
+- "Beides" (alles zusammen)
 
-Jeder Button bekommt ein `title`-Attribut, das erklärt, was genau passiert:
-
-```tsx
-<Button
-  title="Optimiert den Szenentext, Kamerawinkel und Shot-Typ basierend auf deiner Anweisung"
-  ...
->
-  Text optimieren
-</Button>
-```
-
-### 3. Button-Icon ändern
-
-Statt dem generischen `Sparkles`-Icon könnte der Button kontextabhängig ein passendes Icon zeigen:
-- Bei "Text optimieren": Sparkles oder MessageSquare
-- Bei "Bild regenerieren": RefreshCw oder Image
-- Bei "Text + Bild": Sparkles (alles zusammen)
-
-## Betroffene Datei
+## Betroffene Dateien
 
 | Datei | Änderung |
 |-------|----------|
-| `src/pages/Index.tsx` | Segmented Control Labels und Tooltips anpassen (Zeilen 6001-6025) |
+| `src/pages/Index.tsx` | Komplette Neustrukturierung des Story-Detail-Popups (Zeilen 5530-6073) |
 
 ## Technische Umsetzung
 
+### Sektion 1: Was passiert in dieser Szene?
 ```tsx
-{/* Segmented Control mit klareren Labels */}
-<div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
-  <Button
-    variant={sceneAiMode === "text" ? "default" : "ghost"}
-    size="sm"
-    className={`h-6 px-2 text-xs ${sceneAiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`}
-    onClick={() => setSceneAiMode("text")}
-    title="Optimiert den Szenentext, Kamerawinkel und Shot-Typ"
-  >
-    Text optimieren
-  </Button>
-  <Button
-    variant={sceneAiMode === "image" ? "default" : "ghost"}
-    size="sm"
-    className={`h-6 px-2 text-xs ${sceneAiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`}
-    onClick={() => setSceneAiMode("image")}
-    title="Generiert das Bild zur Szene neu"
-  >
-    Bild regenerieren
-  </Button>
-  <Button
-    variant={sceneAiMode === "both" ? "default" : "ghost"}
-    size="sm"
-    className={`h-6 px-2 text-xs ${sceneAiMode === "both" ? "" : "text-muted-foreground hover:text-foreground"}`}
-    onClick={() => setSceneAiMode("both")}
-    title="Optimiert erst den Text, dann regeneriert das Bild"
-  >
-    Text + Bild
+<div className="space-y-4">
+  <div className="flex items-center gap-2">
+    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs">●</div>
+    <h3 className="font-semibold">1. Was passiert in dieser Szene?</h3>
+  </div>
+  
+  <div className="space-y-2">
+    <label className="text-sm text-muted-foreground">Zusammenfassung:</label>
+    <div className="bg-muted/30 rounded-lg p-3">
+      <Textarea value={...} onChange={...} className="..." />
+    </div>
+  </div>
+  
+  <div className="space-y-2">
+    <label className="text-sm text-muted-foreground flex items-center gap-1.5">
+      <BookOpen className="w-4 h-4" />
+      Detaillierte Szenen-Beschreibung
+    </label>
+    <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+      <Textarea value={...} onChange={...} className="..." />
+    </div>
+  </div>
+</div>
+```
+
+### Sektion 2: Handlung & Beteiligte (Dropdowns statt Inputs)
+```tsx
+<div className="space-y-3">
+  <div className="flex items-center gap-2">
+    <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs">●</div>
+    <h3 className="font-semibold">2. Handlung & Beteiligte</h3>
+  </div>
+  
+  <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-2">
+      <label className="text-sm text-muted-foreground">Schlüsselaktion</label>
+      <Select value={...} onValueChange={...}>
+        <SelectTrigger>...</SelectTrigger>
+        <SelectContent>
+          <SelectItem value="tippen">Andere Gäste tippen und wischen umher</SelectItem>
+          {/* Dynamische Optionen */}
+        </SelectContent>
+      </Select>
+    </div>
+    <div className="space-y-2">
+      <label className="text-sm text-muted-foreground">Bereich</label>
+      <Select value={...} onValueChange={...}>...</Select>
+    </div>
+  </div>
+</div>
+```
+
+### Sektion 3: Emotion & Wirkung
+```tsx
+<div className="space-y-3">
+  <div className="flex items-center gap-2">
+    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">💚</div>
+    <h3 className="font-semibold">3. Emotion & Wirkung</h3>
+  </div>
+  
+  <div className="space-y-2">
+    <label className="text-sm text-muted-foreground">Emotion</label>
+    <Select value={...} onValueChange={...}>
+      <SelectTrigger className="w-full">...</SelectTrigger>
+      <SelectContent>
+        <SelectItem value="unruhig-abgelenkt">Unruhig, abgelenkt</SelectItem>
+        <SelectItem value="gluecklich">Glücklich</SelectItem>
+        {/* weitere Emotionen */}
+      </SelectContent>
+    </Select>
+  </div>
+</div>
+```
+
+### Sektion 4: Kamera & Bildsprache
+```tsx
+<div className="space-y-3">
+  <div className="flex items-center gap-2 justify-between">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">◉</div>
+      <h3 className="font-semibold">4. Kamera & Bildsprache</h3>
+    </div>
+    <Button variant="ghost" size="sm" className="gap-1">
+      <Download className="w-3 h-3" /> Weiteren
+    </Button>
+  </div>
+  
+  {/* Mood Tags */}
+  <div className="flex gap-2 flex-wrap">
+    {["Ruhig", "Dynamisch", "Intim", "Beobachtend"].map(mood => (
+      <Button key={mood} variant={selectedMood === mood ? "default" : "outline"} size="sm">
+        {mood}
+      </Button>
+    ))}
+  </div>
+  
+  {/* Kamera-Dropdowns */}
+  <div className="grid grid-cols-2 gap-3">
+    <Select><SelectTrigger>Kamerawinkel</SelectTrigger>...</Select>
+    <Select><SelectTrigger>Shot-Typ</SelectTrigger>...</Select>
+  </div>
+  
+  {/* Bild-Vorschau mit Tags */}
+  <div className="relative">
+    <img src={...} className="rounded-lg" />
+    <div className="flex gap-2 mt-2">
+      <Badge variant="secondary">{emotion}</Badge>
+      <Badge variant="outline">{shotType}</Badge>
+      <Badge variant="outline">{cameraAngle}</Badge>
+    </div>
+  </div>
+</div>
+```
+
+### Rechte Spalte: Ergebnis dieser Szene
+```tsx
+<div className="space-y-4">
+  <div className="flex items-center gap-2">
+    <div className="w-6 h-6 rounded-full bg-purple-600/20 flex items-center justify-center">
+      <span className="text-purple-400">⬤</span>
+    </div>
+    <h3 className="font-semibold">Ergebnis dieser Szene</h3>
+  </div>
+  
+  {/* Großes Bild */}
+  <div className="relative rounded-lg overflow-hidden">
+    <img src={...} className="w-full aspect-video object-cover" />
+  </div>
+  
+  {/* Tags */}
+  <div className="flex gap-2 flex-wrap">
+    <Badge className="bg-primary">{emotion}</Badge>
+    <Badge variant="outline">{shotType}</Badge>
+    <Badge variant="outline">{cameraAngle}</Badge>
+    <Badge variant="outline">Keine Bewegung</Badge>
+  </div>
+  
+  {/* Status */}
+  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+    <Sparkles className="w-4 h-4" />
+    Aktualisiert nach letzter Änderung
+  </p>
+  
+  {/* Aktions-Buttons */}
+  <div className="flex gap-2">
+    <Button variant="outline" className="flex-1 gap-2">
+      <RefreshCw className="w-4 h-4" />
+      Vorschau neu generieren
+    </Button>
+    <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700">
+      <ThumbsUp className="w-4 h-4" />
+      Als final übernehmen
+    </Button>
+  </div>
+  <Button variant="ghost" className="w-full gap-2 text-muted-foreground">
+    <ArrowLeft className="w-4 h-4" />
+    Änderungen verwerfen
   </Button>
 </div>
 ```
 
-## Zusammenfassung
+### KI-Assistent mit 4 Modi
+```tsx
+<div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+  <Button variant={mode === "text" ? "default" : "ghost"}>
+    <MessageSquare className="w-3 h-3" /> Text
+  </Button>
+  <Button variant={mode === "camera" ? "default" : "ghost"}>
+    <Camera className="w-3 h-3" /> Kamera
+  </Button>
+  <Button variant={mode === "image" ? "default" : "ghost"}>
+    <ImageIcon className="w-3 h-3" /> Bild neu
+  </Button>
+  <Button variant={mode === "both" ? "default" : "ghost"} className="bg-primary">
+    <Sparkles className="w-3 h-3" /> Beides
+  </Button>
+</div>
+```
 
-1. **"Text & Kamera" → "Text optimieren"** - klarer, was optimiert wird
-2. **"Bild neu" → "Bild regenerieren"** - konsistent mit "Regenerieren" im restlichen UI
-3. **"Beides" → "Text + Bild"** - zeigt die Reihenfolge der Aktionen
-4. **Tooltips hinzufügen** - erklärt bei Hover genau, was jede Option macht
+## Neue State-Variablen
+
+```tsx
+// Für Mood-Tags
+const [selectedMood, setSelectedMood] = useState<string>("");
+
+// Erweiterter sceneAiMode um "camera"
+type SceneAiMode = "text" | "camera" | "image" | "both";
+```
+
+## Zusammenfassung der Änderungen
+
+1. **Nummerierte Sektionen** mit farbigen Icons (1-5)
+2. **Zwei-Spalten-Layout** auf Desktop (links: Bearbeitung, rechts: Ergebnis)
+3. **Dropdowns** für Schlüsselaktion, Bereich, Emotion (statt Textfelder)
+4. **Mood-Tags** (Ruhig, Dynamisch, Intim, Beobachtend)
+5. **Tags unter dem Bild** zeigen aktuelle Einstellungen
+6. **Neue Buttons**: "Vorschau neu generieren", "Als final übernehmen", "Änderungen verwerfen"
+7. **4 KI-Modi**: Text, Kamera, Bild neu, Beides
+8. **Szenen-Übersicht** als horizontale Thumbnail-Leiste am unteren Rand
 
