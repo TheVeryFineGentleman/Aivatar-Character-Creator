@@ -1870,40 +1870,20 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
         : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
 
-      // Build multimodal content array
-      const contentParts: Array<{ type: string; text?: string; inlineData?: { mimeType: string; data: string } }> = [];
-      
-      // Text prompt first
-      contentParts.push({ type: "text", text: imagePromptText });
-      
-      // Add character references
-      for (const base64 of characterBase64Images) {
-        contentParts.push({
-          type: "inline_data",
-          inlineData: { mimeType: "image/jpeg", data: base64 }
-        });
-      }
+      // Build reference images array
+      const allReferenceImages: string[] = [...characterBase64Images];
       
       // Add previous scene image for continuity
       if (previousSceneImage) {
         try {
           const response = await fetch(previousSceneImage);
           const blob = await response.blob();
-          const base64 = await new Promise<string>((resolve, reject) => {
+          const prevBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              const base64Data = result.split(',')[1];
-              if (base64Data) resolve(base64Data);
-              else reject(new Error('No base64 data'));
-            };
-            reader.onerror = reject;
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
             reader.readAsDataURL(blob);
           });
-          contentParts.push({
-            type: "inline_data",
-            inlineData: { mimeType: "image/jpeg", data: base64 }
-          });
+          allReferenceImages.push(prevBase64);
         } catch (error) {
           console.error('Error converting previous scene image:', error);
         }
@@ -1914,57 +1894,64 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         try {
           const response = await fetch(currentSceneImage);
           const blob = await response.blob();
-          const base64 = await new Promise<string>((resolve, reject) => {
+          const currBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              const base64Data = result.split(',')[1];
-              if (base64Data) resolve(base64Data);
-              else reject(new Error('No base64 data'));
-            };
-            reader.onerror = reject;
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
             reader.readAsDataURL(blob);
           });
-          contentParts.push({
-            type: "inline_data",
-            inlineData: { mimeType: "image/jpeg", data: base64 }
-          });
+          allReferenceImages.push(currBase64);
         } catch (error) {
           console.error('Error converting current scene image:', error);
         }
       }
 
-      const requestBody = {
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: contentParts }],
-        modalities: ["image", "text"],
-        temperature: 0.75
-      };
-
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal
-      });
+      // Call edge function for image generation (same as regenerateSingleStoryScene)
+      const imageResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            prompt: imagePromptText,
+            referenceImages: allReferenceImages,
+            aspectRatio: "16:9",
+            mode: "image",
+            apiKey: apiKey
+          }),
+        }
+      );
       
       clearTimeout(timeoutId);
       
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `API Error: ${imageResponse.status}`);
       }
 
-      const data = await response.json();
-      const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const imageResult = await imageResponse.json();
       
-      if (!imageData) {
-        throw new Error("Kein Bild in der Antwort");
+      if (!imageResult.success) {
+        throw new Error(imageResult.error || "Kein Bild generiert");
       }
 
-      const generatedImageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`;
+      let generatedImageUrl = "";
+      
+      // The edge function returns base64 and mimeType, convert to blob URL
+      if (imageResult.imageBase64) {
+        const binary = atob(imageResult.imageBase64);
+        const bytes = new Uint8Array(binary.length);
+        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+        const blob = new Blob([bytes], { type: imageResult.mimeType || "image/png" });
+        generatedImageUrl = URL.createObjectURL(blob);
+      }
+      
+      if (!generatedImageUrl) {
+        throw new Error("Kein Bild generiert");
+      }
       
       // Update storypoint with new image
       setStoryPoints(prev => prev.map((p, idx) => {
