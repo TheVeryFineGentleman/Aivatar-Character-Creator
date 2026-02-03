@@ -278,6 +278,17 @@ const Index = () => {
     veo3StartState?: string;      // Beschreibung des Startframes
     veo3Motion?: string;          // Bewegung/Aktion
     veo3EndState?: string;        // Beschreibung des Endframes für Übergang
+    // NEW: Additional structured fields
+    participants?: string;
+    audienceEffect?: string;
+    composition?: string;
+    movement?: string;
+    negativePrompts?: string;
+    styleNotes?: string;
+    continuityNotes?: string;
+    // Final/Draft State management
+    finalSnapshot?: any;        // Snapshot of scene when finalized
+    finalizedAt?: number;       // Timestamp when finalized
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
@@ -5541,16 +5552,51 @@ Beispiel einer korrekten Antwort:
                           i === index ? { ...p, ...updates } : p
                         ));
                       }}
-                      onNavigateVersion={navigateStoryPointVersion}
+                      onNavigateScene={(direction) => {
+                        if (expandedStoryPointIndex === null) return;
+                        const newIndex = direction === 'prev' 
+                          ? expandedStoryPointIndex - 1 
+                          : expandedStoryPointIndex + 1;
+                        if (newIndex >= 0 && newIndex < storyPoints.length) {
+                          setExpandedStoryPointIndex(newIndex);
+                        }
+                      }}
                       onRegenerateImage={regenerateSingleStoryScene}
+                      onFinalizeScene={(index) => {
+                        setStoryPoints(prev => prev.map((p, i) => 
+                          i === index ? { 
+                            ...p, 
+                            finalSnapshot: { ...p },
+                            finalizedAt: Date.now()
+                          } : p
+                        ));
+                        toast({ 
+                          title: "Szene finalisiert!", 
+                          description: `Szene ${index + 1} wurde in deine Story übernommen.` 
+                        });
+                      }}
+                      onDiscardChanges={(index) => {
+                        setStoryPoints(prev => prev.map((p, i) => {
+                          if (i !== index || !p.finalSnapshot) return p;
+                          return { ...p.finalSnapshot, finalSnapshot: p.finalSnapshot, finalizedAt: p.finalizedAt };
+                        }));
+                        toast({ 
+                          title: "Änderungen verworfen", 
+                          description: "Die Szene wurde auf den letzten finalen Stand zurückgesetzt." 
+                        });
+                      }}
                       regeneratingIndex={regeneratingPointIndex}
                       veo3CameraMovements={VEO3_CAMERA_MOVEMENTS}
                       sceneAssistantInput={sceneAssistantInput}
                       setSceneAssistantInput={setSceneAssistantInput}
                       isGeneratingAssistant={isGeneratingSceneAssistant}
-                      onAssistantSubmit={handleUnifiedSceneAssistant}
-                      sceneAiMode={sceneAiMode}
-                      setSceneAiMode={setSceneAiMode}
+                      onAssistantSubmit={(mode) => {
+                        if (mode === "text") {
+                          handleSceneAssistant();
+                        } else {
+                          regenerateSingleStoryScene(expandedStoryPointIndex);
+                        }
+                      }}
                       onCopyVideoPrompt={() => {
                         const point = storyPoints[expandedStoryPointIndex];
                         const cameraInfo = VEO3_CAMERA_MOVEMENTS.find(m => m.id === point.veo3CameraMovement);
@@ -5564,6 +5610,8 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                         navigator.clipboard.writeText(copyText);
                         toast({ title: "Kopiert!", description: "Video-Prompt in Zwischenablage kopiert." });
                       }}
+                      totalScenes={storyPoints.length}
+                      finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}
                     />
                   )}
                 </div>
