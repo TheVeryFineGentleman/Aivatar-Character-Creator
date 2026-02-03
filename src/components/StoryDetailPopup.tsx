@@ -543,77 +543,77 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         </div>
       )}
       
-      {/* Main Container */}
-      <div className={`fixed inset-x-0 top-0 bottom-0 z-[110] flex flex-col pointer-events-none overflow-hidden ${isDirty ? 'pt-10' : ''}`}>
-        {/* Sticky Header */}
-        <div className="bg-background/95 backdrop-blur-sm border-b border-border/30 flex items-center justify-between px-4 py-3 pointer-events-auto shrink-0">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => onNavigateScene('prev')}
-              disabled={expandedIndex === 0}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Zurück</span>
-            </Button>
-            <div className="text-sm font-medium">
-              Szene {expandedIndex + 1} von {totalScenes}
+      {/* Main Container - NOT fullscreen, centered with solid background */}
+      <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-8 px-4 ${isDirty ? 'pt-16' : ''}`}>
+        <div className={`bg-card border border-border rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
+          {/* Sticky Header */}
+          <div className="bg-card border-b border-border/30 flex items-center justify-between px-4 py-3 shrink-0 rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => onNavigateScene('prev')}
+                disabled={expandedIndex === 0}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Zurück</span>
+              </Button>
+              <div className="text-sm font-medium">
+                Szene {expandedIndex + 1} von {totalScenes}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => onNavigateScene('next')}
+                disabled={expandedIndex === totalScenes - 1}
+              >
+                <span className="hidden sm:inline">Weiter</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => onNavigateScene('next')}
-              disabled={expandedIndex === totalScenes - 1}
-            >
-              <span className="hidden sm:inline">Weiter</span>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            
+            <div className="flex items-center gap-3">
+              {/* Status Badge in Header */}
+              <Badge 
+                className={
+                  status.variant === 'final' 
+                    ? 'bg-green-600/20 text-green-500 border-green-600/30' 
+                    : status.variant === 'dirty'
+                    ? 'bg-destructive/10 text-destructive border-destructive/30'
+                    : 'bg-orange-500/10 text-orange-500 border-orange-500/30'
+                }
+                variant="outline"
+              >
+                {status.label}
+              </Badge>
+              
+              {/* Mobile Preview Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden gap-1.5"
+                onClick={() => setShowMobilePreview(true)}
+              >
+                <Eye className="w-4 h-4" />
+                Vorschau
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                onClick={onClose}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Status Badge in Header */}
-            <Badge 
-              className={
-                status.variant === 'final' 
-                  ? 'bg-green-600/20 text-green-500 border-green-600/30' 
-                  : status.variant === 'dirty'
-                  ? 'bg-destructive/10 text-destructive border-destructive/30'
-                  : 'bg-orange-500/10 text-orange-500 border-orange-500/30'
-              }
-              variant="outline"
-            >
-              {status.label}
-            </Badge>
-            
-            {/* Mobile Preview Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="lg:hidden gap-1.5"
-              onClick={() => setShowMobilePreview(true)}
-            >
-              <Eye className="w-4 h-4" />
-              Vorschau
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
-              onClick={onClose}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-        
-        {/* Two Column Layout */}
-        <div className="flex-1 overflow-y-auto pointer-events-auto">
-          <div className="max-w-5xl mx-auto px-4 py-6">
-            <div className={`grid grid-cols-1 lg:grid-cols-[1fr,340px] gap-6 ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
+          {/* Two Column Layout - Scrollable content area */}
+          <div className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr,340px] gap-6">
               {/* Left Column - Editing */}
               <div className="space-y-1">
                 {/* Section 1: Story-Kern (ALWAYS VISIBLE, NOT COLLAPSIBLE) */}
@@ -928,11 +928,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Sticky Footer - AI Assistant */}
-        <div className="bg-background/95 backdrop-blur-sm border-t border-border/30 p-4 pointer-events-auto shrink-0">
-          <div className="max-w-5xl mx-auto">
+          
+          {/* AI Assistant Section - Inside the card */}
+          <div className="border-t border-border/30 p-4 mt-4">
             {/* Header with label and mode selector */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
