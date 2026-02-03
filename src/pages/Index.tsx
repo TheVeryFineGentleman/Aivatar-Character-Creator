@@ -1602,7 +1602,206 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     }));
   };
 
-  // Regenerate a single failed story scene - NO AUTO RETRY, use SIMPLIFIED prompt immediately
+  // ===== TRANSLATION MAPS for German dropdown values → English =====
+  const emotionToEnglish: Record<string, string> = {
+    "gluecklich": "happy, joyful expression",
+    "traurig": "sad, melancholic expression",
+    "nachdenklich": "thoughtful, pensive expression",
+    "aufgeregt": "excited, energetic expression",
+    "aengstlich": "fearful, anxious expression",
+    "wuetend": "angry, furious expression",
+    "ueberrascht": "surprised, astonished expression",
+    "verliebt": "lovestruck, romantic expression",
+    "verzweifelt": "desperate, distressed expression",
+    "hoffnungsvoll": "hopeful, optimistic expression",
+    "melancholisch": "melancholic, wistful expression",
+    "entspannt": "relaxed, calm expression",
+    "neutral": "neutral expression",
+  };
+
+  const actionToEnglish: Record<string, string> = {
+    "steht": "standing",
+    "geht": "walking",
+    "sitzt": "sitting",
+    "lehnt": "leaning",
+    "schaut": "looking, gazing",
+    "spricht": "speaking, talking",
+    "rennt": "running",
+    "wartet": "waiting",
+    "greift": "reaching, grabbing",
+    "haelt": "holding",
+    "zeigt": "pointing, showing",
+    "wendet-sich": "turning around",
+  };
+
+  const areaToEnglish: Record<string, string> = {
+    "innenraum": "indoor setting",
+    "aussenbereich": "outdoor setting",
+    "strasse": "street, urban environment",
+    "natur": "natural environment",
+    "arbeitsplatz": "workplace, office",
+    "zuhause": "home interior",
+    "fahrzeug": "inside vehicle",
+    "oeffentlicher-ort": "public place",
+  };
+
+  const effectToEnglish: Record<string, string> = {
+    "spannung": "tense, suspenseful",
+    "empathie": "empathetic, emotional",
+    "freude": "joyful, uplifting",
+    "unbehagen": "uneasy, uncomfortable",
+    "neugier": "intriguing, curious",
+    "erleichterung": "relieving, calming",
+    "trauer": "sorrowful, mournful",
+    "hoffnung": "hopeful, inspiring",
+  };
+
+  const compositionToEnglish: Record<string, string> = {
+    "zentriert": "centered composition",
+    "drittel-regel": "rule of thirds",
+    "symmetrisch": "symmetrical composition",
+    "diagonal": "diagonal composition",
+    "rahmen-im-rahmen": "frame within frame",
+  };
+
+  const movementToEnglish: Record<string, string> = {
+    "keine": "",
+    "dolly-in": "dolly-in camera movement",
+    "dolly-out": "dolly-out camera movement",
+    "truck": "truck camera movement",
+    "tilt": "tilt camera movement",
+    "pan": "pan camera movement",
+    "crane": "crane camera movement",
+    "arc": "arc camera movement",
+  };
+
+  const cameraAngleToEnglish: Record<string, string> = {
+    "frontal": "frontal shot, eye level",
+    "seitlich": "side profile shot",
+    "von-oben": "high angle shot, looking down",
+    "von-unten": "low angle shot, looking up",
+    "ueber-schulter": "over-the-shoulder shot",
+    "dutch-angle": "dutch angle, tilted frame",
+    "vogelperspektive": "bird's eye view",
+    "froschperspektive": "worm's eye view, extreme low angle",
+  };
+
+  const shotTypeToEnglish: Record<string, string> = {
+    "extreme-close-up": "extreme close-up showing only a detail (eyes, hands)",
+    "close-up": "close-up of face from chin to forehead",
+    "medium-close-up": "medium close-up from chest up",
+    "medium-shot": "medium shot from waist up",
+    "medium-long-shot": "medium long shot from knees up",
+    "full-shot": "full body shot showing entire person",
+    "long-shot": "long shot with character and environment",
+    "extreme-long-shot": "extreme long shot, wide establishing shot",
+  };
+
+  // ===== BUILD FULL IMAGE PROMPT HELPER =====
+  const buildFullImagePrompt = (
+    point: typeof storyPoints[0],
+    sceneIndex: number
+  ): string => {
+    const lines: string[] = [];
+    
+    // === SECTION 1: MANDATORY CAMERA FRAMING ===
+    lines.push("MANDATORY CAMERA FRAMING:");
+    const shotType = point.shotType ? (shotTypeToEnglish[point.shotType] || point.shotType) : "medium shot";
+    lines.push(`Shot Type: ${shotType}`);
+    
+    if (point.cameraAngle && point.cameraAngle !== 'random') {
+      lines.push(`Camera Angle: ${cameraAngleToEnglish[point.cameraAngle] || point.cameraAngle}`);
+    }
+    
+    if (point.composition) {
+      lines.push(`Composition: ${compositionToEnglish[point.composition] || point.composition}`);
+    }
+    
+    // === SECTION 2: SCENE SETTING ===
+    lines.push("");
+    lines.push("SCENE SETTING:");
+    const locationParts: string[] = [];
+    if (storyboardMainLocation) locationParts.push(storyboardMainLocation);
+    if (point.specificArea) {
+      locationParts.push(areaToEnglish[point.specificArea] || point.specificArea);
+    }
+    if (locationParts.length > 0) {
+      lines.push(`Location: ${locationParts.join(", ")}`);
+    }
+    
+    // Scene description
+    const sceneText = point.detailedDescription || point.versions[point.currentVersion] || "";
+    if (sceneText) {
+      lines.push(`Scene: ${sceneText}`);
+    }
+    
+    // === SECTION 3: CHARACTER IDENTITY ===
+    lines.push("");
+    lines.push("CHARACTER IDENTITY:");
+    lines.push(sceneIndex === 0
+      ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image."
+      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly."
+    );
+    
+    // === SECTION 4: CHARACTER POSE & EXPRESSION ===
+    lines.push("");
+    lines.push("CHARACTER POSE:");
+    if (point.keyAction) {
+      lines.push(`Action: ${actionToEnglish[point.keyAction] || point.keyAction}`);
+    }
+    if (point.emotion) {
+      lines.push(`Expression: ${emotionToEnglish[point.emotion] || point.emotion}`);
+    }
+    lines.push("IGNORE the pose in reference images - generate a completely new pose matching this scene.");
+    
+    // === SECTION 5: PARTICIPANTS (if any) ===
+    if (point.participants && point.participants.trim()) {
+      lines.push("");
+      lines.push(`PARTICIPANTS: ${point.participants}`);
+    }
+    
+    // === SECTION 6: INTENDED EFFECT / MOOD ===
+    if (point.audienceEffect) {
+      lines.push("");
+      const moodEnglish = effectToEnglish[point.audienceEffect] || point.audienceEffect;
+      lines.push(`INTENDED MOOD: Create a ${moodEnglish} atmosphere in this image.`);
+    }
+    
+    // === SECTION 7: MOVEMENT (camera movement if specified) ===
+    if (point.movement && point.movement !== 'keine') {
+      const movementEnglish = movementToEnglish[point.movement] || point.movement;
+      if (movementEnglish) {
+        lines.push("");
+        lines.push(`CAMERA MOVEMENT: ${movementEnglish}`);
+      }
+    }
+    
+    // === SECTION 8: STYLE NOTES ===
+    if (point.styleNotes && point.styleNotes.trim()) {
+      lines.push("");
+      lines.push(`STYLE: ${point.styleNotes}`);
+    }
+    
+    // === SECTION 9: CONTINUITY NOTES ===
+    if (point.continuityNotes && point.continuityNotes.trim()) {
+      lines.push("");
+      lines.push(`CONTINUITY: ${point.continuityNotes}`);
+    }
+    
+    // === SECTION 10: NEGATIVE PROMPTS / AVOID ===
+    if (point.negativePrompts && point.negativePrompts.trim()) {
+      lines.push("");
+      lines.push(`AVOID: ${point.negativePrompts}`);
+    }
+    
+    // === SECTION 11: TECHNICAL REQUIREMENTS ===
+    lines.push("");
+    lines.push("TECHNICAL: 16:9 aspect ratio, ultra high resolution, single cohesive image, full-bleed edge-to-edge.");
+    
+    return lines.join("\n");
+  };
+
+  // Regenerate a single failed story scene - uses FULL PROMPT with all metadata
   // Can receive an optional updatedPoint with the latest edits from popup
   const regenerateSingleStoryScene = async (sceneIndex: number, updatedPoint?: typeof storyPoints[0]) => {
     if (!apiKey || regeneratingPointIndex !== null) return;
@@ -1620,8 +1819,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     
     // Use updatedPoint if provided (contains latest edits from popup), otherwise use current state
     const point = updatedPoint || storyPoints[sceneIndex];
-    // IMPORTANT: Use detailedDescription if edited in popup, otherwise fallback to current version
-    const storyText = point.detailedDescription || point.versions[point.currentVersion];
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
@@ -1655,22 +1852,10 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     const timeoutId = setTimeout(() => controller.abort(), 120000);
     
     try {
-      // Use camera/shot from point - these are the latest values
-      const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
-        ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || ''
-        : '';
-      const shotLabel = point.shotType
-        ? SHOT_TYPE_OPTIONS.find(o => o.value === point.shotType)?.label || ''
-        : '';
-      const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
+      // Build FULL structured prompt with ALL metadata
+      const imagePromptText = buildFullImagePrompt(point, sceneIndex);
       
-      // Ultra-minimal prompt - just the essentials (max ~30 words)
-      const shortScene = storyText.substring(0, 60);
-      const imagePromptText = sceneIndex === 0
-        ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
-        : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
-      
-      console.log(`Regenerating scene ${sceneIndex + 1} with ultra-compact prompt:`, imagePromptText);
+      console.log(`Regenerating scene ${sceneIndex + 1} with FULL metadata prompt:`, imagePromptText.substring(0, 200) + '...');
       
       // Build image parts - collect all reference images as base64
       const allReferenceImages: string[] = [...characterBase64Images];
@@ -1824,8 +2009,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     }));
     
     const point = storyPoints[sceneIndex];
-    // IMPORTANT: Use detailedDescription if edited in popup, otherwise fallback to current version
-    const storyText = point.detailedDescription || point.versions[point.currentVersion];
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
@@ -1859,20 +2042,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     const timeoutId = setTimeout(() => controller.abort(), 120000);
     
     try {
-      // Use same ultra-simplified prompt style as regenerateSingleStoryScene
-      const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
-        ? point.cameraAngle.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        : '';
-      const shotLabel = point.shotType
-        ? point.shotType.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        : '';
-      const cameraShot = [cameraLabel, shotLabel].filter(Boolean).join(', ');
-      
-      // Ultra-minimal prompt - just the essentials
-      const shortScene = storyText.substring(0, 60);
-      const imagePromptText = sceneIndex === 0
-        ? `Reference person. ${shortScene}. ${cameraShot}. 16:9.`
-        : `Same person. ${shortScene}. ${cameraShot}. 16:9.`;
+      // Build FULL structured prompt with ALL metadata (same as regenerateSingleStoryScene)
+      const imagePromptText = buildFullImagePrompt(point, sceneIndex);
 
       // Build reference images array
       const allReferenceImages: string[] = [...characterBase64Images];
