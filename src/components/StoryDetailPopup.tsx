@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -10,7 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   BookOpen,
   X,
@@ -18,14 +33,21 @@ import {
   Image as ImageIcon,
   Sparkles,
   RefreshCw,
-  ThumbsUp,
+  Check,
   Undo2,
   Loader2,
-  Camera,
-  MessageSquare,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronRight as ChevronRightIcon,
   Download,
+  MessageSquare,
+  AlertTriangle,
+  Users,
+  Heart,
+  Camera,
+  Wand2,
+  Eye,
 } from "lucide-react";
 
 // Types
@@ -49,6 +71,16 @@ interface StoryPoint {
   veo3StartState?: string;
   veo3Motion?: string;
   veo3EndState?: string;
+  participants?: string;
+  audienceEffect?: string;
+  composition?: string;
+  movement?: string;
+  negativePrompts?: string;
+  styleNotes?: string;
+  continuityNotes?: string;
+  // Final/Draft State
+  finalSnapshot?: StoryPoint;
+  finalizedAt?: number;
 }
 
 interface Veo3CameraMovement {
@@ -63,21 +95,20 @@ interface StoryDetailPopupProps {
   isClosing: boolean;
   onClose: () => void;
   onUpdateStoryPoint: (index: number, updates: Partial<StoryPoint>) => void;
-  onNavigateVersion: (index: number, direction: 'prev' | 'next') => void;
+  onNavigateScene: (direction: 'prev' | 'next') => void;
   onRegenerateImage: (index: number) => void;
+  onFinalizeScene: (index: number) => void;
+  onDiscardChanges: (index: number) => void;
   regeneratingIndex: number | null;
   veo3CameraMovements: Veo3CameraMovement[];
   sceneAssistantInput: string;
   setSceneAssistantInput: (value: string) => void;
   isGeneratingAssistant: boolean;
-  onAssistantSubmit: () => void;
-  sceneAiMode: "text" | "camera" | "image" | "both";
-  setSceneAiMode: (mode: "text" | "camera" | "image" | "both") => void;
+  onAssistantSubmit: (mode: "text" | "image") => void;
   onCopyVideoPrompt: () => void;
+  totalScenes: number;
+  finalizedCount: number;
 }
-
-// Mood options
-const MOOD_OPTIONS = ["Ruhig", "Dynamisch", "Intim", "Beobachtend"];
 
 // Emotion options for dropdown
 const EMOTION_OPTIONS = [
@@ -93,6 +124,19 @@ const EMOTION_OPTIONS = [
   { value: "hoffnungsvoll", label: "Hoffnungsvoll" },
   { value: "melancholisch", label: "Melancholisch" },
   { value: "entspannt", label: "Entspannt" },
+  { value: "neutral", label: "Neutral" },
+];
+
+// Audience effect options
+const AUDIENCE_EFFECT_OPTIONS = [
+  { value: "spannung", label: "Spannung" },
+  { value: "empathie", label: "Empathie" },
+  { value: "freude", label: "Freude" },
+  { value: "unbehagen", label: "Unbehagen" },
+  { value: "neugier", label: "Neugier" },
+  { value: "erleichterung", label: "Erleichterung" },
+  { value: "trauer", label: "Trauer" },
+  { value: "hoffnung", label: "Hoffnung" },
 ];
 
 // Camera angle options
@@ -119,49 +163,346 @@ const SHOT_TYPE_OPTIONS = [
   { value: "extreme-long-shot", label: "Extreme Long Shot" },
 ];
 
+// Composition options
+const COMPOSITION_OPTIONS = [
+  { value: "zentriert", label: "Zentriert" },
+  { value: "drittel-regel", label: "Regel der Drittel" },
+  { value: "symmetrisch", label: "Symmetrisch" },
+  { value: "diagonal", label: "Diagonal" },
+  { value: "rahmen-im-rahmen", label: "Rahmen im Rahmen" },
+];
+
+// Movement options
+const MOVEMENT_OPTIONS = [
+  { value: "keine", label: "Keine" },
+  { value: "dolly-in", label: "Dolly-In" },
+  { value: "dolly-out", label: "Dolly-Out" },
+  { value: "truck", label: "Truck" },
+  { value: "tilt", label: "Tilt" },
+  { value: "pan", label: "Pan" },
+  { value: "crane", label: "Crane" },
+  { value: "arc", label: "Arc" },
+];
+
+// Key action options
+const KEY_ACTION_OPTIONS = [
+  { value: "steht", label: "Steht" },
+  { value: "geht", label: "Geht" },
+  { value: "sitzt", label: "Sitzt" },
+  { value: "lehnt", label: "Lehnt" },
+  { value: "schaut", label: "Schaut" },
+  { value: "spricht", label: "Spricht" },
+  { value: "rennt", label: "Rennt" },
+  { value: "wartet", label: "Wartet" },
+  { value: "greift", label: "Greift" },
+  { value: "haelt", label: "Hält" },
+  { value: "zeigt", label: "Zeigt" },
+  { value: "wendet-sich", label: "Wendet sich" },
+];
+
+// Area options
+const AREA_OPTIONS = [
+  { value: "innenraum", label: "Innenraum" },
+  { value: "aussenbereich", label: "Außenbereich" },
+  { value: "strasse", label: "Straße" },
+  { value: "natur", label: "Natur" },
+  { value: "arbeitsplatz", label: "Arbeitsplatz" },
+  { value: "zuhause", label: "Zuhause" },
+  { value: "fahrzeug", label: "Fahrzeug" },
+  { value: "oeffentlicher-ort", label: "Öffentlicher Ort" },
+];
+
+// Helper to check if scene is dirty (has changes since last finalization)
+const isSceneDirty = (point: StoryPoint): boolean => {
+  if (!point.finalSnapshot) return true; // Never finalized = dirty
+  
+  // Compare current state with finalized snapshot
+  const fieldsToCompare = [
+    'summary', 'detailedDescription', 'keyAction', 'specificArea',
+    'emotion', 'audienceEffect', 'cameraAngle', 'shotType',
+    'composition', 'movement', 'participants',
+    'negativePrompts', 'styleNotes', 'continuityNotes'
+  ];
+  
+  for (const field of fieldsToCompare) {
+    if (point[field as keyof StoryPoint] !== point.finalSnapshot[field as keyof StoryPoint]) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Get status info for a scene
+const getSceneStatus = (point: StoryPoint): { label: string; variant: 'draft' | 'final' | 'dirty' } => {
+  if (!point.finalSnapshot) {
+    return { label: "Entwurf", variant: "draft" };
+  }
+  if (isSceneDirty(point)) {
+    return { label: "Nicht übernommen", variant: "dirty" };
+  }
+  return { label: "Final ✓", variant: "final" };
+};
+
 export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   expandedIndex,
   storyPoints,
   isClosing,
   onClose,
   onUpdateStoryPoint,
-  onNavigateVersion,
+  onNavigateScene,
   onRegenerateImage,
+  onFinalizeScene,
+  onDiscardChanges,
   regeneratingIndex,
   veo3CameraMovements,
   sceneAssistantInput,
   setSceneAssistantInput,
   isGeneratingAssistant,
   onAssistantSubmit,
-  sceneAiMode,
-  setSceneAiMode,
   onCopyVideoPrompt,
+  totalScenes,
+  finalizedCount,
 }) => {
-  const [activeTab, setActiveTab] = useState<"content" | "image" | "video">("content");
-  const [selectedMood, setSelectedMood] = useState<string>("");
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    handlung: true,
+    emotion: true,
+    kamera: false,
+    feintuning: false,
+  });
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [aiMode, setAiMode] = useState<"text" | "image">("text");
   
   const point = storyPoints[expandedIndex];
+  const uniqueId = useId();
+  
   if (!point) return null;
+  
+  const status = getSceneStatus(point);
+  const isDirty = isSceneDirty(point);
+  const hasFinalized = !!point.finalSnapshot;
 
   const handleFieldUpdate = (field: keyof StoryPoint, value: string) => {
     onUpdateStoryPoint(expandedIndex, { [field]: value });
   };
 
-  // Section Header Component
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleFinalize = () => {
+    if (hasFinalized && isDirty) {
+      setShowFinalizeConfirm(true);
+    } else {
+      onFinalizeScene(expandedIndex);
+    }
+  };
+
+  const confirmFinalize = () => {
+    setShowFinalizeConfirm(false);
+    onFinalizeScene(expandedIndex);
+  };
+
+  // Get display labels for camera settings (for collapsed state)
+  const cameraTagsDisplay = [
+    point.shotType && SHOT_TYPE_OPTIONS.find(s => s.value === point.shotType)?.label,
+    point.cameraAngle && CAMERA_ANGLE_OPTIONS.find(a => a.value === point.cameraAngle)?.label,
+  ].filter(Boolean);
+
+  // Collapsible Section Header Component
   const SectionHeader = ({ 
     number, 
     title, 
-    color 
+    icon: Icon,
+    color,
+    sectionKey,
+    tags = [],
+    badge,
   }: { 
     number: number; 
     title: string; 
+    icon: React.ElementType;
     color: string;
-  }) => (
-    <div className="flex items-center gap-2 mb-3">
-      <div className={`w-6 h-6 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold`}>
-        {number}
+    sectionKey: string;
+    tags?: string[];
+    badge?: string;
+  }) => {
+    const isExpanded = expandedSections[sectionKey];
+    const panelId = `${uniqueId}-panel-${sectionKey}`;
+    
+    return (
+      <CollapsibleTrigger 
+        className="flex items-center gap-2 w-full py-3 hover:bg-muted/10 rounded-lg transition-colors group"
+        aria-expanded={isExpanded}
+        aria-controls={panelId}
+      >
+        <div className={`w-6 h-6 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+          {number}
+        </div>
+        <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+        <h3 className="font-medium text-foreground text-sm">{title}</h3>
+        {badge && (
+          <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-muted-foreground/30 text-muted-foreground">
+            {badge}
+          </Badge>
+        )}
+        {!isExpanded && tags.length > 0 && (
+          <div className="flex gap-1.5 ml-auto mr-2">
+            {tags.map((tag, i) => (
+              <Badge key={i} variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted/50">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <div className="ml-auto">
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronRightIcon className="w-4 h-4 text-muted-foreground" />
+          )}
+        </div>
+      </CollapsibleTrigger>
+    );
+  };
+
+  // Preview Column Component (used for both desktop and mobile overlay)
+  const PreviewColumn = ({ inMobileOverlay = false }: { inMobileOverlay?: boolean }) => (
+    <div className={`space-y-4 ${inMobileOverlay ? '' : 'lg:sticky lg:top-4'}`}>
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+          <Eye className="w-3 h-3 text-primary" />
+        </div>
+        <h3 className="font-semibold text-sm">Ergebnis dieser Szene</h3>
       </div>
-      <h3 className="font-semibold text-foreground">{title}</h3>
+      
+      {/* Image Preview */}
+      <div className="relative rounded-lg overflow-hidden bg-muted/30 aspect-video border border-border/30">
+        {point.generatedImage ? (
+          <>
+            <img 
+              src={point.generatedImage} 
+              alt="Generiertes Bild" 
+              className="w-full h-full object-cover"
+            />
+            {regeneratingIndex === expandedIndex && (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Wird generiert...</span>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
+            <ImageIcon className="w-12 h-12 mb-2 opacity-30" />
+            <p className="text-sm">Noch kein Bild generiert</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Status Tags */}
+      <div className="flex gap-2 flex-wrap">
+        {/* Status Badge */}
+        <Badge 
+          className={
+            status.variant === 'final' 
+              ? 'bg-green-600 text-white border-transparent' 
+              : status.variant === 'dirty'
+              ? 'bg-transparent border-destructive text-destructive'
+              : 'bg-transparent border-orange-500 text-orange-500'
+          }
+          variant={status.variant === 'final' ? 'default' : 'outline'}
+        >
+          {status.label}
+        </Badge>
+        {point.emotion && (
+          <Badge variant="secondary" className="bg-primary/10 text-primary border-transparent">
+            {EMOTION_OPTIONS.find(e => e.value === point.emotion)?.label || point.emotion}
+          </Badge>
+        )}
+        {point.shotType && (
+          <Badge variant="outline" className="text-muted-foreground">
+            {SHOT_TYPE_OPTIONS.find(s => s.value === point.shotType)?.label || point.shotType}
+          </Badge>
+        )}
+        {point.cameraAngle && (
+          <Badge variant="outline" className="text-muted-foreground">
+            {CAMERA_ANGLE_OPTIONS.find(a => a.value === point.cameraAngle)?.label || point.cameraAngle}
+          </Badge>
+        )}
+      </div>
+      
+      {/* Update Status */}
+      {point.generatedImage && (
+        <p className={`text-xs flex items-center gap-1.5 ${isDirty ? 'text-orange-500' : 'text-green-500'}`}>
+          {isDirty ? (
+            <>
+              <RefreshCw className="w-3.5 h-3.5" />
+              Vorschau veraltet – bitte neu generieren
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-3.5 h-3.5" />
+              Aktualisiert nach letzter Änderung
+            </>
+          )}
+        </p>
+      )}
+      
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        <Button 
+          variant="outline" 
+          className="w-full gap-2"
+          onClick={() => onRegenerateImage(expandedIndex)}
+          disabled={regeneratingIndex !== null}
+        >
+          {regeneratingIndex === expandedIndex ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
+          Vorschau neu generieren
+        </Button>
+        
+        <Button 
+          className={`w-full gap-2 ${
+            status.variant === 'final' && !isDirty 
+              ? 'bg-green-600/50 cursor-not-allowed' 
+              : 'bg-green-600 hover:bg-green-700'
+          } text-white`}
+          onClick={handleFinalize}
+          disabled={status.variant === 'final' && !isDirty}
+        >
+          <Check className="w-4 h-4" />
+          {status.variant === 'final' && !isDirty ? 'Bereits finalisiert ✓' : 'Als final übernehmen'}
+        </Button>
+        
+        {hasFinalized && (
+          <Button 
+            variant="ghost" 
+            className="w-full gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => onDiscardChanges(expandedIndex)}
+            disabled={!isDirty}
+          >
+            <Undo2 className="w-4 h-4" />
+            Änderungen verwerfen
+          </Button>
+        )}
+      </div>
+      
+      {inMobileOverlay && (
+        <Button 
+          variant="outline" 
+          className="w-full mt-4"
+          onClick={() => setShowMobilePreview(false)}
+        >
+          Schließen
+        </Button>
+      )}
     </div>
   );
 
@@ -173,29 +514,90 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         onClick={onClose}
       />
       
-      {/* Popup Container */}
-      <div className="fixed inset-x-0 top-0 bottom-0 z-[110] flex items-start justify-center pt-8 pb-6 px-6 pointer-events-none overflow-y-auto">
+      {/* Dirty State Banner */}
+      {isDirty && (
         <div 
-          className={`bg-background rounded-xl border border-border/40 shadow-2xl w-full max-w-5xl flex flex-col pointer-events-auto mx-auto ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}
+          className="fixed top-0 left-0 right-0 z-[115] bg-orange-500/10 border-b border-orange-500/30 px-4 py-2"
+          role="alert"
+          aria-live="assertive"
         >
-          {/* Header with Tabs */}
-          <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-5 py-3 flex-shrink-0">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "content" | "image" | "video")}>
-              <TabsList className="bg-transparent h-9">
-                <TabsTrigger value="content" className="gap-1.5 data-[state=active]:bg-background">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  Inhalt
-                </TabsTrigger>
-                <TabsTrigger value="image" className="gap-1.5 data-[state=active]:bg-background">
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  Bild
-                </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1.5 data-[state=active]:bg-background">
-                  <Video className="w-3.5 h-3.5" />
-                  Video
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2 text-orange-500">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-sm font-medium">Nicht gespeicherte Änderungen</span>
+              <span className="text-sm text-orange-500/80 hidden sm:inline">
+                – Klicke auf "Als final übernehmen" um deine Änderungen zu sichern.
+              </span>
+            </div>
+            {hasFinalized && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 h-7"
+                onClick={() => onDiscardChanges(expandedIndex)}
+              >
+                Verwerfen
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Main Container */}
+      <div className={`fixed inset-x-0 top-0 bottom-0 z-[110] flex flex-col pointer-events-none overflow-hidden ${isDirty ? 'pt-10' : ''}`}>
+        {/* Sticky Header */}
+        <div className="bg-background/95 backdrop-blur-sm border-b border-border/30 flex items-center justify-between px-4 py-3 pointer-events-auto shrink-0">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => onNavigateScene('prev')}
+              disabled={expandedIndex === 0}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Zurück</span>
+            </Button>
+            <div className="text-sm font-medium">
+              Szene {expandedIndex + 1} von {totalScenes}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => onNavigateScene('next')}
+              disabled={expandedIndex === totalScenes - 1}
+            >
+              <span className="hidden sm:inline">Weiter</span>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {/* Status Badge in Header */}
+            <Badge 
+              className={
+                status.variant === 'final' 
+                  ? 'bg-green-600/20 text-green-500 border-green-600/30' 
+                  : status.variant === 'dirty'
+                  ? 'bg-destructive/10 text-destructive border-destructive/30'
+                  : 'bg-orange-500/10 text-orange-500 border-orange-500/30'
+              }
+              variant="outline"
+            >
+              {status.label}
+            </Badge>
+            
+            {/* Mobile Preview Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="lg:hidden gap-1.5"
+              onClick={() => setShowMobilePreview(true)}
+            >
+              <Eye className="w-4 h-4" />
+              Vorschau
+            </Button>
             
             <Button
               variant="ghost"
@@ -206,539 +608,383 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
               <X className="w-4 h-4" />
             </Button>
           </div>
-          
-          {/* Content Tab - Two Column Layout */}
-          {activeTab === "content" && (
-            <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </div>
+        
+        {/* Two Column Layout */}
+        <div className="flex-1 overflow-y-auto pointer-events-auto">
+          <div className="max-w-5xl mx-auto px-4 py-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-[1fr,340px] gap-6 ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
               {/* Left Column - Editing */}
-              <div className="space-y-5">
-                {/* Section 1: Was passiert in dieser Szene? */}
-                <div>
-                  <SectionHeader number={1} title="Was passiert in dieser Szene?" color="bg-purple-600" />
+              <div className="space-y-1">
+                {/* Section 1: Story-Kern (ALWAYS VISIBLE, NOT COLLAPSIBLE) */}
+                <div className="pb-4 border-b border-border/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                      1
+                    </div>
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="font-medium text-foreground text-sm">Was passiert in dieser Szene?</h3>
+                  </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-3 pl-8">
                     <div className="space-y-1.5">
                       <label className="text-xs text-muted-foreground">Zusammenfassung:</label>
                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
                         <Textarea
                           value={point.summary || ""}
                           onChange={(e) => handleFieldUpdate('summary', e.target.value)}
-                          className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[50px]"
-                          placeholder="Kurze Zusammenfassung der Szene..."
+                          className={`leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[40px] ${isDirty ? 'border-l-2 border-l-orange-500 pl-2 -ml-2' : ''}`}
+                          placeholder="Beschreibe kurz, was in dieser Szene passiert (1-2 Sätze)"
+                          maxLength={200}
                         />
                       </div>
                     </div>
                     
                     <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        Detaillierte Szenen-Beschreibung
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          Detaillierte Szenen-Beschreibung
+                        </label>
+                      </div>
                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
                         <Textarea
                           value={point.detailedDescription || point.versions[point.currentVersion]}
                           onChange={(e) => handleFieldUpdate('detailedDescription', e.target.value)}
                           className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[80px]"
-                          placeholder="Ausführliche Beschreibung..."
+                          placeholder="Die detaillierte Szenen-Beschreibung wird hier angezeigt. Du kannst sie jederzeit bearbeiten."
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Section 2: Handlung & Beteiligte */}
-                <div>
-                  <SectionHeader number={2} title="Handlung & Beteiligte" color="bg-orange-500" />
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">Schlüsselaktion</label>
-                      <Select
-                        value={point.keyAction || ""}
-                        onValueChange={(value) => handleFieldUpdate('keyAction', value)}
-                      >
-                        <SelectTrigger className="bg-background/50 text-sm">
-                          <SelectValue placeholder="Aktion wählen..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="steht">Steht</SelectItem>
-                          <SelectItem value="geht">Geht</SelectItem>
-                          <SelectItem value="sitzt">Sitzt</SelectItem>
-                          <SelectItem value="lehnt">Lehnt</SelectItem>
-                          <SelectItem value="schaut">Schaut</SelectItem>
-                          <SelectItem value="spricht">Spricht</SelectItem>
-                          <SelectItem value="rennt">Rennt</SelectItem>
-                          <SelectItem value="wartet">Wartet</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">Bereich</label>
-                      <Select
-                        value={point.specificArea || ""}
-                        onValueChange={(value) => handleFieldUpdate('specificArea', value)}
-                      >
-                        <SelectTrigger className="bg-background/50 text-sm">
-                          <SelectValue placeholder="Bereich wählen..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="innenraum">Innenraum</SelectItem>
-                          <SelectItem value="aussenbereich">Außenbereich</SelectItem>
-                          <SelectItem value="strasse">Straße</SelectItem>
-                          <SelectItem value="natur">Natur</SelectItem>
-                          <SelectItem value="arbeitsplatz">Arbeitsplatz</SelectItem>
-                          <SelectItem value="zuhause">Zuhause</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 3: Emotion & Wirkung */}
-                <div>
-                  <SectionHeader number={3} title="Emotion & Wirkung" color="bg-green-500" />
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">Emotion</label>
-                    <Select
-                      value={point.emotion || ""}
-                      onValueChange={(value) => handleFieldUpdate('emotion', value)}
-                    >
-                      <SelectTrigger className="bg-background/50 text-sm w-full">
-                        <SelectValue placeholder="Emotion wählen..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {EMOTION_OPTIONS.map(emotion => (
-                          <SelectItem key={emotion.value} value={emotion.value}>
-                            {emotion.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Section 4: Kamera & Bildsprache */}
-                <div>
-                  <SectionHeader number={4} title="Kamera & Bildsprache" color="bg-blue-500" />
-                  
-                  {/* Mood Tags */}
-                  <div className="flex gap-2 flex-wrap mb-3">
-                    {MOOD_OPTIONS.map(mood => (
-                      <Button
-                        key={mood}
-                        variant={selectedMood === mood ? "default" : "outline"}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setSelectedMood(selectedMood === mood ? "" : mood)}
-                      >
-                        {mood}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  {/* Camera Dropdowns */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">Kamerawinkel</label>
-                      <Select
-                        value={point.cameraAngle || ""}
-                        onValueChange={(value) => handleFieldUpdate('cameraAngle', value)}
-                      >
-                        <SelectTrigger className="bg-background/50 text-sm">
-                          <SelectValue placeholder="Von KI wählen..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CAMERA_ANGLE_OPTIONS.map(angle => (
-                            <SelectItem key={angle.value} value={angle.value}>
-                              {angle.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">Shot-Typ</label>
-                      <Select
-                        value={point.shotType || ""}
-                        onValueChange={(value) => handleFieldUpdate('shotType', value)}
-                      >
-                        <SelectTrigger className="bg-background/50 text-sm">
-                          <SelectValue placeholder="Von KI wählen..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SHOT_TYPE_OPTIONS.map(shot => (
-                            <SelectItem key={shot.value} value={shot.value}>
-                              {shot.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column - Result */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary text-xs">⬤</span>
-                  </div>
-                  <h3 className="font-semibold">Ergebnis dieser Szene</h3>
-                </div>
-                
-                {/* Image Preview */}
-                <div className="relative rounded-lg overflow-hidden bg-muted/30 aspect-video">
-                  {point.generatedImage ? (
-                    <>
-                      <img 
-                        src={point.generatedImage} 
-                        alt="Generiertes Bild" 
-                        className="w-full h-full object-cover"
-                      />
-                      {regeneratingIndex === expandedIndex && (
-                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                {/* Section 2: Handlung & Beteiligte (Collapsible, default OPEN) */}
+                <Collapsible open={expandedSections.handlung} onOpenChange={() => toggleSection('handlung')}>
+                  <div className="border-b border-border/30">
+                    <SectionHeader 
+                      number={2} 
+                      title="Handlung & Beteiligte" 
+                      icon={Users}
+                      color="bg-orange-500" 
+                      sectionKey="handlung"
+                    />
+                    <CollapsibleContent id={`${uniqueId}-panel-handlung`} className="pl-8 pb-4">
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground">Schlüsselaktion</label>
+                            <Select
+                              value={point.keyAction || ""}
+                              onValueChange={(value) => handleFieldUpdate('keyAction', value)}
+                            >
+                              <SelectTrigger className="bg-background/50 text-sm h-9">
+                                <SelectValue placeholder="Von KI wählen lassen..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {KEY_ACTION_OPTIONS.map(action => (
+                                  <SelectItem key={action.value} value={action.value}>
+                                    {action.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground">Bereich</label>
+                            <Select
+                              value={point.specificArea || ""}
+                              onValueChange={(value) => handleFieldUpdate('specificArea', value)}
+                            >
+                              <SelectTrigger className="bg-background/50 text-sm h-9">
+                                <SelectValue placeholder="Von KI wählen lassen..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AREA_OPTIONS.map(area => (
+                                  <SelectItem key={area.value} value={area.value}>
+                                    {area.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                      <ImageIcon className="w-12 h-12 mb-2 opacity-30" />
-                      <p className="text-sm">Noch kein Bild generiert</p>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Tags */}
-                <div className="flex gap-2 flex-wrap">
-                  {point.emotion && (
-                    <Badge className="bg-primary text-primary-foreground">
-                      {EMOTION_OPTIONS.find(e => e.value === point.emotion)?.label || point.emotion}
-                    </Badge>
-                  )}
-                  {point.shotType && (
-                    <Badge variant="outline">
-                      {SHOT_TYPE_OPTIONS.find(s => s.value === point.shotType)?.label || point.shotType}
-                    </Badge>
-                  )}
-                  {point.cameraAngle && (
-                    <Badge variant="outline">
-                      {CAMERA_ANGLE_OPTIONS.find(a => a.value === point.cameraAngle)?.label || point.cameraAngle}
-                    </Badge>
-                  )}
-                  {selectedMood && (
-                    <Badge variant="secondary">{selectedMood}</Badge>
-                  )}
-                </div>
-                
-                {/* Status */}
-                {point.generatedImage && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" />
-                    Aktualisiert nach letzter Änderung
-                  </p>
-                )}
-                
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 gap-2"
-                    onClick={() => onRegenerateImage(expandedIndex)}
-                    disabled={regeneratingIndex !== null}
-                  >
-                    {regeneratingIndex === expandedIndex ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    Vorschau neu
-                  </Button>
-                  <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white">
-                    <ThumbsUp className="w-4 h-4" />
-                    Als final
-                  </Button>
-                </div>
-                <Button variant="ghost" className="w-full gap-2 text-muted-foreground">
-                  <Undo2 className="w-4 h-4" />
-                  Änderungen verwerfen
-                </Button>
-
-                {/* Scene Navigation */}
-                <div className="pt-3 border-t border-border/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Szene {expandedIndex + 1} von {storyPoints.length}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => onNavigateVersion(expandedIndex, 'prev')}
-                        disabled={point.currentVersion === 0}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <span className="text-sm min-w-[40px] text-center">
-                        {point.currentVersion + 1}/{point.versions.length}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => onNavigateVersion(expandedIndex, 'next')}
-                        disabled={point.currentVersion === point.versions.length - 1}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Image Tab */}
-          {activeTab === "image" && (
-            <div className="p-5 space-y-4">
-              {/* Large Image Display */}
-              <div className="relative rounded-lg overflow-hidden bg-muted/30 aspect-video max-h-[400px]">
-                {point.generatedImage ? (
-                  <>
-                    <img 
-                      src={point.generatedImage} 
-                      alt="Generiertes Bild" 
-                      className="w-full h-full object-contain"
-                    />
-                    {regeneratingIndex === expandedIndex && (
-                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Beteiligte</label>
+                          <Input
+                            value={point.participants || ""}
+                            onChange={(e) => handleFieldUpdate('participants', e.target.value)}
+                            className="bg-background/50 text-sm h-9"
+                            placeholder="z.B. Hauptcharakter, Hund"
+                          />
+                        </div>
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-16 text-muted-foreground">
-                    <ImageIcon className="w-16 h-16 mb-3 opacity-30" />
-                    <p className="text-sm">Noch kein Bild generiert</p>
-                    <Button
-                      className="mt-4 gap-2"
-                      onClick={() => onRegenerateImage(expandedIndex)}
-                      disabled={regeneratingIndex !== null}
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                      Bild generieren
-                    </Button>
+                    </CollapsibleContent>
                   </div>
-                )}
-              </div>
-              
-              {/* Image regenerate button if exists */}
-              {point.generatedImage && (
-                <Button
-                  className="w-full gap-2"
-                  variant="outline"
-                  onClick={() => onRegenerateImage(expandedIndex)}
-                  disabled={regeneratingIndex !== null}
-                >
-                  {regeneratingIndex === expandedIndex ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Generiere neu...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4" />
-                      Bild neu generieren
-                    </>
-                  )}
-                </Button>
-              )}
+                </Collapsible>
 
-              {/* Image Prompt */}
-              {point.detailedImagePrompt && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Bild-Prompt (bearbeitbar)
-                  </label>
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                    <Textarea
-                      value={point.detailedImagePrompt}
-                      onChange={(e) => handleFieldUpdate('detailedImagePrompt', e.target.value)}
-                      className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[120px]"
-                      placeholder="Detaillierter Bild-Prompt..."
+                {/* Section 3: Emotion & Wirkung (Collapsible, default OPEN) */}
+                <Collapsible open={expandedSections.emotion} onOpenChange={() => toggleSection('emotion')}>
+                  <div className="border-b border-border/30">
+                    <SectionHeader 
+                      number={3} 
+                      title="Emotion & Wirkung" 
+                      icon={Heart}
+                      color="bg-green-500" 
+                      sectionKey="emotion"
                     />
+                    <CollapsibleContent id={`${uniqueId}-panel-emotion`} className="pl-8 pb-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Emotion Charakter</label>
+                          <Select
+                            value={point.emotion || ""}
+                            onValueChange={(value) => handleFieldUpdate('emotion', value)}
+                          >
+                            <SelectTrigger className="bg-background/50 text-sm h-9">
+                              <SelectValue placeholder="Von KI wählen lassen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {EMOTION_OPTIONS.map(emotion => (
+                                <SelectItem key={emotion.value} value={emotion.value}>
+                                  {emotion.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Wirkung beim Zuschauer</label>
+                          <Select
+                            value={point.audienceEffect || ""}
+                            onValueChange={(value) => handleFieldUpdate('audienceEffect', value)}
+                          >
+                            <SelectTrigger className="bg-background/50 text-sm h-9">
+                              <SelectValue placeholder="Von KI wählen lassen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AUDIENCE_EFFECT_OPTIONS.map(effect => (
+                                <SelectItem key={effect.value} value={effect.value}>
+                                  {effect.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                </Collapsible>
 
-          {/* Video Tab */}
-          {activeTab === "video" && (
-            <div className="p-5 space-y-4">
-              {/* Video Prompt */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Video className="w-3.5 h-3.5" />
-                  Video-Prompt
-                </label>
-                <div className="bg-muted/30 rounded-lg p-3">
-                  <Textarea
-                    value={point.videoPrompt || ""}
-                    onChange={(e) => handleFieldUpdate('videoPrompt', e.target.value)}
-                    className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[80px]"
-                    placeholder="Video-Animations-Prompt..."
-                  />
-                </div>
+                {/* Section 4: Kamera & Bildsprache (Collapsible, default COLLAPSED) */}
+                <Collapsible open={expandedSections.kamera} onOpenChange={() => toggleSection('kamera')}>
+                  <div className="border-b border-border/30">
+                    <SectionHeader 
+                      number={4} 
+                      title="Kamera & Bildsprache" 
+                      icon={Camera}
+                      color="bg-blue-500" 
+                      sectionKey="kamera"
+                      tags={cameraTagsDisplay}
+                    />
+                    <CollapsibleContent id={`${uniqueId}-panel-kamera`} className="pl-8 pb-4">
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground">
+                          Shot-Typ und Winkel werden automatisch von der KI gewählt, wenn du sie nicht selbst festlegst.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground">Shot-Typ</label>
+                            <Select
+                              value={point.shotType || ""}
+                              onValueChange={(value) => handleFieldUpdate('shotType', value)}
+                            >
+                              <SelectTrigger className="bg-background/50 text-sm h-9">
+                                <SelectValue placeholder="Von KI wählen lassen..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SHOT_TYPE_OPTIONS.map(shot => (
+                                  <SelectItem key={shot.value} value={shot.value}>
+                                    {shot.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground">Kamerawinkel</label>
+                            <Select
+                              value={point.cameraAngle || ""}
+                              onValueChange={(value) => handleFieldUpdate('cameraAngle', value)}
+                            >
+                              <SelectTrigger className="bg-background/50 text-sm h-9">
+                                <SelectValue placeholder="Von KI wählen lassen..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CAMERA_ANGLE_OPTIONS.map(angle => (
+                                  <SelectItem key={angle.value} value={angle.value}>
+                                    {angle.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground">Bildaufbau</label>
+                            <Select
+                              value={point.composition || ""}
+                              onValueChange={(value) => handleFieldUpdate('composition', value)}
+                            >
+                              <SelectTrigger className="bg-background/50 text-sm h-9">
+                                <SelectValue placeholder="Von KI wählen lassen..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {COMPOSITION_OPTIONS.map(comp => (
+                                  <SelectItem key={comp.value} value={comp.value}>
+                                    {comp.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground">Bewegung</label>
+                            <Select
+                              value={point.movement || ""}
+                              onValueChange={(value) => handleFieldUpdate('movement', value)}
+                            >
+                              <SelectTrigger className="bg-background/50 text-sm h-9">
+                                <SelectValue placeholder="Keine" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {MOVEMENT_OPTIONS.map(mov => (
+                                  <SelectItem key={mov.value} value={mov.value}>
+                                    {mov.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+
+                {/* Section 5: KI-Feintuning (Collapsible, default COLLAPSED) */}
+                <Collapsible open={expandedSections.feintuning} onOpenChange={() => toggleSection('feintuning')}>
+                  <div className="border-b border-border/30">
+                    <SectionHeader 
+                      number={5} 
+                      title="KI-Feintuning" 
+                      icon={Wand2}
+                      color="bg-violet-500" 
+                      sectionKey="feintuning"
+                      badge="Erweitert"
+                    />
+                    <CollapsibleContent id={`${uniqueId}-panel-feintuning`} className="pl-8 pb-4">
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground">
+                          Erweiterte Einstellungen für erfahrene Nutzer. Die meisten Szenen brauchen das nicht.
+                        </p>
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Negative Prompts</label>
+                          <Textarea
+                            value={point.negativePrompts || ""}
+                            onChange={(e) => handleFieldUpdate('negativePrompts', e.target.value)}
+                            className="bg-background/50 text-sm min-h-[60px] resize-none"
+                            placeholder="Was soll NICHT im Bild erscheinen? z.B. 'keine Brille, keine Tattoos'"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Stil-Feintuning</label>
+                          <Textarea
+                            value={point.styleNotes || ""}
+                            onChange={(e) => handleFieldUpdate('styleNotes', e.target.value)}
+                            className="bg-background/50 text-sm min-h-[60px] resize-none"
+                            placeholder="Spezielle Stil-Anweisungen, z.B. 'im Stil von Studio Ghibli'"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Konsistenz-Hinweise</label>
+                          <Textarea
+                            value={point.continuityNotes || ""}
+                            onChange={(e) => handleFieldUpdate('continuityNotes', e.target.value)}
+                            className="bg-background/50 text-sm min-h-[60px] resize-none"
+                            placeholder="Hinweise zur Kontinuität, z.B. 'Charakter trägt selbe Kleidung wie Szene 1'"
+                          />
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
               </div>
-              
-              {/* Camera Movement */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">Kamerabewegung (Veo3)</label>
-                <Select
-                  value={point.veo3CameraMovement || ""}
-                  onValueChange={(value) => handleFieldUpdate('veo3CameraMovement', value)}
-                >
-                  <SelectTrigger className="w-full bg-background/50">
-                    <SelectValue placeholder="Kamerabewegung wählen..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {veo3CameraMovements.map(movement => (
-                      <SelectItem key={movement.id} value={movement.id}>
-                        {movement.label} - {movement.description}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+              {/* Right Column - Preview (Desktop only) */}
+              <div className="hidden lg:block">
+                <PreviewColumn />
               </div>
-              
-              {/* Structured Veo3 Details */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Start-Frame</label>
-                  <Textarea
-                    value={point.veo3StartState || ""}
-                    onChange={(e) => handleFieldUpdate('veo3StartState', e.target.value)}
-                    className="text-xs bg-background/50 min-h-[70px] resize-none"
-                    placeholder="Startframe..."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Bewegung</label>
-                  <Textarea
-                    value={point.veo3Motion || ""}
-                    onChange={(e) => handleFieldUpdate('veo3Motion', e.target.value)}
-                    className="text-xs bg-background/50 min-h-[70px] resize-none"
-                    placeholder="Bewegung..."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">End-Frame</label>
-                  <Textarea
-                    value={point.veo3EndState || ""}
-                    onChange={(e) => handleFieldUpdate('veo3EndState', e.target.value)}
-                    className="text-xs bg-background/50 min-h-[70px] resize-none"
-                    placeholder="Endframe..."
-                  />
-                </div>
-              </div>
-              
-              {/* Copy Button */}
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={onCopyVideoPrompt}
-              >
-                <Download className="w-4 h-4" />
-                Video-Prompt kopieren
-              </Button>
             </div>
-          )}
-          
-          {/* AI Assistant Footer */}
-          <div className="border-t border-border/30 p-4 bg-muted/10 flex-shrink-0">
+          </div>
+        </div>
+        
+        {/* Sticky Footer - AI Assistant */}
+        <div className="bg-background/95 backdrop-blur-sm border-t border-border/30 p-4 pointer-events-auto shrink-0">
+          <div className="max-w-5xl mx-auto">
             {/* Header with label and mode selector */}
-            <div className="flex items-center mb-2 h-7">
-              <div className="flex items-center gap-1.5 w-28">
-                <Sparkles className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">KI-Assistent</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">KI-Assistent</span>
               </div>
-              <div className="flex-1 flex justify-center">
-                <div className="flex items-center gap-0.5 bg-muted/50 rounded-md p-0.5">
-                  <Button
-                    variant={sceneAiMode === "text" ? "default" : "ghost"}
-                    size="sm"
-                    className={`h-6 px-2 text-xs gap-1 ${sceneAiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`}
-                    onClick={() => setSceneAiMode("text")}
-                    title="Optimiert den Szenentext, Kamerawinkel und Shot-Typ"
-                  >
-                    <MessageSquare className="w-3 h-3" />
-                    Text
-                  </Button>
-                  <Button
-                    variant={sceneAiMode === "camera" ? "default" : "ghost"}
-                    size="sm"
-                    className={`h-6 px-2 text-xs gap-1 ${sceneAiMode === "camera" ? "" : "text-muted-foreground hover:text-foreground"}`}
-                    onClick={() => setSceneAiMode("camera")}
-                    title="Optimiert nur die Kamera-Einstellungen"
-                  >
-                    <Camera className="w-3 h-3" />
-                    Kamera
-                  </Button>
-                  <Button
-                    variant={sceneAiMode === "image" ? "default" : "ghost"}
-                    size="sm"
-                    className={`h-6 px-2 text-xs gap-1 ${sceneAiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`}
-                    onClick={() => setSceneAiMode("image")}
-                    title="Generiert das Bild zur Szene neu"
-                  >
-                    <ImageIcon className="w-3 h-3" />
-                    Bild neu
-                  </Button>
-                  <Button
-                    variant={sceneAiMode === "both" ? "default" : "ghost"}
-                    size="sm"
-                    className={`h-6 px-2 text-xs gap-1 ${sceneAiMode === "both" ? "" : "text-muted-foreground hover:text-foreground"}`}
-                    onClick={() => setSceneAiMode("both")}
-                    title="Optimiert Text + Kamera, dann regeneriert das Bild"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Beides
-                  </Button>
-                </div>
-              </div>
-              <div className="w-28 flex justify-end">
-                {isGeneratingAssistant && (
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                )}
+              <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+                <Button
+                  variant={aiMode === "text" ? "default" : "ghost"}
+                  size="sm"
+                  className={`h-7 px-3 text-xs gap-1.5 ${aiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setAiMode("text")}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Text optimieren
+                </Button>
+                <Button
+                  variant={aiMode === "image" ? "default" : "ghost"}
+                  size="sm"
+                  className={`h-7 px-3 text-xs gap-1.5 ${aiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setAiMode("image")}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Bild regenerieren
+                </Button>
               </div>
             </div>
             
             {/* Input area */}
             <div className="flex gap-3 items-stretch">
-              <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[90px]">
+              <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[80px]">
                 <Textarea
                   value={sceneAssistantInput}
                   onChange={(e) => setSceneAssistantInput(e.target.value)}
-                  placeholder="z.B. 'Mache es dramatischer' oder 'Ändere zu Nahaufnahme'..."
+                  placeholder={aiMode === "text" 
+                    ? 'Beschreibe was du ändern möchtest, z.B. "Mache es dramatischer" oder "Ändere zu Nahaufnahme"...'
+                    : 'Beschreibe spezielle Bild-Anweisungen oder lasse leer für Standard-Regenerierung...'
+                  }
                   className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
-                  disabled={isGeneratingAssistant}
+                  disabled={isGeneratingAssistant || regeneratingIndex !== null}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      onAssistantSubmit();
+                      onAssistantSubmit(aiMode);
                     }
                   }}
                 />
               </div>
               <Button 
-                className="h-[90px] w-12 rounded-lg"
-                onClick={onAssistantSubmit}
-                disabled={isGeneratingAssistant || regeneratingIndex !== null || !sceneAssistantInput.trim()}
+                className="h-[80px] w-12 rounded-lg"
+                onClick={() => onAssistantSubmit(aiMode)}
+                disabled={isGeneratingAssistant || regeneratingIndex !== null || (aiMode === "text" && !sceneAssistantInput.trim())}
               >
                 {isGeneratingAssistant ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -750,6 +996,39 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Mobile Preview Overlay */}
+      {showMobilePreview && (
+        <div className="fixed inset-0 z-[120] lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowMobilePreview(false)}
+          />
+          <div className="absolute inset-x-4 top-16 bottom-4 bg-background rounded-xl border border-border/40 p-4 overflow-y-auto">
+            <PreviewColumn inMobileOverlay />
+          </div>
+        </div>
+      )}
+      
+      {/* Finalize Confirmation Dialog */}
+      <AlertDialog open={showFinalizeConfirm} onOpenChange={setShowFinalizeConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finale Version überschreiben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Szene hat bereits eine finale Version. Möchtest du sie mit der aktuellen Vorschau überschreiben?
+              <br /><br />
+              Die vorherige Version kann nicht wiederhergestellt werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmFinalize} className="bg-green-600 hover:bg-green-700">
+              Ja, überschreiben
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>,
     document.body
   );
