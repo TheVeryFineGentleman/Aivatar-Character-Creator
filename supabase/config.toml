@@ -1,7 +1,10 @@
 project_id = "wpewsxohwwvdrinowxjb"
 
-[functions.generate-character-images]
+[functions.generate-image]
 verify_jwt = false
 
 [functions.license-check]
+verify_jwt = false
+
+[functions.license-remind]
 verify_jwt = false

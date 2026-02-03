@@ -1248,70 +1248,61 @@ TECHNICAL REQUIREMENTS:
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: Structured prompt with keyAction="${sceneKeyAction}", emotion="${sceneEmotion}", location="${globalMainLocation}/${sceneSpecificArea}"`);
 
-        // === EXACT SAME PAYLOAD AS POSE GENERATOR ===
+        // === USE EDGE FUNCTION FOR IMAGE GENERATION ===
         // Clean base64 images (remove data URL prefix if present)
         const cleanBase64Images = characterBase64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
         
-        // Build parts array: text FIRST, then reference images
-        const parts = [
-          { text: imagePromptText },
-          ...cleanBase64Images.map(base64Data => ({
-            inlineData: {
-              mimeType: "image/png",
-              data: base64Data,
-            },
-          })),
-        ];
-
-        // === NO safetySettings - exactly like pose generator ===
+        // Call the edge function instead of direct API call
         const imageResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
             signal: controller.signal,
             body: JSON.stringify({
-              contents: [{ role: "user", parts }],
-              generationConfig: {
-                responseModalities: ["IMAGE", "TEXT"],
-                imageConfig: {
-                  aspectRatio: "16:9",
-                },
-              },
-              // NO safetySettings - pose generator doesn't use them and works fine
+              prompt: imagePromptText,
+              referenceImages: cleanBase64Images,
+              aspectRatio: "16:9",
+              mode: "image"
             }),
           }
         );
 
         if (!imageResponse.ok) {
-          throw new Error(getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1}`));
+          const errorData = await imageResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1}`));
+        }
+
+        const imageResult = await imageResponse.json();
+        
+        if (!imageResult.success) {
+          console.warn(`Scene ${sceneIndex + 1} attempt ${attempt}: ${imageResult.error}`);
+          throw new Error(imageResult.error || `Kein Bild generiert`);
         }
 
         let generatedImageUrl = "";
-        const imageData = await imageResponse.json();
-        const candidates = imageData.candidates ?? [];
         
-        if (candidates.length > 0) {
-          // Check for IMAGE_OTHER error
-          if (candidates[0]?.finishReason === "IMAGE_OTHER" || candidates[0]?.finishReason === "SAFETY") {
-            console.warn(`Scene ${sceneIndex + 1} attempt ${attempt}: ${candidates[0]?.finishReason}`);
-            throw new Error(`Bild blockiert (${candidates[0]?.finishReason})`);
-          }
-          
-          const partsOut = candidates[0]?.content?.parts ?? [];
-          const imagePart = partsOut.find(
-            (p: any) => p.inlineData && typeof p.inlineData.data === "string" && p.inlineData.mimeType?.startsWith("image/")
-          );
-          if (imagePart) {
-            const base64 = imagePart.inlineData.data;
-            const mimeType = imagePart.inlineData.mimeType || "image/png";
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let j = 0; j < binary.length; j++) {
-              bytes[j] = binary.charCodeAt(j);
+        // The edge function returns base64 data URL, convert to blob URL
+        if (imageResult.imageUrl) {
+          if (imageResult.imageUrl.startsWith('data:')) {
+            // Extract base64 from data URL
+            const base64Match = imageResult.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (base64Match) {
+              const mimeType = base64Match[1];
+              const base64 = base64Match[2];
+              const binary = atob(base64);
+              const bytes = new Uint8Array(binary.length);
+              for (let j = 0; j < binary.length; j++) {
+                bytes[j] = binary.charCodeAt(j);
+              }
+              const blob = new Blob([bytes], { type: mimeType });
+              generatedImageUrl = URL.createObjectURL(blob);
             }
-            const blob = new Blob([bytes], { type: mimeType });
-            generatedImageUrl = URL.createObjectURL(blob);
+          } else {
+            generatedImageUrl = imageResult.imageUrl;
           }
         }
         
@@ -1331,41 +1322,44 @@ TECHNICAL REQUIREMENTS:
           const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
           const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
           
-          const videoPromptResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              signal: controller.signal,
-              body: JSON.stringify({
-                contents: [{
-                  parts: [{
-                    text: `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"
+          const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"
 ${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
 Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
-Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`
-                  }]
-                }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
+
+          const videoPromptResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+            {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+              },
+              signal: controller.signal,
+              body: JSON.stringify({
+                prompt: videoPromptText,
+                mode: "text"
               })
             }
           );
           
           if (videoPromptResponse.ok) {
-            const vpData = await videoPromptResponse.json();
-            const vpText = vpData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-            try {
-              const jsonMatch = vpText.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[0]);
-                veo3CameraMovement = parsed.cameraMovement || "";
-                veo3StartState = parsed.startState || "";
-                veo3Motion = parsed.motion || "";
-                veo3EndState = parsed.endState || "";
-                videoPrompt = parsed.fullPrompt || "";
+            const vpResult = await videoPromptResponse.json();
+            if (vpResult.success && vpResult.text) {
+              const vpText = vpResult.text.trim();
+              try {
+                const jsonMatch = vpText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                  const parsed = JSON.parse(jsonMatch[0]);
+                  veo3CameraMovement = parsed.cameraMovement || "";
+                  veo3StartState = parsed.startState || "";
+                  veo3Motion = parsed.motion || "";
+                  veo3EndState = parsed.endState || "";
+                  videoPrompt = parsed.fullPrompt || "";
+                }
+              } catch (e) {
+                videoPrompt = vpText;
               }
-            } catch (e) {
-              videoPrompt = vpText;
             }
           }
         } catch (e) {
@@ -1683,11 +1677,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       
       console.log(`Regenerating scene ${sceneIndex + 1} with ultra-compact prompt:`, imagePromptText);
       
-      // Build image parts - reference images FIRST
-      const parts: any[] = [];
-      for (const base64Data of characterBase64Images) {
-        parts.push({ inlineData: { mimeType: "image/png", data: base64Data } });
-      }
+      // Build image parts - collect all reference images as base64
+      const allReferenceImages: string[] = [...characterBase64Images];
       
       // Add CURRENT scene's existing image as reference (for regeneration continuity)
       if (currentSceneImage) {
@@ -1699,7 +1690,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
             reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
             reader.readAsDataURL(blob);
           });
-          parts.push({ inlineData: { mimeType: "image/jpeg", data: currentBase64 } });
+          allReferenceImages.push(currentBase64);
           console.log(`Added current scene image as reference for regeneration`);
         } catch (e) {
           console.warn("Could not add current scene as reference:", e);
@@ -1716,64 +1707,61 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
             reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
             reader.readAsDataURL(blob);
           });
-          parts.push({ inlineData: { mimeType: "image/jpeg", data: prevBase64 } });
+          allReferenceImages.push(prevBase64);
         } catch (e) {
           console.warn("Could not add previous scene as reference:", e);
         }
       }
       
-      // Text prompt LAST
-      parts.push({ text: imagePromptText });
-      
+      // Call edge function for image generation
       const imageResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
           signal: controller.signal,
           body: JSON.stringify({
-            contents: [{ role: "user", parts }],
-            generationConfig: { 
-              responseModalities: ["IMAGE", "TEXT"],
-              imageConfig: { aspectRatio: "16:9" }
-            },
-            safetySettings: [
-              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-            ]
-          })
+            prompt: imagePromptText,
+            referenceImages: allReferenceImages,
+            aspectRatio: "16:9",
+            mode: "image"
+          }),
         }
       );
       
       clearTimeout(timeoutId);
       
       if (!imageResponse.ok) {
-        throw new Error(getErrorMessageFromStatus(imageResponse.status, "Bild"));
+        const errorData = await imageResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || getErrorMessageFromStatus(imageResponse.status, "Bild"));
       }
       
-      const imageData = await imageResponse.json();
-      const candidates = imageData.candidates ?? [];
+      const imageResult = await imageResponse.json();
+      
+      if (!imageResult.success) {
+        throw new Error(imageResult.error || "Kein Bild generiert");
+      }
+      
       let generatedImageUrl = "";
       
-      // Check for safety/content blocks
-      const finishReason = candidates[0]?.finishReason;
-      if (finishReason === 'IMAGE_OTHER' || finishReason === 'SAFETY') {
-        throw new Error(`Bild blockiert (${finishReason})`);
-      }
-      
-      if (candidates.length > 0) {
-        const partsOut = candidates[0]?.content?.parts ?? [];
-        const imagePart = partsOut.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
-        if (imagePart) {
-          const base64 = imagePart.inlineData.data;
-          const mimeType = imagePart.inlineData.mimeType || "image/png";
-          const binary = atob(base64);
-          const bytes = new Uint8Array(binary.length);
-          for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-          const blob = new Blob([bytes], { type: mimeType });
-          generatedImageUrl = URL.createObjectURL(blob);
+      // The edge function returns base64 data URL, convert to blob URL
+      if (imageResult.imageUrl) {
+        if (imageResult.imageUrl.startsWith('data:')) {
+          const base64Match = imageResult.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (base64Match) {
+            const mimeType = base64Match[1];
+            const base64 = base64Match[2];
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+            const blob = new Blob([bytes], { type: mimeType });
+            generatedImageUrl = URL.createObjectURL(blob);
+          }
+        } else {
+          generatedImageUrl = imageResult.imageUrl;
         }
       }
       
