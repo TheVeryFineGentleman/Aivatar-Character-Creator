@@ -18,14 +18,45 @@ serve(async (req) => {
     console.log("📐 Aspect ratio:", aspectRatio);
     console.log("🖼️ Reference images count:", referenceImages?.length || 0);
 
-    // Get the Lovable API key from environment OR use user's API key as fallback
+    // User's API key has priority, Lovable Gateway is fallback
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     // TEXT MODE - for video prompt generation
     if (mode === "text") {
-      // Prefer Lovable AI Gateway if available
+      // User's API key has priority
+      if (apiKey) {
+        console.log("📝 Using direct Gemini API for text generation");
+        
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("❌ Text generation error:", response.status, errorText);
+          throw new Error(`Text generation failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        
+        return new Response(
+          JSON.stringify({ success: true, text }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Fallback to Lovable AI Gateway if no user API key
       if (LOVABLE_API_KEY) {
-        console.log("📝 Using Lovable AI Gateway for text generation");
+        console.log("📝 Using Lovable AI Gateway for text generation (fallback)");
         
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -65,137 +96,13 @@ serve(async (req) => {
           JSON.stringify({ success: true, text }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-      } 
-      
-      // Fallback to direct Gemini API if user provided API key
-      if (apiKey) {
-        console.log("📝 Using direct Gemini API for text generation");
-        
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
-            })
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("❌ Text generation error:", response.status, errorText);
-          throw new Error(`Text generation failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-        
-        return new Response(
-          JSON.stringify({ success: true, text }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
       }
       
       throw new Error("No API key available for text generation");
     }
 
     // IMAGE MODE
-    // Prefer Lovable AI Gateway if available
-    if (LOVABLE_API_KEY) {
-      console.log("🖼️ Using Lovable AI Gateway for image generation");
-      
-      // Build messages content with text and reference images
-      const content: any[] = [{ type: "text", text: prompt }];
-      
-      if (referenceImages && referenceImages.length > 0) {
-        for (const base64Image of referenceImages) {
-          const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-          content.push({
-            type: "image_url",
-            image_url: {
-              url: `data:image/png;base64,${cleanBase64}`
-            }
-          });
-        }
-      }
-
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
-          messages: [{ role: "user", content }],
-          modalities: ["image", "text"],
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Image generation error:", response.status, errorText);
-        
-        if (response.status === 429) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Rate limit erreicht. Bitte warte einen Moment." }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        if (response.status === 402) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Keine Credits mehr. Bitte lade dein Konto auf." }),
-            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        return new Response(
-          JSON.stringify({ success: false, error: `API error: ${response.status}` }),
-          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const data = await response.json();
-      
-      // Extract image from Lovable AI Gateway response
-      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      
-      if (!imageUrl) {
-        console.error("❌ No image in response:", JSON.stringify(data).substring(0, 500));
-        return new Response(
-          JSON.stringify({ success: false, error: "Kein Bild generiert" }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      // Extract base64 from data URL
-      const base64Match = imageUrl.match(/^data:image\/([a-z]+);base64,(.+)$/);
-      if (!base64Match) {
-        console.error("❌ Invalid image URL format");
-        return new Response(
-          JSON.stringify({ success: false, error: "Ungültiges Bildformat" }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      const mimeType = `image/${base64Match[1]}`;
-      const imageBase64 = base64Match[2];
-      
-      console.log("✅ Image generated successfully via Lovable AI Gateway");
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          imageBase64,
-          mimeType
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    // Fallback to direct Gemini API if user provided API key
+    // User's API key has priority
     if (apiKey) {
       console.log("🖼️ Using direct Gemini API for image generation");
       
@@ -291,6 +198,99 @@ serve(async (req) => {
       const mimeType = imagePart.inlineData.mimeType || "image/png";
 
       console.log("✅ Image generated successfully via direct Gemini API");
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          imageBase64,
+          mimeType
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Fallback to Lovable AI Gateway if no user API key
+    if (LOVABLE_API_KEY) {
+      console.log("🖼️ Using Lovable AI Gateway for image generation (fallback)");
+      
+      // Build messages content with text and reference images
+      const content: any[] = [{ type: "text", text: prompt }];
+      
+      if (referenceImages && referenceImages.length > 0) {
+        for (const base64Image of referenceImages) {
+          const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+          content.push({
+            type: "image_url",
+            image_url: {
+              url: `data:image/png;base64,${cleanBase64}`
+            }
+          });
+        }
+      }
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Image generation error:", response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Rate limit erreicht. Bitte warte einen Moment." }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Keine Credits mehr. Bitte lade dein Konto auf." }),
+            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        return new Response(
+          JSON.stringify({ success: false, error: `API error: ${response.status}` }),
+          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const data = await response.json();
+      
+      // Extract image from Lovable AI Gateway response
+      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      
+      if (!imageUrl) {
+        console.error("❌ No image in response:", JSON.stringify(data).substring(0, 500));
+        return new Response(
+          JSON.stringify({ success: false, error: "Kein Bild generiert" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Extract base64 from data URL
+      const base64Match = imageUrl.match(/^data:image\/([a-z]+);base64,(.+)$/);
+      if (!base64Match) {
+        console.error("❌ Invalid image URL format");
+        return new Response(
+          JSON.stringify({ success: false, error: "Ungültiges Bildformat" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      const mimeType = `image/${base64Match[1]}`;
+      const imageBase64 = base64Match[2];
+      
+      console.log("✅ Image generated successfully via Lovable AI Gateway");
 
       return new Response(
         JSON.stringify({ 
