@@ -1266,7 +1266,8 @@ TECHNICAL REQUIREMENTS:
               prompt: imagePromptText,
               referenceImages: cleanBase64Images,
               aspectRatio: "16:9",
-              mode: "image"
+              mode: "image",
+              apiKey: apiKey
             }),
           }
         );
@@ -1285,25 +1286,15 @@ TECHNICAL REQUIREMENTS:
 
         let generatedImageUrl = "";
         
-        // The edge function returns base64 data URL, convert to blob URL
-        if (imageResult.imageUrl) {
-          if (imageResult.imageUrl.startsWith('data:')) {
-            // Extract base64 from data URL
-            const base64Match = imageResult.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
-            if (base64Match) {
-              const mimeType = base64Match[1];
-              const base64 = base64Match[2];
-              const binary = atob(base64);
-              const bytes = new Uint8Array(binary.length);
-              for (let j = 0; j < binary.length; j++) {
-                bytes[j] = binary.charCodeAt(j);
-              }
-              const blob = new Blob([bytes], { type: mimeType });
-              generatedImageUrl = URL.createObjectURL(blob);
-            }
-          } else {
-            generatedImageUrl = imageResult.imageUrl;
+        // The edge function returns base64 and mimeType, convert to blob URL
+        if (imageResult.imageBase64) {
+          const binary = atob(imageResult.imageBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) {
+            bytes[j] = binary.charCodeAt(j);
           }
+          const blob = new Blob([bytes], { type: imageResult.mimeType || "image/png" });
+          generatedImageUrl = URL.createObjectURL(blob);
         }
         
         if (!generatedImageUrl) {
@@ -1338,7 +1329,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
               signal: controller.signal,
               body: JSON.stringify({
                 prompt: videoPromptText,
-                mode: "text"
+                mode: "text",
+                apiKey: apiKey
               })
             }
           );
@@ -1727,7 +1719,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
             prompt: imagePromptText,
             referenceImages: allReferenceImages,
             aspectRatio: "16:9",
-            mode: "image"
+            mode: "image",
+            apiKey: apiKey
           }),
         }
       );
@@ -1747,22 +1740,13 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       
       let generatedImageUrl = "";
       
-      // The edge function returns base64 data URL, convert to blob URL
-      if (imageResult.imageUrl) {
-        if (imageResult.imageUrl.startsWith('data:')) {
-          const base64Match = imageResult.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
-          if (base64Match) {
-            const mimeType = base64Match[1];
-            const base64 = base64Match[2];
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-            const blob = new Blob([bytes], { type: mimeType });
-            generatedImageUrl = URL.createObjectURL(blob);
-          }
-        } else {
-          generatedImageUrl = imageResult.imageUrl;
-        }
+      // The edge function returns base64 and mimeType, convert to blob URL
+      if (imageResult.imageBase64) {
+        const binary = atob(imageResult.imageBase64);
+        const bytes = new Uint8Array(binary.length);
+        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+        const blob = new Blob([bytes], { type: imageResult.mimeType || "image/png" });
+        generatedImageUrl = URL.createObjectURL(blob);
       }
       
       if (!generatedImageUrl) {
