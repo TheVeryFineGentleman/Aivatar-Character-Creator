@@ -1603,7 +1603,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
   };
 
   // Regenerate a single failed story scene - NO AUTO RETRY, use SIMPLIFIED prompt immediately
-  const regenerateSingleStoryScene = async (sceneIndex: number) => {
+  // Can receive an optional updatedPoint with the latest edits from popup
+  const regenerateSingleStoryScene = async (sceneIndex: number, updatedPoint?: typeof storyPoints[0]) => {
     if (!apiKey || regeneratingPointIndex !== null) return;
     
     setRegeneratingPointIndex(sceneIndex);
@@ -1617,8 +1618,10 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       return p;
     }));
     
-    const point = storyPoints[sceneIndex];
-    const storyText = point.versions[point.currentVersion];
+    // Use updatedPoint if provided (contains latest edits from popup), otherwise use current state
+    const point = updatedPoint || storyPoints[sceneIndex];
+    // IMPORTANT: Use detailedDescription if edited in popup, otherwise fallback to current version
+    const storyText = point.detailedDescription || point.versions[point.currentVersion];
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
@@ -1652,7 +1655,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     const timeoutId = setTimeout(() => controller.abort(), 120000);
     
     try {
-      // ALWAYS use ultra-simplified prompt on manual retry - maximum 30 words
+      // Use camera/shot from point - these are the latest values
       const cameraLabel = point.cameraAngle && point.cameraAngle !== 'random'
         ? CAMERA_ANGLE_OPTIONS.find(o => o.value === point.cameraAngle)?.label || ''
         : '';
@@ -1821,7 +1824,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     }));
     
     const point = storyPoints[sceneIndex];
-    const storyText = point.versions[point.currentVersion];
+    // IMPORTANT: Use detailedDescription if edited in popup, otherwise fallback to current version
+    const storyText = point.detailedDescription || point.versions[point.currentVersion];
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];

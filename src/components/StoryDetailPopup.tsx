@@ -96,7 +96,7 @@ interface StoryDetailPopupProps {
   onClose: () => void;
   onUpdateStoryPoint: (index: number, updates: Partial<StoryPoint>) => void;
   onNavigateScene: (direction: 'prev' | 'next') => void;
-  onRegenerateImage: (index: number) => void;
+  onRegenerateImage: (index: number, updatedPoint?: StoryPoint) => void;
   onFinalizeScene: (index: number) => void;
   onDiscardChanges: (index: number) => void;
   regeneratingIndex: number | null;
@@ -468,7 +468,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
               ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse' 
               : 'hover:bg-muted/50'
           }`}
-          onClick={() => onRegenerateImage(expandedIndex)}
+          onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])}
           disabled={regeneratingIndex !== null}
         >
           {regeneratingIndex === expandedIndex ? (
