@@ -435,45 +435,57 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         )}
       </div>
       
-      {/* Update Status */}
-      {point.generatedImage && (
-        <p className={`text-xs flex items-center gap-1.5 ${isDirty ? 'text-orange-500' : 'text-green-500'}`}>
-          {isDirty ? (
-            <>
-              <RefreshCw className="w-3.5 h-3.5" />
-              Vorschau veraltet – bitte neu generieren
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-3.5 h-3.5" />
-              Aktualisiert nach letzter Änderung
-            </>
-          )}
-        </p>
+      {/* Dirty State Warning - More prominent when changes need regeneration */}
+      {isDirty && point.generatedImage && (
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-orange-500">Vorschau ist veraltet</p>
+              <p className="text-xs text-orange-500/80">
+                Du hast Änderungen vorgenommen. Generiere die Vorschau neu, um sie zu aktualisieren.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
       
-      {/* Action Buttons */}
-      <div className="space-y-2">
+      {/* Success State */}
+      {!isDirty && point.generatedImage && (
+        <div className="flex items-center gap-1.5 text-green-500">
+          <Sparkles className="w-3.5 h-3.5" />
+          <p className="text-xs">Vorschau ist aktuell</p>
+        </div>
+      )}
+      
+      {/* Action Buttons - Redesigned */}
+      <div className="space-y-3">
+        {/* Regenerate Button - Highlighted when dirty */}
         <Button 
-          variant="outline" 
-          className="w-full gap-2"
+          variant={isDirty ? "default" : "outline"}
+          className={`w-full gap-2 h-11 text-sm font-medium transition-all ${
+            isDirty 
+              ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse' 
+              : 'hover:bg-muted/50'
+          }`}
           onClick={() => onRegenerateImage(expandedIndex)}
           disabled={regeneratingIndex !== null}
         >
           {regeneratingIndex === expandedIndex ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isDirty ? '' : ''}`} />
           )}
-          Vorschau neu generieren
+          {isDirty ? '↻ Vorschau jetzt aktualisieren' : 'Vorschau neu generieren'}
         </Button>
         
+        {/* Finalize Button */}
         <Button 
-          className={`w-full gap-2 ${
+          className={`w-full gap-2 h-11 text-sm font-medium transition-all ${
             status.variant === 'final' && !isDirty 
-              ? 'bg-green-600/50 cursor-not-allowed' 
-              : 'bg-green-600 hover:bg-green-700'
-          } text-white`}
+              ? 'bg-green-600/30 text-green-500 cursor-not-allowed border border-green-600/30' 
+              : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-600/25'
+          }`}
           onClick={handleFinalize}
           disabled={status.variant === 'final' && !isDirty}
         >
@@ -481,14 +493,14 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           {status.variant === 'final' && !isDirty ? 'Bereits finalisiert ✓' : 'Als final übernehmen'}
         </Button>
         
-        {hasFinalized && (
+        {/* Discard Button */}
+        {hasFinalized && isDirty && (
           <Button 
             variant="ghost" 
-            className="w-full gap-2 text-muted-foreground hover:text-foreground"
+            className="w-full gap-2 h-9 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30"
             onClick={() => onDiscardChanges(expandedIndex)}
-            disabled={!isDirty}
           >
-            <Undo2 className="w-4 h-4" />
+            <Undo2 className="w-3.5 h-3.5" />
             Änderungen verwerfen
           </Button>
         )}
