@@ -212,23 +212,32 @@ const AREA_OPTIONS = [
   { value: "oeffentlicher-ort", label: "Öffentlicher Ort" },
 ];
 
-// Helper to check if scene is dirty (has changes since last finalization)
+// Helper to check if scene is dirty (has changes since last finalization OR since image generation)
 const isSceneDirty = (point: StoryPoint): boolean => {
-  if (!point.finalSnapshot) return true; // Never finalized = dirty
+  // If never finalized AND no generated image, it's not dirty yet (user hasn't made changes)
+  if (!point.finalSnapshot && !point.generatedImage) return false;
   
-  // Compare current state with finalized snapshot
-  const fieldsToCompare = [
-    'summary', 'detailedDescription', 'keyAction', 'specificArea',
-    'emotion', 'audienceEffect', 'cameraAngle', 'shotType',
-    'composition', 'movement', 'participants',
-    'negativePrompts', 'styleNotes', 'continuityNotes'
-  ];
-  
-  for (const field of fieldsToCompare) {
-    if (point[field as keyof StoryPoint] !== point.finalSnapshot[field as keyof StoryPoint]) {
-      return true;
+  // If we have a finalized snapshot, compare current state against it
+  if (point.finalSnapshot) {
+    const fieldsToCompare = [
+      'summary', 'detailedDescription', 'keyAction', 'specificArea',
+      'emotion', 'audienceEffect', 'cameraAngle', 'shotType',
+      'composition', 'movement', 'participants',
+      'negativePrompts', 'styleNotes', 'continuityNotes'
+    ];
+    
+    for (const field of fieldsToCompare) {
+      if (point[field as keyof StoryPoint] !== point.finalSnapshot[field as keyof StoryPoint]) {
+        return true;
+      }
     }
+    return false;
   }
+  
+  // If we have an image but no snapshot, we need to track if the user changed anything
+  // The image was generated with certain settings - if those settings changed, it's dirty
+  // Since we can't know the original settings without storing them, we assume not dirty
+  // until the user makes an explicit change (tracked via finalSnapshot after first finalize)
   return false;
 };
 
