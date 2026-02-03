@@ -81,6 +81,8 @@ interface StoryPoint {
   // Final/Draft State
   finalSnapshot?: StoryPoint;
   finalizedAt?: number;
+  // Generation Snapshot - tracks settings when image was last generated
+  generationSnapshot?: Partial<StoryPoint>;
 }
 
 interface Veo3CameraMovement {
@@ -217,15 +219,15 @@ const isSceneDirty = (point: StoryPoint): boolean => {
   // If never finalized AND no generated image, it's not dirty yet (user hasn't made changes)
   if (!point.finalSnapshot && !point.generatedImage) return false;
   
-  // If we have a finalized snapshot, compare current state against it
+  const fieldsToCompare = [
+    'summary', 'detailedDescription', 'keyAction', 'specificArea',
+    'emotion', 'audienceEffect', 'cameraAngle', 'shotType',
+    'composition', 'movement', 'participants',
+    'negativePrompts', 'styleNotes', 'continuityNotes'
+  ];
+  
+  // If we have a finalized snapshot, compare against it (highest priority)
   if (point.finalSnapshot) {
-    const fieldsToCompare = [
-      'summary', 'detailedDescription', 'keyAction', 'specificArea',
-      'emotion', 'audienceEffect', 'cameraAngle', 'shotType',
-      'composition', 'movement', 'participants',
-      'negativePrompts', 'styleNotes', 'continuityNotes'
-    ];
-    
     for (const field of fieldsToCompare) {
       if (point[field as keyof StoryPoint] !== point.finalSnapshot[field as keyof StoryPoint]) {
         return true;
@@ -234,10 +236,17 @@ const isSceneDirty = (point: StoryPoint): boolean => {
     return false;
   }
   
-  // If we have an image but no snapshot, we need to track if the user changed anything
-  // The image was generated with certain settings - if those settings changed, it's dirty
-  // Since we can't know the original settings without storing them, we assume not dirty
-  // until the user makes an explicit change (tracked via finalSnapshot after first finalize)
+  // If we have a generation snapshot (image was generated), compare against it
+  if (point.generationSnapshot) {
+    for (const field of fieldsToCompare) {
+      if (point[field as keyof StoryPoint] !== point.generationSnapshot[field as keyof StoryPoint]) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  // No snapshot to compare against - not dirty
   return false;
 };
 

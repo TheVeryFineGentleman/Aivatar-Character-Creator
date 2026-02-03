@@ -1519,6 +1519,23 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
+          // Create a snapshot of current settings to track changes
+          const generationSnapshot = {
+            summary: p.summary,
+            detailedDescription: p.detailedDescription,
+            keyAction: p.keyAction,
+            specificArea: p.specificArea,
+            emotion: p.emotion,
+            audienceEffect: p.audienceEffect,
+            cameraAngle: p.cameraAngle,
+            shotType: p.shotType,
+            composition: p.composition,
+            movement: p.movement,
+            participants: p.participants,
+            negativePrompts: p.negativePrompts,
+            styleNotes: p.styleNotes,
+            continuityNotes: p.continuityNotes,
+          };
           return {
             ...p,
             generatedImage: finalImageUrl,
@@ -1530,7 +1547,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
             veo3StartState: result.veo3StartState,
             veo3Motion: result.veo3Motion,
             veo3EndState: result.veo3EndState,
-            generationError: undefined
+            generationError: undefined,
+            generationSnapshot,
           };
         }
         return p;
@@ -1941,14 +1959,32 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         throw new Error("Kein Bild generiert");
       }
       
-      // Success! Update story point
+      // Success! Update story point with generation snapshot
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
+          // Create a snapshot of current settings to track changes
+          const generationSnapshot = {
+            summary: p.summary,
+            detailedDescription: p.detailedDescription,
+            keyAction: p.keyAction,
+            specificArea: p.specificArea,
+            emotion: p.emotion,
+            audienceEffect: p.audienceEffect,
+            cameraAngle: p.cameraAngle,
+            shotType: p.shotType,
+            composition: p.composition,
+            movement: p.movement,
+            participants: p.participants,
+            negativePrompts: p.negativePrompts,
+            styleNotes: p.styleNotes,
+            continuityNotes: p.continuityNotes,
+          };
           return {
             ...p,
             generatedImage: generatedImageUrl,
             detailedImagePrompt: imagePromptText,
-            generationError: undefined
+            generationError: undefined,
+            generationSnapshot,
           };
         }
         return p;
@@ -2128,14 +2164,32 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         throw new Error("Kein Bild generiert");
       }
       
-      // Update storypoint with new image
+      // Update storypoint with new image and generation snapshot
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
+          // Create a snapshot of current settings to track changes
+          const generationSnapshot = {
+            summary: p.summary,
+            detailedDescription: p.detailedDescription,
+            keyAction: p.keyAction,
+            specificArea: p.specificArea,
+            emotion: p.emotion,
+            audienceEffect: p.audienceEffect,
+            cameraAngle: p.cameraAngle,
+            shotType: p.shotType,
+            composition: p.composition,
+            movement: p.movement,
+            participants: p.participants,
+            negativePrompts: p.negativePrompts,
+            styleNotes: p.styleNotes,
+            continuityNotes: p.continuityNotes,
+          };
           return {
             ...p,
             generatedImage: generatedImageUrl,
             detailedImagePrompt: imagePromptText,
-            generationError: undefined
+            generationError: undefined,
+            generationSnapshot,
           };
         }
         return p;
