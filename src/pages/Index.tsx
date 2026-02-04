@@ -686,11 +686,13 @@ REGELN:
                   currentVersion: 0,
                   summary: scene.summary || "",
                   detailedDescription: scene.detailedDescription || "",
-                  specificArea: scene.specificArea || "",
-                  keyAction: scene.keyAction || "",
-                  emotion: scene.emotion || "",
-                  cameraAngle: scene.cameraAngle || "",
-                  shotType: scene.shotType || ""
+                  // Leave dropdown fields empty so "Von KI wählen lassen..." is shown
+                  // The AI will choose appropriate values during image generation
+                  specificArea: "",
+                  keyAction: "",
+                  emotion: "",
+                  cameraAngle: "",
+                  shotType: ""
                 })));
                 setStoryboardAnimationKey(prev => prev + 1);
               }
