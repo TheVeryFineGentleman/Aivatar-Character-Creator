@@ -1959,28 +1959,29 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         throw new Error("Kein Bild generiert");
       }
       
-      // Success! Update story point with generation snapshot
+      // Success! Create snapshot from 'point' (the actual values used for generation)
+      const generationSnapshot = {
+        summary: point.summary,
+        detailedDescription: point.detailedDescription,
+        keyAction: point.keyAction,
+        specificArea: point.specificArea,
+        emotion: point.emotion,
+        audienceEffect: point.audienceEffect,
+        cameraAngle: point.cameraAngle,
+        shotType: point.shotType,
+        composition: point.composition,
+        movement: point.movement,
+        participants: point.participants,
+        negativePrompts: point.negativePrompts,
+        styleNotes: point.styleNotes,
+        continuityNotes: point.continuityNotes,
+      };
+      
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
-          // Create a snapshot of current settings to track changes
-          const generationSnapshot = {
-            summary: p.summary,
-            detailedDescription: p.detailedDescription,
-            keyAction: p.keyAction,
-            specificArea: p.specificArea,
-            emotion: p.emotion,
-            audienceEffect: p.audienceEffect,
-            cameraAngle: p.cameraAngle,
-            shotType: p.shotType,
-            composition: p.composition,
-            movement: p.movement,
-            participants: p.participants,
-            negativePrompts: p.negativePrompts,
-            styleNotes: p.styleNotes,
-            continuityNotes: p.continuityNotes,
-          };
           return {
             ...p,
+            ...point, // Merge current point values to ensure state is in sync
             generatedImage: generatedImageUrl,
             detailedImagePrompt: imagePromptText,
             generationError: undefined,
@@ -2164,28 +2165,29 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         throw new Error("Kein Bild generiert");
       }
       
-      // Update storypoint with new image and generation snapshot
+      // Create snapshot from 'point' (the actual values used for generation)
+      const generationSnapshot = {
+        summary: point.summary,
+        detailedDescription: point.detailedDescription,
+        keyAction: point.keyAction,
+        specificArea: point.specificArea,
+        emotion: point.emotion,
+        audienceEffect: point.audienceEffect,
+        cameraAngle: point.cameraAngle,
+        shotType: point.shotType,
+        composition: point.composition,
+        movement: point.movement,
+        participants: point.participants,
+        negativePrompts: point.negativePrompts,
+        styleNotes: point.styleNotes,
+        continuityNotes: point.continuityNotes,
+      };
+      
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
-          // Create a snapshot of current settings to track changes
-          const generationSnapshot = {
-            summary: p.summary,
-            detailedDescription: p.detailedDescription,
-            keyAction: p.keyAction,
-            specificArea: p.specificArea,
-            emotion: p.emotion,
-            audienceEffect: p.audienceEffect,
-            cameraAngle: p.cameraAngle,
-            shotType: p.shotType,
-            composition: p.composition,
-            movement: p.movement,
-            participants: p.participants,
-            negativePrompts: p.negativePrompts,
-            styleNotes: p.styleNotes,
-            continuityNotes: p.continuityNotes,
-          };
           return {
             ...p,
+            ...point, // Merge current point values to ensure state is in sync
             generatedImage: generatedImageUrl,
             detailedImagePrompt: imagePromptText,
             generationError: undefined,
