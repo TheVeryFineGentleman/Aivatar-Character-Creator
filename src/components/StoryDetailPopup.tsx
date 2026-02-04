@@ -770,7 +770,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                             <label className="text-xs text-muted-foreground">Bewegung</label>
                             <Select value={point.movement || ""} onValueChange={value => handleFieldUpdate('movement', value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
-                                <SelectValue placeholder="Keine" />
+                                <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
                               <SelectContent>
                                 {MOVEMENT_OPTIONS.map(mov => <SelectItem key={mov.value} value={mov.value}>
