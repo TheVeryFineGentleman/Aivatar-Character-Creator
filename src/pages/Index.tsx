@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+
 import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
@@ -195,7 +195,7 @@ const Index = () => {
   const [selectedCameraAngle, setSelectedCameraAngle] = useState("random");
   const isGeneratingRef = useRef(false);
   const referenceImagesRef = useRef<File[]>([]);
-  const { toast } = useToast();
+  
   const generationQueueRef = useRef<number[]>([]);
   
   // Video prompt generation state
@@ -331,11 +331,6 @@ const Index = () => {
     const { compatible, issues } = checkBrowserCompatibility();
     if (!compatible) {
       console.warn("⚠️ Browser compatibility issues:", issues);
-      toast({
-        title: "Browser-Hinweis",
-        description: `Mögliche Probleme: ${issues.join(", ")}. Bitte Chrome oder Firefox verwenden.`,
-        variant: "destructive",
-      });
     }
     
     // Cleanup Blob URLs on page unload
@@ -447,18 +442,9 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
         }));
         
         setSceneAssistantInput("");
-        toast({
-          title: "Szene optimiert",
-          description: "Story, Kamerawinkel und Shot-Typ wurden aktualisiert."
-        });
       }
     } catch (error) {
       console.error("Scene assistant error:", error);
-      toast({
-        title: "Fehler",
-        description: "Die Szene konnte nicht optimiert werden.",
-        variant: "destructive"
-      });
     } finally {
       setIsGeneratingSceneAssistant(false);
     }
@@ -528,18 +514,9 @@ WICHTIGE REGELN:
       if (generatedIdea) {
         setStoryIdea(generatedIdea);
         setStoryAiAssistantInput("");
-        
-        toast({
-          title: "Story-Idee generiert!",
-          description: "Die KI hat eine neue Story-Idee erstellt."
-        });
       }
     } catch (error) {
-      toast({
-        title: "Fehler",
-        description: "Die Story-Idee konnte nicht generiert werden.",
-        variant: "destructive"
-      });
+      console.error("Story AI assistant error:", error);
     } finally {
       setIsGeneratingStoryAiIdea(false);
     }
@@ -574,11 +551,6 @@ WICHTIGE REGELN:
           newImages.push(base64);
         } catch (error) {
           console.error('Error compressing image:', error);
-          toast({
-            title: "Fehler beim Verarbeiten",
-            description: `${file.name} konnte nicht verarbeitet werden.`,
-            variant: "destructive",
-          });
         }
       }
       
@@ -737,11 +709,6 @@ REGELN:
       }
     } catch (error) {
       console.error("Failed to generate storyboard:", error);
-      toast({
-        title: "Fehler",
-        description: "Das Storyboard konnte nicht generiert werden.",
-        variant: "destructive"
-      });
     } finally {
       setIsGeneratingStoryboard(false);
     }
@@ -756,10 +723,6 @@ REGELN:
     setFlippedCards(new Set());
     setStoryboardAnimationKey(0);
     setUsedCameraMovements([]);
-    toast({
-      title: "Storyboard gelöscht",
-      description: "Alle Szenen und Bilder wurden entfernt."
-    });
   };
 
   // Export Storyboard für Veo3 als ZIP-Datei
@@ -768,11 +731,7 @@ REGELN:
     
     const hasImages = storyPoints.some(p => p.generatedImage);
     if (!hasImages) {
-      toast({
-        title: "Keine Bilder vorhanden",
-        description: "Generiere zuerst Bilder für dein Storyboard.",
-        variant: "destructive"
-      });
+      console.warn("Keine Bilder vorhanden für Veo3 Export");
       return;
     }
     
@@ -912,18 +871,8 @@ Viel Spaß beim Erstellen deines Videos!
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast({
-        title: "Export erfolgreich!",
-        description: `${storyPoints.length} Szenen als ZIP-Datei exportiert.`
-      });
-      
     } catch (error) {
       console.error("Veo3 export error:", error);
-      toast({
-        title: "Export fehlgeschlagen",
-        description: "Die ZIP-Datei konnte nicht erstellt werden.",
-        variant: "destructive"
-      });
     } finally {
       setIsExportingVeo3(false);
     }
@@ -1388,10 +1337,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
           const delayMs = attempt <= 2 ? 2000 : 3000;
           console.log(`🔄 Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
           
-          toast({
-            title: `Szene ${sceneIndex + 1} - Versuch ${attempt}/${maxRetries}`,
-            description: `Wechsle zu einfacherem Prompt...`,
-          });
           
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
@@ -1454,11 +1399,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     
     // CRITICAL: If no reference images loaded, show error and stop
     if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
-      toast({
-        title: "Fehler: Keine Referenzbilder",
-        description: "Die hochgeladenen Referenzbilder konnten nicht geladen werden. Bitte lade sie erneut hoch.",
-        variant: "destructive"
-      });
+      console.error("Fehler: Keine Referenzbilder - Die hochgeladenen Referenzbilder konnten nicht geladen werden.");
       setIsGeneratingStoryImages(false);
       return;
     }
@@ -1496,10 +1437,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         if (cycleNumber > 1) {
           // Longer pause between cycles - increases with each failed cycle
           const waitTime = Math.min(5 + (cycleNumber - 1) * 2, 15); // 5s, 7s, 9s, ... max 15s
-          toast({
-            title: `Szene ${sceneIndex + 1} - Neuer Versuch ${cycleNumber}`,
-            description: `Warte ${waitTime} Sekunden und starte neue Versuchsreihe...`,
-          });
           await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
         }
         
@@ -1585,35 +1522,10 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         }
       }
       
-      toast({
-        title: `Szene ${sceneIndex + 1} ✓`,
-        description: `${successCount}/${storyPoints.length} - Starte nächste Szene...`
-      });
     }
     
     setGeneratingStoryImageIndex(null);
     setIsGeneratingStoryImages(false);
-    
-    // Show summary toast
-    const failedCount = storyPoints.filter((_, i) => !storyPoints[i]?.generatedImage && i < storyPoints.length).length;
-    if (failedCount === 0) {
-      toast({
-        title: "Fertig!",
-        description: `Alle ${storyPoints.length} Bilder und Video-Prompts wurden generiert.`
-      });
-    } else if (successCount > 0) {
-      toast({
-        title: "Teilweise fertig",
-        description: `${successCount} von ${storyPoints.length} Bilder generiert.`,
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Generierung fehlgeschlagen",
-        description: "Keine Bilder konnten generiert werden. Bitte überprüfe deinen API-Key.",
-        variant: "destructive"
-      });
-    }
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
@@ -2005,8 +1917,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       setFlippedCards(prev => new Set(prev).add(sceneIndex));
       setTimeout(() => setJustFinishedIndex(null), 700);
       
-      toast({ title: `Szene ${sceneIndex + 1} generiert!` });
-      
     } catch (error) {
       clearTimeout(timeoutId);
       
@@ -2023,12 +1933,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         }
         return p;
       }));
-      
-      toast({ 
-        title: `Szene ${sceneIndex + 1} fehlgeschlagen`, 
-        description: errorMessage, 
-        variant: "destructive" 
-      });
     } finally {
       // Always reset animation state on error too
       if (regeneratingCardIndex === sceneIndex) {
@@ -2210,8 +2114,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       setJustFinishedImageOnlyIndex(sceneIndex);
       setTimeout(() => setJustFinishedImageOnlyIndex(null), 700);
       
-      toast({ title: `Szene ${sceneIndex + 1} Bild regeneriert!` });
-      
     } catch (error) {
       clearTimeout(timeoutId);
       
@@ -2228,12 +2130,6 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         }
         return p;
       }));
-      
-      toast({ 
-        title: `Szene ${sceneIndex + 1} fehlgeschlagen`, 
-        description: errorMessage, 
-        variant: "destructive" 
-      });
     } finally {
       setRegeneratingImageOnlyIndex(null);
       setRegeneratingPointIndex(null);
@@ -2402,11 +2298,7 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     const files = Array.from(e.target.files || []);
     
     if (referenceImages.length + files.length > 3) {
-      toast({
-        title: "Zu viele Bilder",
-        description: "Du kannst maximal 3 Referenzbilder hochladen",
-        variant: "destructive",
-      });
+      console.warn("Zu viele Bilder - maximal 3 Referenzbilder erlaubt");
       return;
     }
     
@@ -2422,11 +2314,6 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
         processedFiles.push(compressedFile);
       } catch (error) {
         console.error('Error compressing image:', error);
-        toast({
-          title: "Fehler beim Verarbeiten",
-          description: `${file.name} konnte nicht verarbeitet werden.`,
-          variant: "destructive",
-        });
       }
     }
     
@@ -2838,21 +2725,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     
     if (!apiKey) {
       console.log("❌ Fehler: Kein API Key");
-      toast({
-        title: "API Key erforderlich",
-        description: "Bitte gib deinen Google Gemini API Key ein",
-        variant: "destructive",
-      });
       return;
     }
 
     if (referenceImages.length === 0) {
       console.log("❌ Fehler: Keine Reference Images");
-      toast({
-        title: "Referenzbilder erforderlich",
-        description: "Bitte lade mindestens ein Referenzbild hoch",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -2887,17 +2764,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, imageCount[0], useCustomPrompt ? customPrompt : undefined);
       
-      toast({
-        title: "Erfolg!",
-        description: `${imageCount[0]} Bilder wurden generiert`,
-      });
     } catch (error) {
       console.error("Generation error:", error);
-      toast({
-        title: "Generierung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
-        variant: "destructive",
-      });
     } finally {
       setIsGenerating(false);
       isGeneratingRef.current = false;
@@ -2907,20 +2775,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
   const handleGenerateMore = async () => {
     if (!apiKey) {
-      toast({
-        title: "API Key erforderlich",
-        description: "Bitte gib deinen Google Gemini API Key ein",
-        variant: "destructive",
-      });
       return;
     }
 
     if (referenceImages.length === 0) {
-      toast({
-        title: "Referenzbilder erforderlich",
-        description: "Bitte lade mindestens ein Referenzbild hoch",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -2949,10 +2807,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     
     // If already generating, the existing processQueue loop will pick up new items
     if (isGenerating) {
-      toast({
-        title: "Zur Warteschlange hinzugefügt",
-        description: `${newCount} ${newCount === 1 ? 'Bild wird' : 'Bilder werden'} generiert`,
-      });
       return;
     }
     
@@ -2975,18 +2829,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const base64Images = await Promise.all(imagePromises);
 
       await processQueue(apiKey, base64Images, selectedBackground, selectedFormat, selectedShot, currentLength + newCount, useCustomPrompt ? customPrompt : undefined);
-      
-      toast({
-        title: "Erfolg!",
-        description: `${newCount} weitere Bilder wurden generiert`,
-      });
     } catch (error) {
       console.error("Generation error:", error);
-      toast({
-        title: "Generierung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten",
-        variant: "destructive",
-      });
     } finally {
       setIsGenerating(false);
       isGeneratingRef.current = false;
@@ -2996,20 +2840,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
   const handleCustomPrompt = async () => {
     if (!apiKey || !customPrompt) {
-      toast({
-        title: "Fehlende Informationen",
-        description: "Bitte gib sowohl API Key als auch Custom Prompt ein",
-        variant: "destructive",
-      });
       return;
     }
 
     if (referenceImages.length === 0) {
-      toast({
-        title: "Referenzbilder erforderlich",
-        description: "Bitte lade mindestens ein Referenzbild hoch",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -3183,10 +3017,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           
           updateSlotSafe(newIndex, { status: "completed", imageUrl, progress: 100 });
           
-          toast({
-            title: "Erfolg!",
-            description: "Benutzerdefiniertes Bild wurde mit deinen Anforderungen generiert",
-          });
           return;
         }
       }
@@ -3201,11 +3031,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         : "Ein Fehler ist aufgetreten";
       
       updateSlotSafe(newIndex, { status: "error", progress: 0 });
-      toast({
-        title: "Generierung fehlgeschlagen",
-        description: errorMessage,
-        variant: "destructive",
-      });
     } finally {
       // CRITICAL: Always clear the progress interval to prevent memory leaks and crashes
       if (progressInterval) {
@@ -3287,10 +3112,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
     
     setImageSlots((prev) => prev.filter((_, i) => i !== index));
-    toast({
-      title: "Bild gelöscht",
-      description: `Bild #${index + 1} wurde erfolgreich gelöscht`,
-    });
   };
 
   // Remove image from queue (for pending images only)
@@ -3315,10 +3136,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
     
     setImageSlots((prev) => prev.filter((_, i) => i !== index));
-    toast({
-      title: "Aus Warteschlange entfernt",
-      description: `Bild #${index + 1} wurde aus der Warteschlange entfernt`,
-    });
   };
 
   const navigateImage = (direction: 'prev' | 'next') => {
@@ -3433,20 +3250,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
   const handleGenerateVideoPrompt = async () => {
     if (!apiKey) {
-      toast({
-        title: "API Key erforderlich",
-        description: "Bitte gib deinen Google Gemini API Key ein",
-        variant: "destructive",
-      });
       return;
     }
 
     if (selectedImageIndex === null || !imageSlots[selectedImageIndex]?.imageUrl) {
-      toast({
-        title: "Kein Bild ausgewählt",
-        description: "Bitte wähle ein Bild aus",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -3464,11 +3271,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         }
         blob = await response.blob();
       } catch (fetchError) {
-        toast({
-          title: "Bild nicht verfügbar",
-          description: "Das Bild ist nicht mehr verfügbar. Bitte generiere es erneut oder wähle ein anderes Bild.",
-          variant: "destructive",
-        });
+        console.error("Image fetch error:", fetchError);
         setIsGeneratingVideoPrompt(false);
         return;
       }
@@ -3544,17 +3347,8 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
       // Generate new AI suggestions based on the generated prompt
       generateNewAiSuggestions(newPrompt);
       
-      toast({
-        title: "Video-Prompt generiert!",
-        description: `Prompt ${allVideoPrompts.length + 1} erstellt`,
-      });
     } catch (error) {
       console.error("Video prompt generation error:", error);
-      toast({
-        title: "Prompt-Generierung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
     } finally {
       setIsGeneratingVideoPrompt(false);
     }
@@ -3699,17 +3493,8 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
       // Generate new AI suggestions based on the new prompt
       generateNewAiSuggestions(newPrompt);
       
-      toast({
-        title: "Neuer Prompt erstellt!",
-        description: `Prompt ${allVideoPrompts.length + 1}`,
-      });
     } catch (error) {
       console.error("Edit prompt error:", error);
-      toast({
-        title: "Bearbeitung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
     } finally {
       setIsEditingPrompt(false);
     }
@@ -3726,22 +3511,10 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
   // Custom Prompt AI Generation (handles prompt, background, or both based on aiAssistantTarget)
   const handleGenerateCustomPromptWithAI = async () => {
     if (!apiKey) {
-      toast({
-        title: "API Key erforderlich",
-        description: "Bitte gib deinen Google Gemini API Key ein",
-        variant: "destructive",
-      });
       return;
     }
 
     if (!customPromptChatInput.trim()) {
-      toast({
-        title: "Eingabe erforderlich",
-        description: aiAssistantTarget === "background" 
-          ? "Bitte beschreibe den gewünschten Hintergrund"
-          : "Bitte beschreibe, was du generieren möchtest",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -3904,17 +3677,9 @@ REGELN FÜR SCENE (nur wenn scenery):
           setSelectedBackground("scenery");
         }
         setAiBackgroundSuggestion("");
-        toast({
-          title: "Prompt & Hintergrund generiert!",
-          description: `Version ${customPromptVersions.length + 1} mit Szenerie erstellt`,
-        });
       } else if (aiAssistantTarget === "prompt") {
         // For "prompt" mode: only update the prompt, ignore scene suggestions
         setAiBackgroundSuggestion("");
-        toast({
-          title: "Prompt generiert!",
-          description: `Version ${customPromptVersions.length + 1} erstellt`,
-        });
       } else {
         // Legacy behavior for other cases
         if (selectedBackground === "scenery" && suggestedScene && suggestedScene !== sceneDescription) {
@@ -3924,20 +3689,11 @@ REGELN FÜR SCENE (nur wenn scenery):
         } else {
           setAiBackgroundSuggestion("");
         }
-        toast({
-          title: "Prompt generiert!",
-          description: `Version ${customPromptVersions.length + 1} erstellt`,
-        });
       }
       
       // Keep the input text for further iterations
     } catch (error) {
       console.error("Custom prompt generation error:", error);
-      toast({
-        title: "Generierung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
     } finally {
       setIsGeneratingCustomPrompt(false);
     }
@@ -3991,18 +3747,9 @@ Beispiel einer korrekten Antwort:
       
       if (suggestion) {
         setAiBackgroundSuggestion(suggestion);
-        toast({
-          title: "Hintergrund-Vorschlag generiert",
-          description: "Klicke auf 'Übernehmen' um den Vorschlag zu verwenden."
-        });
       }
     } catch (error) {
       console.error("Background suggestion error:", error);
-      toast({
-        title: "Fehler",
-        description: "Hintergrund-Vorschlag konnte nicht generiert werden.",
-        variant: "destructive"
-      });
     } finally {
       setIsGeneratingBackgroundSuggestion(false);
     }
@@ -4062,18 +3809,9 @@ Beispiel einer korrekten Antwort:
           setSelectedBackground("scenery");
         }
         
-        toast({
-          title: "Hintergrund generiert!",
-          description: suggestion.substring(0, 50) + "..."
-        });
       }
     } catch (error) {
       console.error("Background generation error:", error);
-      toast({
-        title: "Fehler",
-        description: "Hintergrund konnte nicht generiert werden.",
-        variant: "destructive"
-      });
     } finally {
       setIsGeneratingBackgroundSuggestion(false);
     }
@@ -4084,10 +3822,6 @@ Beispiel einer korrekten Antwort:
     if (aiBackgroundSuggestion) {
       setSceneDescription(aiBackgroundSuggestion);
       setAiBackgroundSuggestion("");
-      toast({
-        title: "Hintergrund übernommen",
-        description: aiBackgroundSuggestion
-      });
     }
   };
 
@@ -4127,21 +3861,7 @@ Beispiel einer korrekten Antwort:
     const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
     
     if (completedImages.length === 0) {
-      toast({
-        title: "Keine Bilder zum Herunterladen",
-        description: "Generiere zuerst einige Bilder",
-        variant: "destructive",
-      });
       return;
-    }
-
-    // Show progress for large downloads
-    const isLargeDownload = completedImages.length > 10;
-    if (isLargeDownload) {
-      toast({
-        title: "Download wird vorbereitet...",
-        description: `${completedImages.length} Bilder werden verarbeitet`,
-      });
     }
 
     const createdUrls: string[] = []; // Track URLs for cleanup
@@ -4216,19 +3936,8 @@ Beispiel einer korrekten Antwort:
       link.click();
       document.body.removeChild(link);
       
-      toast({
-        title: "Erfolg!",
-        description: `${completedImages.length} Bilder wurden heruntergeladen`,
-      });
     } catch (error) {
       console.error("Download error:", error);
-      toast({
-        title: "Download fehlgeschlagen",
-        description: error instanceof Error && error.message.includes("memory") 
-          ? "Zu wenig Speicher - versuche weniger Bilder"
-          : "ZIP-Datei konnte nicht erstellt werden",
-        variant: "destructive",
-      });
     } finally {
       // CRITICAL: Clean up all created blob URLs to prevent memory leaks
       setTimeout(() => {
@@ -5768,20 +5477,12 @@ Beispiel einer korrekten Antwort:
                             finalizedAt: Date.now()
                           } : p
                         ));
-                        toast({ 
-                          title: "Szene finalisiert!", 
-                          description: `Szene ${index + 1} wurde in deine Story übernommen.` 
-                        });
                       }}
                       onDiscardChanges={(index) => {
                         setStoryPoints(prev => prev.map((p, i) => {
                           if (i !== index || !p.finalSnapshot) return p;
                           return { ...p.finalSnapshot, finalSnapshot: p.finalSnapshot, finalizedAt: p.finalizedAt };
                         }));
-                        toast({ 
-                          title: "Änderungen verworfen", 
-                          description: "Die Szene wurde auf den letzten finalen Stand zurückgesetzt." 
-                        });
                       }}
                       regeneratingIndex={regeneratingPointIndex}
                       veo3CameraMovements={VEO3_CAMERA_MOVEMENTS}
@@ -5806,7 +5507,7 @@ Start: ${point.veo3StartState || 'Nicht definiert'}
 Bewegung: ${point.veo3Motion || 'Nicht definiert'}
 Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                         navigator.clipboard.writeText(copyText);
-                        toast({ title: "Kopiert!", description: "Video-Prompt in Zwischenablage kopiert." });
+                        navigator.clipboard.writeText(copyText);
                       }}
                       totalScenes={storyPoints.length}
                       finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}
@@ -5995,9 +5696,6 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                                     className="text-xs h-8 px-4"
                                     onClick={() => {
                                       navigator.clipboard.writeText(currentVideoPrompt);
-                                      toast({
-                                        title: "Kopiert!",
-                                      });
                                     }}
                                   >
                                     Kopieren
