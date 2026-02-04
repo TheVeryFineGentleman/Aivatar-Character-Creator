@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -21,7 +20,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
   const [remindEmail, setRemindEmail] = useState("");
   const [isReminding, setIsReminding] = useState(false);
   const [remindMessage, setRemindMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const { toast } = useToast();
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleRemindSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,13 +69,10 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError(null);
     
     if (!email || !licenseKey) {
-      toast({
-        title: "Fehler",
-        description: "Bitte füllen Sie alle Felder aus.",
-        variant: "destructive",
-      });
+      setLoginError("Bitte füllen Sie alle Felder aus.");
       return;
     }
 
@@ -84,17 +80,8 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     const result = await onLogin(email, licenseKey);
     setIsLoading(false);
 
-    if (result.success) {
-      toast({
-        title: "Erfolgreich angemeldet",
-        description: "Willkommen zurück!",
-      });
-    } else {
-      toast({
-        title: "Anmeldung fehlgeschlagen",
-        description: result.message || "Bitte überprüfen Sie Ihre Zugangsdaten.",
-        variant: "destructive",
-      });
+    if (!result.success) {
+      setLoginError(result.message || "Bitte überprüfen Sie Ihre Zugangsdaten.");
     }
   };
 
@@ -132,6 +119,9 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
                 disabled={isLoading}
               />
             </div>
+            {loginError && (
+              <p className="text-sm text-destructive">{loginError}</p>
+            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
