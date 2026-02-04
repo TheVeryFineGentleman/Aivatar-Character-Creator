@@ -649,7 +649,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Pose</label>
-                          <Select value={point.keyAction || ""} onValueChange={value => handleFieldUpdate('keyAction', value)}>
+                          <Select value={point.keyAction || undefined} onValueChange={value => handleFieldUpdate('keyAction', value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -662,7 +662,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Bereich</label>
-                          <Select value={point.specificArea || ""} onValueChange={value => handleFieldUpdate('specificArea', value)}>
+                          <Select value={point.specificArea || undefined} onValueChange={value => handleFieldUpdate('specificArea', value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -686,7 +686,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Emotion Charakter</label>
-                          <Select value={point.emotion || ""} onValueChange={value => handleFieldUpdate('emotion', value)}>
+                          <Select value={point.emotion || undefined} onValueChange={value => handleFieldUpdate('emotion', value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -699,7 +699,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Wirkung beim Zuschauer</label>
-                          <Select value={point.audienceEffect || ""} onValueChange={value => handleFieldUpdate('audienceEffect', value)}>
+                          <Select value={point.audienceEffect || undefined} onValueChange={value => handleFieldUpdate('audienceEffect', value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -727,7 +727,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Shot-Typ</label>
-                            <Select value={point.shotType || ""} onValueChange={value => handleFieldUpdate('shotType', value)}>
+                            <Select value={point.shotType || undefined} onValueChange={value => handleFieldUpdate('shotType', value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
@@ -740,7 +740,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Kamerawinkel</label>
-                            <Select value={point.cameraAngle || ""} onValueChange={value => handleFieldUpdate('cameraAngle', value)}>
+                            <Select value={point.cameraAngle || undefined} onValueChange={value => handleFieldUpdate('cameraAngle', value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
@@ -755,7 +755,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Bildaufbau</label>
-                            <Select value={point.composition || ""} onValueChange={value => handleFieldUpdate('composition', value)}>
+                            <Select value={point.composition || undefined} onValueChange={value => handleFieldUpdate('composition', value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
@@ -768,7 +768,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Bewegung</label>
-                            <Select value={point.movement || ""} onValueChange={value => handleFieldUpdate('movement', value)}>
+                            <Select value={point.movement || undefined} onValueChange={value => handleFieldUpdate('movement', value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
