@@ -307,7 +307,7 @@ const AREA_OPTIONS = [{
 const isSceneDirty = (point: StoryPoint): boolean => {
   // If never finalized AND no generated image, it's not dirty yet (user hasn't made changes)
   if (!point.finalSnapshot && !point.generatedImage) return false;
-  const fieldsToCompare = ['summary', 'detailedDescription', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'cameraAngle', 'shotType', 'composition', 'movement', 'participants', 'negativePrompts', 'styleNotes', 'continuityNotes'];
+  const fieldsToCompare = ['summary', 'detailedDescription', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'cameraAngle', 'shotType', 'composition', 'movement', 'negativePrompts', 'styleNotes', 'continuityNotes'];
 
   // If we have a finalized snapshot, compare against it (highest priority)
   if (point.finalSnapshot) {
@@ -641,43 +641,37 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                   </div>
                 </div>
 
-                {/* Section 2: Handlung & Beteiligte (Collapsible, default OPEN) */}
+                {/* Section 2: Handlung (Collapsible, default OPEN) */}
                 <Collapsible open={expandedSections.handlung} onOpenChange={() => toggleSection('handlung')}>
                   <div className="border-b border-border/30">
-                    <SectionHeader number={2} title="Handlung & Beteiligte" icon={Users} color="bg-orange-500" sectionKey="handlung" />
+                    <SectionHeader number={2} title="Handlung" icon={Users} color="bg-orange-500" sectionKey="handlung" />
                     <CollapsibleContent id={`${uniqueId}-panel-handlung`} className="pl-8 pb-4">
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <label className="text-xs text-muted-foreground">Pose</label>
-                            <Select value={point.keyAction || ""} onValueChange={value => handleFieldUpdate('keyAction', value)}>
-                              <SelectTrigger className="bg-background/50 text-sm h-9">
-                                <SelectValue placeholder="Von KI wählen lassen..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {KEY_ACTION_OPTIONS.map(action => <SelectItem key={action.value} value={action.value}>
-                                    {action.label}
-                                  </SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs text-muted-foreground">Bereich</label>
-                            <Select value={point.specificArea || ""} onValueChange={value => handleFieldUpdate('specificArea', value)}>
-                              <SelectTrigger className="bg-background/50 text-sm h-9">
-                                <SelectValue placeholder="Von KI wählen lassen..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {AREA_OPTIONS.map(area => <SelectItem key={area.value} value={area.value}>
-                                    {area.label}
-                                  </SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground">Pose</label>
+                          <Select value={point.keyAction || ""} onValueChange={value => handleFieldUpdate('keyAction', value)}>
+                            <SelectTrigger className="bg-background/50 text-sm h-9">
+                              <SelectValue placeholder="Von KI wählen lassen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {KEY_ACTION_OPTIONS.map(action => <SelectItem key={action.value} value={action.value}>
+                                  {action.label}
+                                </SelectItem>)}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-xs text-muted-foreground">Beteiligte</label>
-                          <Input value={point.participants || ""} onChange={e => handleFieldUpdate('participants', e.target.value)} className="bg-background/50 text-sm h-9" placeholder="z.B. Hauptcharakter, Hund" />
+                          <label className="text-xs text-muted-foreground">Bereich</label>
+                          <Select value={point.specificArea || ""} onValueChange={value => handleFieldUpdate('specificArea', value)}>
+                            <SelectTrigger className="bg-background/50 text-sm h-9">
+                              <SelectValue placeholder="Von KI wählen lassen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AREA_OPTIONS.map(area => <SelectItem key={area.value} value={area.value}>
+                                  {area.label}
+                                </SelectItem>)}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </CollapsibleContent>
