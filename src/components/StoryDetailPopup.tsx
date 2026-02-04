@@ -69,239 +69,118 @@ interface StoryDetailPopupProps {
   finalizedCount: number;
 }
 
+// Auto option for all dropdowns
+const AUTO_OPTION = { value: "_auto_", label: "Von KI wählen lassen..." };
+
 // Emotion options for dropdown
-const EMOTION_OPTIONS = [{
-  value: "gluecklich",
-  label: "Glücklich"
-}, {
-  value: "traurig",
-  label: "Traurig"
-}, {
-  value: "nachdenklich",
-  label: "Nachdenklich"
-}, {
-  value: "aufgeregt",
-  label: "Aufgeregt"
-}, {
-  value: "aengstlich",
-  label: "Ängstlich"
-}, {
-  value: "wuetend",
-  label: "Wütend"
-}, {
-  value: "ueberrascht",
-  label: "Überrascht"
-}, {
-  value: "verliebt",
-  label: "Verliebt"
-}, {
-  value: "verzweifelt",
-  label: "Verzweifelt"
-}, {
-  value: "hoffnungsvoll",
-  label: "Hoffnungsvoll"
-}, {
-  value: "melancholisch",
-  label: "Melancholisch"
-}, {
-  value: "entspannt",
-  label: "Entspannt"
-}, {
-  value: "neutral",
-  label: "Neutral"
-}];
+const EMOTION_OPTIONS = [
+  AUTO_OPTION,
+  { value: "gluecklich", label: "Glücklich" },
+  { value: "traurig", label: "Traurig" },
+  { value: "nachdenklich", label: "Nachdenklich" },
+  { value: "aufgeregt", label: "Aufgeregt" },
+  { value: "aengstlich", label: "Ängstlich" },
+  { value: "wuetend", label: "Wütend" },
+  { value: "ueberrascht", label: "Überrascht" },
+  { value: "verliebt", label: "Verliebt" },
+  { value: "verzweifelt", label: "Verzweifelt" },
+  { value: "hoffnungsvoll", label: "Hoffnungsvoll" },
+  { value: "melancholisch", label: "Melancholisch" },
+  { value: "entspannt", label: "Entspannt" },
+  { value: "neutral", label: "Neutral" },
+];
 
 // Audience effect options
-const AUDIENCE_EFFECT_OPTIONS = [{
-  value: "spannung",
-  label: "Spannung"
-}, {
-  value: "empathie",
-  label: "Empathie"
-}, {
-  value: "freude",
-  label: "Freude"
-}, {
-  value: "unbehagen",
-  label: "Unbehagen"
-}, {
-  value: "neugier",
-  label: "Neugier"
-}, {
-  value: "erleichterung",
-  label: "Erleichterung"
-}, {
-  value: "trauer",
-  label: "Trauer"
-}, {
-  value: "hoffnung",
-  label: "Hoffnung"
-}];
+const AUDIENCE_EFFECT_OPTIONS = [
+  AUTO_OPTION,
+  { value: "spannung", label: "Spannung" },
+  { value: "empathie", label: "Empathie" },
+  { value: "freude", label: "Freude" },
+  { value: "unbehagen", label: "Unbehagen" },
+  { value: "neugier", label: "Neugier" },
+  { value: "erleichterung", label: "Erleichterung" },
+  { value: "trauer", label: "Trauer" },
+  { value: "hoffnung", label: "Hoffnung" },
+];
 
 // Camera angle options
-const CAMERA_ANGLE_OPTIONS = [{
-  value: "frontal",
-  label: "Frontal"
-}, {
-  value: "seitlich",
-  label: "Seitlich"
-}, {
-  value: "von-oben",
-  label: "Von oben"
-}, {
-  value: "von-unten",
-  label: "Von unten"
-}, {
-  value: "ueber-schulter",
-  label: "Über die Schulter"
-}, {
-  value: "dutch-angle",
-  label: "Dutch Angle"
-}, {
-  value: "vogelperspektive",
-  label: "Vogelperspektive"
-}, {
-  value: "froschperspektive",
-  label: "Froschperspektive"
-}];
+const CAMERA_ANGLE_OPTIONS = [
+  AUTO_OPTION,
+  { value: "frontal", label: "Frontal" },
+  { value: "seitlich", label: "Seitlich" },
+  { value: "von-oben", label: "Von oben" },
+  { value: "von-unten", label: "Von unten" },
+  { value: "ueber-schulter", label: "Über die Schulter" },
+  { value: "dutch-angle", label: "Dutch Angle" },
+  { value: "vogelperspektive", label: "Vogelperspektive" },
+  { value: "froschperspektive", label: "Froschperspektive" },
+];
 
 // Shot type options
-const SHOT_TYPE_OPTIONS = [{
-  value: "extreme-close-up",
-  label: "Extreme Close-Up"
-}, {
-  value: "close-up",
-  label: "Close-Up"
-}, {
-  value: "medium-close-up",
-  label: "Medium Close-Up"
-}, {
-  value: "medium-shot",
-  label: "Medium Shot"
-}, {
-  value: "medium-long-shot",
-  label: "Medium Long Shot"
-}, {
-  value: "full-shot",
-  label: "Full Shot"
-}, {
-  value: "long-shot",
-  label: "Long Shot"
-}, {
-  value: "extreme-long-shot",
-  label: "Extreme Long Shot"
-}];
+const SHOT_TYPE_OPTIONS = [
+  AUTO_OPTION,
+  { value: "extreme-close-up", label: "Extreme Close-Up" },
+  { value: "close-up", label: "Close-Up" },
+  { value: "medium-close-up", label: "Medium Close-Up" },
+  { value: "medium-shot", label: "Medium Shot" },
+  { value: "medium-long-shot", label: "Medium Long Shot" },
+  { value: "full-shot", label: "Full Shot" },
+  { value: "long-shot", label: "Long Shot" },
+  { value: "extreme-long-shot", label: "Extreme Long Shot" },
+];
 
 // Composition options
-const COMPOSITION_OPTIONS = [{
-  value: "zentriert",
-  label: "Zentriert"
-}, {
-  value: "drittel-regel",
-  label: "Regel der Drittel"
-}, {
-  value: "symmetrisch",
-  label: "Symmetrisch"
-}, {
-  value: "diagonal",
-  label: "Diagonal"
-}, {
-  value: "rahmen-im-rahmen",
-  label: "Rahmen im Rahmen"
-}];
+const COMPOSITION_OPTIONS = [
+  AUTO_OPTION,
+  { value: "zentriert", label: "Zentriert" },
+  { value: "drittel-regel", label: "Regel der Drittel" },
+  { value: "symmetrisch", label: "Symmetrisch" },
+  { value: "diagonal", label: "Diagonal" },
+  { value: "rahmen-im-rahmen", label: "Rahmen im Rahmen" },
+];
 
 // Movement options
-const MOVEMENT_OPTIONS = [{
-  value: "keine",
-  label: "Keine"
-}, {
-  value: "dolly-in",
-  label: "Dolly-In"
-}, {
-  value: "dolly-out",
-  label: "Dolly-Out"
-}, {
-  value: "truck",
-  label: "Truck"
-}, {
-  value: "tilt",
-  label: "Tilt"
-}, {
-  value: "pan",
-  label: "Pan"
-}, {
-  value: "crane",
-  label: "Crane"
-}, {
-  value: "arc",
-  label: "Arc"
-}];
+const MOVEMENT_OPTIONS = [
+  AUTO_OPTION,
+  { value: "keine", label: "Keine" },
+  { value: "dolly-in", label: "Dolly-In" },
+  { value: "dolly-out", label: "Dolly-Out" },
+  { value: "truck", label: "Truck" },
+  { value: "tilt", label: "Tilt" },
+  { value: "pan", label: "Pan" },
+  { value: "crane", label: "Crane" },
+  { value: "arc", label: "Arc" },
+];
 
 // Key action options
-const KEY_ACTION_OPTIONS = [{
-  value: "steht",
-  label: "Steht"
-}, {
-  value: "geht",
-  label: "Geht"
-}, {
-  value: "sitzt",
-  label: "Sitzt"
-}, {
-  value: "lehnt",
-  label: "Lehnt"
-}, {
-  value: "schaut",
-  label: "Schaut"
-}, {
-  value: "spricht",
-  label: "Spricht"
-}, {
-  value: "rennt",
-  label: "Rennt"
-}, {
-  value: "wartet",
-  label: "Wartet"
-}, {
-  value: "greift",
-  label: "Greift"
-}, {
-  value: "haelt",
-  label: "Hält"
-}, {
-  value: "zeigt",
-  label: "Zeigt"
-}, {
-  value: "wendet-sich",
-  label: "Wendet sich"
-}];
+const KEY_ACTION_OPTIONS = [
+  AUTO_OPTION,
+  { value: "steht", label: "Steht" },
+  { value: "geht", label: "Geht" },
+  { value: "sitzt", label: "Sitzt" },
+  { value: "lehnt", label: "Lehnt" },
+  { value: "schaut", label: "Schaut" },
+  { value: "spricht", label: "Spricht" },
+  { value: "rennt", label: "Rennt" },
+  { value: "wartet", label: "Wartet" },
+  { value: "greift", label: "Greift" },
+  { value: "haelt", label: "Hält" },
+  { value: "zeigt", label: "Zeigt" },
+  { value: "wendet-sich", label: "Wendet sich" },
+];
 
 // Area options
-const AREA_OPTIONS = [{
-  value: "innenraum",
-  label: "Innenraum"
-}, {
-  value: "aussenbereich",
-  label: "Außenbereich"
-}, {
-  value: "strasse",
-  label: "Straße"
-}, {
-  value: "natur",
-  label: "Natur"
-}, {
-  value: "arbeitsplatz",
-  label: "Arbeitsplatz"
-}, {
-  value: "zuhause",
-  label: "Zuhause"
-}, {
-  value: "fahrzeug",
-  label: "Fahrzeug"
-}, {
-  value: "oeffentlicher-ort",
-  label: "Öffentlicher Ort"
-}];
+const AREA_OPTIONS = [
+  AUTO_OPTION,
+  { value: "innenraum", label: "Innenraum" },
+  { value: "aussenbereich", label: "Außenbereich" },
+  { value: "strasse", label: "Straße" },
+  { value: "natur", label: "Natur" },
+  { value: "arbeitsplatz", label: "Arbeitsplatz" },
+  { value: "zuhause", label: "Zuhause" },
+  { value: "fahrzeug", label: "Fahrzeug" },
+  { value: "oeffentlicher-ort", label: "Öffentlicher Ort" },
+];
 
 // Helper to check if scene is dirty (has changes since last finalization OR since image generation)
 const isSceneDirty = (point: StoryPoint): boolean => {
@@ -649,7 +528,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Pose</label>
-                          <Select value={point.keyAction || undefined} onValueChange={value => handleFieldUpdate('keyAction', value)}>
+                          <Select value={point.keyAction || "_auto_"} onValueChange={value => handleFieldUpdate('keyAction', value === "_auto_" ? "" : value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -662,7 +541,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Bereich</label>
-                          <Select value={point.specificArea || undefined} onValueChange={value => handleFieldUpdate('specificArea', value)}>
+                          <Select value={point.specificArea || "_auto_"} onValueChange={value => handleFieldUpdate('specificArea', value === "_auto_" ? "" : value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -686,7 +565,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Emotion Charakter</label>
-                          <Select value={point.emotion || undefined} onValueChange={value => handleFieldUpdate('emotion', value)}>
+                          <Select value={point.emotion || "_auto_"} onValueChange={value => handleFieldUpdate('emotion', value === "_auto_" ? "" : value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -699,7 +578,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Wirkung beim Zuschauer</label>
-                          <Select value={point.audienceEffect || undefined} onValueChange={value => handleFieldUpdate('audienceEffect', value)}>
+                          <Select value={point.audienceEffect || "_auto_"} onValueChange={value => handleFieldUpdate('audienceEffect', value === "_auto_" ? "" : value)}>
                             <SelectTrigger className="bg-background/50 text-sm h-9">
                               <SelectValue placeholder="Von KI wählen lassen..." />
                             </SelectTrigger>
@@ -727,7 +606,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Shot-Typ</label>
-                            <Select value={point.shotType || undefined} onValueChange={value => handleFieldUpdate('shotType', value)}>
+                            <Select value={point.shotType || "_auto_"} onValueChange={value => handleFieldUpdate('shotType', value === "_auto_" ? "" : value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
@@ -740,7 +619,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Kamerawinkel</label>
-                            <Select value={point.cameraAngle || undefined} onValueChange={value => handleFieldUpdate('cameraAngle', value)}>
+                            <Select value={point.cameraAngle || "_auto_"} onValueChange={value => handleFieldUpdate('cameraAngle', value === "_auto_" ? "" : value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
@@ -755,7 +634,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Bildaufbau</label>
-                            <Select value={point.composition || undefined} onValueChange={value => handleFieldUpdate('composition', value)}>
+                            <Select value={point.composition || "_auto_"} onValueChange={value => handleFieldUpdate('composition', value === "_auto_" ? "" : value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
@@ -768,7 +647,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs text-muted-foreground">Bewegung</label>
-                            <Select value={point.movement || undefined} onValueChange={value => handleFieldUpdate('movement', value)}>
+                            <Select value={point.movement || "_auto_"} onValueChange={value => handleFieldUpdate('movement', value === "_auto_" ? "" : value)}>
                               <SelectTrigger className="bg-background/50 text-sm h-9">
                                 <SelectValue placeholder="Von KI wählen lassen..." />
                               </SelectTrigger>
