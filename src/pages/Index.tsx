@@ -163,6 +163,12 @@ const VEO3_CAMERA_MOVEMENTS = [
   { id: "pull-back", label: "Pull-Back", description: "Schnelle Fahrt nach hinten mit Zoom" },
 ];
 
+// Veo3 Format-Optionen für Storyboard-Bildgenerierung
+const VEO3_FORMAT_OPTIONS = [
+  { id: "16:9", label: "16:9 (Widescreen)" },
+  { id: "9:16", label: "9:16 (Vertikal)" },
+];
+
 const Index = () => {
   const { authData, isLoading: authLoading, login, logout } = useAuth();
   
@@ -306,6 +312,7 @@ const Index = () => {
   // Veo3 Export und Kamerabewegung-Tracking
   const [usedCameraMovements, setUsedCameraMovements] = useState<string[]>([]);
   const [isExportingVeo3, setIsExportingVeo3] = useState(false);
+  const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -1222,7 +1229,7 @@ TECHNICAL REQUIREMENTS:
             body: JSON.stringify({
               prompt: imagePromptText,
               referenceImages: cleanBase64Images,
-              aspectRatio: "16:9",
+            aspectRatio: storyboardFormat,
               mode: "image",
               apiKey: apiKey
             }),
@@ -1844,7 +1851,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
           body: JSON.stringify({
             prompt: imagePromptText,
             referenceImages: allReferenceImages,
-            aspectRatio: "16:9",
+            aspectRatio: storyboardFormat,
             mode: "image",
             apiKey: apiKey
           }),
@@ -2042,7 +2049,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
           body: JSON.stringify({
             prompt: imagePromptText,
             referenceImages: allReferenceImages,
-            aspectRatio: "16:9",
+            aspectRatio: storyboardFormat,
             mode: "image",
             apiKey: apiKey
           }),
@@ -5078,6 +5085,17 @@ Beispiel einer korrekten Antwort:
                           </>
                         )}
                       </Button>
+                      {/* Veo3 Format Dropdown */}
+                      <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+                        <SelectTrigger className="w-[130px] shrink-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {VEO3_FORMAT_OPTIONS.map(opt => (
+                            <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -5314,6 +5332,12 @@ Beispiel einer korrekten Antwort:
                                         </div>
                                       </div>
                                     </div>
+                                    {/* Format label */}
+                                    {point.generatedImage && generatingStoryImageIndex !== index && !regeneratingImageOnlyIndex && (
+                                      <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
+                                        {storyboardFormat}
+                                      </div>
+                                    )}
                                     {/* Shot type label */}
                                     {point.shotType && generatingStoryImageIndex !== index && !regeneratingImageOnlyIndex && (
                                       <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
