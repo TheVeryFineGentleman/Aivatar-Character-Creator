@@ -1,107 +1,149 @@
 
-# Plan: Dropdown-Platzhalter "Von KI wählen lassen..." korrekt anzeigen
+# Plan: Format-Anzeige und Veo3-Format-Dropdown hinzufügen
 
-## Problem-Analyse
+## Zusammenfassung
 
-Es gibt zwei Probleme:
+Es werden zwei Funktionen hinzugefügt:
+1. **Format-Badge auf Storyboard-Karten**: Zeigt das aktuelle Bildformat (z.B. "16:9") auf jeder Karten-Vorschau an
+2. **Format-Dropdown neben "Bilder generieren"**: Ermoeglicht die Auswahl zwischen den von Veo3 unterstuetzten Formaten
 
-### Problem 1: Leere Strings statt undefined
-Die Felder werden in der Storyboard-Generierung mit leeren Strings initialisiert (`emotion: scene.emotion || ""`). Radix UI's Select-Komponente zeigt den Placeholder nur bei `value={undefined}`, nicht bei `value=""`.
+## Aenderungen im Detail
 
-**Aktueller Code (Zeile 689-693):**
+### 1. Neuer State fuer Storyboard-Format
+
+Ein neuer State wird eingefuehrt, um das gewaehlte Format fuer die Storyboard-Bildgenerierung zu speichern:
+
 ```typescript
-emotion: scene.emotion || "",
-cameraAngle: scene.cameraAngle || "",
-shotType: scene.shotType || ""
+const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
 ```
 
-### Problem 2: KI generiert Freitext statt Dropdown-Werte
-Die KI generiert Emotionen als Freitext (z.B. "melancholisch", "hoffnungsvoll") statt als Dropdown-Werte (z.B. "melancholisch", "hoffnungsvoll" - diese matchen zufällig, aber "eye-level" != "frontal").
+### 2. Format-Optionen fuer Veo3
 
----
+Basierend auf den aktuellen Veo3-Spezifikationen werden folgende Formate unterstuetzt:
+- **16:9** (Widescreen/Querformat) - Standard
+- **9:16** (Vertikal/Mobile)
 
-## Lösung
-
-### Teil 1: Erste Option "Von KI wählen lassen..." hinzufügen
-
-Jedes Dropdown bekommt als **erste Option** einen Eintrag mit einem speziellen Wert (z.B. `"_auto_"`), der "Von KI wählen lassen..." anzeigt. Wenn der Nutzer diese Option wählt, wird das Feld auf leer gesetzt.
-
-**Alle Dropdown-Arrays erweitern:**
 ```typescript
-const EMOTION_OPTIONS = [
-  { value: "_auto_", label: "Von KI wählen lassen..." },
-  { value: "gluecklich", label: "Glücklich" },
-  // ... rest
+const VEO3_FORMAT_OPTIONS = [
+  { id: "16:9", label: "16:9 (Widescreen)" },
+  { id: "9:16", label: "9:16 (Vertikal)" },
 ];
 ```
 
-### Teil 2: Select-Komponenten anpassen
+### 3. Format-Badge auf Storyboard-Karten
 
-Die Select-Komponenten müssen:
-1. Bei leerem Wert (`""` oder `undefined`) den Wert `"_auto_"` anzeigen
-2. Bei Auswahl von `"_auto_"` das Feld auf `""` setzen
+Ein kleines Badge wird auf jeder Karte angezeigt, das das aktuelle Format zeigt:
 
-**Angepasste Select-Logik:**
-```typescript
-<Select 
-  value={point.emotion || "_auto_"} 
-  onValueChange={value => handleFieldUpdate('emotion', value === "_auto_" ? "" : value)}
->
+**Position**: Unten links auf dem Bild (aehnlich wie der Shot-Type unten rechts)
+
+```text
++---------------------------+
+|  Szene 1           [v] [x]|
++---------------------------+
+|                           |
+|   [Generiertes Bild]      |
+|                           |
+| [16:9]        [Close-Up]  |  <- Format links, Shot-Type rechts
++---------------------------+
+|  Zusammenfassung...       |
++---------------------------+
 ```
 
-### Teil 3: Prompt-Generierung prüfen
+### 4. Format-Dropdown neben "Bilder generieren" Button
 
-In `buildFullImagePrompt` werden leere Felder bereits korrekt ignoriert (conditional includes). Keine Änderung nötig.
-
----
-
-## Betroffene Stellen
-
-| Datei | Zeilen (ca.) | Änderung |
-|-------|-------------|----------|
-| `src/components/StoryDetailPopup.tsx` | 73-238 | Alle OPTIONS-Arrays um `_auto_` erweitern |
-| `src/components/StoryDetailPopup.tsx` | 652-780 | Alle Select-Komponenten: `value` und `onValueChange` anpassen |
-
----
-
-## Konkrete Code-Änderungen
-
-### 1. Options-Arrays erweitern
-
-Alle 8 Dropdown-Arrays bekommen als ersten Eintrag:
-```typescript
-{ value: "_auto_", label: "Von KI wählen lassen..." }
-```
-
-Betroffene Arrays:
-- `EMOTION_OPTIONS`
-- `AUDIENCE_EFFECT_OPTIONS`
-- `CAMERA_ANGLE_OPTIONS`
-- `SHOT_TYPE_OPTIONS`
-- `COMPOSITION_OPTIONS`
-- `MOVEMENT_OPTIONS`
-- `KEY_ACTION_OPTIONS`
-- `AREA_OPTIONS`
-
-### 2. Select-Komponenten anpassen
-
-Alle 8 Select-Komponenten (Pose, Bereich, Emotion, Wirkung, Shot-Typ, Kamerawinkel, Bildaufbau, Bewegung) werden so angepasst:
+Das Layout der Buttons wird angepasst:
 
 **Vorher:**
-```typescript
-<Select value={point.keyAction || undefined} onValueChange={value => handleFieldUpdate('keyAction', value)}>
+```text
+[ Bilder generieren          ] [ Alles loeschen ]
 ```
 
 **Nachher:**
-```typescript
-<Select value={point.keyAction || "_auto_"} onValueChange={value => handleFieldUpdate('keyAction', value === "_auto_" ? "" : value)}>
+```text
+[ Bilder generieren ] [16:9 v] [ Alles loeschen ]
 ```
+
+Das Dropdown wird als kompaktes Select-Element zwischen den beiden Buttons platziert.
+
+---
+
+## Betroffene Dateien
+
+| Datei | Aenderungen |
+|-------|-------------|
+| `src/pages/Index.tsx` | State, Format-Optionen, Button-Layout, API-Aufrufe anpassen |
+
+---
+
+## Technische Details
+
+### State-Definition (ca. Zeile 308)
+```typescript
+const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
+```
+
+### Format-Optionen (ca. Zeile 147)
+```typescript
+const VEO3_FORMAT_OPTIONS = [
+  { id: "16:9", label: "16:9 (Widescreen)" },
+  { id: "9:16", label: "9:16 (Vertikal)" },
+];
+```
+
+### Format-Badge auf Karte (ca. Zeile 5318)
+Neben dem bestehenden Shot-Type-Label wird ein Format-Badge hinzugefuegt:
+
+```tsx
+{/* Format label */}
+{point.generatedImage && (
+  <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
+    {storyboardFormat}
+  </div>
+)}
+```
+
+### Button-Layout anpassen (ca. Zeile 5063-5080)
+```tsx
+<div className="flex gap-2">
+  <Button
+    onClick={generateStoryImagesAndPrompts}
+    disabled={isGeneratingStoryImages || isGeneratingStoryboard}
+    className="flex-1"
+  >
+    {/* ... Button content ... */}
+  </Button>
+  
+  {/* Format Dropdown */}
+  <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+    <SelectTrigger className="w-[130px]">
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      {VEO3_FORMAT_OPTIONS.map(opt => (
+        <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  
+  <AlertDialog>
+    {/* Alles loeschen Button */}
+  </AlertDialog>
+</div>
+```
+
+### API-Aufrufe anpassen
+
+Die Bildgenerierungs-Funktionen muessen das gewaehlte Format verwenden statt dem festen "16:9":
+
+1. **generateStoryImageForScene** (ca. Zeile 1225): `aspectRatio: storyboardFormat`
+2. **regenerateSingleStoryScene** (ca. Zeile 1847): `aspectRatio: storyboardFormat`
+3. **regenerateImageOnly** (ca. Zeile 2045): `aspectRatio: storyboardFormat`
 
 ---
 
 ## Erwartetes Ergebnis
 
-1. Jedes leere Dropdown zeigt "Von KI wählen lassen..." als ausgewählte Option
-2. Der Nutzer kann jedes Feld auf "Von KI wählen lassen..." zurücksetzen
-3. Bei der Bildgenerierung werden leere Felder von der KI automatisch passend gewählt
-4. Die Dirty-State-Erkennung funktioniert weiterhin korrekt (leerer String = `_auto_` gewählt)
+1. Nutzer sehen auf jeder Storyboard-Karte das aktuelle Format als Badge
+2. Nutzer koennen vor der Bildgenerierung zwischen 16:9 und 9:16 waehlen
+3. Alle generierten Bilder verwenden das gewaehlte Format
+4. Der Veo3-Export funktioniert mit beiden Formaten
