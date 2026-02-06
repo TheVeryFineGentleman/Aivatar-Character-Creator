@@ -1795,7 +1795,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
     
     try {
       // Build FULL structured prompt with ALL metadata
@@ -1930,7 +1930,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung – keine Antwort nach 20s" : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
@@ -1942,10 +1942,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         return p;
       }));
     } finally {
-      // Always reset animation state on error too
-      if (regeneratingCardIndex === sceneIndex) {
-        setRegeneratingCardIndex(null);
-      }
+      // Always unconditionally reset animation state
+      setRegeneratingCardIndex(null);
       setRegeneratingPointIndex(null);
     }
   };
@@ -1996,7 +1994,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
     
     try {
       // Build FULL structured prompt with ALL metadata (same as regenerateSingleStoryScene)
@@ -2127,7 +2125,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung (2 Min.)" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung – keine Antwort nach 20s" : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
