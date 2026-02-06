@@ -266,6 +266,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
   const [aiMode, setAiMode] = useState<"text" | "image">("text");
   
+  // Fullscreen image lightbox state
+  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  
   // Zoom state for image preview
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
@@ -275,10 +278,19 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const point = storyPoints[expandedIndex];
   const uniqueId = useId();
   
-  // Reset zoom when scene changes
+  // Block background scrolling when popup is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+  
+  // Reset zoom and fullscreen when scene changes
   useEffect(() => {
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
+    setShowFullscreenImage(false);
   }, [expandedIndex]);
   
   if (!point) return null;
