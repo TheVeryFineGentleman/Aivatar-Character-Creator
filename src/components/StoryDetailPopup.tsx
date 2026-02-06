@@ -897,5 +897,61 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Fullscreen Image Lightbox */}
+      {showFullscreenImage && point.generatedImage && (
+        <div 
+          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center animate-backdrop-in"
+          onClick={() => setShowFullscreenImage(false)}
+        >
+          {/* Close button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            onClick={() => setShowFullscreenImage(false)}
+          >
+            <X className="w-5 h-5" />
+          </Button>
+          
+          {/* Aspect ratio badge */}
+          <div className="absolute top-4 left-4 z-10">
+            <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-sm px-3 py-1">
+              📐 {aspectRatio}
+            </Badge>
+          </div>
+          
+          {/* Download button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              const link = document.createElement('a');
+              link.href = point.generatedImage!;
+              link.download = `szene-${expandedIndex + 1}-${aspectRatio.replace(':', 'x')}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+          >
+            <Download className="w-5 h-5" />
+          </Button>
+          
+          {/* Hint text */}
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+            Klicken zum Schließen
+          </p>
+          
+          {/* Full-size image */}
+          <img 
+            src={point.generatedImage} 
+            alt="Vollbild-Ansicht" 
+            className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>, document.body);
 };
