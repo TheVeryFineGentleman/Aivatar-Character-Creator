@@ -443,16 +443,19 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         </Badge>
       </div>
       
-      {/* Image Preview with Zoom */}
-      <div className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px]">
+      {/* Image Preview with Zoom - clickable for fullscreen */}
+      <div 
+        className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px] cursor-pointer group/preview"
+        onClick={() => point.generatedImage && !isDraggingImage && imageZoom === 1 && setShowFullscreenImage(true)}
+      >
         {point.generatedImage ? <>
             <img 
               src={point.generatedImage} 
               alt="Generiertes Bild" 
-              className="max-w-full max-h-[400px] object-contain select-none rounded-lg"
+              className="max-w-full max-h-[400px] object-contain select-none rounded-lg transition-transform group-hover/preview:scale-[1.02]"
               style={{
                 transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
-                cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
+                cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'pointer',
               }}
               draggable={false}
               onWheel={handleImageWheel}
@@ -461,6 +464,15 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
               onMouseUp={handleImageMouseUp}
               onMouseLeave={handleImageMouseLeave}
             />
+            {/* Click hint overlay */}
+            {imageZoom === 1 && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/preview:bg-black/20 transition-colors pointer-events-none">
+                <div className="opacity-0 group-hover/preview:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  Klicken zum Vergrößern
+                </div>
+              </div>
+            )}
             {/* Zoom indicator */}
             {imageZoom > 1 && (
               <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 z-10">
@@ -483,7 +495,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
       {/* Zoom hint */}
       {point.generatedImage && (
         <p className="text-[10px] text-muted-foreground text-center">
-          Mausrad zum Zoomen • Bei Zoom verschieben durch Ziehen
+          Klicken zum Vergrößern • Mausrad zum Zoomen
         </p>
       )}
       
