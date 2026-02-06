@@ -99,7 +99,10 @@ serve(async (req) => {
           body: JSON.stringify({
             contents: [{ role: "user", parts }],
             generationConfig: {
-              responseModalities: ["IMAGE", "TEXT"]
+              responseModalities: ["IMAGE", "TEXT"],
+              imageConfig: {
+                aspectRatio: aspectRatio
+              }
             }
           })
         }
