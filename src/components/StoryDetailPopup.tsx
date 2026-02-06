@@ -418,17 +418,44 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     inMobileOverlay?: boolean;
   }) => <div className={`space-y-4 ${inMobileOverlay ? '' : 'lg:sticky lg:top-4'}`}>
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-          <Eye className="w-3 h-3 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+            <Eye className="w-3 h-3 text-primary" />
+          </div>
+          <h3 className="font-semibold text-sm">Ergebnis dieser Szene</h3>
         </div>
-        <h3 className="font-semibold text-sm">Ergebnis dieser Szene</h3>
+        {/* Aspect Ratio Badge */}
+        <Badge variant="outline" className="text-[10px] h-5 px-2 border-primary/50 text-primary bg-primary/10">
+          <span className="mr-1">📐</span> {aspectRatio}
+        </Badge>
       </div>
       
-      {/* Image Preview */}
+      {/* Image Preview with Zoom */}
       <div className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px]">
         {point.generatedImage ? <>
-            <img src={point.generatedImage} alt="Generiertes Bild" className="max-w-full max-h-[400px] object-contain" />
+            <img 
+              src={point.generatedImage} 
+              alt="Generiertes Bild" 
+              className="max-w-full max-h-[400px] object-contain select-none rounded-lg"
+              style={{
+                transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
+                cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
+              }}
+              draggable={false}
+              onWheel={handleImageWheel}
+              onMouseDown={handleImageMouseDown}
+              onMouseMove={handleImageMouseMove}
+              onMouseUp={handleImageMouseUp}
+              onMouseLeave={handleImageMouseLeave}
+            />
+            {/* Zoom indicator */}
+            {imageZoom > 1 && (
+              <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 z-10">
+                <ZoomIn className="w-3 h-3" />
+                {Math.round(imageZoom * 100)}%
+              </div>
+            )}
             {regeneratingIndex === expandedIndex && <div className="absolute inset-0 bg-background/80 flex items-center justify-center backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -440,6 +467,13 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             <p className="text-sm">Noch kein Bild generiert</p>
           </div>}
       </div>
+      
+      {/* Zoom hint */}
+      {point.generatedImage && (
+        <p className="text-[10px] text-muted-foreground text-center">
+          Mausrad zum Zoomen • Bei Zoom verschieben durch Ziehen
+        </p>
+      )}
       
       {/* Status Tags */}
       <div className="flex gap-2 flex-wrap">
