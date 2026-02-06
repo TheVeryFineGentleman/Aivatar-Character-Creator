@@ -253,7 +253,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   onAssistantSubmit,
   onCopyVideoPrompt,
   totalScenes,
-  finalizedCount
+  finalizedCount,
+  aspectRatio = "16:9"
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     handlung: true,
@@ -264,8 +265,22 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
   const [aiMode, setAiMode] = useState<"text" | "image">("text");
+  
+  // Zoom state for image preview
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
   const point = storyPoints[expandedIndex];
   const uniqueId = useId();
+  
+  // Reset zoom when scene changes
+  useEffect(() => {
+    setImageZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  }, [expandedIndex]);
+  
   if (!point) return null;
   const status = getSceneStatus(point);
   const isDirty = isSceneDirty(point);
