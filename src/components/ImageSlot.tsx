@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle, Ban } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -14,6 +14,7 @@ interface ImageSlotProps {
   onImageClick?: () => void;
   onDelete?: () => void;
   onRemoveFromQueue?: () => void;
+  onCancel?: () => void;
   retrying?: boolean;
   isWaitingForPro?: boolean;
   isInQueue?: boolean;
@@ -34,7 +35,7 @@ const getAspectClass = (format: string) => {
   }
 };
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
   const aspectClass = getAspectClass(format);
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
@@ -117,6 +118,20 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                 {retrying ? "Wiederhole..." : `${Math.round(progress)}%`}
               </p>
             </div>
+            {onCancel && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancel();
+                }}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Ban className="w-3 h-3 mr-1" />
+                Abbrechen
+              </Button>
+            )}
           </div>
         )}
         

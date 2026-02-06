@@ -203,6 +203,7 @@ const Index = () => {
   const referenceImagesRef = useRef<File[]>([]);
   
   const generationQueueRef = useRef<number[]>([]);
+  const abortControllersRef = useRef<Map<number, AbortController>>(new Map());
   
   // Video prompt generation state
   const [allVideoPrompts, setAllVideoPrompts] = useState<string[]>([]);
@@ -2344,7 +2345,8 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
     customPromptText?: string,
     angle?: string,
     retryCount: number = 0,
-    useSimplifiedPrompt: boolean = false
+    useSimplifiedPrompt: boolean = false,
+    externalSignal?: AbortSignal
   ): Promise<string | null> => {
     // NO AUTO RETRY - fail immediately on error
     
@@ -2459,7 +2461,15 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       
       // ===== Gemini 2.5 Flash Image Generation =====
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120_000); // 2 Minuten
+      const timeoutId = setTimeout(() => controller.abort(), 20_000); // 20 Sekunden Timeout
+
+      // If external signal is already aborted, abort immediately
+      if (externalSignal?.aborted) {
+        throw new Error("Generierung abgebrochen");
+      }
+      // Link external signal to this controller
+      const onExternalAbort = () => controller.abort();
+      externalSignal?.addEventListener('abort', onExternalAbort);
 
       let response: Response;
       try {
@@ -2482,11 +2492,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         );
       } catch (err: any) {
         if (err?.name === "AbortError") {
-          throw new Error("Gemini request timed out");
+          throw new Error(externalSignal?.aborted ? "Generierung abgebrochen" : "Zeitüberschreitung - keine Antwort nach 20s");
         }
         throw err;
       } finally {
         clearTimeout(timeoutId);
+        externalSignal?.removeEventListener('abort', onExternalAbort);
       }
 
       console.log("🔍 API Request sent, Response status:", response.status);
@@ -2618,6 +2629,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       await Promise.all(
         batch.map(async (index) => {
           console.log(`🎨 Starte Generierung für Index ${index}`);
+          
+          // Create AbortController for this slot
+          const slotController = new AbortController();
+          abortControllersRef.current.set(index, slotController);
+          
           // Update to loading - ensure index exists
           setImageSlots((prev) => {
             const updated = [...prev];
@@ -2655,7 +2671,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               totalCount,
               selectedFormat,
               selectedShot,
-              customPromptText
+              customPromptText,
+              undefined,
+              0,
+              false,
+              slotController.signal
             );
 
             // Animate progress quickly from current value to 100%
@@ -2714,8 +2734,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               return updated;
             });
           } finally {
-            // CRITICAL: Always clear interval to prevent memory leaks and crashes
+            // CRITICAL: Always clear interval and remove controller
             clearInterval(progressInterval);
+            abortControllersRef.current.delete(index);
           }
         })
       );
@@ -2954,7 +2975,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 Sekunden Timeout
 
       // Call Google Gemini API with ALL reference images
       const response = await fetch(
@@ -3100,6 +3121,15 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+
+  // Cancel an active generation
+  const handleCancelGeneration = (index: number) => {
+    const controller = abortControllersRef.current.get(index);
+    if (controller) {
+      controller.abort();
+      // The error handling in processQueue will take care of updating the slot
     }
   };
 
@@ -4859,6 +4889,7 @@ Beispiel einer korrekten Antwort:
             onImageClick={handleImageClick}
             onDelete={handleDeleteImage}
             onRemoveFromQueue={handleRemoveFromQueue}
+            onCancelGeneration={handleCancelGeneration}
             isBasicPlan={!isPro}
             isGenerating={isGenerating}
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
