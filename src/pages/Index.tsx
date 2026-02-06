@@ -1011,9 +1011,9 @@ REGELN:
       
       // Step 3: Now also regenerate the image with the new metadata
       // Small delay to let the card flip settle visually
-      setRegeneratingPointIndex(null); // Reset so regenerateSingleStoryScene can start
+      setRegeneratingPointIndex(null);
       await new Promise(resolve => setTimeout(resolve, 300));
-      await regenerateSingleStoryScene(index, updatedPoint);
+      await regenerateSingleStoryScene(index, updatedPoint, true); // skipGuard: bypass stale closure check
       
     } catch (error) {
       clearTimeout(timeoutId);
@@ -1823,8 +1823,9 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
 
   // Regenerate a single failed story scene - uses FULL PROMPT with all metadata
   // Can receive an optional updatedPoint with the latest edits from popup
-  const regenerateSingleStoryScene = async (sceneIndex: number, updatedPoint?: typeof storyPoints[0]) => {
-    if (!apiKey || regeneratingPointIndex !== null) return;
+  const regenerateSingleStoryScene = async (sceneIndex: number, updatedPoint?: typeof storyPoints[0], skipGuard?: boolean) => {
+    if (!apiKey) return;
+    if (!skipGuard && regeneratingPointIndex !== null) return;
     
     setRegeneratingPointIndex(sceneIndex);
     setRegeneratingCardIndex(sceneIndex); // Start flip-away animation
