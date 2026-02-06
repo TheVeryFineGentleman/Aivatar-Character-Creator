@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn } from "lucide-react";
+import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2 } from "lucide-react";
 
 // Types
 interface StoryPoint {
@@ -266,6 +266,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
   const [aiMode, setAiMode] = useState<"text" | "image">("text");
   
+  // Fullscreen image lightbox state
+  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  
   // Zoom state for image preview
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
@@ -275,10 +278,19 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const point = storyPoints[expandedIndex];
   const uniqueId = useId();
   
-  // Reset zoom when scene changes
+  // Block background scrolling when popup is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+  
+  // Reset zoom and fullscreen when scene changes
   useEffect(() => {
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
+    setShowFullscreenImage(false);
   }, [expandedIndex]);
   
   if (!point) return null;
@@ -431,16 +443,19 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         </Badge>
       </div>
       
-      {/* Image Preview with Zoom */}
-      <div className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px]">
+      {/* Image Preview with Zoom - clickable for fullscreen */}
+      <div 
+        className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px] cursor-pointer group/preview"
+        onClick={() => point.generatedImage && !isDraggingImage && imageZoom === 1 && setShowFullscreenImage(true)}
+      >
         {point.generatedImage ? <>
             <img 
               src={point.generatedImage} 
               alt="Generiertes Bild" 
-              className="max-w-full max-h-[400px] object-contain select-none rounded-lg"
+              className="max-w-full max-h-[400px] object-contain select-none rounded-lg transition-transform group-hover/preview:scale-[1.02]"
               style={{
                 transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
-                cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
+                cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'pointer',
               }}
               draggable={false}
               onWheel={handleImageWheel}
@@ -449,6 +464,15 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
               onMouseUp={handleImageMouseUp}
               onMouseLeave={handleImageMouseLeave}
             />
+            {/* Click hint overlay */}
+            {imageZoom === 1 && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/preview:bg-black/20 transition-colors pointer-events-none">
+                <div className="opacity-0 group-hover/preview:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  Klicken zum Vergrößern
+                </div>
+              </div>
+            )}
             {/* Zoom indicator */}
             {imageZoom > 1 && (
               <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 z-10">
@@ -471,7 +495,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
       {/* Zoom hint */}
       {point.generatedImage && (
         <p className="text-[10px] text-muted-foreground text-center">
-          Mausrad zum Zoomen • Bei Zoom verschieben durch Ziehen
+          Klicken zum Vergrößern • Mausrad zum Zoomen
         </p>
       )}
       
@@ -873,5 +897,61 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Fullscreen Image Lightbox */}
+      {showFullscreenImage && point.generatedImage && (
+        <div 
+          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center animate-backdrop-in"
+          onClick={() => setShowFullscreenImage(false)}
+        >
+          {/* Close button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            onClick={() => setShowFullscreenImage(false)}
+          >
+            <X className="w-5 h-5" />
+          </Button>
+          
+          {/* Aspect ratio badge */}
+          <div className="absolute top-4 left-4 z-10">
+            <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-sm px-3 py-1">
+              📐 {aspectRatio}
+            </Badge>
+          </div>
+          
+          {/* Download button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              const link = document.createElement('a');
+              link.href = point.generatedImage!;
+              link.download = `szene-${expandedIndex + 1}-${aspectRatio.replace(':', 'x')}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+          >
+            <Download className="w-5 h-5" />
+          </Button>
+          
+          {/* Hint text */}
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+            Klicken zum Schließen
+          </p>
+          
+          {/* Full-size image */}
+          <img 
+            src={point.generatedImage} 
+            alt="Vollbild-Ansicht" 
+            className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>, document.body);
 };
