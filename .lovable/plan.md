@@ -1,149 +1,92 @@
 
-# Plan: Format-Anzeige und Veo3-Format-Dropdown hinzufügen
 
-## Zusammenfassung
+# Plan: Aspect Ratio an Gemini API weitergeben
 
-Es werden zwei Funktionen hinzugefügt:
-1. **Format-Badge auf Storyboard-Karten**: Zeigt das aktuelle Bildformat (z.B. "16:9") auf jeder Karten-Vorschau an
-2. **Format-Dropdown neben "Bilder generieren"**: Ermoeglicht die Auswahl zwischen den von Veo3 unterstuetzten Formaten
+## Problem
 
-## Aenderungen im Detail
+Der `aspectRatio` Parameter wird zwar vom Frontend an die Edge Function gesendet, aber die Edge Function gibt ihn **nicht** an die Gemini API weiter. Die `generationConfig` enthält nur `responseModalities`, aber kein `imageConfig` mit dem gewaehlten Seitenverhaeltnis.
 
-### 1. Neuer State fuer Storyboard-Format
-
-Ein neuer State wird eingefuehrt, um das gewaehlte Format fuer die Storyboard-Bildgenerierung zu speichern:
-
-```typescript
-const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
+**Aktuelle Edge Function (Zeile 99-104):**
+```javascript
+body: JSON.stringify({
+  contents: [{ role: "user", parts }],
+  generationConfig: {
+    responseModalities: ["IMAGE", "TEXT"]
+  }
+})
 ```
 
-### 2. Format-Optionen fuer Veo3
+## Loesung
 
-Basierend auf den aktuellen Veo3-Spezifikationen werden folgende Formate unterstuetzt:
-- **16:9** (Widescreen/Querformat) - Standard
-- **9:16** (Vertikal/Mobile)
+Die Edge Function muss den empfangenen `aspectRatio` Wert in das `imageConfig` Objekt der Gemini API einfuegen.
 
-```typescript
-const VEO3_FORMAT_OPTIONS = [
-  { id: "16:9", label: "16:9 (Widescreen)" },
-  { id: "9:16", label: "9:16 (Vertikal)" },
-];
+**Korrigierte Version:**
+```javascript
+body: JSON.stringify({
+  contents: [{ role: "user", parts }],
+  generationConfig: {
+    responseModalities: ["IMAGE", "TEXT"],
+    imageConfig: {
+      aspectRatio: aspectRatio  // z.B. "16:9" oder "9:16"
+    }
+  }
+})
 ```
-
-### 3. Format-Badge auf Storyboard-Karten
-
-Ein kleines Badge wird auf jeder Karte angezeigt, das das aktuelle Format zeigt:
-
-**Position**: Unten links auf dem Bild (aehnlich wie der Shot-Type unten rechts)
-
-```text
-+---------------------------+
-|  Szene 1           [v] [x]|
-+---------------------------+
-|                           |
-|   [Generiertes Bild]      |
-|                           |
-| [16:9]        [Close-Up]  |  <- Format links, Shot-Type rechts
-+---------------------------+
-|  Zusammenfassung...       |
-+---------------------------+
-```
-
-### 4. Format-Dropdown neben "Bilder generieren" Button
-
-Das Layout der Buttons wird angepasst:
-
-**Vorher:**
-```text
-[ Bilder generieren          ] [ Alles loeschen ]
-```
-
-**Nachher:**
-```text
-[ Bilder generieren ] [16:9 v] [ Alles loeschen ]
-```
-
-Das Dropdown wird als kompaktes Select-Element zwischen den beiden Buttons platziert.
 
 ---
 
-## Betroffene Dateien
+## Betroffene Datei
 
-| Datei | Aenderungen |
-|-------|-------------|
-| `src/pages/Index.tsx` | State, Format-Optionen, Button-Layout, API-Aufrufe anpassen |
+| Datei | Aenderung |
+|-------|-----------|
+| `supabase/functions/generate-image/index.ts` | `imageConfig.aspectRatio` zur `generationConfig` hinzufuegen |
 
 ---
 
 ## Technische Details
 
-### State-Definition (ca. Zeile 308)
+### Aenderung in der Edge Function (Zeile 99-105)
+
+**Vorher:**
 ```typescript
-const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
+body: JSON.stringify({
+  contents: [{ role: "user", parts }],
+  generationConfig: {
+    responseModalities: ["IMAGE", "TEXT"]
+  }
+})
 ```
 
-### Format-Optionen (ca. Zeile 147)
+**Nachher:**
 ```typescript
-const VEO3_FORMAT_OPTIONS = [
-  { id: "16:9", label: "16:9 (Widescreen)" },
-  { id: "9:16", label: "9:16 (Vertikal)" },
-];
+body: JSON.stringify({
+  contents: [{ role: "user", parts }],
+  generationConfig: {
+    responseModalities: ["IMAGE", "TEXT"],
+    imageConfig: {
+      aspectRatio: aspectRatio
+    }
+  }
+})
 ```
 
-### Format-Badge auf Karte (ca. Zeile 5318)
-Neben dem bestehenden Shot-Type-Label wird ein Format-Badge hinzugefuegt:
+---
 
-```tsx
-{/* Format label */}
-{point.generatedImage && (
-  <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
-    {storyboardFormat}
-  </div>
-)}
-```
+## Unterstuetzte Formate (laut Google Dokumentation)
 
-### Button-Layout anpassen (ca. Zeile 5063-5080)
-```tsx
-<div className="flex gap-2">
-  <Button
-    onClick={generateStoryImagesAndPrompts}
-    disabled={isGeneratingStoryImages || isGeneratingStoryboard}
-    className="flex-1"
-  >
-    {/* ... Button content ... */}
-  </Button>
-  
-  {/* Format Dropdown */}
-  <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
-    <SelectTrigger className="w-[130px]">
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      {VEO3_FORMAT_OPTIONS.map(opt => (
-        <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-  
-  <AlertDialog>
-    {/* Alles loeschen Button */}
-  </AlertDialog>
-</div>
-```
+Gemini 2.5 Flash Image unterstuetzt folgende Aspect Ratios:
+- **Landscape:** 21:9, 16:9, 4:3, 3:2
+- **Square:** 1:1
+- **Portrait:** 9:16, 3:4, 2:3
+- **Flexible:** 5:4, 4:5
 
-### API-Aufrufe anpassen
-
-Die Bildgenerierungs-Funktionen muessen das gewaehlte Format verwenden statt dem festen "16:9":
-
-1. **generateStoryImageForScene** (ca. Zeile 1225): `aspectRatio: storyboardFormat`
-2. **regenerateSingleStoryScene** (ca. Zeile 1847): `aspectRatio: storyboardFormat`
-3. **regenerateImageOnly** (ca. Zeile 2045): `aspectRatio: storyboardFormat`
+Die aktuellen Optionen im Dropdown (16:9 und 9:16) sind beide unterstuetzt.
 
 ---
 
 ## Erwartetes Ergebnis
 
-1. Nutzer sehen auf jeder Storyboard-Karte das aktuelle Format als Badge
-2. Nutzer koennen vor der Bildgenerierung zwischen 16:9 und 9:16 waehlen
-3. Alle generierten Bilder verwenden das gewaehlte Format
-4. Der Veo3-Export funktioniert mit beiden Formaten
+Nach dieser Aenderung werden Bilder im tatsaechlich gewaehlten Seitenverhaeltnis generiert:
+- Bei Auswahl "16:9" → Widescreen-Bilder
+- Bei Auswahl "9:16" → Vertikale/Mobile Bilder
+
