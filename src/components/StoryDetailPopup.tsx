@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye } from "lucide-react";
+import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn } from "lucide-react";
 
 // Types
 interface StoryPoint {
@@ -67,6 +67,7 @@ interface StoryDetailPopupProps {
   onCopyVideoPrompt: () => void;
   totalScenes: number;
   finalizedCount: number;
+  aspectRatio?: string; // "16:9" or "9:16"
 }
 
 // Auto option for all dropdowns
@@ -252,7 +253,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   onAssistantSubmit,
   onCopyVideoPrompt,
   totalScenes,
-  finalizedCount
+  finalizedCount,
+  aspectRatio = "16:9"
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     handlung: true,
@@ -263,8 +265,22 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
   const [aiMode, setAiMode] = useState<"text" | "image">("text");
+  
+  // Zoom state for image preview
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
   const point = storyPoints[expandedIndex];
   const uniqueId = useId();
+  
+  // Reset zoom when scene changes
+  useEffect(() => {
+    setImageZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  }, [expandedIndex]);
+  
   if (!point) return null;
   const status = getSceneStatus(point);
   const isDirty = isSceneDirty(point);
@@ -290,6 +306,66 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const confirmFinalize = () => {
     setShowFinalizeConfirm(false);
     onFinalizeScene(expandedIndex);
+  };
+
+  // Zoom handlers for image preview
+  const handleImageWheel = (e: React.WheelEvent<HTMLImageElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Mouse position relative to image center in pixels
+    const mouseXPx = e.clientX - (rect.left + rect.width / 2);
+    const mouseYPx = e.clientY - (rect.top + rect.height / 2);
+    
+    const delta = e.deltaY > 0 ? -0.25 : 0.25;
+    const newZoom = Math.min(Math.max(imageZoom + delta, 1), 4);
+    
+    if (newZoom === 1) {
+      setImagePosition({ x: 0, y: 0 });
+    } else {
+      // To keep the point under cursor fixed
+      const zoomRatio = newZoom / imageZoom;
+      
+      setImagePosition(prev => ({
+        x: prev.x * zoomRatio + (mouseXPx / rect.width * 100) * (1 - zoomRatio),
+        y: prev.y * zoomRatio + (mouseYPx / rect.height * 100) * (1 - zoomRatio)
+      }));
+    }
+    
+    setImageZoom(newZoom);
+  };
+
+  const handleImageMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (imageZoom <= 1) return;
+    e.preventDefault();
+    setIsDraggingImage(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (imageZoom <= 1 || !isDraggingImage) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Scale drag speed with zoom level
+    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100 * imageZoom;
+    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100 * imageZoom;
+    
+    const maxOffset = (imageZoom - 1) * 50;
+    setImagePosition(prev => ({
+      x: Math.max(-maxOffset, Math.min(maxOffset, prev.x + deltaX)),
+      y: Math.max(-maxOffset, Math.min(maxOffset, prev.y + deltaY))
+    }));
+    
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseUp = () => {
+    setIsDraggingImage(false);
+  };
+
+  const handleImageMouseLeave = () => {
+    setIsDraggingImage(false);
   };
 
   // Get display labels for camera settings (for collapsed state)
@@ -342,17 +418,44 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     inMobileOverlay?: boolean;
   }) => <div className={`space-y-4 ${inMobileOverlay ? '' : 'lg:sticky lg:top-4'}`}>
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-          <Eye className="w-3 h-3 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+            <Eye className="w-3 h-3 text-primary" />
+          </div>
+          <h3 className="font-semibold text-sm">Ergebnis dieser Szene</h3>
         </div>
-        <h3 className="font-semibold text-sm">Ergebnis dieser Szene</h3>
+        {/* Aspect Ratio Badge */}
+        <Badge variant="outline" className="text-[10px] h-5 px-2 border-primary/50 text-primary bg-primary/10">
+          <span className="mr-1">📐</span> {aspectRatio}
+        </Badge>
       </div>
       
-      {/* Image Preview */}
+      {/* Image Preview with Zoom */}
       <div className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px]">
         {point.generatedImage ? <>
-            <img src={point.generatedImage} alt="Generiertes Bild" className="max-w-full max-h-[400px] object-contain" />
+            <img 
+              src={point.generatedImage} 
+              alt="Generiertes Bild" 
+              className="max-w-full max-h-[400px] object-contain select-none rounded-lg"
+              style={{
+                transform: `translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imageZoom})`,
+                cursor: imageZoom > 1 ? (isDraggingImage ? 'grabbing' : 'grab') : 'ns-resize',
+              }}
+              draggable={false}
+              onWheel={handleImageWheel}
+              onMouseDown={handleImageMouseDown}
+              onMouseMove={handleImageMouseMove}
+              onMouseUp={handleImageMouseUp}
+              onMouseLeave={handleImageMouseLeave}
+            />
+            {/* Zoom indicator */}
+            {imageZoom > 1 && (
+              <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 z-10">
+                <ZoomIn className="w-3 h-3" />
+                {Math.round(imageZoom * 100)}%
+              </div>
+            )}
             {regeneratingIndex === expandedIndex && <div className="absolute inset-0 bg-background/80 flex items-center justify-center backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -364,6 +467,13 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             <p className="text-sm">Noch kein Bild generiert</p>
           </div>}
       </div>
+      
+      {/* Zoom hint */}
+      {point.generatedImage && (
+        <p className="text-[10px] text-muted-foreground text-center">
+          Mausrad zum Zoomen • Bei Zoom verschieben durch Ziehen
+        </p>
+      )}
       
       {/* Status Tags */}
       <div className="flex gap-2 flex-wrap">

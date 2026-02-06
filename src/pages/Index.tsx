@@ -5535,6 +5535,7 @@ Ende: ${point.veo3EndState || 'Nicht definiert'}`;
                       }}
                       totalScenes={storyPoints.length}
                       finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}
+                      aspectRatio={storyboardFormat}
                     />
                   )}
                 </div>
