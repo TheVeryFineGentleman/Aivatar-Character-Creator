@@ -5346,14 +5346,26 @@ Beispiel einer korrekten Antwort:
                                     )}
                                     {/* Quick Action Overlay on hover - hidden during regeneration */}
                                     {regeneratingImageOnlyIndex !== index && (
-                                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
+                                      <div 
+                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20 cursor-pointer"
+                                        onClick={() => setExpandedStoryPointIndex(index)}
+                                      >
                                         <Button 
                                           size="icon" 
                                           variant="secondary" 
                                           className="h-9 w-9 rounded-full shadow-lg"
-                                          onClick={(e) => { e.stopPropagation(); setExpandedStoryPointIndex(index); setSceneEditTab("image"); }}
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            // Download single image
+                                            const link = document.createElement('a');
+                                            link.href = point.generatedImage!;
+                                            link.download = `szene-${index + 1}-${storyboardFormat.replace(':', 'x')}.png`;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                          }}
                                         >
-                                          <Maximize2 className="w-4 h-4" />
+                                          <Download className="w-4 h-4" />
                                         </Button>
                                         <Button 
                                           size="icon" 
