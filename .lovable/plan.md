@@ -1,92 +1,65 @@
 
-
-# Plan: Aspect Ratio an Gemini API weitergeben
+# Fix: Storyboard-Bilder werden nicht neu generiert
 
 ## Problem
 
-Der `aspectRatio` Parameter wird zwar vom Frontend an die Edge Function gesendet, aber die Edge Function gibt ihn **nicht** an die Gemini API weiter. Die `generationConfig` enthält nur `responseModalities`, aber kein `imageConfig` mit dem gewaehlten Seitenverhaeltnis.
+Bei der Karten-Regenerierung (`regenerateStoryPoint`) wird nach dem Text-Schritt die Bildgenerierung (`regenerateSingleStoryScene`) aufgerufen. Allerdings hat `regenerateSingleStoryScene` eine Schutzabfrage:
 
-**Aktuelle Edge Function (Zeile 99-104):**
-```javascript
-body: JSON.stringify({
-  contents: [{ role: "user", parts }],
-  generationConfig: {
-    responseModalities: ["IMAGE", "TEXT"]
-  }
-})
+```text
+if (!apiKey || regeneratingPointIndex !== null) return;
 ```
+
+Das Problem: `regenerateStoryPoint` setzt zwar `setRegeneratingPointIndex(null)` vor dem Aufruf, aber React-State-Updates sind **asynchron**. Die Funktion liest den alten Wert aus der Closure (`regeneratingPointIndex` ist noch `index`, nicht `null`), und `regenerateSingleStoryScene` bricht sofort ab, ohne ein Bild zu generieren. Die Karte dreht sich zurueck und zeigt das alte Bild.
 
 ## Loesung
 
-Die Edge Function muss den empfangenen `aspectRatio` Wert in das `imageConfig` Objekt der Gemini API einfuegen.
-
-**Korrigierte Version:**
-```javascript
-body: JSON.stringify({
-  contents: [{ role: "user", parts }],
-  generationConfig: {
-    responseModalities: ["IMAGE", "TEXT"],
-    imageConfig: {
-      aspectRatio: aspectRatio  // z.B. "16:9" oder "9:16"
-    }
-  }
-})
-```
-
----
+Die Funktion `regenerateSingleStoryScene` erhaelt einen optionalen Parameter `skipGuard`, der die Schutzabfrage umgeht, wenn sie programmatisch aus `regenerateStoryPoint` aufgerufen wird.
 
 ## Betroffene Datei
 
 | Datei | Aenderung |
 |-------|-----------|
-| `supabase/functions/generate-image/index.ts` | `imageConfig.aspectRatio` zur `generationConfig` hinzufuegen |
-
----
+| `src/pages/Index.tsx` | `skipGuard`-Parameter hinzufuegen und Aufruf anpassen |
 
 ## Technische Details
 
-### Aenderung in der Edge Function (Zeile 99-105)
+### 1. `regenerateSingleStoryScene` - Guard ueberspringbar machen
 
-**Vorher:**
+Die Funktionssignatur wird um `skipGuard?: boolean` erweitert:
+
 ```typescript
-body: JSON.stringify({
-  contents: [{ role: "user", parts }],
-  generationConfig: {
-    responseModalities: ["IMAGE", "TEXT"]
-  }
-})
+const regenerateSingleStoryScene = async (
+  sceneIndex: number, 
+  updatedPoint?: typeof storyPoints[0],
+  skipGuard?: boolean
+) => {
+  if (!skipGuard && (!apiKey || regeneratingPointIndex !== null)) return;
+  // ... Rest bleibt gleich
+};
 ```
 
-**Nachher:**
+### 2. `regenerateStoryPoint` - Aufruf mit `skipGuard: true`
+
+In Schritt 3 wird der Aufruf angepasst, damit die Schutzabfrage uebersprungen wird:
+
 ```typescript
-body: JSON.stringify({
-  contents: [{ role: "user", parts }],
-  generationConfig: {
-    responseModalities: ["IMAGE", "TEXT"],
-    imageConfig: {
-      aspectRatio: aspectRatio
-    }
-  }
-})
+// Step 3: Image regenerieren
+setRegeneratingPointIndex(null);
+await new Promise(resolve => setTimeout(resolve, 300));
+await regenerateSingleStoryScene(index, updatedPoint, true); // skipGuard = true
 ```
 
----
+### 3. `apiKey`-Check beibehalten
 
-## Unterstuetzte Formate (laut Google Dokumentation)
+Der `apiKey`-Check wird separat am Anfang der Funktion geprueft, damit er auch bei `skipGuard` greift:
 
-Gemini 2.5 Flash Image unterstuetzt folgende Aspect Ratios:
-- **Landscape:** 21:9, 16:9, 4:3, 3:2
-- **Square:** 1:1
-- **Portrait:** 9:16, 3:4, 2:3
-- **Flexible:** 5:4, 4:5
-
-Die aktuellen Optionen im Dropdown (16:9 und 9:16) sind beide unterstuetzt.
-
----
+```typescript
+if (!apiKey) return;
+if (!skipGuard && regeneratingPointIndex !== null) return;
+```
 
 ## Erwartetes Ergebnis
 
-Nach dieser Aenderung werden Bilder im tatsaechlich gewaehlten Seitenverhaeltnis generiert:
-- Bei Auswahl "16:9" → Widescreen-Bilder
-- Bei Auswahl "9:16" → Vertikale/Mobile Bilder
-
+- Beim Klick auf "Karte regenerieren" werden **Text und Bild** vollstaendig neu generiert
+- Die Schutzabfrage verhindert weiterhin Doppelklicks bei direkten Nutzer-Interaktionen
+- Der programmatische Aufruf aus `regenerateStoryPoint` wird nicht mehr blockiert
