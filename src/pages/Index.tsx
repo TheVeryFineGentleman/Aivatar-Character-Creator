@@ -1864,9 +1864,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       }
     }
     
-    // Get current scene's existing image for style/continuity reference (if regenerating)
-    const currentSceneImage = point.generatedImage || null;
-    // Also get previous scene's image for additional context
+    // Get previous scene's image for continuity (NOT the current scene's old image)
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
@@ -1881,25 +1879,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       // Build image parts - collect all reference images as base64
       const allReferenceImages: string[] = [...characterBase64Images];
       
-      // Add CURRENT scene's existing image as reference (for regeneration continuity)
-      if (currentSceneImage) {
-        try {
-          const response = await fetch(currentSceneImage);
-          const blob = await response.blob();
-          const currentBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-            reader.readAsDataURL(blob);
-          });
-          allReferenceImages.push(currentBase64);
-          console.log(`Added current scene image as reference for regeneration`);
-        } catch (e) {
-          console.warn("Could not add current scene as reference:", e);
-        }
-      }
-      
-      // Add previous scene image if available (for additional continuity)
-      if (previousSceneImage && previousSceneImage !== currentSceneImage) {
+      // Add previous scene's image for visual continuity (NOT the current scene's old image)
+      if (previousSceneImage) {
         try {
           const response = await fetch(previousSceneImage);
           const blob = await response.blob();
@@ -2094,21 +2075,8 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         }
       }
       
-      // Add current scene image for style reference
-      if (currentSceneImage) {
-        try {
-          const response = await fetch(currentSceneImage);
-          const blob = await response.blob();
-          const currBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-            reader.readAsDataURL(blob);
-          });
-          allReferenceImages.push(currBase64);
-        } catch (error) {
-          console.error('Error converting current scene image:', error);
-        }
-      }
+      // NOTE: Current scene's own image is intentionally NOT added as reference
+      // to ensure a fresh generation without self-referencing
 
       // Call edge function for image generation (same as regenerateSingleStoryScene)
       const imageResponse = await fetch(
