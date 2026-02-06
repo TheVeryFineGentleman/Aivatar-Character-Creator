@@ -889,75 +889,149 @@ Viel Spaß beim Erstellen deines Videos!
   const regenerateStoryPoint = async (index: number) => {
     if (!apiKey || regeneratingPointIndex !== null) return;
     
-    const point = storyPoints[index];
-    
-    // Check if this scene already has a generated image
-    if (point.generatedImage) {
-      // Image exists → regenerate image using regenerateSingleStoryScene
-      await regenerateSingleStoryScene(index);
-      return;
-    }
-    
-    // No image yet → only regenerate text
     setRegeneratingPointIndex(index);
     setRegeneratingCardIndex(index); // Start flip-away animation
+    
+    // Clear previous error
+    setStoryPoints(prev => prev.map((p, idx) => {
+      if (idx === index) {
+        return { ...p, generationError: undefined };
+      }
+      return p;
+    }));
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout for text
+    
     try {
-      const currentPoint = point.versions[point.currentVersion];
-      const prevPoint = index > 0 ? storyPoints[index - 1].versions[storyPoints[index - 1].currentVersion] : null;
-      const nextPoint = index < storyPoints.length - 1 ? storyPoints[index + 1].versions[storyPoints[index + 1].currentVersion] : null;
+      const point = storyPoints[index];
+      const prevPoint = index > 0 ? storyPoints[index - 1] : null;
+      const nextPoint = index < storyPoints.length - 1 ? storyPoints[index + 1] : null;
       
+      // Step 1: Regenerate ALL metadata via AI (structured JSON)
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Story-Idee: "${storyIdea}"
+                text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
-Generiere eine NEUE Alternative für diesen Story-Punkt (Punkt ${index + 1} von ${storyPoints.length}):
-"${currentPoint}"
+STORY-IDEE: "${storyIdea}"
+HAUPTORT: "${storyboardMainLocation}"
 
-${prevPoint ? `Vorheriger Punkt: "${prevPoint}"` : "Dies ist der erste Punkt."}
-${nextPoint ? `Nächster Punkt: "${nextPoint}"` : "Dies ist der letzte Punkt."}
+Generiere eine KOMPLETT NEUE Alternative für Szene ${index + 1} von ${storyPoints.length}.
 
-Die neue Version soll:
-- 1-2 Sätze lang sein
-- Eine andere Perspektive oder Variation der Szene zeigen
-- Trotzdem logisch in die Geschichte passen
+Bisherige Szene: "${point.versions[point.currentVersion]}"
+${prevPoint ? `Vorherige Szene: "${prevPoint.versions[prevPoint.currentVersion]}"` : "Dies ist die erste Szene."}
+${nextPoint ? `Nächste Szene: "${nextPoint.versions[nextPoint.currentVersion]}"` : "Dies ist die letzte Szene."}
 
-Antworte NUR mit dem neuen Story-Punkt, ohne Erklärung. Auf Deutsch.`
+WICHTIG: Antworte NUR mit diesem validen JSON-Format:
+{
+  "summary": "1-Satz Zusammenfassung (max. 15 Wörter)",
+  "specificArea": "Welcher Bereich des Hauptorts (z.B. 'im Flur', 'auf dem Balkon')",
+  "keyAction": "Die EINE zentrale Aktion/Gestik der Person",
+  "emotion": "Die sichtbare Emotion (z.B. 'melancholisch', 'hoffnungsvoll')",
+  "detailedDescription": "Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut",
+  "cameraAngle": "eye-level|low-angle|high-angle|dutch-angle|over-shoulder|bird-eye|worm-eye",
+  "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-full-shot|full-shot|long-shot|extreme-long-shot"
+}
+
+REGELN:
+- Die neue Szene MUSS sich deutlich von der bisherigen unterscheiden
+- Der Hauptort bleibt gleich, nur der Bereich wechselt
+- Die Szene muss logisch in die Geschichte passen
+- NUR realistische Szenarien
+- Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen`
               }]
-            }]
+            }],
+            generationConfig: {
+              temperature: 0.9,
+              maxOutputTokens: 1000
+            }
           }),
         }
       );
+      
+      clearTimeout(timeoutId);
 
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (text) {
-          setStoryPoints(prev => prev.map((p, i) => {
-            if (i === index) {
-              return {
-                ...p,
-                versions: [...p.versions, text],
-                currentVersion: p.versions.length
-              };
-            }
-            return p;
-          }));
-          // Trigger flip-back animation for this card
-          setRegeneratingCardIndex(null);
-          setJustFinishedIndex(index);
-          setFlippedCards(prev => new Set(prev).add(index));
-          setTimeout(() => setJustFinishedIndex(null), 700);
-        }
+      if (!response.ok) {
+        throw new Error(getErrorMessageFromStatus(response.status, "Text"));
       }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      
+      if (!text) {
+        throw new Error("Keine Antwort von der KI");
+      }
+      
+      // Parse the structured JSON response
+      const cleanedText = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("KI-Antwort konnte nicht verarbeitet werden");
+      }
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Step 2: Update the story point with ALL new AI-chosen metadata
+      const updatedPoint = {
+        ...point,
+        versions: [...point.versions, parsed.detailedDescription || parsed.summary || ""],
+        currentVersion: point.versions.length,
+        summary: parsed.summary || "",
+        detailedDescription: parsed.detailedDescription || "",
+        specificArea: parsed.specificArea || "",
+        keyAction: parsed.keyAction || "",
+        emotion: parsed.emotion || "",
+        cameraAngle: parsed.cameraAngle || "",
+        shotType: parsed.shotType || "",
+      };
+      
+      setStoryPoints(prev => prev.map((p, i) => {
+        if (i === index) {
+          return updatedPoint;
+        }
+        return p;
+      }));
+      
+      // Trigger flip-back for card (text is done)
+      setRegeneratingCardIndex(null);
+      setJustFinishedIndex(index);
+      setFlippedCards(prev => new Set(prev).add(index));
+      setTimeout(() => setJustFinishedIndex(null), 700);
+      
+      // Step 3: Now also regenerate the image with the new metadata
+      // Small delay to let the card flip settle visually
+      setRegeneratingPointIndex(null); // Reset so regenerateSingleStoryScene can start
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await regenerateSingleStoryScene(index, updatedPoint);
+      
     } catch (error) {
-      console.error("Failed to regenerate story point:", error);
-    } finally {
+      clearTimeout(timeoutId);
+      let errorMessage = "Unbekannter Fehler";
+      if (error instanceof Error) {
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung – keine Antwort nach 20s" : error.message;
+      }
+      console.error("Failed to regenerate story point:", errorMessage);
+      
+      setStoryPoints(prev => prev.map((p, idx) => {
+        if (idx === index) {
+          return { ...p, generationError: errorMessage };
+        }
+        return p;
+      }));
+      
+      // Reset animation on error
+      setRegeneratingCardIndex(null);
       setRegeneratingPointIndex(null);
     }
   };
