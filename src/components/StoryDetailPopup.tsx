@@ -308,6 +308,66 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     onFinalizeScene(expandedIndex);
   };
 
+  // Zoom handlers for image preview
+  const handleImageWheel = (e: React.WheelEvent<HTMLImageElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Mouse position relative to image center in pixels
+    const mouseXPx = e.clientX - (rect.left + rect.width / 2);
+    const mouseYPx = e.clientY - (rect.top + rect.height / 2);
+    
+    const delta = e.deltaY > 0 ? -0.25 : 0.25;
+    const newZoom = Math.min(Math.max(imageZoom + delta, 1), 4);
+    
+    if (newZoom === 1) {
+      setImagePosition({ x: 0, y: 0 });
+    } else {
+      // To keep the point under cursor fixed
+      const zoomRatio = newZoom / imageZoom;
+      
+      setImagePosition(prev => ({
+        x: prev.x * zoomRatio + (mouseXPx / rect.width * 100) * (1 - zoomRatio),
+        y: prev.y * zoomRatio + (mouseYPx / rect.height * 100) * (1 - zoomRatio)
+      }));
+    }
+    
+    setImageZoom(newZoom);
+  };
+
+  const handleImageMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (imageZoom <= 1) return;
+    e.preventDefault();
+    setIsDraggingImage(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (imageZoom <= 1 || !isDraggingImage) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Scale drag speed with zoom level
+    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100 * imageZoom;
+    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100 * imageZoom;
+    
+    const maxOffset = (imageZoom - 1) * 50;
+    setImagePosition(prev => ({
+      x: Math.max(-maxOffset, Math.min(maxOffset, prev.x + deltaX)),
+      y: Math.max(-maxOffset, Math.min(maxOffset, prev.y + deltaY))
+    }));
+    
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseUp = () => {
+    setIsDraggingImage(false);
+  };
+
+  const handleImageMouseLeave = () => {
+    setIsDraggingImage(false);
+  };
+
   // Get display labels for camera settings (for collapsed state)
   const cameraTagsDisplay = [point.shotType && SHOT_TYPE_OPTIONS.find(s => s.value === point.shotType)?.label, point.cameraAngle && CAMERA_ANGLE_OPTIONS.find(a => a.value === point.cameraAngle)?.label].filter(Boolean);
 
