@@ -350,9 +350,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
       </div>
       
       {/* Image Preview */}
-      <div className="relative rounded-lg overflow-hidden bg-muted/30 aspect-video border border-border/30">
+      <div className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px]">
         {point.generatedImage ? <>
-            <img src={point.generatedImage} alt="Generiertes Bild" className="w-full h-full object-cover" />
+            <img src={point.generatedImage} alt="Generiertes Bild" className="max-w-full max-h-[400px] object-contain" />
             {regeneratingIndex === expandedIndex && <div className="absolute inset-0 bg-background/80 flex items-center justify-center backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
