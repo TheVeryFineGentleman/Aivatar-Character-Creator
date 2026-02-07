@@ -1723,19 +1723,20 @@ ${nextScene ? `NÄCHSTE SZENE (Szene ${i + 2}): "${nextSceneText}" - Das End-Fra
 VERFÜGBARE KAMERABEWEGUNGEN (wähle eine passende):
 ${availableMovements.length > 0 ? availableMovements.map(m => `- "${m.id}": ${m.label} - ${m.description}`).join('\n') : VEO3_CAMERA_MOVEMENTS.map(m => `- "${m.id}": ${m.label}`).join('\n')}
 
-WICHTIGES KONZEPT - START-FRAME UND END-FRAME:
-- Das VIDEO wird später so generiert: Das Bild der AKTUELLEN Szene ist der START-FRAME, das Bild der NÄCHSTEN Szene ist der END-FRAME
-- Die Video-KI animiert den Übergang vom Start-Frame zum End-Frame
-- Es soll einen HARD CUT geben - also einen abrupten, sofortigen Schnitt. KEIN sanfter Übergang, KEIN Fade, KEIN Dissolve, KEIN Morphing
-- Beschreibe die Bewegung und Aktion die INNERHALB dieser Szene passiert, vom Startbild ausgehend
-- Der Prompt soll klar machen: "Hard cut to next scene" am Ende
+WICHTIGES KONZEPT - START-FRAME UND END-FRAME UND MID-VIDEO HARD CUT:
+- Das VIDEO wird später so generiert: Das Bild der AKTUELLEN Szene (Szene ${i + 1}) ist der START-FRAME, das Bild der NÄCHSTEN Szene (Szene ${i + 2}) ist der END-FRAME
+- Die Video-KI bekommt beide Frames und generiert ein Video dazwischen
+- STRUKTUR DES VIDEOS: Die erste Hälfte zeigt die Animation/Bewegung der AKTUELLEN Szene (Start-Frame). Dann gibt es einen ABRUPTEN HARD CUT (kein Fade, kein Dissolve, kein Morphing, kein sanfter Übergang!) und das Video springt sofort zum END-FRAME (nächste Szene). Die restliche kurze Zeit zeigt die nächste Szene kurz in Bewegung.
+- Der Hard Cut soll ca. 70-80% durch das Video passieren (also relativ spät, kurz vor Ende)
+- Beschreibe im Prompt EXPLIZIT: "At approximately 70-80% through the video, there is an abrupt hard cut - an instantaneous, jarring transition with no fade, dissolve or morphing - cutting directly to [END-FRAME Beschreibung]."
 
 ANFORDERUNGEN:
-- Beschreibe präzise: Startzustand (= das generierte Bild dieser Szene), Kamerabewegung, Charakter-Bewegung, Endzustand
+- Beschreibe präzise: Startzustand (= das generierte Bild dieser Szene), Kamerabewegung, Charakter-Bewegung
 - Integriere ALLE oben genannten Metadaten in den Prompt
 - Beschreibe Licht, Atmosphäre, Tempo und Stimmung
-- Schreibe am Ende des Prompts explizit: "The scene ends with an abrupt hard cut to black."
-- Der Endzustand muss NICHT sanft in die nächste Szene überleiten - es ist ein harter Schnitt
+- Der Prompt MUSS den Hard Cut als dramatisches Stilmittel beschreiben - es ist ein bewusster, abrupter Schnitt mitten im Video
+- Nach dem Hard Cut: Beschreibe kurz was im End-Frame (nächste Szene) zu sehen ist und welche minimale Bewegung dort stattfindet
+- KEIN "fade to black", KEIN "dissolve", KEIN "smooth transition" - NUR ein harter, sofortiger Schnitt
 
 Antworte NUR mit einem JSON-Objekt:
 {
