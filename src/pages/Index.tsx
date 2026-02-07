@@ -1003,16 +1003,9 @@ REGELN:
         return p;
       }));
       
-      // Trigger flip-back for card (text is done)
-      setRegeneratingCardIndex(null);
-      setJustFinishedIndex(index);
-      setFlippedCards(prev => new Set(prev).add(index));
-      setTimeout(() => setJustFinishedIndex(null), 700);
-      
-      // Step 3: Now also regenerate the image with the new metadata
-      // Small delay to let the card flip settle visually
+      // Step 3: Now regenerate the image with the new metadata
+      // Card stays flipped (regeneratingCardIndex remains set) - no intermediate flip-back
       setRegeneratingPointIndex(null);
-      await new Promise(resolve => setTimeout(resolve, 300));
       await regenerateSingleStoryScene(index, updatedPoint, true); // skipGuard: bypass stale closure check
       
     } catch (error) {
@@ -1828,7 +1821,9 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     if (!skipGuard && regeneratingPointIndex !== null) return;
     
     setRegeneratingPointIndex(sceneIndex);
-    setRegeneratingCardIndex(sceneIndex); // Start flip-away animation
+    if (!skipGuard) {
+      setRegeneratingCardIndex(sceneIndex); // Start flip-away animation (skip if already flipped from regenerateStoryPoint)
+    }
     
     // Clear previous error
     setStoryPoints(prev => prev.map((p, idx) => {
