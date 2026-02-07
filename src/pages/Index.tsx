@@ -209,6 +209,8 @@ const Index = () => {
   const [allVideoPrompts, setAllVideoPrompts] = useState<string[]>([]);
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isGeneratingVideoPrompt, setIsGeneratingVideoPrompt] = useState(false);
+  const [isGeneratingVideoPrompts, setIsGeneratingVideoPrompts] = useState(false);
+  const [generatingVideoPromptIndex, setGeneratingVideoPromptIndex] = useState<number | null>(null);
   const [promptChatInput, setPromptChatInput] = useState("");
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [videoPromptOpen, setVideoPromptOpen] = useState(false);
@@ -453,6 +455,71 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
       }
     } catch (error) {
       console.error("Scene assistant error:", error);
+    } finally {
+      setIsGeneratingSceneAssistant(false);
+    }
+  };
+
+  // Video Prompt AI Assistant - optimizes existing video prompt based on user input
+  const handleVideoPromptAssistant = async () => {
+    if (!apiKey || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
+    
+    const currentPoint = storyPoints[expandedStoryPointIndex];
+    if (!currentPoint.videoPrompt && !sceneAssistantInput.trim()) return;
+    
+    setIsGeneratingSceneAssistant(true);
+    try {
+      const sceneText = currentPoint.detailedDescription || currentPoint.versions[currentPoint.currentVersion] || "";
+      
+      const promptRequest = `Du bist ein professioneller Video-Prompt-Autor für KI-Video-Generatoren.
+
+AKTUELLER VIDEO PROMPT:
+"${currentPoint.videoPrompt || 'Noch kein Video-Prompt vorhanden.'}"
+
+SZENEN-KONTEXT:
+"${sceneText}"
+${currentPoint.emotion ? `Emotion: ${currentPoint.emotion}` : ''}
+${currentPoint.keyAction ? `Aktion: ${currentPoint.keyAction}` : ''}
+${currentPoint.cameraAngle ? `Kamerawinkel: ${currentPoint.cameraAngle}` : ''}
+${currentPoint.shotType ? `Shot-Typ: ${currentPoint.shotType}` : ''}
+
+NUTZERANWEISUNG:
+"${sceneAssistantInput.trim() || 'Optimiere den Video-Prompt für maximale visuelle Wirkung und Detailgrad.'}"
+
+Erstelle einen VERBESSERTEN Video-Prompt (ca. 200 Wörter, auf Englisch) basierend auf der Nutzeranweisung.
+Der Prompt soll präzise Kamerabewegungen, Charakter-Aktionen, Licht und Atmosphäre beschreiben.
+
+Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklärungen.`;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
+          body: JSON.stringify({
+            prompt: promptRequest,
+            mode: "text",
+            apiKey: apiKey
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.text) {
+          const idx = expandedStoryPointIndex;
+          setStoryPoints(prev => prev.map((p, i) => {
+            if (i !== idx) return p;
+            return { ...p, videoPrompt: result.text.trim() };
+          }));
+          setSceneAssistantInput("");
+        }
+      }
+    } catch (error) {
+      console.error("Video prompt assistant error:", error);
     } finally {
       setIsGeneratingSceneAssistant(false);
     }
@@ -1601,6 +1668,134 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     
     setGeneratingStoryImageIndex(null);
     setIsGeneratingStoryImages(false);
+  };
+
+  // Generate detailed ~200-word video prompts for all scenes
+  const generateVideoPrompts = async () => {
+    if (!apiKey || storyPoints.length === 0 || isGeneratingVideoPrompts) return;
+    
+    setIsGeneratingVideoPrompts(true);
+    
+    for (let i = 0; i < storyPoints.length; i++) {
+      const point = storyPoints[i];
+      if (!point.generatedImage) continue;
+      
+      setGeneratingVideoPromptIndex(i);
+      
+      // Gather all scene metadata
+      const sceneText = point.detailedDescription || point.versions[point.currentVersion] || "";
+      const previousEndState = i > 0 ? storyPoints[i - 1]?.veo3EndState : null;
+      const usedMovements = storyPoints.slice(0, i).map(p => p.veo3CameraMovement).filter(Boolean);
+      const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id));
+      
+      // Build metadata context
+      const metadataLines: string[] = [];
+      if (point.emotion) metadataLines.push(`Emotion: ${emotionToEnglish[point.emotion] || point.emotion}`);
+      if (point.keyAction) metadataLines.push(`Pose/Aktion: ${actionToEnglish[point.keyAction] || point.keyAction}`);
+      if (point.specificArea) metadataLines.push(`Bereich: ${areaToEnglish[point.specificArea] || point.specificArea}`);
+      if (point.cameraAngle) metadataLines.push(`Kamerawinkel: ${cameraAngleToEnglish[point.cameraAngle] || point.cameraAngle}`);
+      if (point.shotType) metadataLines.push(`Shot-Typ: ${shotTypeToEnglish[point.shotType] || point.shotType}`);
+      if (point.composition) metadataLines.push(`Komposition: ${compositionToEnglish[point.composition] || point.composition}`);
+      if (point.movement) metadataLines.push(`Kamerabewegung: ${movementToEnglish[point.movement] || point.movement}`);
+      if (point.audienceEffect) metadataLines.push(`Wirkung: ${effectToEnglish[point.audienceEffect] || point.audienceEffect}`);
+      if (storyboardMainLocation) metadataLines.push(`Hauptort: ${storyboardMainLocation}`);
+      if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
+      if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
+      
+      const videoPromptRequest = `Du bist ein professioneller Video-Prompt-Autor für KI-Video-Generatoren wie Veo3 oder Kling.
+
+Erstelle einen DETAILLIERTEN Video-Animations-Prompt (ca. 200 Wörter, auf Englisch) für folgende Szene:
+
+SZENE ${i + 1} VON ${storyPoints.length}:
+"${sceneText}"
+
+SZENEN-METADATEN:
+${metadataLines.length > 0 ? metadataLines.join('\n') : 'Keine spezifischen Einstellungen'}
+
+${previousEndState ? `VORHERIGE SZENE ENDETE MIT: "${previousEndState}" - Stelle einen nahtlosen Übergang sicher.` : 'Dies ist die ERSTE Szene. Beginne mit einem eindrucksvollen Einstieg.'}
+
+VERFÜGBARE KAMERABEWEGUNGEN (wähle eine passende):
+${availableMovements.length > 0 ? availableMovements.map(m => `- "${m.id}": ${m.label} - ${m.description}`).join('\n') : VEO3_CAMERA_MOVEMENTS.map(m => `- "${m.id}": ${m.label}`).join('\n')}
+
+ANFORDERUNGEN:
+- Beschreibe präzise: Startzustand, Kamerabewegung, Charakter-Bewegung, Endzustand
+- Integriere ALLE oben genannten Metadaten in den Prompt
+- Der Prompt soll das generierte Bild als Startframe beschreiben
+- Beschreibe Licht, Atmosphäre, Tempo und Stimmung
+- Schließe mit einem klaren Endzustand für den Übergang zur nächsten Szene
+
+Antworte NUR mit einem JSON-Objekt:
+{
+  "videoPrompt": "Der vollständige englische Video-Prompt (ca. 200 Wörter)",
+  "cameraMovement": "eine der verfügbaren Kamerabewegungen-IDs",
+  "startState": "Beschreibung des Startframes (deutsch, 1 Satz)",
+  "motion": "Beschreibung der Bewegung (deutsch, 1 Satz)",
+  "endState": "Beschreibung des Endframes (deutsch, 1 Satz)"
+}`;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            body: JSON.stringify({
+              prompt: videoPromptRequest,
+              mode: "text",
+              apiKey: apiKey
+            })
+          }
+        );
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.text) {
+            const text = result.text.trim();
+            try {
+              const jsonMatch = text.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                setStoryPoints(prev => prev.map((p, idx) => {
+                  if (idx !== i) return p;
+                  return {
+                    ...p,
+                    videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
+                    veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
+                    veo3StartState: parsed.startState || p.veo3StartState || "",
+                    veo3Motion: parsed.motion || p.veo3Motion || "",
+                    veo3EndState: parsed.endState || p.veo3EndState || "",
+                  };
+                }));
+              } else {
+                // Fallback: use raw text as video prompt
+                setStoryPoints(prev => prev.map((p, idx) => {
+                  if (idx !== i) return p;
+                  return { ...p, videoPrompt: text };
+                }));
+              }
+            } catch (e) {
+              setStoryPoints(prev => prev.map((p, idx) => {
+                if (idx !== i) return p;
+                return { ...p, videoPrompt: text };
+              }));
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`Video prompt generation failed for scene ${i + 1}:`, error);
+      }
+      
+      // Small delay between requests to avoid rate limiting
+      if (i < storyPoints.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    setGeneratingVideoPromptIndex(null);
+    setIsGeneratingVideoPrompts(false);
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
@@ -5134,40 +5329,96 @@ Beispiel einer korrekten Antwort:
                   </Button>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={generateStoryImagesAndPrompts}
-                        disabled={isGeneratingStoryImages || isGeneratingStoryboard}
-                        className="flex-1"
-                      >
-                        {isGeneratingStoryImages ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Generiere Szene {(generatingStoryImageIndex ?? 0) + 1}/{storyPoints.length}...
-                          </>
-                        ) : (
-                          <>
-                            <ImageIcon className="w-4 h-4 mr-2" />
-                            Bilder generieren
-                          </>
-                        )}
-                      </Button>
-                      {/* Veo3 Format Dropdown */}
-                      <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
-                        <SelectTrigger className="w-[130px] shrink-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {VEO3_FORMAT_OPTIONS.map(opt => (
-                            <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="flex gap-2 items-center">
+                      {/* If images exist: small "Bilder neu generieren" + format dropdown + big "Video Prompt generieren" */}
+                      {storyPoints.some(p => p.generatedImage) ? (
+                        <>
+                          <Button
+                            onClick={generateStoryImagesAndPrompts}
+                            disabled={isGeneratingStoryImages || isGeneratingStoryboard || isGeneratingVideoPrompts}
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                          >
+                            {isGeneratingStoryImages ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                Szene {(generatingStoryImageIndex ?? 0) + 1}/{storyPoints.length}
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                                Bilder neu generieren
+                              </>
+                            )}
+                          </Button>
+                          {/* Veo3 Format Dropdown */}
+                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+                            <SelectTrigger className="w-[130px] shrink-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {VEO3_FORMAT_OPTIONS.map(opt => (
+                                <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            onClick={generateVideoPrompts}
+                            disabled={isGeneratingVideoPrompts || isGeneratingStoryImages || isGeneratingStoryboard}
+                            className="flex-1"
+                          >
+                            {isGeneratingVideoPrompts ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Video Prompt {(generatingVideoPromptIndex ?? 0) + 1}/{storyPoints.length}...
+                              </>
+                            ) : (
+                              <>
+                                <Video className="w-4 h-4 mr-2" />
+                                Video Prompt generieren
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {/* No images yet: big "Bilder generieren" button + format dropdown */}
+                          <Button
+                            onClick={generateStoryImagesAndPrompts}
+                            disabled={isGeneratingStoryImages || isGeneratingStoryboard}
+                            className="flex-1"
+                          >
+                            {isGeneratingStoryImages ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generiere Szene {(generatingStoryImageIndex ?? 0) + 1}/{storyPoints.length}...
+                              </>
+                            ) : (
+                              <>
+                                <ImageIcon className="w-4 h-4 mr-2" />
+                                Bilder generieren
+                              </>
+                            )}
+                          </Button>
+                          {/* Veo3 Format Dropdown */}
+                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+                            <SelectTrigger className="w-[130px] shrink-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {VEO3_FORMAT_OPTIONS.map(opt => (
+                                <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="destructive"
-                            disabled={isGeneratingStoryboard || isGeneratingStoryImages}
+                            disabled={isGeneratingStoryboard || isGeneratingStoryImages || isGeneratingVideoPrompts}
                             className="shrink-0"
                           >
                             <X className="w-4 h-4 mr-2" />
@@ -5194,7 +5445,7 @@ Beispiel einer korrekten Antwort:
                     {storyPoints.some(p => p.generatedImage) && (
                       <Button
                         onClick={exportForVeo3}
-                        disabled={isExportingVeo3 || isGeneratingStoryImages}
+                        disabled={isExportingVeo3 || isGeneratingStoryImages || isGeneratingVideoPrompts}
                         variant="secondary"
                         className="w-full"
                       >
@@ -5595,22 +5846,22 @@ Beispiel einer korrekten Antwort:
                       onAssistantSubmit={(mode) => {
                         if (mode === "text") {
                           handleSceneAssistant();
+                        } else if (mode === "video") {
+                          // Video prompt mode - handled in StoryDetailPopup via onUpdateVideoPrompt
+                          handleVideoPromptAssistant();
                         } else {
                           regenerateSingleStoryScene(expandedStoryPointIndex);
                         }
                       }}
                       onCopyVideoPrompt={() => {
                         const point = storyPoints[expandedStoryPointIndex];
-                        const cameraInfo = VEO3_CAMERA_MOVEMENTS.find(m => m.id === point.veo3CameraMovement);
-                        const copyText = `${point.videoPrompt || ''}
-
---- STRUKTURIERTE DETAILS ---
-Kamerabewegung: ${cameraInfo?.label || 'Nicht definiert'}
-Start: ${point.veo3StartState || 'Nicht definiert'}
-Bewegung: ${point.veo3Motion || 'Nicht definiert'}
-Ende: ${point.veo3EndState || 'Nicht definiert'}`;
+                        const copyText = point.videoPrompt || '';
                         navigator.clipboard.writeText(copyText);
-                        navigator.clipboard.writeText(copyText);
+                      }}
+                      onUpdateVideoPrompt={(index, videoPrompt) => {
+                        setStoryPoints(prev => prev.map((p, i) => 
+                          i === index ? { ...p, videoPrompt } : p
+                        ));
                       }}
                       totalScenes={storyPoints.length}
                       finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2 } from "lucide-react";
+import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy } from "lucide-react";
 import { FullscreenLightbox } from "@/components/FullscreenLightbox";
 
 // Types
@@ -64,8 +64,9 @@ interface StoryDetailPopupProps {
   sceneAssistantInput: string;
   setSceneAssistantInput: (value: string) => void;
   isGeneratingAssistant: boolean;
-  onAssistantSubmit: (mode: "text" | "image") => void;
+  onAssistantSubmit: (mode: "text" | "image" | "video") => void;
   onCopyVideoPrompt: () => void;
+  onUpdateVideoPrompt: (index: number, videoPrompt: string) => void;
   totalScenes: number;
   finalizedCount: number;
   aspectRatio?: string; // "16:9" or "9:16"
@@ -253,6 +254,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   isGeneratingAssistant,
   onAssistantSubmit,
   onCopyVideoPrompt,
+  onUpdateVideoPrompt,
   totalScenes,
   finalizedCount,
   aspectRatio = "16:9"
@@ -265,7 +267,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   });
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
-  const [aiMode, setAiMode] = useState<"text" | "image">("text");
+  const [aiMode, setAiMode] = useState<"text" | "image" | "video">("text");
   
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
@@ -536,26 +538,43 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <p className="text-xs">Vorschau ist aktuell</p>
         </div>}
       
-      {/* Action Buttons - Redesigned */}
+      {/* Action Buttons - Simplified */}
       <div className="space-y-3">
         {/* Regenerate Button - Highlighted when dirty */}
         <Button variant={isDirty ? "default" : "outline"} className={`w-full gap-2 h-11 text-sm font-medium transition-all ${isDirty ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse' : 'hover:bg-muted/50'}`} onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={regeneratingIndex !== null}>
-          {regeneratingIndex === expandedIndex ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className={`w-4 h-4 ${isDirty ? '' : ''}`} />}
+          {regeneratingIndex === expandedIndex ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className={`w-4 h-4`} />}
           {isDirty ? '↻ Vorschau jetzt aktualisieren' : 'Vorschau neu generieren'}
         </Button>
-        
-        {/* Finalize Button */}
-        <Button className={`w-full gap-2 h-11 text-sm font-medium transition-all ${status.variant === 'final' && !isDirty ? 'bg-green-600/30 text-green-500 cursor-not-allowed border border-green-600/30' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-600/25'}`} onClick={handleFinalize} disabled={status.variant === 'final' && !isDirty}>
-          <Check className="w-4 h-4" />
-          {status.variant === 'final' && !isDirty ? 'Bereits finalisiert ✓' : 'Als final übernehmen'}
-        </Button>
-        
-        {/* Discard Button */}
-        {hasFinalized && isDirty && <Button variant="ghost" className="w-full gap-2 h-9 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onDiscardChanges(expandedIndex)}>
-            <Undo2 className="w-3.5 h-3.5" />
-            Änderungen verwerfen
-          </Button>}
       </div>
+      
+      {/* Video Prompt Display */}
+      {point.videoPrompt && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Video className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-medium text-foreground">Video Prompt</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                navigator.clipboard.writeText(point.videoPrompt || '');
+              }}
+            >
+              <Copy className="w-3 h-3" />
+              Kopieren
+            </Button>
+          </div>
+          <Textarea
+            value={point.videoPrompt}
+            onChange={(e) => onUpdateVideoPrompt(expandedIndex, e.target.value)}
+            className="text-xs min-h-[100px] resize-none bg-muted/30 border-border/30"
+            placeholder="Video Prompt wird hier angezeigt..."
+          />
+        </div>
+      )}
       
       {inMobileOverlay && <Button variant="outline" className="w-full mt-4" onClick={() => setShowMobilePreview(false)}>
           Schließen
@@ -565,24 +584,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
       {/* Backdrop */}
       <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={onClose} />
       
-      {/* Dirty State Banner */}
-      {isDirty && <div className="fixed top-0 left-0 right-0 z-[115] bg-orange-500/10 border-b border-orange-500/30 px-4 py-2" role="alert" aria-live="assertive">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2 text-orange-500">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">Nicht gespeicherte Änderungen</span>
-              <span className="text-sm text-orange-500/80 hidden sm:inline">
-                – Klicke auf "Als final übernehmen" um deine Änderungen zu sichern.
-              </span>
-            </div>
-            {hasFinalized && <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 h-7" onClick={() => onDiscardChanges(expandedIndex)}>
-                Verwerfen
-              </Button>}
-          </div>
-        </div>}
-      
       {/* Main Container - NOT fullscreen, centered with solid background */}
-      <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-8 px-4 ${isDirty ? 'pt-16' : ''}`}>
+      <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-8 px-4`}>
         <div className={`bg-card border border-border rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
           {/* Sticky Header */}
           <div className="bg-card border-b border-border/30 flex items-center justify-between px-4 py-3 shrink-0 rounded-t-xl">
@@ -850,20 +853,24 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                   <ImageIcon className="w-3.5 h-3.5" />
                   Bild regenerieren
                 </Button>
+                <Button variant={aiMode === "video" ? "default" : "ghost"} size="sm" className={`h-7 px-3 text-xs gap-1.5 ${aiMode === "video" ? "" : "text-muted-foreground hover:text-foreground"}`} onClick={() => setAiMode("video")}>
+                  <Video className="w-3.5 h-3.5" />
+                  Video Prompt
+                </Button>
               </div>
             </div>
             
             {/* Input area */}
             <div className="flex gap-3 items-stretch">
               <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[80px]">
-                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder={aiMode === "text" ? 'Beschreibe was du ändern möchtest, z.B. "Mache es dramatischer" oder "Ändere zu Nahaufnahme"...' : 'Beschreibe spezielle Bild-Anweisungen oder lasse leer für Standard-Regenerierung...'} className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
+                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder={aiMode === "text" ? 'Beschreibe was du ändern möchtest, z.B. "Mache es dramatischer" oder "Ändere zu Nahaufnahme"...' : aiMode === "video" ? 'Beschreibe wie der Video-Prompt angepasst werden soll, z.B. "Mehr Kamerabewegung" oder "Langsamer und dramatischer"...' : 'Beschreibe spezielle Bild-Anweisungen oder lasse leer für Standard-Regenerierung...'} className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   onAssistantSubmit(aiMode);
                 }
               }} />
               </div>
-              <Button className="h-[80px] w-12 rounded-lg" onClick={() => onAssistantSubmit(aiMode)} disabled={isGeneratingAssistant || regeneratingIndex !== null || aiMode === "text" && !sceneAssistantInput.trim()}>
+              <Button className="h-[80px] w-12 rounded-lg" onClick={() => onAssistantSubmit(aiMode)} disabled={isGeneratingAssistant || regeneratingIndex !== null || (aiMode === "text" && !sceneAssistantInput.trim()) || (aiMode === "video" && !sceneAssistantInput.trim() && !point.videoPrompt)}>
                 {isGeneratingAssistant ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
               </Button>
             </div>
