@@ -1722,6 +1722,8 @@ ANFORDERUNGEN:
 - Integriere ALLE oben genannten Metadaten in den Prompt
 - Der Prompt soll das generierte Bild als Startframe beschreiben
 - Beschreibe Licht, Atmosphäre, Tempo und Stimmung
+- Die Szene MUSS mit einem HARD CUT enden (abrupter, sofortiger Schnitt zur nächsten Szene - KEIN Fade, KEIN Überblenden, KEIN Dissolve)
+- Schreibe am Ende des Prompts explizit: "The scene ends with a hard cut."
 - Schließe mit einem klaren Endzustand für den Übergang zur nächsten Szene
 
 Antworte NUR mit einem JSON-Objekt:
