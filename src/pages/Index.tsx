@@ -1702,6 +1702,10 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
       if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
       
+      const isLastScene = i === storyPoints.length - 1;
+      const nextScene = !isLastScene ? storyPoints[i + 1] : null;
+      const nextSceneText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "") : "";
+      
       const videoPromptRequest = `Du bist ein professioneller Video-Prompt-Autor für KI-Video-Generatoren wie Veo3 oder Kling.
 
 Erstelle einen DETAILLIERTEN Video-Animations-Prompt (ca. 200 Wörter, auf Englisch) für folgende Szene:
@@ -1714,17 +1718,24 @@ ${metadataLines.length > 0 ? metadataLines.join('\n') : 'Keine spezifischen Eins
 
 ${previousEndState ? `VORHERIGE SZENE ENDETE MIT: "${previousEndState}" - Stelle einen nahtlosen Übergang sicher.` : 'Dies ist die ERSTE Szene. Beginne mit einem eindrucksvollen Einstieg.'}
 
+${nextScene ? `NÄCHSTE SZENE (Szene ${i + 2}): "${nextSceneText}" - Das End-Frame dieser Szene soll visuell zur nächsten Szene hinführen.` : 'Dies ist die LETZTE Szene. Beende mit einem starken Abschluss.'}
+
 VERFÜGBARE KAMERABEWEGUNGEN (wähle eine passende):
 ${availableMovements.length > 0 ? availableMovements.map(m => `- "${m.id}": ${m.label} - ${m.description}`).join('\n') : VEO3_CAMERA_MOVEMENTS.map(m => `- "${m.id}": ${m.label}`).join('\n')}
 
+WICHTIGES KONZEPT - START-FRAME UND END-FRAME:
+- Das VIDEO wird später so generiert: Das Bild der AKTUELLEN Szene ist der START-FRAME, das Bild der NÄCHSTEN Szene ist der END-FRAME
+- Die Video-KI animiert den Übergang vom Start-Frame zum End-Frame
+- Es soll einen HARD CUT geben - also einen abrupten, sofortigen Schnitt. KEIN sanfter Übergang, KEIN Fade, KEIN Dissolve, KEIN Morphing
+- Beschreibe die Bewegung und Aktion die INNERHALB dieser Szene passiert, vom Startbild ausgehend
+- Der Prompt soll klar machen: "Hard cut to next scene" am Ende
+
 ANFORDERUNGEN:
-- Beschreibe präzise: Startzustand, Kamerabewegung, Charakter-Bewegung, Endzustand
+- Beschreibe präzise: Startzustand (= das generierte Bild dieser Szene), Kamerabewegung, Charakter-Bewegung, Endzustand
 - Integriere ALLE oben genannten Metadaten in den Prompt
-- Der Prompt soll das generierte Bild als Startframe beschreiben
 - Beschreibe Licht, Atmosphäre, Tempo und Stimmung
-- Die Szene MUSS mit einem HARD CUT enden (abrupter, sofortiger Schnitt zur nächsten Szene - KEIN Fade, KEIN Überblenden, KEIN Dissolve)
-- Schreibe am Ende des Prompts explizit: "The scene ends with a hard cut."
-- Schließe mit einem klaren Endzustand für den Übergang zur nächsten Szene
+- Schreibe am Ende des Prompts explizit: "The scene ends with an abrupt hard cut to black."
+- Der Endzustand muss NICHT sanft in die nächste Szene überleiten - es ist ein harter Schnitt
 
 Antworte NUR mit einem JSON-Objekt:
 {
