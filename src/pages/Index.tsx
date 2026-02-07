@@ -1747,6 +1747,43 @@ Antworte NUR mit einem JSON-Objekt:
   "endState": "Beschreibung des Endframes (deutsch, 1 Satz)"
 }`;
 
+      // Collect reference images for visual context
+      const videoReferenceImages: string[] = [];
+      
+      // Add global story reference images
+      for (const imageUrl of storyReferenceImages) {
+        try {
+          const imgResponse = await fetch(imageUrl);
+          const blob = await imgResponse.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          videoReferenceImages.push(base64);
+        } catch (e) {
+          console.warn("Could not load story reference image for video prompt:", e);
+        }
+      }
+      
+      // Add previous scene's generated image as reference
+      if (i > 0 && storyPoints[i - 1]?.generatedImage) {
+        try {
+          const prevImgResponse = await fetch(storyPoints[i - 1].generatedImage!);
+          const prevBlob = await prevImgResponse.blob();
+          const prevBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(prevBlob);
+          });
+          videoReferenceImages.push(prevBase64);
+        } catch (e) {
+          console.warn("Could not load previous scene image for video prompt:", e);
+        }
+      }
+      
+      console.log(`🎬 Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${i > 0 && storyPoints[i - 1]?.generatedImage ? 1 : 0} vorherige Szene)`);
+
       try {
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
@@ -1758,6 +1795,7 @@ Antworte NUR mit einem JSON-Objekt:
             },
             body: JSON.stringify({
               prompt: videoPromptRequest,
+              referenceImages: videoReferenceImages.length > 0 ? videoReferenceImages : undefined,
               mode: "text",
               apiKey: apiKey
             })

@@ -26,9 +26,25 @@ serve(async (req) => {
       );
     }
     
-    // TEXT MODE - for video prompt generation
+    // TEXT MODE - for video prompt generation (supports optional reference images for context)
     if (mode === "text") {
       console.log("📝 Using direct Gemini API for text generation");
+      console.log("🖼️ Text mode reference images:", referenceImages?.length || 0);
+      
+      // Build parts: text first, then optional reference images
+      const textParts: any[] = [{ text: prompt }];
+      
+      if (referenceImages && referenceImages.length > 0) {
+        for (const base64Image of referenceImages) {
+          const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+          textParts.push({
+            inlineData: {
+              mimeType: "image/png",
+              data: cleanBase64
+            }
+          });
+        }
+      }
       
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -36,7 +52,7 @@ serve(async (req) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts: textParts }],
             generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
           })
         }
