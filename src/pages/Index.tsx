@@ -1766,7 +1766,7 @@ Antworte NUR mit einem JSON-Objekt:
         }
       }
       
-      // Add previous scene's generated image as reference
+      // Add previous scene's generated image as reference (i-1)
       if (i > 0 && storyPoints[i - 1]?.generatedImage) {
         try {
           const prevImgResponse = await fetch(storyPoints[i - 1].generatedImage!);
@@ -1782,7 +1782,42 @@ Antworte NUR mit einem JSON-Objekt:
         }
       }
       
-      console.log(`🎬 Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${i > 0 && storyPoints[i - 1]?.generatedImage ? 1 : 0} vorherige Szene)`);
+      // Add current scene's generated image as START-FRAME reference (i)
+      if (point.generatedImage) {
+        try {
+          const currentImgResponse = await fetch(point.generatedImage);
+          const currentBlob = await currentImgResponse.blob();
+          const currentBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(currentBlob);
+          });
+          videoReferenceImages.push(currentBase64);
+        } catch (e) {
+          console.warn("Could not load current scene image for video prompt:", e);
+        }
+      }
+      
+      // Add next scene's generated image as END-FRAME reference (i+1)
+      if (storyPoints[i + 1]?.generatedImage) {
+        try {
+          const nextImgResponse = await fetch(storyPoints[i + 1].generatedImage!);
+          const nextBlob = await nextImgResponse.blob();
+          const nextBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(nextBlob);
+          });
+          videoReferenceImages.push(nextBase64);
+        } catch (e) {
+          console.warn("Could not load next scene image for video prompt:", e);
+        }
+      }
+      
+      const prevCount = (i > 0 && storyPoints[i - 1]?.generatedImage) ? 1 : 0;
+      const currentCount = point.generatedImage ? 1 : 0;
+      const nextCount = storyPoints[i + 1]?.generatedImage ? 1 : 0;
+      console.log(`🎬 Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nächste Szene)`);
 
       try {
         const response = await fetch(
