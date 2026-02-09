@@ -317,6 +317,14 @@ const Index = () => {
   const [isExportingVeo3, setIsExportingVeo3] = useState(false);
   const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
   
+  // Video generation state (kie.ai Veo3)
+  const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
+  const [generatingVideoIndex, setGeneratingVideoIndex] = useState<number | null>(null);
+  const [videoTaskIds, setVideoTaskIds] = useState<Map<number, string>>(new Map());
+  const [videoResults, setVideoResults] = useState<Map<number, string>>(new Map());
+  const [videoErrors, setVideoErrors] = useState<Map<number, string>>(new Map());
+  const [videoGenerationPhase, setVideoGenerationPhase] = useState<"idle" | "uploading" | "generating" | "polling">("idle");
+  
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
   const [isGeneratingSceneAssistant, setIsGeneratingSceneAssistant] = useState(false);
@@ -1478,8 +1486,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
         if (attempt < maxRetries) {
           const delayMs = attempt <= 2 ? 2000 : 3000;
           console.log(`🔄 Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
-          
-          
+
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
         }
@@ -1883,6 +1890,143 @@ Antworte NUR mit einem JSON-Objekt:
     
     setGeneratingVideoPromptIndex(null);
     setIsGeneratingVideoPrompts(false);
+  };
+
+  // Generate videos via kie.ai Veo3 API for all scenes
+  const generateVideos = async () => {
+    if (storyPoints.length === 0 || isGeneratingVideos) return;
+    
+    setIsGeneratingVideos(true);
+    setVideoErrors(new Map());
+    setVideoResults(new Map());
+    setVideoTaskIds(new Map());
+    
+    const newTaskIds = new Map<number, string>();
+    
+    for (let i = 0; i < storyPoints.length; i++) {
+      const point = storyPoints[i];
+      if (!point.generatedImage || !point.videoPrompt) continue;
+      
+      setGeneratingVideoIndex(i);
+      setVideoGenerationPhase("uploading");
+      
+      try {
+        const startImgResponse = await fetch(point.generatedImage);
+        const startBlob = await startImgResponse.blob();
+        const startBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(startBlob);
+        });
+        
+        let endBase64: string | undefined;
+        if (storyPoints[i + 1]?.generatedImage) {
+          const endImgResponse = await fetch(storyPoints[i + 1].generatedImage!);
+          const endBlob = await endImgResponse.blob();
+          endBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(endBlob);
+          });
+        }
+        
+        setVideoGenerationPhase("generating");
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            body: JSON.stringify({
+              action: "generate",
+              prompt: point.videoPrompt,
+              startFrameBase64: startBase64,
+              endFrameBase64: endBase64,
+              model: "veo3_fast",
+            })
+          }
+        );
+        
+        const result = await response.json();
+        
+        if (result.success && result.taskId) {
+          console.log(`✅ Szene ${i + 1}: Video-Task gestartet, ID: ${result.taskId}`);
+          newTaskIds.set(i, result.taskId);
+          setVideoTaskIds(prev => new Map(prev).set(i, result.taskId));
+        } else {
+          console.error(`❌ Szene ${i + 1}: ${result.error}`);
+          setVideoErrors(prev => new Map(prev).set(i, result.error || "Unbekannter Fehler"));
+        }
+      } catch (error) {
+        console.error(`❌ Szene ${i + 1} Video-Generierung fehlgeschlagen:`, error);
+        setVideoErrors(prev => new Map(prev).set(i, error instanceof Error ? error.message : "Netzwerkfehler"));
+      }
+      
+      if (i < storyPoints.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    setVideoGenerationPhase("polling");
+    setGeneratingVideoIndex(null);
+    
+    const pendingTasks = new Map<number, string>(newTaskIds);
+    const maxPolls = 60;
+    let pollCount = 0;
+    
+    while (pendingTasks.size > 0 && pollCount < maxPolls) {
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      pollCount++;
+      
+      for (const [sceneIndex, taskId] of Array.from(pendingTasks.entries())) {
+        try {
+          const statusResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+              },
+              body: JSON.stringify({ action: "status", taskId })
+            }
+          );
+          
+          const statusResult = await statusResponse.json();
+          
+          if (statusResult.success) {
+            const status = statusResult.status;
+            console.log(`📊 Szene ${sceneIndex + 1} Status: ${status}`);
+            
+            if (status === "completed" || status === "success") {
+              const videoUrl = statusResult.resultUrls?.[0];
+              if (videoUrl) {
+                setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
+              }
+              pendingTasks.delete(sceneIndex);
+            } else if (status === "failed" || status === "error") {
+              setVideoErrors(prev => new Map(prev).set(sceneIndex, "Video-Generierung fehlgeschlagen"));
+              pendingTasks.delete(sceneIndex);
+            }
+          }
+        } catch (error) {
+          console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+        }
+      }
+    }
+    
+    if (pendingTasks.size > 0) {
+      for (const [sceneIndex] of pendingTasks.entries()) {
+        setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
+      }
+    }
+    
+    setVideoGenerationPhase("idle");
+    setIsGeneratingVideos(false);
+    setGeneratingVideoIndex(null);
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
@@ -5450,23 +5594,47 @@ Beispiel einer korrekten Antwort:
                               ))}
                             </SelectContent>
                           </Select>
-                          <Button
-                            onClick={generateVideoPrompts}
-                            disabled={isGeneratingVideoPrompts || isGeneratingStoryImages || isGeneratingStoryboard}
-                            className="flex-1"
-                          >
-                            {isGeneratingVideoPrompts ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Video Prompt {(generatingVideoPromptIndex ?? 0) + 1}/{storyPoints.length}...
-                              </>
-                            ) : (
-                              <>
-                                <Video className="w-4 h-4 mr-2" />
-                                Video Prompt generieren
-                              </>
-                            )}
-                          </Button>
+                          {/* Show "Video generieren" if all scenes with images have video prompts, otherwise "Video Prompt generieren" */}
+                          {storyPoints.filter(p => p.generatedImage).every(p => p.videoPrompt) ? (
+                            <Button
+                              onClick={generateVideos}
+                              disabled={isGeneratingVideos || isGeneratingStoryImages || isGeneratingStoryboard || isGeneratingVideoPrompts}
+                              className="flex-1"
+                            >
+                              {isGeneratingVideos ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  {videoGenerationPhase === "uploading" && `Upload Szene ${(generatingVideoIndex ?? 0) + 1}/${storyPoints.length}...`}
+                                  {videoGenerationPhase === "generating" && `Starte Szene ${(generatingVideoIndex ?? 0) + 1}/${storyPoints.length}...`}
+                                  {videoGenerationPhase === "polling" && `Videos werden generiert...`}
+                                  {videoGenerationPhase === "idle" && `Video generieren...`}
+                                </>
+                              ) : (
+                                <>
+                                  <Video className="w-4 h-4 mr-2" />
+                                  Videos generieren
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={generateVideoPrompts}
+                              disabled={isGeneratingVideoPrompts || isGeneratingStoryImages || isGeneratingStoryboard}
+                              className="flex-1"
+                            >
+                              {isGeneratingVideoPrompts ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Video Prompt {(generatingVideoPromptIndex ?? 0) + 1}/{storyPoints.length}...
+                                </>
+                              ) : (
+                                <>
+                                  <Video className="w-4 h-4 mr-2" />
+                                  Video Prompt generieren
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </>
                       ) : (
                         <>
@@ -5505,7 +5673,7 @@ Beispiel einer korrekten Antwort:
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="destructive"
-                            disabled={isGeneratingStoryboard || isGeneratingStoryImages || isGeneratingVideoPrompts}
+                            disabled={isGeneratingStoryboard || isGeneratingStoryImages || isGeneratingVideoPrompts || isGeneratingVideos}
                             className="shrink-0"
                           >
                             <X className="w-4 h-4 mr-2" />
@@ -5548,6 +5716,36 @@ Beispiel einer korrekten Antwort:
                           </>
                         )}
                       </Button>
+                    )}
+                    {/* Video Generation Results */}
+                    {videoResults.size > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-foreground">🎬 Generierte Videos:</p>
+                        {Array.from(videoResults.entries()).map(([idx, url]) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Szene {idx + 1}:</span>
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate flex-1">{url}</a>
+                            <Button size="sm" variant="outline" onClick={() => {
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `video_szene_${idx + 1}.mp4`;
+                              a.click();
+                            }}>
+                              <Download className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {videoErrors.size > 0 && (
+                      <div className="space-y-1">
+                        {Array.from(videoErrors.entries()).map(([idx, err]) => (
+                          <p key={idx} className="text-xs text-destructive flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Szene {idx + 1}: {err}
+                          </p>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
