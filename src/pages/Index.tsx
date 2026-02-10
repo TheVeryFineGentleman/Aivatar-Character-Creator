@@ -1137,6 +1137,7 @@ REGELN:
       generatedImage?: string;
       detailedImagePrompt?: string;
       videoPrompt?: string;
+      generatedVideo?: string;
       generationError?: string;
       sceneTitle?: string;
       sceneDescription?: string;
