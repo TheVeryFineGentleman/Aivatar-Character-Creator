@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy } from "lucide-react";
+import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy, Play } from "lucide-react";
 import { FullscreenLightbox } from "@/components/FullscreenLightbox";
 
 // Types
