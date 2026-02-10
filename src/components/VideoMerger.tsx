@@ -93,7 +93,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
 
       // Read the output file
       const outputData = await ffmpeg.readFile("output.mp4");
-      const blob = new Blob([outputData], { type: "video/mp4" });
+      const blob = new Blob([new Uint8Array(outputData as Uint8Array)], { type: "video/mp4" });
       const url = URL.createObjectURL(blob);
       setMergedVideoUrl(url);
       setProgress(100);
