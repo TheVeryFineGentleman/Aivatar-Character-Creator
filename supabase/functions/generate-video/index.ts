@@ -213,8 +213,14 @@ serve(async (req) => {
       }
 
       const statusData = await statusResponse.json();
-      const taskStatus = statusData.data?.status;
-      const resultUrls = statusData.data?.response?.resultUrls || statusData.data?.resultUrls || [];
+      console.log("📦 Raw API response:", JSON.stringify(statusData));
+      
+      // Try multiple possible response structures
+      const taskStatus = statusData.data?.status || statusData.status;
+      const resultUrls = statusData.data?.response?.resultUrls 
+        || statusData.data?.resultUrls 
+        || statusData.data?.works?.map((w: any) => w.resource?.resource) 
+        || [];
 
       console.log("📊 Task status:", taskStatus, "Result URLs:", resultUrls.length);
 
