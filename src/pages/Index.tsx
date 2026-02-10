@@ -5929,16 +5929,27 @@ Beispiel einer korrekten Antwort:
                                         transformStyle: 'preserve-3d',
                                       }}
                                     >
-                                      {/* Front - the actual image */}
+                                      {/* Front - video player if available, otherwise image */}
                                       <div 
                                         className="absolute inset-0 flex items-center justify-center"
                                         style={{ backfaceVisibility: 'hidden' }}
                                       >
-                                        <img 
-                                          src={point.generatedImage} 
-                                          alt={`Szene ${index + 1}`}
-                                          className="max-w-full max-h-full object-contain"
-                                        />
+                                        {point.generatedVideo ? (
+                                          <video 
+                                            src={point.generatedVideo} 
+                                            className="max-w-full max-h-full object-contain"
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                          />
+                                        ) : (
+                                          <img 
+                                            src={point.generatedImage} 
+                                            alt={`Szene ${index + 1}`}
+                                            className="max-w-full max-h-full object-contain"
+                                          />
+                                        )}
                                       </div>
                                       {/* Back - decorative pattern like card back */}
                                       <div 
