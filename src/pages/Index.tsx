@@ -6201,6 +6201,16 @@ Beispiel einer korrekten Antwort:
           </Card>
         )}
 
+        {/* Merged Video Result */}
+        {storyPoints.some(p => p.generatedVideo) && (
+          <VideoMerger
+            videos={storyPoints
+              .map((p, i) => p.generatedVideo ? { index: i, url: p.generatedVideo } : null)
+              .filter((v): v is { index: number; url: string } => v !== null)}
+            className="mt-4"
+          />
+        )}
+
         {/* Image Viewer Dialog */}
         <Dialog open={selectedImageIndex !== null} onOpenChange={() => { setSelectedImageIndex(null); setImageZoom(1); setImagePosition({ x: 0, y: 0 }); }}>
           <DialogContent className="max-w-6xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] h-[90vh] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col overflow-hidden">
