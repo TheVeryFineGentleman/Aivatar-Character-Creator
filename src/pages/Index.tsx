@@ -1902,6 +1902,7 @@ Antworte NUR mit einem JSON-Objekt:
     setVideoTaskIds(new Map());
     
     const newTaskIds = new Map<number, string>();
+    const allUploadedKeys: string[] = [];
     
     for (let i = 0; i < storyPoints.length; i++) {
       const point = storyPoints[i];
