@@ -25,6 +25,7 @@ import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
+import { VideoMerger } from "@/components/VideoMerger";
 import {
   DropdownMenu,
   DropdownMenuContent,
