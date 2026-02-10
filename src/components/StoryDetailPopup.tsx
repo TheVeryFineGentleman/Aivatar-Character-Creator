@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy } from "lucide-react";
+import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy, Play } from "lucide-react";
 import { FullscreenLightbox } from "@/components/FullscreenLightbox";
 
 // Types
@@ -24,6 +24,7 @@ interface StoryPoint {
   generatedImage?: string;
   detailedImagePrompt?: string;
   videoPrompt?: string;
+  generatedVideo?: string;
   generationError?: string;
   sceneTitle?: string;
   sceneDescription?: string;
@@ -272,6 +273,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   
+  // Preview tab state: "video" default when video exists, otherwise "image"
+  const [previewTab, setPreviewTab] = useState<"image" | "video">("image");
+  
   // Zoom state for image preview
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
@@ -289,12 +293,22 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     };
   }, []);
   
-  // Reset zoom and fullscreen when scene changes
+  // Reset zoom, fullscreen, and preview tab when scene changes
   useEffect(() => {
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
     setShowFullscreenImage(false);
-  }, [expandedIndex]);
+    // Default to video tab if video exists for this scene
+    const currentPoint = storyPoints[expandedIndex];
+    setPreviewTab(currentPoint?.generatedVideo ? "video" : "image");
+  }, [expandedIndex, storyPoints]);
+  
+  // Auto-switch to video tab when video becomes available
+  useEffect(() => {
+    if (point?.generatedVideo) {
+      setPreviewTab("video");
+    }
+  }, [point?.generatedVideo]);
   
   if (!point) return null;
   const status = getSceneStatus(point);
@@ -446,12 +460,53 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         </Badge>
       </div>
       
-      {/* Image Preview with Zoom - clickable for fullscreen */}
+      {/* Image/Video Tabs - only show when video exists */}
+      {point.generatedVideo && (point.generatedImage || point.generatedVideo) && (
+        <div className="flex rounded-lg bg-muted/30 p-1 gap-1">
+          <button
+            onClick={() => setPreviewTab("video")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              previewTab === "video" 
+                ? "bg-background text-foreground shadow-sm" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Play className="w-3 h-3" />
+            Video
+          </button>
+          <button
+            onClick={() => setPreviewTab("image")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              previewTab === "image" 
+                ? "bg-background text-foreground shadow-sm" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ImageIcon className="w-3 h-3" />
+            Bild
+          </button>
+        </div>
+      )}
+      
+      {/* Media Preview */}
       <div 
         className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px] cursor-pointer group/preview"
-        onClick={() => point.generatedImage && !isDraggingImage && imageZoom === 1 && setShowFullscreenImage(true)}
+        onClick={() => {
+          if (previewTab === "image" && point.generatedImage && !isDraggingImage && imageZoom === 1) {
+            setShowFullscreenImage(true);
+          }
+        }}
       >
-        {point.generatedImage ? <>
+        {/* Video view */}
+        {previewTab === "video" && point.generatedVideo ? (
+          <video 
+            src={point.generatedVideo} 
+            controls
+            autoPlay
+            loop
+            className="max-w-full max-h-[400px] object-contain rounded-lg"
+          />
+        ) : point.generatedImage ? <>
             <img 
               src={point.generatedImage} 
               alt="Generiertes Bild" 
@@ -495,8 +550,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           </div>}
       </div>
       
-      {/* Zoom hint */}
-      {point.generatedImage && (
+      {/* Zoom hint - only for image tab */}
+      {previewTab === "image" && point.generatedImage && (
         <p className="text-[10px] text-muted-foreground text-center">
           Klicken zum Vergrößern • Mausrad zum Zoomen
         </p>
