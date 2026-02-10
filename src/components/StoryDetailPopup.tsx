@@ -460,12 +460,53 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         </Badge>
       </div>
       
-      {/* Image Preview with Zoom - clickable for fullscreen */}
+      {/* Image/Video Tabs - only show when video exists */}
+      {point.generatedVideo && (point.generatedImage || point.generatedVideo) && (
+        <div className="flex rounded-lg bg-muted/30 p-1 gap-1">
+          <button
+            onClick={() => setPreviewTab("video")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              previewTab === "video" 
+                ? "bg-background text-foreground shadow-sm" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Play className="w-3 h-3" />
+            Video
+          </button>
+          <button
+            onClick={() => setPreviewTab("image")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              previewTab === "image" 
+                ? "bg-background text-foreground shadow-sm" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ImageIcon className="w-3 h-3" />
+            Bild
+          </button>
+        </div>
+      )}
+      
+      {/* Media Preview */}
       <div 
         className="relative rounded-lg overflow-hidden bg-muted/30 border border-border/30 flex items-center justify-center min-h-[200px] cursor-pointer group/preview"
-        onClick={() => point.generatedImage && !isDraggingImage && imageZoom === 1 && setShowFullscreenImage(true)}
+        onClick={() => {
+          if (previewTab === "image" && point.generatedImage && !isDraggingImage && imageZoom === 1) {
+            setShowFullscreenImage(true);
+          }
+        }}
       >
-        {point.generatedImage ? <>
+        {/* Video view */}
+        {previewTab === "video" && point.generatedVideo ? (
+          <video 
+            src={point.generatedVideo} 
+            controls
+            autoPlay
+            loop
+            className="max-w-full max-h-[400px] object-contain rounded-lg"
+          />
+        ) : point.generatedImage ? <>
             <img 
               src={point.generatedImage} 
               alt="Generiertes Bild" 
@@ -509,8 +550,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           </div>}
       </div>
       
-      {/* Zoom hint */}
-      {point.generatedImage && (
+      {/* Zoom hint - only for image tab */}
+      {previewTab === "image" && point.generatedImage && (
         <p className="text-[10px] text-muted-foreground text-center">
           Klicken zum Vergrößern • Mausrad zum Zoomen
         </p>
