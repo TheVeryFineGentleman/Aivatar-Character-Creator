@@ -274,7 +274,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   
   // Preview tab state: "video" default when video exists, otherwise "image"
-  const [previewTab, setPreviewTab] = useState<"image" | "video">(point?.generatedVideo ? "video" : "image");
+  const [previewTab, setPreviewTab] = useState<"image" | "video">("image");
   
   // Zoom state for image preview
   const [imageZoom, setImageZoom] = useState(1);
