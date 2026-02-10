@@ -273,6 +273,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   
+  // Preview tab state: "video" default when video exists, otherwise "image"
+  const [previewTab, setPreviewTab] = useState<"image" | "video">(point?.generatedVideo ? "video" : "image");
+  
   // Zoom state for image preview
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
