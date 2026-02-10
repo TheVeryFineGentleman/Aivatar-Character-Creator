@@ -215,14 +215,26 @@ serve(async (req) => {
       const statusData = await statusResponse.json();
       console.log("📦 Raw API response:", JSON.stringify(statusData));
       
-      // Try multiple possible response structures
-      const taskStatus = statusData.data?.status || statusData.status;
+      // Derive status from API response structure
       const resultUrls = statusData.data?.response?.resultUrls 
         || statusData.data?.resultUrls 
         || statusData.data?.works?.map((w: any) => w.resource?.resource) 
         || [];
+      
+      const successFlag = statusData.data?.successFlag;
+      const errorCode = statusData.data?.errorCode;
+      const errorMessage = statusData.data?.errorMessage;
+      
+      let taskStatus: string;
+      if (successFlag === 1 && resultUrls.length > 0) {
+        taskStatus = "completed";
+      } else if (errorCode || errorMessage) {
+        taskStatus = "failed";
+      } else {
+        taskStatus = "processing";
+      }
 
-      console.log("📊 Task status:", taskStatus, "Result URLs:", resultUrls.length);
+      console.log("📊 Task status:", taskStatus, "successFlag:", successFlag, "Result URLs:", resultUrls.length);
 
       return new Response(
         JSON.stringify({
