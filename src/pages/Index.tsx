@@ -1957,6 +1957,9 @@ Antworte NUR mit einem JSON-Objekt:
           console.log(`✅ Szene ${i + 1}: Video-Task gestartet, ID: ${result.taskId}`);
           newTaskIds.set(i, result.taskId);
           setVideoTaskIds(prev => new Map(prev).set(i, result.taskId));
+          if (result.uploadedKeys) {
+            allUploadedKeys.push(...result.uploadedKeys);
+          }
         } else {
           console.error(`❌ Szene ${i + 1}: ${result.error}`);
           setVideoErrors(prev => new Map(prev).set(i, result.error || "Unbekannter Fehler"));
