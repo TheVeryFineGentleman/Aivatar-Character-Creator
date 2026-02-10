@@ -29,7 +29,7 @@ async function uploadToSpaces(base64Data: string, fileName: string): Promise<{ u
   const key = `temp-video-frames/${fileName}`;
   
   await s3.putObject(key, binaryData, {
-    metadata: { "Content-Type": "image/png" },
+    metadata: { "Content-Type": "image/png", "x-amz-acl": "public-read" },
   });
   
   const url = `https://${bucket}.fra1.digitaloceanspaces.com/${key}`;
