@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "https://deno.land/x/s3_lite_client@0.7.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,48 @@ const corsHeaders = {
 };
 
 const KIE_API_BASE = "https://api.kie.ai";
-const KIE_FILE_UPLOAD_BASE = "https://kieai.redpandaai.co";
+
+function getS3Client(bucket: string) {
+  return new S3Client({
+    endPoint: "fra1.digitaloceanspaces.com",
+    region: "fra1",
+    bucket,
+    accessKey: Deno.env.get("DO_SPACES_ACCESS_KEY")!,
+    secretKey: Deno.env.get("DO_SPACES_SECRET_KEY")!,
+    pathStyle: false,
+  });
+}
+
+async function uploadToSpaces(base64Data: string, fileName: string): Promise<{ url: string; key: string }> {
+  const bucket = Deno.env.get("DO_SPACES_BUCKET")!;
+  const s3 = getS3Client(bucket);
+  
+  const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+  const binaryData = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
+  
+  const key = `temp-video-frames/${fileName}`;
+  
+  await s3.putObject(key, binaryData, {
+    metadata: { "Content-Type": "image/png" },
+  });
+  
+  const url = `https://${bucket}.fra1.digitaloceanspaces.com/${key}`;
+  return { url, key };
+}
+
+async function deleteFromSpaces(keys: string[]) {
+  const bucket = Deno.env.get("DO_SPACES_BUCKET")!;
+  const s3 = getS3Client(bucket);
+  
+  for (const key of keys) {
+    try {
+      await s3.deleteObject(key);
+      console.log(`🗑️ Deleted: ${key}`);
+    } catch (err) {
+      console.warn(`⚠️ Failed to delete ${key}:`, err);
+    }
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -22,14 +64,39 @@ serve(async (req) => {
       );
     }
 
-    const { action, taskId, startFrameBase64, endFrameBase64, prompt, model = "veo3_fast" } = await req.json();
+    const requiredEnv = ["DO_SPACES_ACCESS_KEY", "DO_SPACES_SECRET_KEY", "DO_SPACES_BUCKET"];
+    for (const env of requiredEnv) {
+      if (!Deno.env.get(env)) {
+        return new Response(
+          JSON.stringify({ success: false, error: `${env} nicht konfiguriert` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
-    // ACTION: generate - Upload images and start video generation
+    const { action, taskId, startFrameBase64, endFrameBase64, prompt, model = "veo3_fast", uploadedKeys } = await req.json();
+
+    // ACTION: cleanup - Delete temporary images from DO Spaces
+    if (action === "cleanup") {
+      if (!uploadedKeys || uploadedKeys.length === 0) {
+        return new Response(
+          JSON.stringify({ success: true, message: "Nichts zu löschen" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`🗑️ Cleaning up ${uploadedKeys.length} temporary files`);
+      await deleteFromSpaces(uploadedKeys);
+
+      return new Response(
+        JSON.stringify({ success: true, deleted: uploadedKeys.length }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ACTION: generate - Upload images to DO Spaces and start video generation
     if (action === "generate") {
       console.log("🎬 Video generation requested");
-      console.log("📝 Prompt length:", prompt?.length || 0);
-      console.log("🖼️ Start frame:", startFrameBase64 ? "provided" : "missing");
-      console.log("🖼️ End frame:", endFrameBase64 ? "provided" : "missing");
 
       if (!prompt) {
         return new Response(
@@ -45,71 +112,26 @@ serve(async (req) => {
         );
       }
 
-      // Upload images to kie.ai file upload API
       const imageUrls: string[] = [];
+      const spacesKeys: string[] = [];
 
-      // Upload start frame
-      console.log("📤 Uploading start frame...");
-      const startUploadResponse = await fetch(`${KIE_FILE_UPLOAD_BASE}/api/file-base64-upload`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${KIE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          base64Data: startFrameBase64,
-          fileName: `start-frame-${Date.now()}.png`,
-        }),
-      });
-
-      if (!startUploadResponse.ok) {
-        const errText = await startUploadResponse.text();
-        console.error("❌ Start frame upload failed:", startUploadResponse.status, errText);
-        return new Response(
-          JSON.stringify({ success: false, error: `Start-Frame Upload fehlgeschlagen: ${startUploadResponse.status}` }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const startUploadData = await startUploadResponse.json();
-      const startFrameUrl = startUploadData.data?.downloadUrl || startUploadData.data?.fileUrl;
-      if (!startFrameUrl) {
-        console.error("❌ No download URL in start frame upload response:", startUploadData);
-        return new Response(
-          JSON.stringify({ success: false, error: "Keine URL für Start-Frame erhalten" }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      console.log("✅ Start frame uploaded:", startFrameUrl);
-      imageUrls.push(startFrameUrl);
+      // Upload start frame to DO Spaces
+      console.log("📤 Uploading start frame to DO Spaces...");
+      const startResult = await uploadToSpaces(startFrameBase64, `start-${Date.now()}.png`);
+      imageUrls.push(startResult.url);
+      spacesKeys.push(startResult.key);
+      console.log("✅ Start frame uploaded:", startResult.url);
 
       // Upload end frame if provided
       if (endFrameBase64) {
-        console.log("📤 Uploading end frame...");
-        const endUploadResponse = await fetch(`${KIE_FILE_UPLOAD_BASE}/api/file-base64-upload`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${KIE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            base64Data: endFrameBase64,
-            fileName: `end-frame-${Date.now()}.png`,
-          }),
-        });
-
-        if (!endUploadResponse.ok) {
-          const errText = await endUploadResponse.text();
-          console.error("❌ End frame upload failed:", endUploadResponse.status, errText);
-          // Continue without end frame - just use start frame
-          console.log("⚠️ Continuing without end frame");
-        } else {
-          const endUploadData = await endUploadResponse.json();
-          const endFrameUrl = endUploadData.data?.downloadUrl || endUploadData.data?.fileUrl;
-          if (endFrameUrl) {
-            console.log("✅ End frame uploaded:", endFrameUrl);
-            imageUrls.push(endFrameUrl);
-          }
+        console.log("📤 Uploading end frame to DO Spaces...");
+        try {
+          const endResult = await uploadToSpaces(endFrameBase64, `end-${Date.now()}.png`);
+          imageUrls.push(endResult.url);
+          spacesKeys.push(endResult.key);
+          console.log("✅ End frame uploaded:", endResult.url);
+        } catch (err) {
+          console.warn("⚠️ End frame upload failed, continuing without:", err);
         }
       }
 
@@ -121,16 +143,15 @@ serve(async (req) => {
           "Authorization": `Bearer ${KIE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt,
-          imageUrls,
-          model,
-        }),
+        body: JSON.stringify({ prompt, imageUrls, model }),
       });
 
       if (!generateResponse.ok) {
         const errText = await generateResponse.text();
         console.error("❌ Video generation failed:", generateResponse.status, errText);
+        
+        // Cleanup uploaded images on failure
+        await deleteFromSpaces(spacesKeys);
         
         let errorMessage = `Video-Generierung fehlgeschlagen: ${generateResponse.status}`;
         if (generateResponse.status === 429) errorMessage = "Rate limit erreicht. Bitte warte einen Moment.";
@@ -148,6 +169,7 @@ serve(async (req) => {
 
       if (!generatedTaskId) {
         console.error("❌ No taskId in generate response:", generateData);
+        await deleteFromSpaces(spacesKeys);
         return new Response(
           JSON.stringify({ success: false, error: "Keine Task-ID erhalten" }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -157,7 +179,7 @@ serve(async (req) => {
       console.log("✅ Video generation started, taskId:", generatedTaskId);
 
       return new Response(
-        JSON.stringify({ success: true, taskId: generatedTaskId }),
+        JSON.stringify({ success: true, taskId: generatedTaskId, uploadedKeys: spacesKeys }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -177,9 +199,7 @@ serve(async (req) => {
         `${KIE_API_BASE}/api/v1/veo/record-info?taskId=${taskId}`,
         {
           method: "GET",
-          headers: {
-            "Authorization": `Bearer ${KIE_API_KEY}`,
-          },
+          headers: { "Authorization": `Bearer ${KIE_API_KEY}` },
         }
       );
 

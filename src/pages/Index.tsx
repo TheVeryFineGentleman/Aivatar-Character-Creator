@@ -1902,6 +1902,7 @@ Antworte NUR mit einem JSON-Objekt:
     setVideoTaskIds(new Map());
     
     const newTaskIds = new Map<number, string>();
+    const allUploadedKeys: string[] = [];
     
     for (let i = 0; i < storyPoints.length; i++) {
       const point = storyPoints[i];
@@ -1956,6 +1957,9 @@ Antworte NUR mit einem JSON-Objekt:
           console.log(`✅ Szene ${i + 1}: Video-Task gestartet, ID: ${result.taskId}`);
           newTaskIds.set(i, result.taskId);
           setVideoTaskIds(prev => new Map(prev).set(i, result.taskId));
+          if (result.uploadedKeys) {
+            allUploadedKeys.push(...result.uploadedKeys);
+          }
         } else {
           console.error(`❌ Szene ${i + 1}: ${result.error}`);
           setVideoErrors(prev => new Map(prev).set(i, result.error || "Unbekannter Fehler"));
@@ -2021,6 +2025,27 @@ Antworte NUR mit einem JSON-Objekt:
     if (pendingTasks.size > 0) {
       for (const [sceneIndex] of pendingTasks.entries()) {
         setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
+      }
+    }
+    
+    // Cleanup temporary images from DO Spaces
+    if (allUploadedKeys.length > 0) {
+      console.log(`🗑️ Cleaning up ${allUploadedKeys.length} temporary images from DO Spaces...`);
+      try {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            body: JSON.stringify({ action: "cleanup", uploadedKeys: allUploadedKeys })
+          }
+        );
+        console.log("✅ Temporary images cleaned up");
+      } catch (err) {
+        console.warn("⚠️ Cleanup failed:", err);
       }
     }
     
