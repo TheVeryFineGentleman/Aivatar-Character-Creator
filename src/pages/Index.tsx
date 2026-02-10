@@ -2009,6 +2009,10 @@ Antworte NUR mit einem JSON-Objekt:
               const videoUrl = statusResult.resultUrls?.[0];
               if (videoUrl) {
                 setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
+                // Save video URL directly on the story point
+                setStoryPoints(prev => prev.map((p, i) => 
+                  i === sceneIndex ? { ...p, generatedVideo: videoUrl } : p
+                ));
               }
               pendingTasks.delete(sceneIndex);
             } else if (status === "failed" || status === "error") {
