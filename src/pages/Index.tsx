@@ -25,6 +25,7 @@ import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
+import { VideoMerger } from "@/components/VideoMerger";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6199,6 +6200,16 @@ Beispiel einer korrekten Antwort:
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Merged Video Result */}
+        {storyPoints.some(p => p.generatedVideo) && (
+          <VideoMerger
+            videos={storyPoints
+              .map((p, i) => p.generatedVideo ? { index: i, url: p.generatedVideo } : null)
+              .filter((v): v is { index: number; url: string } => v !== null)}
+            className="mt-4"
+          />
         )}
 
         {/* Image Viewer Dialog */}
