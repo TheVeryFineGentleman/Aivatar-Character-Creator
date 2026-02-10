@@ -2028,6 +2028,27 @@ Antworte NUR mit einem JSON-Objekt:
       }
     }
     
+    // Cleanup temporary images from DO Spaces
+    if (allUploadedKeys.length > 0) {
+      console.log(`🗑️ Cleaning up ${allUploadedKeys.length} temporary images from DO Spaces...`);
+      try {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            body: JSON.stringify({ action: "cleanup", uploadedKeys: allUploadedKeys })
+          }
+        );
+        console.log("✅ Temporary images cleaned up");
+      } catch (err) {
+        console.warn("⚠️ Cleanup failed:", err);
+      }
+    }
+    
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
     setGeneratingVideoIndex(null);
