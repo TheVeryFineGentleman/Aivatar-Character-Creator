@@ -293,12 +293,22 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     };
   }, []);
   
-  // Reset zoom and fullscreen when scene changes
+  // Reset zoom, fullscreen, and preview tab when scene changes
   useEffect(() => {
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
     setShowFullscreenImage(false);
-  }, [expandedIndex]);
+    // Default to video tab if video exists for this scene
+    const currentPoint = storyPoints[expandedIndex];
+    setPreviewTab(currentPoint?.generatedVideo ? "video" : "image");
+  }, [expandedIndex, storyPoints]);
+  
+  // Auto-switch to video tab when video becomes available
+  useEffect(() => {
+    if (point?.generatedVideo) {
+      setPreviewTab("video");
+    }
+  }, [point?.generatedVideo]);
   
   if (!point) return null;
   const status = getSceneStatus(point);
