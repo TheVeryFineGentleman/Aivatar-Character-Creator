@@ -39,6 +39,7 @@ interface StoryPoint {
   negativePrompts?: string;
   styleNotes?: string;
   continuityNotes?: string;
+  dialogText?: string;
   // Final/Draft State
   finalSnapshot?: StoryPoint;
   finalizedAt?: number;
@@ -708,6 +709,17 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       </div>
                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
                         <Textarea value={point.detailedDescription || point.versions[point.currentVersion]} onChange={e => handleFieldUpdate('detailedDescription', e.target.value)} className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[80px]" placeholder="Die detaillierte Szenen-Beschreibung wird hier angezeigt. Du kannst sie jederzeit bearbeiten." />
+                      </div>
+                    </div>
+                    
+                    {/* Dialog Text */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        Dialog / Gesprochener Text
+                      </label>
+                      <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
+                        <Textarea value={point.dialogText || ""} onChange={e => handleFieldUpdate('dialogText', e.target.value)} className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[50px] italic" placeholder={'Was sagt der Charakter? z.B. "Ich hätte nie gedacht, dass es so enden würde."'} />
                       </div>
                     </div>
                   </div>
