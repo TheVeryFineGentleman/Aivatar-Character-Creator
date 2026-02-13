@@ -1428,7 +1428,9 @@ TECHNICAL REQUIREMENTS:
           const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
           const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
           
-          const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"
+          const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Sprache: "${storyPoints[sceneIndex].dialogText}" - Der Charakter soll diese Worte sichtbar sprechen.` : '';
+          
+          const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"${dialogInfo}
 ${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
 Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
 Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
@@ -1716,6 +1718,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       if (storyboardMainLocation) metadataLines.push(`Hauptort: ${storyboardMainLocation}`);
       if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
       if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
+      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog in den Video-Prompt, sodass der Charakter diese Worte sichtbar spricht.`);
       
       const isLastScene = i === storyPoints.length - 1;
       const nextScene = !isLastScene ? storyPoints[i + 1] : null;
