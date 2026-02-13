@@ -5006,8 +5006,9 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Format, Shot Type, Skin Type, and Camera Angle Selection */}
-            <div className={`grid gap-4 ${isPro ? "grid-cols-4" : "grid-cols-3"}`}>
-              {/* Image Format Dropdown */}
+            <div className="grid gap-4 grid-cols-4">
+              {/* Image Format Dropdown - Pro Only */}
+              {isPro ? (
               <div className="space-y-2">
                 <Label>Bildformat</Label>
                 <DropdownMenu>
@@ -5029,8 +5030,21 @@ Beispiel einer korrekten Antwort:
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">Bildformat <Lock className="w-3 h-3 text-muted-foreground/70" /></Label>
+                  <Button 
+                    variant="outline" 
+                    className={`w-full justify-between opacity-60 ${shakingElement === "format" ? "animate-shake border-red-500 bg-red-500/20" : ""}`}
+                    onClick={() => { setShakingElement("format"); setTimeout(() => setShakingElement(null), 500); setShowUpgradePopup(true); }}
+                  >
+                    Quadratisch <Lock className={`w-4 h-4 ${shakingElement === "format" ? "text-red-500" : "text-muted-foreground/70"}`} />
+                  </Button>
+                </div>
+              )}
 
-              {/* Shot Type Dropdown */}
+              {/* Shot Type Dropdown - Pro Only */}
+              {isPro ? (
               <div className="space-y-2">
                 <Label>Aufnahme-Typ</Label>
                 <DropdownMenu>
@@ -5052,9 +5066,21 @@ Beispiel einer korrekten Antwort:
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">Aufnahme-Typ <Lock className="w-3 h-3 text-muted-foreground/70" /></Label>
+                  <Button 
+                    variant="outline" 
+                    className={`w-full justify-between opacity-60 ${shakingElement === "shot" ? "animate-shake border-red-500 bg-red-500/20" : ""}`}
+                    onClick={() => { setShakingElement("shot"); setTimeout(() => setShakingElement(null), 500); setShowUpgradePopup(true); }}
+                  >
+                    Ganzkörper <Lock className={`w-4 h-4 ${shakingElement === "shot" ? "text-red-500" : "text-muted-foreground/70"}`} />
+                  </Button>
+                </div>
+              )}
 
-              {/* Camera Angle Dropdown - FULL Only */}
-              {authData.planCode === 'FULL' && (
+              {/* Camera Angle Dropdown - Pro Only */}
+              {isPro ? (
                 <div className="space-y-2">
                   <Label>Kamerawinkel</Label>
                   <DropdownMenu>
@@ -5076,10 +5102,21 @@ Beispiel einer korrekten Antwort:
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">Kamerawinkel <Lock className="w-3 h-3 text-muted-foreground/70" /></Label>
+                  <Button 
+                    variant="outline" 
+                    className={`w-full justify-between opacity-60 ${shakingElement === "camera" ? "animate-shake border-red-500 bg-red-500/20" : ""}`}
+                    onClick={() => { setShakingElement("camera"); setTimeout(() => setShakingElement(null), 500); setShowUpgradePopup(true); }}
+                  >
+                    Zufällig <Lock className={`w-4 h-4 ${shakingElement === "camera" ? "text-red-500" : "text-muted-foreground/70"}`} />
+                  </Button>
+                </div>
               )}
 
               {/* Skin Type Dropdown - Pro Only */}
-              {isPro && (
+              {isPro ? (
                 <div className="space-y-2">
                   <Label>Hauttyp</Label>
                   <DropdownMenu>
@@ -5100,6 +5137,17 @@ Beispiel einer korrekten Antwort:
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">Hauttyp <Lock className="w-3 h-3 text-muted-foreground/70" /></Label>
+                  <Button 
+                    variant="outline" 
+                    className={`w-full justify-between opacity-60 ${shakingElement === "skin" ? "animate-shake border-red-500 bg-red-500/20" : ""}`}
+                    onClick={() => { setShakingElement("skin"); setTimeout(() => setShakingElement(null), 500); setShowUpgradePopup(true); }}
+                  >
+                    Realistisch <Lock className={`w-4 h-4 ${shakingElement === "skin" ? "text-red-500" : "text-muted-foreground/70"}`} />
+                  </Button>
                 </div>
               )}
             </div>
