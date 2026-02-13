@@ -1428,7 +1428,7 @@ TECHNICAL REQUIREMENTS:
           const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
           const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
           
-          const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Sprache: "${storyPoints[sceneIndex].dialogText}" - Der Charakter soll diese Worte sichtbar sprechen.` : '';
+          const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Speech: "${storyPoints[sceneIndex].dialogText}" - The character must visibly speak these EXACT words in their ORIGINAL language. Do NOT translate the dialogue.` : '';
           
           const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"${dialogInfo}
 ${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
@@ -1718,7 +1718,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       if (storyboardMainLocation) metadataLines.push(`Hauptort: ${storyboardMainLocation}`);
       if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
       if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
-      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog in den Video-Prompt, sodass der Charakter diese Worte sichtbar spricht.`);
+      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog WÖRTLICH in der Originalsprache in den Video-Prompt, sodass der Charakter genau diese Worte sichtbar spricht. Der Dialog darf NICHT ins Englische übersetzt werden.`);
       
       const isLastScene = i === storyPoints.length - 1;
       const nextScene = !isLastScene ? storyPoints[i + 1] : null;
@@ -2027,7 +2027,10 @@ Antworte NUR mit einem JSON-Objekt:
               }
               pendingTasks.delete(sceneIndex);
             } else if (status === "failed" || status === "error") {
-              setVideoErrors(prev => new Map(prev).set(sceneIndex, "Video-Generierung fehlgeschlagen"));
+              const apiError = statusResult.rawData?.errorMessage || statusResult.rawData?.errorCode 
+                ? `${statusResult.rawData.errorMessage || ''} (Code: ${statusResult.rawData.errorCode || 'unknown'})`
+                : "Video-Generierung fehlgeschlagen";
+              setVideoErrors(prev => new Map(prev).set(sceneIndex, apiError));
               pendingTasks.delete(sceneIndex);
             }
           }
@@ -2069,7 +2072,157 @@ Antworte NUR mit einem JSON-Objekt:
     setGeneratingVideoIndex(null);
   };
 
-  const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
+  // Regenerate a single video for a specific scene
+  const regenerateSingleVideo = async (sceneIndex: number) => {
+    const point = storyPoints[sceneIndex];
+    if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos) return;
+    
+    // Clear previous results/errors for this scene
+    setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
+    setVideoResults(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
+    setStoryPoints(prev => prev.map((p, i) => i === sceneIndex ? { ...p, generatedVideo: undefined } : p));
+    
+    setIsGeneratingVideos(true);
+    setGeneratingVideoIndex(sceneIndex);
+    setVideoGenerationPhase("uploading");
+    
+    let uploadedKeys: string[] = [];
+    
+    try {
+      const startImgResponse = await fetch(point.generatedImage);
+      const startBlob = await startImgResponse.blob();
+      const startBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(startBlob);
+      });
+      
+      let endBase64: string | undefined;
+      if (storyPoints[sceneIndex + 1]?.generatedImage) {
+        const endImgResponse = await fetch(storyPoints[sceneIndex + 1].generatedImage!);
+        const endBlob = await endImgResponse.blob();
+        endBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(endBlob);
+        });
+      }
+      
+      setVideoGenerationPhase("generating");
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
+          body: JSON.stringify({
+            action: "generate",
+            prompt: point.videoPrompt,
+            startFrameBase64: startBase64,
+            endFrameBase64: endBase64,
+            model: "veo3_fast",
+          })
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (result.success && result.taskId) {
+        console.log(`✅ Szene ${sceneIndex + 1}: Video-Task gestartet, ID: ${result.taskId}`);
+        setVideoTaskIds(prev => new Map(prev).set(sceneIndex, result.taskId));
+        if (result.uploadedKeys) uploadedKeys = result.uploadedKeys;
+        
+        // Poll for result
+        setVideoGenerationPhase("polling");
+        setGeneratingVideoIndex(null);
+        
+        let pollCount = 0;
+        const maxPolls = 60;
+        
+        while (pollCount < maxPolls) {
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          pollCount++;
+          
+          try {
+            const statusResponse = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+                },
+                body: JSON.stringify({ action: "status", taskId: result.taskId })
+              }
+            );
+            
+            const statusResult = await statusResponse.json();
+            
+            if (statusResult.success) {
+              const status = statusResult.status;
+              console.log(`📊 Szene ${sceneIndex + 1} Status: ${status}`);
+              
+              if (status === "completed" || status === "success") {
+                const videoUrl = statusResult.resultUrls?.[0];
+                if (videoUrl) {
+                  setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
+                  setStoryPoints(prev => prev.map((p, i) => 
+                    i === sceneIndex ? { ...p, generatedVideo: videoUrl } : p
+                  ));
+                }
+                break;
+              } else if (status === "failed" || status === "error") {
+                const apiError = statusResult.rawData?.errorMessage || statusResult.rawData?.errorCode 
+                  ? `${statusResult.rawData.errorMessage || ''} (Code: ${statusResult.rawData.errorCode || 'unknown'})`
+                  : "Video-Generierung fehlgeschlagen";
+                setVideoErrors(prev => new Map(prev).set(sceneIndex, apiError));
+                break;
+              }
+            }
+          } catch (error) {
+            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+          }
+        }
+        
+        if (pollCount >= maxPolls) {
+          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
+        }
+      } else {
+        setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Unbekannter Fehler"));
+      }
+    } catch (error) {
+      console.error(`❌ Szene ${sceneIndex + 1} Video-Generierung fehlgeschlagen:`, error);
+      setVideoErrors(prev => new Map(prev).set(sceneIndex, error instanceof Error ? error.message : "Netzwerkfehler"));
+    }
+    
+    // Cleanup
+    if (uploadedKeys.length > 0) {
+      try {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            body: JSON.stringify({ action: "cleanup", uploadedKeys })
+          }
+        );
+      } catch (err) {
+        console.warn("⚠️ Cleanup failed:", err);
+      }
+    }
+    
+    setVideoGenerationPhase("idle");
+    setIsGeneratingVideos(false);
+    setGeneratingVideoIndex(null);
+  };
+
+
     setStoryPoints(prev => prev.map((point, i) => {
       if (i === pointIndex) {
         const newVersion = direction === 'prev' 
@@ -5981,7 +6134,7 @@ Beispiel einer korrekten Antwort:
                                               
                                               {/* Error state */}
                                               <div 
-                                                className="absolute flex flex-col items-center gap-1"
+                                                className="absolute flex flex-col items-center gap-1 max-w-[90%]"
                                                 style={{
                                                   opacity: hasError ? 1 : 0,
                                                   transform: hasError ? 'scale(1)' : 'scale(0.8)',
@@ -5991,7 +6144,9 @@ Beispiel einer korrekten Antwort:
                                                 <div className="w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center">
                                                   <AlertCircle className="w-5 h-5 text-white" />
                                                 </div>
-                                                <span className="text-[10px] font-medium text-white/90">Fehler</span>
+                                                <span className="text-[10px] font-medium text-white/90 text-center line-clamp-3 px-1">
+                                                  {videoErrors.get(index) || 'Fehler'}
+                                                </span>
                                               </div>
                                               
                                               {/* Processing state */}
@@ -6086,8 +6241,15 @@ Beispiel einer korrekten Antwort:
                                           size="icon" 
                                           variant="secondary" 
                                           className="h-9 w-9 rounded-full shadow-lg"
-                                          onClick={(e) => { e.stopPropagation(); regenerateImageOnly(index); }}
-                                          disabled={regeneratingPointIndex !== null}
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            if (point.generatedVideo || point.videoPrompt) {
+                                              regenerateSingleVideo(index);
+                                            } else {
+                                              regenerateImageOnly(index);
+                                            }
+                                          }}
+                                          disabled={regeneratingPointIndex !== null || isGeneratingVideos}
                                         >
                                           <RefreshCw className="w-4 h-4" />
                                         </Button>
