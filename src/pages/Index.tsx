@@ -2222,7 +2222,7 @@ Antworte NUR mit einem JSON-Objekt:
     setGeneratingVideoIndex(null);
   };
 
-
+  const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
     setStoryPoints(prev => prev.map((point, i) => {
       if (i === pointIndex) {
         const newVersion = direction === 'prev' 
