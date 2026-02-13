@@ -5961,6 +5961,65 @@ Beispiel einer korrekten Antwort:
                                             className="max-w-full max-h-full object-contain"
                                           />
                                         )}
+                                        
+                                        {/* Video generation status overlay */}
+                                        {(() => {
+                                          const hasTask = videoTaskIds.has(index);
+                                          const hasResult = videoResults.has(index) || point.generatedVideo;
+                                          const hasError = videoErrors.has(index);
+                                          
+                                          if (hasResult && !hasError && isGeneratingVideos) {
+                                            return (
+                                              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none animate-video-fade-out" style={{ animationDelay: '2s' }}>
+                                                <div className="flex flex-col items-center gap-1 animate-video-slide-up">
+                                                  <div className="w-8 h-8 rounded-full bg-green-500/90 flex items-center justify-center">
+                                                    <Check className="w-5 h-5 text-white" />
+                                                  </div>
+                                                  <span className="text-[10px] font-medium text-white/90">Fertig</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                          
+                                          if (hasError) {
+                                            return (
+                                              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                                                <div className="flex flex-col items-center gap-1">
+                                                  <div className="w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center">
+                                                    <AlertCircle className="w-5 h-5 text-white" />
+                                                  </div>
+                                                  <span className="text-[10px] font-medium text-white/90">Fehler</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                          
+                                          if (hasTask && isGeneratingVideos && !hasResult) {
+                                            // Processing - show spinner
+                                            return (
+                                              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                                                <div className="flex flex-col items-center gap-1">
+                                                  <Loader2 className="w-7 h-7 text-white animate-spin" />
+                                                  <span className="text-[10px] font-medium text-white/90">Video wird erstellt...</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                          
+                                          if (isGeneratingVideos && !hasTask && !hasResult && generatingVideoIndex !== null && index > generatingVideoIndex) {
+                                            // Waiting in queue
+                                            return (
+                                              <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                                                <div className="flex flex-col items-center gap-1">
+                                                  <Clock className="w-6 h-6 text-white/70" />
+                                                  <span className="text-[10px] font-medium text-white/70">Wartend...</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                          
+                                          return null;
+                                        })()}
                                       </div>
                                       {/* Back - decorative pattern like card back */}
                                       <div 
