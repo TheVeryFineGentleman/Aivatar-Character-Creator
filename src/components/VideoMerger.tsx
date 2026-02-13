@@ -32,12 +32,21 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
       console.log("[ffmpeg]", message);
     });
 
-    setProgressMessage("FFmpeg wird geladen...");
-    await ffmpeg.load({
-      coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js",
-      wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm",
+    setProgressMessage("FFmpeg wird geladen (~30 MB)...");
+
+    const timeoutMs = 60000;
+    const loadPromise = ffmpeg.load({
+      coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+      wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
     });
+    
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("FFmpeg-Laden hat zu lange gedauert (60s Timeout). Bitte versuche es erneut.")), timeoutMs)
+    );
+
+    await Promise.race([loadPromise, timeoutPromise]);
     ffmpegRef.current = ffmpeg;
+    console.log("[ffmpeg] Successfully loaded");
     return ffmpeg;
   }, []);
 
