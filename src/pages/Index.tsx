@@ -5948,58 +5948,79 @@ Beispiel einer korrekten Antwort:
                                           const hasTask = videoTaskIds.has(index);
                                           const hasResult = videoResults.has(index) || point.generatedVideo;
                                           const hasError = videoErrors.has(index);
+                                          const isProcessing = hasTask && isGeneratingVideos && !hasResult && !hasError;
+                                          const isWaiting = isGeneratingVideos && !hasTask && !hasResult && !hasError && generatingVideoIndex !== null && index > generatingVideoIndex;
+                                          const isCompleted = hasResult && !hasError && isGeneratingVideos;
+                                          const showOverlay = isProcessing || isWaiting || isCompleted || hasError;
                                           
-                                          if (hasResult && !hasError && isGeneratingVideos) {
-                                            return (
-                                              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none animate-video-fade-out" style={{ animationDelay: '2s' }}>
-                                                <div className="flex flex-col items-center gap-1 animate-video-slide-up">
-                                                  <div className="w-8 h-8 rounded-full bg-green-500/90 flex items-center justify-center">
-                                                    <Check className="w-5 h-5 text-white" />
-                                                  </div>
-                                                  <span className="text-[10px] font-medium text-white/90">Fertig</span>
+                                          return (
+                                            <div 
+                                              className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-lg overflow-hidden"
+                                              style={{
+                                                backgroundColor: showOverlay ? (isWaiting ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.4)') : 'rgba(0,0,0,0)',
+                                                backdropFilter: showOverlay ? 'blur(1px)' : 'blur(0px)',
+                                                opacity: isCompleted ? 0 : (showOverlay ? 1 : 0),
+                                                transition: 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease, backdrop-filter 0.5s ease',
+                                                transitionDelay: isCompleted ? '1.8s' : '0s',
+                                              }}
+                                            >
+                                              {/* Completed state */}
+                                              <div 
+                                                className="absolute flex flex-col items-center gap-1"
+                                                style={{
+                                                  opacity: isCompleted ? 1 : 0,
+                                                  transform: isCompleted ? 'translateY(-4px) scale(1)' : 'translateY(12px) scale(0.8)',
+                                                  transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                                                }}
+                                              >
+                                                <div className="w-8 h-8 rounded-full bg-green-500/90 flex items-center justify-center shadow-lg shadow-green-500/30">
+                                                  <Check className="w-5 h-5 text-white" />
                                                 </div>
+                                                <span className="text-[10px] font-medium text-white/90">Fertig</span>
                                               </div>
-                                            );
-                                          }
-                                          
-                                          if (hasError) {
-                                            return (
-                                              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-                                                <div className="flex flex-col items-center gap-1">
-                                                  <div className="w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center">
-                                                    <AlertCircle className="w-5 h-5 text-white" />
-                                                  </div>
-                                                  <span className="text-[10px] font-medium text-white/90">Fehler</span>
+                                              
+                                              {/* Error state */}
+                                              <div 
+                                                className="absolute flex flex-col items-center gap-1"
+                                                style={{
+                                                  opacity: hasError ? 1 : 0,
+                                                  transform: hasError ? 'scale(1)' : 'scale(0.8)',
+                                                  transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                                                }}
+                                              >
+                                                <div className="w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center">
+                                                  <AlertCircle className="w-5 h-5 text-white" />
                                                 </div>
+                                                <span className="text-[10px] font-medium text-white/90">Fehler</span>
                                               </div>
-                                            );
-                                          }
-                                          
-                                          if (hasTask && isGeneratingVideos && !hasResult) {
-                                            // Processing - show spinner
-                                            return (
-                                              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-                                                <div className="flex flex-col items-center gap-1">
-                                                  <Loader2 className="w-7 h-7 text-white animate-spin" />
-                                                  <span className="text-[10px] font-medium text-white/90">Video wird erstellt...</span>
-                                                </div>
+                                              
+                                              {/* Processing state */}
+                                              <div 
+                                                className="absolute flex flex-col items-center gap-1"
+                                                style={{
+                                                  opacity: isProcessing ? 1 : 0,
+                                                  transform: isProcessing ? 'scale(1)' : 'scale(0.85)',
+                                                  transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                                                }}
+                                              >
+                                                <Loader2 className="w-7 h-7 text-white animate-spin" />
+                                                <span className="text-[10px] font-medium text-white/90">Video wird erstellt...</span>
                                               </div>
-                                            );
-                                          }
-                                          
-                                          if (isGeneratingVideos && !hasTask && !hasResult && generatingVideoIndex !== null && index > generatingVideoIndex) {
-                                            // Waiting in queue
-                                            return (
-                                              <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-                                                <div className="flex flex-col items-center gap-1">
-                                                  <Clock className="w-6 h-6 text-white/70" />
-                                                  <span className="text-[10px] font-medium text-white/70">Wartend...</span>
-                                                </div>
+                                              
+                                              {/* Waiting state */}
+                                              <div 
+                                                className="absolute flex flex-col items-center gap-1"
+                                                style={{
+                                                  opacity: isWaiting ? 1 : 0,
+                                                  transform: isWaiting ? 'scale(1)' : 'scale(0.85)',
+                                                  transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                                                }}
+                                              >
+                                                <Clock className="w-6 h-6 text-white/70" />
+                                                <span className="text-[10px] font-medium text-white/70">Wartend...</span>
                                               </div>
-                                            );
-                                          }
-                                          
-                                          return null;
+                                            </div>
+                                          );
                                         })()}
                                       </div>
                                       {/* Back - decorative pattern like card back */}
