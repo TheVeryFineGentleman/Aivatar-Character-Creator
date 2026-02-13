@@ -5758,25 +5758,6 @@ Beispiel einer korrekten Antwort:
                       </Button>
                     )}
                     {/* Video Generation Results */}
-                    {videoResults.size > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-foreground">🎬 Generierte Videos:</p>
-                        {Array.from(videoResults.entries()).map(([idx, url]) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">Szene {idx + 1}:</span>
-                            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate flex-1">{url}</a>
-                            <Button size="sm" variant="outline" onClick={() => {
-                              const a = document.createElement("a");
-                              a.href = url;
-                              a.download = `video_szene_${idx + 1}.mp4`;
-                              a.click();
-                            }}>
-                              <Download className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                     {videoErrors.size > 0 && (
                       <div className="space-y-1">
                         {Array.from(videoErrors.entries()).map(([idx, err]) => (
