@@ -626,7 +626,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <Textarea
             value={point.videoPrompt}
             onChange={(e) => onUpdateVideoPrompt(expandedIndex, e.target.value)}
-            className="text-xs min-h-[100px] resize-none bg-muted/30 border-border/30"
+            className="text-xs min-h-[100px] resize-y bg-muted/30 border-border/30"
             placeholder="Video Prompt wird hier angezeigt..."
           />
         </div>
@@ -696,7 +696,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                     <div className="space-y-1.5">
                       <label className="text-xs text-muted-foreground">Zusammenfassung:</label>
                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
-                        <Textarea value={point.summary || ""} onChange={e => handleFieldUpdate('summary', e.target.value)} className={`leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[40px] ${isDirty ? 'border-l-2 border-l-orange-500 pl-2 -ml-2' : ''}`} placeholder="Beschreibe kurz, was in dieser Szene passiert (1-2 Sätze)" maxLength={200} />
+                        <Textarea value={point.summary || ""} onChange={e => handleFieldUpdate('summary', e.target.value)} className={`leading-relaxed bg-transparent border-none resize-y p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[40px] ${isDirty ? 'border-l-2 border-l-orange-500 pl-2 -ml-2' : ''}`} placeholder="Beschreibe kurz, was in dieser Szene passiert (1-2 Sätze)" maxLength={200} />
                       </div>
                     </div>
                     
@@ -708,7 +708,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         </label>
                       </div>
                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
-                        <Textarea value={point.detailedDescription || point.versions[point.currentVersion]} onChange={e => handleFieldUpdate('detailedDescription', e.target.value)} className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[80px]" placeholder="Die detaillierte Szenen-Beschreibung wird hier angezeigt. Du kannst sie jederzeit bearbeiten." />
+                        <Textarea value={point.detailedDescription || point.versions[point.currentVersion]} onChange={e => handleFieldUpdate('detailedDescription', e.target.value)} className="leading-relaxed bg-transparent border-none resize-y p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[80px]" placeholder="Die detaillierte Szenen-Beschreibung wird hier angezeigt. Du kannst sie jederzeit bearbeiten." />
                       </div>
                     </div>
                     
@@ -719,7 +719,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         Dialog / Gesprochener Text
                       </label>
                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20">
-                        <Textarea value={point.dialogText || ""} onChange={e => handleFieldUpdate('dialogText', e.target.value)} className="leading-relaxed bg-transparent border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[50px] italic" placeholder={'Was sagt der Charakter? z.B. "Ich hätte nie gedacht, dass es so enden würde."'} />
+                        <Textarea value={point.dialogText || ""} onChange={e => handleFieldUpdate('dialogText', e.target.value)} className="leading-relaxed bg-transparent border-none resize-y p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[50px] italic" placeholder={'Was sagt der Charakter? z.B. "Ich hätte nie gedacht, dass es so enden würde."'} />
                       </div>
                     </div>
                   </div>

@@ -5266,7 +5266,7 @@ Beispiel einer korrekten Antwort:
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[80px] w-[calc(3*120px+2*4px)] resize-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[80px] w-[calc(3*120px+2*4px)] resize-y focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
                   </div>
@@ -5409,7 +5409,7 @@ Beispiel einer korrekten Antwort:
                           placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                           value={customPrompt}
                           onChange={(e) => handleCustomPromptChange(e.target.value)}
-                          className="min-h-[124px] h-[124px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                          className="min-h-[124px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
                         />
                       </div>
                       
@@ -5619,7 +5619,7 @@ Beispiel einer korrekten Antwort:
                       placeholder=""
                       value={storyIdea}
                       onChange={(e) => setStoryIdea(e.target.value)}
-                      className="min-h-[160px] resize-none"
+                      className="min-h-[160px] resize-y"
                     />
                     
                     {/* Suggestions overlay - only when empty and not animating */}
@@ -6656,7 +6656,7 @@ Beispiel einer korrekten Antwort:
                                 <Textarea
                                   value={currentVideoPrompt}
                                   onChange={(e) => updateCurrentPrompt(e.target.value)}
-                                  className="min-h-[180px] text-xs resize-none flex-1"
+                                  className="min-h-[180px] text-xs resize-y flex-1"
                                   placeholder="Video-Prompt..."
                                 />
                                 
@@ -6701,7 +6701,7 @@ Beispiel einer korrekten Antwort:
                                         placeholder="Beschreibe was im Video passieren soll, z.B. 'Die Person lächelt und winkt in die Kamera'"
                                         value={promptChatInput}
                                         onChange={(e) => setPromptChatInput(e.target.value)}
-                                        className="flex-1 text-xs min-h-[80px] resize-none"
+                                        className="flex-1 text-xs min-h-[80px] resize-y"
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter' && !e.shiftKey && promptChatInput.trim()) {
                                             e.preventDefault();
