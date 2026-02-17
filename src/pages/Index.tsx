@@ -3371,7 +3371,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                 return prev;
               }
               if (imageUrl) {
-                updated[index] = { status: "completed", imageUrl, progress: 100 };
+                const prevVersions = updated[index]?.imageVersions || [];
+                updated[index] = { status: "completed", imageUrl, progress: 100, imageVersions: [...prevVersions, imageUrl], currentVersionIndex: prevVersions.length };
               } else {
                 updated[index] = { status: "error", progress: 0, errorMessage: "Kein Bild generiert - bitte erneut versuchen" };
               }
@@ -3698,7 +3699,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           // Short pause at 100%
           await new Promise(resolve => setTimeout(resolve, 150));
           
-          updateSlotSafe(newIndex, { status: "completed", imageUrl, progress: 100 });
+          updateSlotSafe(newIndex, (slot) => {
+            const prevVersions = slot.imageVersions || [];
+            return { ...slot, status: "completed" as const, imageUrl, progress: 100, imageVersions: [...prevVersions, imageUrl], currentVersionIndex: prevVersions.length };
+          });
           
           return;
         }
@@ -3828,6 +3832,147 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
     
     setImageSlots((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle version change for a specific slot
+  const handleVersionChange = (slotIndex: number, versionIndex: number) => {
+    setImageSlots(prev => {
+      const updated = [...prev];
+      const slot = updated[slotIndex];
+      if (!slot?.imageVersions || versionIndex < 0 || versionIndex >= slot.imageVersions.length) return prev;
+      updated[slotIndex] = { ...slot, imageUrl: slot.imageVersions[versionIndex], currentVersionIndex: versionIndex };
+      return updated;
+    });
+  };
+
+  // Regenerate a single image slot (creates a new version)
+  const handleRegenerateSlot = async (index: number) => {
+    if (!apiKey || referenceImages.length === 0) return;
+    
+    // Set slot to loading state, keep versions
+    setImageSlots(prev => {
+      const updated = [...prev];
+      const slot = updated[index];
+      updated[index] = { ...slot, status: "loading" as const, progress: 0 };
+      return updated;
+    });
+
+    try {
+      const currentImages = referenceImagesRef.current;
+      const imagePromises = currentImages.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      });
+      const base64Images = await Promise.all(imagePromises);
+
+      // Build prompt (reuse existing logic)
+      const formatOption = FORMAT_OPTIONS.find(f => f.id === selectedFormat);
+      const aspectRatio = formatOption?.ratio || "1:1";
+      const shotOption = SHOT_OPTIONS.find(s => s.id === selectedShot);
+      const skinOption = SKIN_OPTIONS.find(s => s.id === selectedSkinType);
+
+      let prompt = "";
+      if (useCustomPrompt && customPrompt) {
+        prompt = customPrompt;
+      } else {
+        const bg = selectedBackground === "white" ? "plain white background" 
+          : selectedBackground === "greenscreen" ? "green screen background"
+          : `background scene: ${sceneDescription || "natural outdoor setting"}`;
+        
+        const pose = CASUAL_POSES[Math.floor(Math.random() * CASUAL_POSES.length)];
+        prompt = `Generate a photorealistic full body image of the person shown in the reference photo. ${shotOption?.description || "full body shot"}. Pose: ${pose}. Skin: ${skinOption?.description || "realistic natural skin"}. ${bg}. Aspect ratio: ${aspectRatio}. High quality, photorealistic.`;
+      }
+
+      // Progress animation
+      const progressInterval = setInterval(() => {
+        updateSlotSafe(index, (slot) => ({
+          ...slot,
+          progress: Math.min((slot.progress || 0) + Math.random() * 8, 85),
+        }));
+      }, 500);
+
+      // Build request parts
+      const parts: any[] = [];
+      for (const b64 of base64Images) {
+        const [meta, data] = b64.split(",");
+        const mimeType = meta.match(/:(.*?);/)?.[1] || "image/png";
+        parts.push({ inline_data: { mime_type: mimeType, data } });
+      }
+      parts.push({ text: prompt });
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+          }),
+        }
+      );
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+      const result = await response.json();
+      const candidate = result?.candidates?.[0]?.content?.parts;
+      let imageUrl = "";
+
+      if (candidate) {
+        for (const part of candidate) {
+          if (part.inline_data) {
+            const blob = new Blob(
+              [Uint8Array.from(atob(part.inline_data.data), c => c.charCodeAt(0))],
+              { type: part.inline_data.mime_type || "image/png" }
+            );
+            imageUrl = URL.createObjectURL(blob);
+            break;
+          }
+        }
+      }
+
+      if (!imageUrl) throw new Error("No image in response");
+
+      // Animate to 100%
+      for (let p = 85; p <= 100; p += 5) {
+        updateSlotSafe(index, { progress: p });
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Add as new version
+      updateSlotSafe(index, (slot) => {
+        const prevVersions = slot.imageVersions || [];
+        return {
+          ...slot,
+          status: "completed" as const,
+          imageUrl,
+          progress: 100,
+          imageVersions: [...prevVersions, imageUrl],
+          currentVersionIndex: prevVersions.length,
+        };
+      });
+
+    } catch (error) {
+      console.error("❌ Regeneration error:", error);
+      // Revert to completed state with previous version
+      updateSlotSafe(index, (slot) => {
+        const versions = slot.imageVersions || [];
+        const lastVersion = versions.length > 0 ? versions[versions.length - 1] : slot.imageUrl;
+        return {
+          ...slot,
+          status: "completed" as const,
+          imageUrl: lastVersion || "",
+          progress: 100,
+          currentVersionIndex: versions.length - 1,
+        };
+      });
+    }
   };
 
   const navigateImage = (direction: 'prev' | 'next') => {
@@ -5593,6 +5738,8 @@ Beispiel einer korrekten Antwort:
             onDelete={handleDeleteImage}
             onRemoveFromQueue={handleRemoveFromQueue}
             onCancelGeneration={handleCancelGeneration}
+            onRegenerate={handleRegenerateSlot}
+            onVersionChange={handleVersionChange}
             isBasicPlan={!isPro}
             isGenerating={isGenerating}
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
@@ -6496,7 +6643,7 @@ Beispiel einer korrekten Antwort:
           <DialogContent className="max-w-6xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] h-[90vh] max-h-[90vh] p-0 bg-background/95 backdrop-blur-sm border-border/50 flex flex-col overflow-hidden">
             {selectedImageIndex !== null && imageSlots[selectedImageIndex] && (
               <>
-                {/* Header with counter and download */}
+                {/* Header with counter, version nav, and download */}
                 <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/50">
                   <div className="flex items-center gap-2">
                     {imageSlots[selectedImageIndex].status === "completed" && (
@@ -6509,12 +6656,63 @@ Beispiel einer korrekten Antwort:
                         Download
                       </Button>
                     )}
+                    {/* Regenerate button in viewer */}
+                    {imageSlots[selectedImageIndex].status === "completed" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRegenerateSlot(selectedImageIndex)}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Neu generieren
+                      </Button>
+                    )}
                   </div>
-                  <div className="bg-muted px-3 py-1 rounded-full">
-                    <span className="text-sm font-medium">
-                      {selectedImageIndex + 1} / {imageSlots.length}
-                    </span>
-                  </div>
+                  {/* Version navigation (if multiple versions) */}
+                  {(() => {
+                    const slot = imageSlots[selectedImageIndex];
+                    const versions = slot?.imageVersions || [];
+                    const vIdx = slot?.currentVersionIndex ?? 0;
+                    if (versions.length <= 1) return (
+                      <div className="bg-muted px-3 py-1 rounded-full">
+                        <span className="text-sm font-medium">
+                          {selectedImageIndex + 1} / {imageSlots.length}
+                        </span>
+                      </div>
+                    );
+                    return (
+                      <div className="flex items-center gap-2">
+                        <div className="bg-muted px-3 py-1 rounded-full">
+                          <span className="text-sm font-medium">
+                            Bild {selectedImageIndex + 1} / {imageSlots.length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 bg-primary/10 border border-primary/30 px-2 py-1 rounded-full">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => handleVersionChange(selectedImageIndex, vIdx - 1)}
+                            disabled={vIdx === 0}
+                          >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                          </Button>
+                          <span className="text-xs font-medium text-primary min-w-[40px] text-center">
+                            Version {vIdx + 1}/{versions.length}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => handleVersionChange(selectedImageIndex, vIdx + 1)}
+                            disabled={vIdx === versions.length - 1}
+                          >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div className="w-[100px]" /> {/* Spacer for balance */}
                 </div>
 

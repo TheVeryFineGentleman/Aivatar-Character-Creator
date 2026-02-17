@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle, Ban } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle, Ban, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
@@ -15,6 +15,10 @@ interface ImageSlotProps {
   onDelete?: () => void;
   onRemoveFromQueue?: () => void;
   onCancel?: () => void;
+  onRegenerate?: () => void;
+  imageVersions?: string[];
+  currentVersionIndex?: number;
+  onVersionChange?: (versionIndex: number) => void;
   retrying?: boolean;
   isWaitingForPro?: boolean;
   isInQueue?: boolean;
@@ -35,7 +39,9 @@ const getAspectClass = (format: string) => {
   }
 };
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
+  const totalVersions = imageVersions?.length || 0;
+  const hasMultipleVersions = totalVersions > 1;
   const aspectClass = getAspectClass(format);
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
@@ -152,6 +158,32 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
                 console.error("Error:", e);
               }}
             />
+            {/* Version navigation overlay - bottom */}
+            {hasMultipleVersions && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-full px-1.5 py-0.5 shadow-md">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 rounded-full"
+                  onClick={(e) => { e.stopPropagation(); onVersionChange?.(currentVersionIndex - 1); }}
+                  disabled={currentVersionIndex === 0}
+                >
+                  <ChevronLeft className="w-3 h-3" />
+                </Button>
+                <span className="text-[10px] font-medium min-w-[28px] text-center">
+                  {currentVersionIndex + 1}/{totalVersions}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 rounded-full"
+                  onClick={(e) => { e.stopPropagation(); onVersionChange?.(currentVersionIndex + 1); }}
+                  disabled={currentVersionIndex === totalVersions - 1}
+                >
+                  <ChevronRight className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <Button
                 onClick={(e) => {
@@ -164,6 +196,19 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
               >
                 <Download className="w-5 h-5" />
               </Button>
+              {onRegenerate && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRegenerate();
+                  }}
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                </Button>
+              )}
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
