@@ -5496,7 +5496,7 @@ Beispiel einer korrekten Antwort:
                               }
                               value={customPromptChatInput}
                               onChange={(e) => setCustomPromptChatInput(e.target.value)}
-                              className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                              className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
@@ -5697,7 +5697,7 @@ Beispiel einer korrekten Antwort:
                       placeholder="Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
                       value={storyAiAssistantInput}
                       onChange={(e) => setStoryAiAssistantInput(e.target.value)}
-                      className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
+                      className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
