@@ -6,6 +6,8 @@ export interface ImageSlotData {
   progress?: number;
   retrying?: boolean;
   errorMessage?: string;
+  imageVersions?: string[];
+  currentVersionIndex?: number;
 }
 
 interface ImageGalleryProps {
@@ -15,12 +17,14 @@ interface ImageGalleryProps {
   onDelete?: (index: number) => void;
   onRemoveFromQueue?: (index: number) => void;
   onCancelGeneration?: (index: number) => void;
+  onRegenerate?: (index: number) => void;
+  onVersionChange?: (slotIndex: number, versionIndex: number) => void;
   isBasicPlan?: boolean;
   isGenerating?: boolean;
   format?: string;
 }
 
-export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancelGeneration, isBasicPlan = false, isGenerating = false, format = "1:1" }: ImageGalleryProps) => {
+export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancelGeneration, onRegenerate, onVersionChange, isBasicPlan = false, isGenerating = false, format = "1:1" }: ImageGalleryProps) => {
   if (slots.length === 0) return null;
 
   // Find first loading slot index
@@ -60,6 +64,10 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemo
             onDelete={() => onDelete?.(index)}
             onRemoveFromQueue={slot.status === "pending" ? () => onRemoveFromQueue?.(index) : undefined}
             onCancel={slot.status === "loading" ? () => onCancelGeneration?.(index) : undefined}
+            onRegenerate={slot.status === "completed" ? () => onRegenerate?.(index) : undefined}
+            imageVersions={slot.imageVersions}
+            currentVersionIndex={slot.currentVersionIndex}
+            onVersionChange={onVersionChange ? (vi) => onVersionChange(index, vi) : undefined}
             isWaitingForPro={index === waitingIndex}
             isInQueue={isSlotInQueue(index, slot.status)}
             format={format}
