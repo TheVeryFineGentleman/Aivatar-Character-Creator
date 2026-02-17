@@ -880,15 +880,15 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         </p>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Negative Prompts</label>
-                          <Textarea value={point.negativePrompts || ""} onChange={e => handleFieldUpdate('negativePrompts', e.target.value)} className="bg-background/50 text-sm min-h-[60px] resize-none" placeholder="Was soll NICHT im Bild erscheinen? z.B. 'keine Brille, keine Tattoos'" />
+                          <Textarea value={point.negativePrompts || ""} onChange={e => handleFieldUpdate('negativePrompts', e.target.value)} className="bg-background/50 text-sm min-h-[60px] resize-y" placeholder="Was soll NICHT im Bild erscheinen? z.B. 'keine Brille, keine Tattoos'" />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Stil-Feintuning</label>
-                          <Textarea value={point.styleNotes || ""} onChange={e => handleFieldUpdate('styleNotes', e.target.value)} className="bg-background/50 text-sm min-h-[60px] resize-none" placeholder="Spezielle Stil-Anweisungen, z.B. 'im Stil von Studio Ghibli'" />
+                          <Textarea value={point.styleNotes || ""} onChange={e => handleFieldUpdate('styleNotes', e.target.value)} className="bg-background/50 text-sm min-h-[60px] resize-y" placeholder="Spezielle Stil-Anweisungen, z.B. 'im Stil von Studio Ghibli'" />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs text-muted-foreground">Konsistenz-Hinweise</label>
-                          <Textarea value={point.continuityNotes || ""} onChange={e => handleFieldUpdate('continuityNotes', e.target.value)} className="bg-background/50 text-sm min-h-[60px] resize-none" placeholder="Hinweise zur Kontinuität, z.B. 'Charakter trägt selbe Kleidung wie Szene 1'" />
+                          <Textarea value={point.continuityNotes || ""} onChange={e => handleFieldUpdate('continuityNotes', e.target.value)} className="bg-background/50 text-sm min-h-[60px] resize-y" placeholder="Hinweise zur Kontinuität, z.B. 'Charakter trägt selbe Kleidung wie Szene 1'" />
                         </div>
                       </div>
                     </CollapsibleContent>
@@ -930,7 +930,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             {/* Input area */}
             <div className="flex gap-3 items-stretch">
               <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[80px]">
-                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder={aiMode === "text" ? 'Beschreibe was du ändern möchtest, z.B. "Mache es dramatischer" oder "Ändere zu Nahaufnahme"...' : aiMode === "video" ? 'Beschreibe wie der Video-Prompt angepasst werden soll, z.B. "Mehr Kamerabewegung" oder "Langsamer und dramatischer"...' : 'Beschreibe spezielle Bild-Anweisungen oder lasse leer für Standard-Regenerierung...'} className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
+                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder={aiMode === "text" ? 'Beschreibe was du ändern möchtest, z.B. "Mache es dramatischer" oder "Ändere zu Nahaufnahme"...' : aiMode === "video" ? 'Beschreibe wie der Video-Prompt angepasst werden soll, z.B. "Mehr Kamerabewegung" oder "Langsamer und dramatischer"...' : 'Beschreibe spezielle Bild-Anweisungen oder lasse leer für Standard-Regenerierung...'} className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   onAssistantSubmit(aiMode);
