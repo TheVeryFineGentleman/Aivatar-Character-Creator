@@ -26,6 +26,8 @@ import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
+import { StoryboardLayout } from "@/components/storyboard/StoryboardLayout";
+import type { StoryboardSubTab } from "@/types/storyboard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -245,6 +247,9 @@ const Index = () => {
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
+  
+  // Storyboard sub-tab state
+  const [storyboardSubTab, setStoryboardSubTab] = useState<StoryboardSubTab>("project");
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
@@ -5750,11 +5755,14 @@ Beispiel einer korrekten Antwort:
 
         {/* Story Tab Content - Only for FULL users when story tab is active */}
         {authData.planCode === "FULL" && activeMainTab === "story" && (
-          <Card 
-            className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
-            style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
-          >
-            <CardContent className="pt-6 space-y-6">
+          <StoryboardLayout
+            activeSubTab={storyboardSubTab}
+            onSubTabChange={setStoryboardSubTab}
+            projectContent={
+              <Card 
+                className="border-border/50 bg-card/50 backdrop-blur-sm"
+              >
+                <CardContent className="pt-6 space-y-6">
               {/* Story Idea and AI Assistant side by side */}
               <div className="flex gap-4">
                 {/* Left: Story Idea Field */}
@@ -6625,7 +6633,9 @@ Beispiel einer korrekten Antwort:
                 </div>
               </div>
             </CardContent>
-          </Card>
+              </Card>
+            }
+          />
         )}
 
         {/* Merged Video Result */}
