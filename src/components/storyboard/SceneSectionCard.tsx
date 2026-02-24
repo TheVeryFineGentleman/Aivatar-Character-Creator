@@ -88,12 +88,12 @@ export const SceneSectionCard: React.FC<SceneSectionCardProps> = ({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card/50 transition-all duration-200",
+        "rounded-lg border bg-gradient-to-b from-card/70 to-card/50 shadow-sm transition-all duration-200",
         isFocused
           ? "border-primary/40 ring-1 ring-primary/20 shadow-[0_0_20px_hsl(var(--primary)/0.1)]"
-          : "border-border/40",
-        isDimmed && "opacity-60",
-        !isExpanded && "cursor-pointer hover:border-border/60"
+          : "border-border/30 shadow-black/5",
+        isDimmed && "opacity-50",
+        !isExpanded && "cursor-pointer hover:border-border/50 hover:shadow-md hover:shadow-black/10"
       )}
       onClick={() => !isExpanded && onToggleExpand()}
     >

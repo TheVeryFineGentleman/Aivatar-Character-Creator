@@ -152,8 +152,10 @@ export interface Transition {
 
 // --- AI Assistant ---
 
+export type EditScopeLevel = "field" | "card" | "substack" | "scene" | "storyboard";
+
 export interface EditScope {
-  level: "field" | "card" | "substack" | "scene";
+  level: EditScopeLevel;
   sceneId: string;
   subStackType?: SubStackType;
   cardId?: string;
@@ -168,6 +170,16 @@ export interface AssistantSuggestion {
   status: "pending" | "accepted" | "rejected" | "partial";
   prompt: string;
   createdAt: number;
+}
+
+// Story idea input for AI generation
+export interface StoryIdeaInput {
+  idea: string;
+  sceneCount: number;
+  format: "16:9" | "9:16";
+  genre?: string;
+  generateDialogues: boolean;
+  generateTransitions: boolean;
 }
 
 // --- Helpers ---

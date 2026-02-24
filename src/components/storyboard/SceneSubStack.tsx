@@ -36,7 +36,7 @@ export const SceneSubStack: React.FC<SceneSubStackProps> = ({ subStack, sceneId 
     : "";
 
   return (
-    <div className={cn("border-l-2 rounded-r-lg", ACCENT_CLASSES[subStack.type])}>
+    <div className={cn("border-l-2 rounded-r-lg rounded-l-sm bg-card/20 shadow-inner shadow-black/5", ACCENT_CLASSES[subStack.type])}>
       {/* Sub-Stack Header */}
       <button
         onClick={() => toggleSubStackExpanded(sceneId, subStack.type)}

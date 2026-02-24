@@ -38,7 +38,7 @@ export const TransitionCard: React.FC<TransitionCardProps> = ({ transition, onUp
   }
 
   return (
-    <div className="rounded-lg border border-border/40 bg-card/30 p-3 space-y-3">
+    <div className="rounded-lg border border-dashed border-border/50 bg-card/20 backdrop-blur-sm p-3 space-y-3 shadow-sm shadow-black/5">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-foreground">
           Übergang: Szene {transition.fromSceneIndex + 1} → {transition.toSceneIndex + 1}
