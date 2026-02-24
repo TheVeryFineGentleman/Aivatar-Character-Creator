@@ -6270,12 +6270,21 @@ Beispiel einer korrekten Antwort:
                                 transform: 'rotateX(0deg)',
                               }}
                             >
-                            {/* Scene header with title and status badge */}
-                            <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-3 py-2">
+                            {/* Scene header */}
+                            <div className="bg-muted/40 border-b border-border/30 px-3 py-2 space-y-1.5">
+                              {/* Row 1: Scene number + title */}
                               <div className="flex items-center gap-2">
-                                {/* Status Badge */}
+                                <span className="text-xs font-bold text-primary/70 tabular-nums shrink-0">
+                                  {String(index + 1).padStart(2, '0')}
+                                </span>
+                                <span className="font-semibold text-foreground/90 text-sm truncate">
+                                  {point.sceneTitle || `Szene ${index + 1}`}
+                                </span>
+                              </div>
+                              {/* Row 2: Status badge + controls */}
+                              <div className="flex items-center justify-between">
                                 <span className={cn(
-                                  "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                                  "text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1",
                                   point.generatedVideo 
                                     ? "bg-accent/20 text-accent" 
                                     : point.generatedImage 
@@ -6284,56 +6293,52 @@ Beispiel einer korrekten Antwort:
                                 )}>
                                   {point.generatedVideo ? "Video ✓" : point.generatedImage ? "Bild ✓" : "Entwurf"}
                                 </span>
-                                <span className="font-semibold text-foreground/80 text-sm">
-                                  {point.sceneTitle || `Szene ${index + 1}`}
-                                </span>
-                              </div>
-                              
-                              <div className="flex items-center gap-1">
-                                <div className="flex items-center bg-background/50 rounded-full px-1.5 py-0.5">
+                                <div className="flex items-center gap-0.5">
+                                  <div className="flex items-center bg-background/50 rounded-full px-1.5 py-0.5">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="rounded-full hover:bg-muted h-5 w-5"
+                                      onClick={() => navigateStoryPointVersion(index, 'prev')}
+                                      disabled={point.currentVersion === 0}
+                                    >
+                                      <ChevronLeft className="w-3 h-3" />
+                                    </Button>
+                                    <span className="font-semibold min-w-[28px] text-center text-[10px]">
+                                      {point.currentVersion + 1}/{point.versions.length}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="rounded-full hover:bg-muted h-5 w-5"
+                                      onClick={() => navigateStoryPointVersion(index, 'next')}
+                                      disabled={point.currentVersion === point.versions.length - 1}
+                                    >
+                                      <ChevronRight className="w-3 h-3" />
+                                    </Button>
+                                  </div>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="rounded-full hover:bg-muted h-5 w-5"
-                                    onClick={() => navigateStoryPointVersion(index, 'prev')}
-                                    disabled={point.currentVersion === 0}
+                                    className="rounded-full hover:bg-primary/10 hover:text-primary h-6 w-6"
+                                    onClick={() => regenerateStoryPoint(index)}
+                                    disabled={regeneratingPointIndex !== null}
                                   >
-                                    <ChevronLeft className="w-3 h-3" />
+                                    {regeneratingPointIndex === index ? (
+                                      <Loader2 className="animate-spin w-3.5 h-3.5" />
+                                    ) : (
+                                      <RefreshCw className="w-3.5 h-3.5" />
+                                    )}
                                   </Button>
-                                  <span className="font-semibold min-w-[28px] text-center text-[10px]">
-                                    {point.currentVersion + 1}/{point.versions.length}
-                                  </span>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="rounded-full hover:bg-muted h-5 w-5"
-                                    onClick={() => navigateStoryPointVersion(index, 'next')}
-                                    disabled={point.currentVersion === point.versions.length - 1}
+                                    className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
+                                    onClick={() => setExpandedStoryPointIndex(index)}
                                   >
-                                    <ChevronRight className="w-3 h-3" />
+                                    <Maximize2 className="w-3.5 h-3.5" />
                                   </Button>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="rounded-full hover:bg-primary/10 hover:text-primary h-6 w-6"
-                                  onClick={() => regenerateStoryPoint(index)}
-                                  disabled={regeneratingPointIndex !== null}
-                                >
-                                  {regeneratingPointIndex === index ? (
-                                    <Loader2 className="animate-spin w-3.5 h-3.5" />
-                                  ) : (
-                                    <RefreshCw className="w-3.5 h-3.5" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
-                                  onClick={() => setExpandedStoryPointIndex(index)}
-                                >
-                                  <Maximize2 className="w-3.5 h-3.5" />
-                                </Button>
                               </div>
                             </div>
                             
