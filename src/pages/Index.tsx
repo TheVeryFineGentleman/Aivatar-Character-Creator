@@ -27,7 +27,8 @@ import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
 import { StoryboardLayout } from "@/components/storyboard/StoryboardLayout";
-import type { StoryboardSubTab } from "@/types/storyboard";
+import type { StoryboardSubTab, Character } from "@/types/storyboard";
+import { CharacterPanel } from "@/components/storyboard/CharacterPanel";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -250,6 +251,9 @@ const Index = () => {
   
   // Storyboard sub-tab state
   const [storyboardSubTab, setStoryboardSubTab] = useState<StoryboardSubTab>("project");
+  
+  // Storyboard characters state
+  const [storyboardCharacters, setStoryboardCharacters] = useState<Character[]>([]);
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
@@ -5758,6 +5762,12 @@ Beispiel einer korrekten Antwort:
           <StoryboardLayout
             activeSubTab={storyboardSubTab}
             onSubTabChange={setStoryboardSubTab}
+            charactersContent={
+              <CharacterPanel
+                characters={storyboardCharacters}
+                onCharactersChange={setStoryboardCharacters}
+              />
+            }
             projectContent={
               <Card 
                 className="border-border/50 bg-card/50 backdrop-blur-sm"
