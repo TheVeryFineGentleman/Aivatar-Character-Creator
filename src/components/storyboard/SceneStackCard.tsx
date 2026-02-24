@@ -1,7 +1,8 @@
 import React from "react";
-import { ChevronDown, ChevronRight, GripVertical, Sparkles, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, GripVertical, Plus, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SceneStack } from "@/types/storyboard";
+import type { SceneStack, SubStackType } from "@/types/storyboard";
+import { SUB_STACK_CONFIG } from "@/types/storyboard";
 import { useStoryboard } from "@/contexts/StoryboardContext";
 import { StatusBadge } from "./StatusBadge";
 import { OverflowActionMenu, type OverflowAction } from "./OverflowActionMenu";
@@ -12,7 +13,7 @@ interface SceneStackCardProps {
 }
 
 export const SceneStackCard: React.FC<SceneStackCardProps> = ({ scene }) => {
-  const { toggleSceneExpanded, removeScene } = useStoryboard();
+  const { toggleSceneExpanded, removeScene, duplicateScene, insertSceneAt } = useStoryboard();
   const isExpanded = scene.isExpanded;
 
   // Get story-core summary for collapsed view
@@ -35,6 +36,9 @@ export const SceneStackCard: React.FC<SceneStackCardProps> = ({ scene }) => {
   ].filter(Boolean) as string[];
 
   const overflowActions: OverflowAction[] = [
+    { label: "Szene duplizieren", icon: <Copy className="w-3.5 h-3.5" />, onClick: () => duplicateScene(scene.id) },
+    { label: "Szene davor einfügen", icon: <Plus className="w-3.5 h-3.5" />, onClick: () => insertSceneAt(scene.index) },
+    { label: "Szene danach einfügen", icon: <Plus className="w-3.5 h-3.5" />, onClick: () => insertSceneAt(scene.index + 1) },
     { label: "KI: Szene verbessern", icon: <Sparkles className="w-3.5 h-3.5" />, onClick: () => {} },
     { label: "Szene löschen", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: () => removeScene(scene.id), destructive: true, separator: true },
   ];
@@ -42,10 +46,10 @@ export const SceneStackCard: React.FC<SceneStackCardProps> = ({ scene }) => {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card/60 backdrop-blur-sm transition-all duration-300",
+        "rounded-xl border bg-gradient-to-b from-card/80 to-card/60 backdrop-blur-sm transition-all duration-300",
         isExpanded
-          ? "border-border/60 shadow-lg"
-          : "border-border/40 hover:border-border/60",
+          ? "border-border/60 shadow-lg shadow-black/20"
+          : "border-border/40 hover:border-border/60 shadow-md shadow-black/10",
         scene.status === "final" && "border-primary/30"
       )}
     >
@@ -91,17 +95,47 @@ export const SceneStackCard: React.FC<SceneStackCardProps> = ({ scene }) => {
         </div>
       </div>
 
-      {/* Expanded: Sub-Stacks */}
+      {/* Expanded: Sub-Stack Segment Buttons + Sub-Stacks */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-4">
-          {scene.subStacks.map(subStack => (
-            <SceneSubStack
-              key={subStack.type}
-              subStack={subStack}
-              sceneId={scene.id}
-            />
-          ))}
-        </div>
+        <>
+          {/* Sub-Stack segment buttons */}
+          <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none">
+            {scene.subStacks.map(ss => {
+              const config = SUB_STACK_CONFIG[ss.type];
+              return (
+                <button
+                  key={ss.type}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Scroll to sub-stack or toggle it
+                    const el = document.getElementById(`substack-${scene.id}-${ss.type}`);
+                    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }}
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1 text-[10px] font-medium border transition-all",
+                    ss.isExpanded
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border/40 text-muted-foreground hover:border-border/60 hover:text-foreground"
+                  )}
+                >
+                  {config.letter} {config.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-Stacks */}
+          <div className="px-4 pb-4 space-y-4">
+            {scene.subStacks.map(subStack => (
+              <div key={subStack.type} id={`substack-${scene.id}-${subStack.type}`}>
+                <SceneSubStack
+                  subStack={subStack}
+                  sceneId={scene.id}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
