@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera, LayoutGrid, LayoutList, ArrowRight, Film, Clapperboard } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import sceneryBg from "@/assets/scenery-background.jpg";
@@ -245,6 +245,9 @@ const Index = () => {
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
+  
+  // Storyboard layout mode
+  const [storyboardLayout, setStoryboardLayout] = useState<"scroll" | "grid">("scroll");
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
@@ -6121,31 +6124,104 @@ Beispiel einer korrekten Antwort:
 
 {/* Story Points Display - Always visible container */}
                 <div className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-4 min-h-[160px] border border-border/40 shadow-inner">
-                  {storyPoints.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full min-h-[130px] text-muted-foreground gap-2">
-                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
-                        <Sparkles className="w-6 h-6 opacity-50" />
+                {storyPoints.length === 0 ? (
+                    /* Enhanced Empty State */
+                    <div className="flex flex-col items-center justify-center min-h-[200px] text-muted-foreground gap-4 py-8">
+                      {/* Illustrated film frames */}
+                      <div className="flex items-center gap-3">
+                        {[1, 2, 3].map((i) => (
+                          <div 
+                            key={i} 
+                            className="w-20 h-14 rounded-lg border-2 border-dashed border-border/60 flex items-center justify-center bg-muted/20"
+                            style={{ 
+                              animationDelay: `${i * 150}ms`,
+                              animation: 'shimmer 3s ease-in-out infinite',
+                              backgroundSize: '400% 100%',
+                              backgroundImage: `linear-gradient(90deg, transparent 33%, hsl(var(--primary) / 0.04) 50%, transparent 66%)`,
+                            }}
+                          >
+                            {i === 1 && <Film className="w-5 h-5 opacity-30" />}
+                            {i === 2 && <Clapperboard className="w-5 h-5 opacity-30" />}
+                            {i === 3 && <ImageIcon className="w-5 h-5 opacity-30" />}
+                          </div>
+                        ))}
                       </div>
-                      <span className="text-sm">Generierte Szenen erscheinen hier...</span>
+                      {/* 3-Step Guide */}
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                          <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">1</span>
+                          Story-Idee
+                        </span>
+                        <ArrowRight className="w-3 h-3 text-muted-foreground/50" />
+                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-muted-foreground">
+                          <span className="w-4 h-4 rounded-full bg-muted-foreground/20 flex items-center justify-center text-[10px] font-bold">2</span>
+                          Referenzbild
+                        </span>
+                        <ArrowRight className="w-3 h-3 text-muted-foreground/50" />
+                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-muted-foreground">
+                          <span className="w-4 h-4 rounded-full bg-muted-foreground/20 flex items-center justify-center text-[10px] font-bold">3</span>
+                          Generieren
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     <div className="relative">
+                      {/* Layout Toggle */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {storyPoints.length} Szenen
+                        </span>
+                        <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
+                          <button
+                            onClick={() => setStoryboardLayout("scroll")}
+                            className={cn(
+                              "p-1.5 rounded-md transition-all",
+                              storyboardLayout === "scroll" 
+                                ? "bg-primary text-primary-foreground shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                            title="Reihe"
+                          >
+                            <LayoutList className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setStoryboardLayout("grid")}
+                            className={cn(
+                              "p-1.5 rounded-md transition-all",
+                              storyboardLayout === "grid" 
+                                ? "bg-primary text-primary-foreground shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                            title="Raster"
+                          >
+                            <LayoutGrid className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
                       <div 
                         id="story-points-scroll" 
-                        className="flex gap-4 overflow-x-auto pb-3 px-2 scrollbar-thin scroll-smooth"
-                        onWheel={(e) => {
+                        className={cn(
+                          storyboardLayout === "scroll"
+                            ? "flex gap-4 overflow-x-auto pb-3 px-2 scrollbar-thin scroll-smooth"
+                            : "grid grid-cols-1 md:grid-cols-2 gap-4 px-2 pb-3"
+                        )}
+                        onWheel={storyboardLayout === "scroll" ? (e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const container = e.currentTarget;
                           container.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' });
-                        }}
-                        style={{ overscrollBehavior: 'contain', perspective: '1000px' }}
+                        } : undefined}
+                        style={storyboardLayout === "scroll" ? { overscrollBehavior: 'contain', perspective: '1000px' } : { perspective: '1000px' }}
                       >
                         {storyPoints.map((point, index) => (
+                          <React.Fragment key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}>
                           <div 
-                            key={regeneratingCardIndex === index ? `regen-${index}` : justFinishedIndex === index ? `flip-${index}` : `${storyboardAnimationKey}-${index}`}
                             className={cn(
-                              "min-w-[260px] max-w-[300px] flex-shrink-0 relative h-[295px]",
+                              storyboardLayout === "scroll"
+                                ? "min-w-[280px] max-w-[320px] flex-shrink-0 relative"
+                                : "relative",
+                              storyboardLayout === "scroll" ? "h-[360px]" : "h-[380px]",
                               regeneratingCardIndex === index 
                                 ? "animate-storyboard-flip-away" 
                                 : justFinishedIndex === index 
@@ -6167,14 +6243,12 @@ Beispiel einer korrekten Antwort:
                                 transform: 'rotateX(180deg)'
                               }}
                             >
-                              {/* Decorative pattern */}
                               <div className="absolute inset-0 opacity-[0.07]">
                                 <div className="absolute top-4 left-4 w-16 h-16 border-2 border-foreground rounded-full" />
                                 <div className="absolute top-8 left-8 w-12 h-12 border-2 border-foreground rounded-full" />
                                 <div className="absolute bottom-4 right-4 w-20 h-20 border-2 border-foreground rounded-full" />
                                 <div className="absolute bottom-10 right-10 w-10 h-10 border-2 border-foreground rounded-full" />
                               </div>
-                              {/* Center icon */}
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
                                   {justFinishedIndex === index ? (
@@ -6189,20 +6263,34 @@ Beispiel einer korrekten Antwort:
                             </div>
                             {/* Card Front */}
                             <div 
-                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30"
+                              className="absolute inset-0 group bg-gradient-to-b from-background to-background/90 rounded-xl border border-border/40 overflow-hidden shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
                               style={{ 
                                 backfaceVisibility: 'hidden',
                                 WebkitBackfaceVisibility: 'hidden',
                                 transform: 'rotateX(0deg)',
-                                transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
                               }}
                             >
-                            {/* Scene number header bar with controls */}
-                            <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-4 py-2.5">
-                              <span className="font-semibold text-foreground/80 text-sm">Szene {index + 1}</span>
+                            {/* Scene header with title and status badge */}
+                            <div className="bg-muted/40 border-b border-border/30 flex items-center justify-between px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                {/* Status Badge */}
+                                <span className={cn(
+                                  "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                                  point.generatedVideo 
+                                    ? "bg-accent/20 text-accent" 
+                                    : point.generatedImage 
+                                      ? "bg-primary/20 text-primary" 
+                                      : "bg-muted text-muted-foreground"
+                                )}>
+                                  {point.generatedVideo ? "Video ✓" : point.generatedImage ? "Bild ✓" : "Entwurf"}
+                                </span>
+                                <span className="font-semibold text-foreground/80 text-sm">
+                                  {point.sceneTitle || `Szene ${index + 1}`}
+                                </span>
+                              </div>
                               
-                              <div className="flex items-center gap-1.5">
-                                <div className="flex items-center bg-background/50 rounded-full px-2 py-0.5">
+                              <div className="flex items-center gap-1">
+                                <div className="flex items-center bg-background/50 rounded-full px-1.5 py-0.5">
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -6212,7 +6300,7 @@ Beispiel einer korrekten Antwort:
                                   >
                                     <ChevronLeft className="w-3 h-3" />
                                   </Button>
-                                  <span className="font-semibold min-w-[32px] text-center text-xs">
+                                  <span className="font-semibold min-w-[28px] text-center text-[10px]">
                                     {point.currentVersion + 1}/{point.versions.length}
                                   </span>
                                   <Button
@@ -6249,27 +6337,24 @@ Beispiel einer korrekten Antwort:
                               </div>
                             </div>
                             
-                            {/* Scene content - clean card layout */}
-                            <div className="p-3 flex-1 flex flex-col">
+                            {/* Scene content - image takes ~65% */}
+                            <div className="p-3 flex-1 flex flex-col h-[calc(100%-44px)]">
                               {point.generatedImage ? (
                                 <>
-                                  {/* Generated Image with flip animation for regeneration */}
+                                  {/* Generated Image - larger */}
                                   <div 
-                                    className="relative rounded-lg overflow-hidden bg-muted/10 h-[160px] w-full group/image"
+                                    className="relative rounded-lg overflow-hidden bg-muted/10 flex-1 min-h-0 group/image"
                                     style={{ perspective: '600px' }}
                                   >
-                                    {/* Image flip container - only image flips during regeneration */}
                                     <div 
                                       className={cn(
                                         "w-full h-full transition-transform duration-500",
                                         regeneratingImageOnlyIndex === index && "animate-image-flip-out",
                                         justFinishedImageOnlyIndex === index && "animate-image-flip-in"
                                       )}
-                                      style={{ 
-                                        transformStyle: 'preserve-3d',
-                                      }}
+                                      style={{ transformStyle: 'preserve-3d' }}
                                     >
-                                      {/* Front - video player if available, otherwise image */}
+                                      {/* Front */}
                                       <div 
                                         className="absolute inset-0 flex items-center justify-center"
                                         style={{ backfaceVisibility: 'hidden' }}
@@ -6278,10 +6363,7 @@ Beispiel einer korrekten Antwort:
                                           <video 
                                             src={point.generatedVideo} 
                                             className="max-w-full max-h-full object-contain"
-                                            autoPlay
-                                            loop
-                                            muted
-                                            playsInline
+                                            autoPlay loop muted playsInline
                                           />
                                         ) : (
                                           <img 
@@ -6312,60 +6394,19 @@ Beispiel einer korrekten Antwort:
                                                 transitionDelay: isCompleted ? '1.8s' : '0s',
                                               }}
                                             >
-                                              {/* Completed state */}
-                                              <div 
-                                                className="absolute flex flex-col items-center gap-1"
-                                                style={{
-                                                  opacity: isCompleted ? 1 : 0,
-                                                  transform: isCompleted ? 'translateY(-4px) scale(1)' : 'translateY(12px) scale(0.8)',
-                                                  transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                                                }}
-                                              >
-                                                <div className="w-8 h-8 rounded-full bg-green-500/90 flex items-center justify-center shadow-lg shadow-green-500/30">
-                                                  <Check className="w-5 h-5 text-white" />
-                                                </div>
+                                              <div className="absolute flex flex-col items-center gap-1" style={{ opacity: isCompleted ? 1 : 0, transform: isCompleted ? 'translateY(-4px) scale(1)' : 'translateY(12px) scale(0.8)', transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                                                <div className="w-8 h-8 rounded-full bg-green-500/90 flex items-center justify-center shadow-lg shadow-green-500/30"><Check className="w-5 h-5 text-white" /></div>
                                                 <span className="text-[10px] font-medium text-white/90">Fertig</span>
                                               </div>
-                                              
-                                              {/* Error state */}
-                                              <div 
-                                                className="absolute flex flex-col items-center gap-1 max-w-[90%]"
-                                                style={{
-                                                  opacity: hasError ? 1 : 0,
-                                                  transform: hasError ? 'scale(1)' : 'scale(0.8)',
-                                                  transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                                                }}
-                                              >
-                                                <div className="w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center">
-                                                  <AlertCircle className="w-5 h-5 text-white" />
-                                                </div>
-                                                <span className="text-[10px] font-medium text-white/90 text-center line-clamp-3 px-1">
-                                                  {videoErrors.get(index) || 'Fehler'}
-                                                </span>
+                                              <div className="absolute flex flex-col items-center gap-1 max-w-[90%]" style={{ opacity: hasError ? 1 : 0, transform: hasError ? 'scale(1)' : 'scale(0.8)', transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                                                <div className="w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center"><AlertCircle className="w-5 h-5 text-white" /></div>
+                                                <span className="text-[10px] font-medium text-white/90 text-center line-clamp-3 px-1">{videoErrors.get(index) || 'Fehler'}</span>
                                               </div>
-                                              
-                                              {/* Processing state */}
-                                              <div 
-                                                className="absolute flex flex-col items-center gap-1"
-                                                style={{
-                                                  opacity: isProcessing ? 1 : 0,
-                                                  transform: isProcessing ? 'scale(1)' : 'scale(0.85)',
-                                                  transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                                                }}
-                                              >
+                                              <div className="absolute flex flex-col items-center gap-1" style={{ opacity: isProcessing ? 1 : 0, transform: isProcessing ? 'scale(1)' : 'scale(0.85)', transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                                                 <Loader2 className="w-7 h-7 text-white animate-spin" />
                                                 <span className="text-[10px] font-medium text-white/90">Video wird erstellt...</span>
                                               </div>
-                                              
-                                              {/* Waiting state */}
-                                              <div 
-                                                className="absolute flex flex-col items-center gap-1"
-                                                style={{
-                                                  opacity: isWaiting ? 1 : 0,
-                                                  transform: isWaiting ? 'scale(1)' : 'scale(0.85)',
-                                                  transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                                                }}
-                                              >
+                                              <div className="absolute flex flex-col items-center gap-1" style={{ opacity: isWaiting ? 1 : 0, transform: isWaiting ? 'scale(1)' : 'scale(0.85)', transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                                                 <Clock className="w-6 h-6 text-white/70" />
                                                 <span className="text-[10px] font-medium text-white/70">Wartend...</span>
                                               </div>
@@ -6373,19 +6414,12 @@ Beispiel einer korrekten Antwort:
                                           );
                                         })()}
                                       </div>
-                                      {/* Back - decorative pattern like card back */}
-                                      <div 
-                                        className="absolute inset-0 bg-background rounded-lg overflow-hidden"
-                                        style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                                      >
-                                        {/* Decorative pattern */}
+                                      {/* Back */}
+                                      <div className="absolute inset-0 bg-background rounded-lg overflow-hidden" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                                         <div className="absolute inset-0 opacity-[0.07]">
                                           <div className="absolute top-2 left-2 w-10 h-10 border-2 border-foreground rounded-full" />
-                                          <div className="absolute top-4 left-4 w-6 h-6 border-2 border-foreground rounded-full" />
                                           <div className="absolute bottom-2 right-2 w-12 h-12 border-2 border-foreground rounded-full" />
-                                          <div className="absolute bottom-5 right-5 w-6 h-6 border-2 border-foreground rounded-full" />
                                         </div>
-                                        {/* Center loader */}
                                         <div className="absolute inset-0 flex items-center justify-center">
                                           <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center border border-border/50">
                                             {justFinishedImageOnlyIndex === index ? (
@@ -6397,31 +6431,26 @@ Beispiel einer korrekten Antwort:
                                         </div>
                                       </div>
                                     </div>
-                                    {/* Format label */}
+                                    {/* Format + Shot labels */}
                                     {point.generatedImage && generatingStoryImageIndex !== index && !regeneratingImageOnlyIndex && (
                                       <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
                                         {storyboardFormat}
                                       </div>
                                     )}
-                                    {/* Shot type label */}
                                     {point.shotType && generatingStoryImageIndex !== index && !regeneratingImageOnlyIndex && (
                                       <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none z-10">
                                         {point.shotType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                       </div>
                                     )}
-                                    {/* Quick Action Overlay on hover - hidden during regeneration */}
+                                    {/* Quick Action Overlay */}
                                     {regeneratingImageOnlyIndex !== index && (
                                       <div 
                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20 cursor-pointer"
                                         onClick={() => setExpandedStoryPointIndex(index)}
                                       >
-                                        <Button 
-                                          size="icon" 
-                                          variant="secondary" 
-                                          className="h-9 w-9 rounded-full shadow-lg"
+                                        <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full shadow-lg"
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
-                                            // Download single image
                                             const link = document.createElement('a');
                                             link.href = point.generatedImage!;
                                             link.download = `szene-${index + 1}-${storyboardFormat.replace(':', 'x')}.png`;
@@ -6432,10 +6461,7 @@ Beispiel einer korrekten Antwort:
                                         >
                                           <Download className="w-4 h-4" />
                                         </Button>
-                                        <Button 
-                                          size="icon" 
-                                          variant="secondary" 
-                                          className="h-9 w-9 rounded-full shadow-lg"
+                                        <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full shadow-lg"
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
                                             if (point.generatedVideo || point.videoPrompt) {
@@ -6452,11 +6478,19 @@ Beispiel einer korrekten Antwort:
                                     )}
                                   </div>
                                   
-                                  {/* Scene summary - compact */}
-                                  <div className="mt-2 bg-muted/30 rounded-lg p-2 border border-border/20">
+                                  {/* Scene summary - compact at bottom */}
+                                  <div className="mt-2 bg-muted/30 rounded-lg p-2 border border-border/20 shrink-0">
                                     <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
                                       {point.summary || point.sceneDescription || point.versions[point.currentVersion]}
                                     </p>
+                                  </div>
+                                  
+                                  {/* Progress bar at bottom */}
+                                  <div className="mt-1.5 h-1 rounded-full bg-muted/50 overflow-hidden shrink-0">
+                                    <div className={cn(
+                                      "h-full rounded-full transition-all duration-500",
+                                      point.generatedVideo ? "w-full bg-accent" : point.generatedImage ? "w-2/3 bg-primary" : "w-1/3 bg-muted-foreground/30"
+                                    )} />
                                   </div>
                                 </>
                               ) : point.generationError ? (
@@ -6519,12 +6553,10 @@ Beispiel einer korrekten Antwort:
                                 <div className="flex-1 flex flex-col p-2">
                                   {generatingStoryImageIndex === index ? (
                                     <>
-                                      {/* Image placeholder sliding from top */}
                                       <div className="relative rounded-lg overflow-hidden bg-muted/10 flex items-center justify-center animate-image-from-top aspect-video mb-3">
                                         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
                                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
                                       </div>
-                                      {/* Text field tweening to bottom position */}
                                       <div className="bg-muted/30 rounded-lg p-2.5 border border-border/20 animate-text-to-bottom overflow-hidden">
                                         <p className="text-xs text-foreground/60 leading-relaxed line-clamp-3">
                                           {point.summary || point.versions[point.currentVersion]}
@@ -6532,7 +6564,6 @@ Beispiel einer korrekten Antwort:
                                       </div>
                                     </>
                                   ) : (
-                                    /* Show summary in card, editing happens in popup */
                                     <div className="flex-1 flex flex-col">
                                       <div className="bg-muted/30 rounded-lg p-3 border border-border/20 flex-1">
                                         <p className="text-sm text-foreground/80 leading-relaxed">
@@ -6549,6 +6580,17 @@ Beispiel einer korrekten Antwort:
                             </div>
                             </div>
                           </div>
+                          {/* Timeline connector between cards */}
+                          {storyboardLayout === "scroll" && index < storyPoints.length - 1 && (
+                            <div className="flex-shrink-0 flex items-center justify-center w-6 self-center">
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="w-0.5 h-3 bg-border/60 rounded-full" />
+                                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/50" />
+                                <div className="w-0.5 h-3 bg-border/60 rounded-full" />
+                              </div>
+                            </div>
+                          )}
+                          </React.Fragment>
                         ))}
 
                       </div>
