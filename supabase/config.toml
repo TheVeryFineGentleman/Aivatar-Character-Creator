@@ -11,6 +11,3 @@ verify_jwt = false
 
 [functions.license-remind]
 verify_jwt = false
-
-[functions.generate-storyboard]
-verify_jwt = false
