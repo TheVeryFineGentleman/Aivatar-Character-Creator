@@ -26,11 +26,6 @@ import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
-import { StoryboardLayout } from "@/components/storyboard/StoryboardLayout";
-import type { StoryboardSubTab, Character, Scene } from "@/types/storyboard";
-import { createDefaultScene } from "@/types/storyboard";
-import { CharacterPanel } from "@/components/storyboard/CharacterPanel";
-import { ScenesTab } from "@/components/storyboard/ScenesTab";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -250,12 +245,6 @@ const Index = () => {
 
   // Main Tab state - only for FULL users
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
-  
-  // Storyboard sub-tab state
-  const [storyboardSubTab, setStoryboardSubTab] = useState<StoryboardSubTab>("project");
-  
-  // Storyboard characters state
-  const [storyboardCharacters, setStoryboardCharacters] = useState<Character[]>([]);
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
@@ -5761,75 +5750,11 @@ Beispiel einer korrekten Antwort:
 
         {/* Story Tab Content - Only for FULL users when story tab is active */}
         {authData.planCode === "FULL" && activeMainTab === "story" && (
-          <StoryboardLayout
-            activeSubTab={storyboardSubTab}
-            onSubTabChange={setStoryboardSubTab}
-            charactersContent={
-              <CharacterPanel
-                characters={storyboardCharacters}
-                onCharactersChange={setStoryboardCharacters}
-              />
-            }
-            scenesContent={
-              storyPoints.length > 0 ? (
-                <ScenesTab
-                  scenes={storyPoints.map((point, i) => {
-                    const scene = createDefaultScene(`scene-${i}`);
-                    scene.summary = point.summary || point.sceneDescription || point.versions?.[point.currentVersion] || '';
-                    scene.detailedDescription = point.detailedDescription || point.versions?.[point.currentVersion] || '';
-                    scene.versions = point.versions || [];
-                    scene.currentVersion = point.currentVersion || 0;
-                    scene.generatedImage = point.generatedImage || '';
-                    scene.generatedVideo = point.generatedVideo || '';
-                    scene.videoPrompt = point.videoPrompt || '';
-                    scene.detailedImagePrompt = point.detailedImagePrompt || '';
-                    scene.generationError = point.generationError;
-                    scene.emotion = point.emotion || '';
-                    scene.cameraAngle = point.cameraAngle || '';
-                    scene.shotType = point.shotType || '';
-                    scene.veo3CameraMovement = point.veo3CameraMovement;
-                    scene.veo3StartState = point.veo3StartState;
-                    scene.veo3Motion = point.veo3Motion;
-                    scene.veo3EndState = point.veo3EndState;
-                    // Derive status
-                    if (point.generatedVideo) scene.status = 'video-ok';
-                    else if (point.generatedImage) scene.status = 'image-ok';
-                    else if (point.summary || point.detailedDescription) scene.status = 'text-ok';
-                    else scene.status = 'draft';
-                    if (point.finalSnapshot) scene.status = 'final';
-                    return scene;
-                  })}
-                  onOpenEditor={(index) => setExpandedStoryPointIndex(index)}
-                  onRegenerateScene={(index) => regenerateStoryPoint(index)}
-                  onRegenerateImage={(index) => regenerateSingleStoryScene(index)}
-                  onDownloadImage={(index) => {
-                    const point = storyPoints[index];
-                    if (point?.generatedImage) {
-                      const link = document.createElement('a');
-                      link.href = point.generatedImage;
-                      link.download = `szene-${index + 1}.png`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }
-                  }}
-                  onNavigateVersion={(index, direction) => navigateStoryPointVersion(index, direction === 'prev' ? 'prev' : 'next')}
-                  onUpdateSummary={(index, summary) => {
-                    setStoryPoints(prev => prev.map((p, i) =>
-                      i === index ? { ...p, summary } : p
-                    ));
-                  }}
-                  regeneratingIndex={regeneratingPointIndex}
-                  generatingImageIndex={generatingStoryImageIndex}
-                  aspectRatio={storyboardFormat}
-                />
-              ) : undefined
-            }
-            projectContent={
-              <Card 
-                className="border-border/50 bg-card/50 backdrop-blur-sm"
-              >
-                <CardContent className="pt-6 space-y-6">
+          <Card 
+            className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+            style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
+          >
+            <CardContent className="pt-6 space-y-6">
               {/* Story Idea and AI Assistant side by side */}
               <div className="flex gap-4">
                 {/* Left: Story Idea Field */}
@@ -6700,9 +6625,7 @@ Beispiel einer korrekten Antwort:
                 </div>
               </div>
             </CardContent>
-              </Card>
-            }
-          />
+          </Card>
         )}
 
         {/* Merged Video Result */}
