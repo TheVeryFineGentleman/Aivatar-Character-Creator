@@ -28,6 +28,10 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
 
   const fetchBalance = useCallback(async () => {
     if (!isFullPlan || !isAuthenticated) return;
+    if (isDevAccount()) {
+      setCredits({ balance: 999, isLoading: false, error: null });
+      return;
+    }
 
     const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
     if (!savedCredentials?.email || !savedCredentials?.licenseKey) return;
