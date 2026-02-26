@@ -9,6 +9,9 @@ interface CreditsState {
   error: string | null;
 }
 
+// Dev accounts bypass credits entirely
+const DEV_EMAILS = ["1", "2", "3"];
+
 export const useCredits = (planCode: string, isAuthenticated: boolean) => {
   const [credits, setCredits] = useState<CreditsState>({
     balance: null,
@@ -18,8 +21,17 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
 
   const isFullPlan = planCode === "FULL";
 
+  const isDevAccount = (): boolean => {
+    const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
+    return DEV_EMAILS.includes(savedCredentials?.email);
+  };
+
   const fetchBalance = useCallback(async () => {
     if (!isFullPlan || !isAuthenticated) return;
+    if (isDevAccount()) {
+      setCredits({ balance: 999, isLoading: false, error: null });
+      return;
+    }
 
     const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
     if (!savedCredentials?.email || !savedCredentials?.licenseKey) return;
@@ -53,7 +65,8 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
   }, [isFullPlan, isAuthenticated]);
 
   const consumeCredit = useCallback(async (amount: number = 1): Promise<{ success: boolean; newBalance?: number; error?: string }> => {
-    if (!isFullPlan) return { success: true }; // Non-FULL plans don't use credits
+    if (!isFullPlan) return { success: true };
+    if (isDevAccount()) return { success: true, newBalance: 999 };
 
     const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
     if (!savedCredentials?.email || !savedCredentials?.licenseKey) {
