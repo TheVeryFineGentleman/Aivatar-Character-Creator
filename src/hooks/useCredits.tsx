@@ -65,7 +65,8 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
   }, [isFullPlan, isAuthenticated]);
 
   const consumeCredit = useCallback(async (amount: number = 1): Promise<{ success: boolean; newBalance?: number; error?: string }> => {
-    if (!isFullPlan) return { success: true }; // Non-FULL plans don't use credits
+    if (!isFullPlan) return { success: true };
+    if (isDevAccount()) return { success: true, newBalance: 999 };
 
     const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
     if (!savedCredentials?.email || !savedCredentials?.licenseKey) {
