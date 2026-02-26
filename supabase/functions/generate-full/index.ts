@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const KIE_API_BASE = "https://api.kie.ai";
-const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 function getS3Client(bucket: string) {
   return new S3Client({
