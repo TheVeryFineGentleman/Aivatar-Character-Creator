@@ -6,6 +6,15 @@ verify_jwt = false
 [functions.generate-video]
 verify_jwt = false
 
+[functions.generate-full]
+verify_jwt = false
+
+[functions.credits-balance]
+verify_jwt = false
+
+[functions.credits-consume]
+verify_jwt = false
+
 [functions.license-check]
 verify_jwt = false
 
