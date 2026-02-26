@@ -49,58 +49,18 @@ async function deleteFromSpaces(keys: string[]) {
   }
 }
 
-async function pollForResult(taskId: string, apiKey: string, endpoint: string, maxWaitMs = 150000): Promise<{ success: boolean; resultUrls?: string[]; error?: string }> {
-  const startTime = Date.now();
-  const pollInterval = 2000;
-
-  while (Date.now() - startTime < maxWaitMs) {
-    await new Promise(resolve => setTimeout(resolve, pollInterval));
-
-    const statusResponse = await fetch(
-      `${KIE_API_BASE}${endpoint}?taskId=${taskId}`,
-      {
-        method: "GET",
-        headers: { "Authorization": `Bearer ${apiKey}` },
-      }
-    );
-
-    if (!statusResponse.ok) {
-      const errText = await statusResponse.text();
-      console.error("❌ Status check failed:", statusResponse.status, errText);
-      continue;
-    }
-
-    const statusData = await statusResponse.json();
-    const data = statusData.data;
-
-    // Check for completion
-    const resultUrls = data?.response?.resultUrls
-      || data?.resultUrls
-      || data?.works?.map((w: any) => w.resource?.resource)
-      || [];
-
-    if (data?.successFlag === 1 && resultUrls.length > 0) {
-      return { success: true, resultUrls };
-    }
-
-    if (data?.errorCode || data?.errorMessage) {
-      return { success: false, error: data?.errorMessage || `Error code: ${data?.errorCode}` };
-    }
-  }
-
-  return { success: false, error: "Zeitüberschreitung bei der Bildgenerierung" };
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { mode, prompt, referenceImages, aspectRatio = "1:1" } = await req.json();
+    const body = await req.json();
+    const { mode } = body;
 
-    // ===== TEXT MODE - Gemini API with backend key =====
+    // ===== TEXT MODE - Gemini API =====
     if (mode === "text") {
+      const { prompt, referenceImages } = body;
       console.log("📝 Text generation via Gemini (backend key)");
 
       const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -112,16 +72,12 @@ serve(async (req) => {
       }
 
       const model = "gemini-2.5-flash";
-
-      // Build parts array for Gemini
       const parts: any[] = [{ text: prompt }];
 
       if (referenceImages && referenceImages.length > 0) {
         for (const base64Image of referenceImages) {
           const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-          parts.push({
-            inlineData: { mimeType: "image/png", data: cleanBase64 }
-          });
+          parts.push({ inlineData: { mimeType: "image/png", data: cleanBase64 } });
         }
       }
 
@@ -132,10 +88,7 @@ serve(async (req) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2000,
-            },
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
           }),
         }
       );
@@ -143,11 +96,9 @@ serve(async (req) => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("❌ Gemini error:", response.status, errorText);
-
         let errorMessage = `AI-Fehler: ${response.status}`;
         if (response.status === 429) errorMessage = "Rate limit erreicht. Bitte warte einen Moment.";
         else if (response.status === 403) errorMessage = "API-Key ungültig oder gesperrt.";
-
         return new Response(
           JSON.stringify({ success: false, error: errorMessage }),
           { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -156,16 +107,16 @@ serve(async (req) => {
 
       const data = await response.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-
       return new Response(
         JSON.stringify({ success: true, text }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // ===== IMAGE MODE - kie.ai Flux Kontext =====
-    if (mode === "image") {
-      console.log("🖼️ Image generation via kie.ai Flux Kontext");
+    // ===== IMAGE-START MODE - Start kie.ai job, return taskId immediately =====
+    if (mode === "image-start") {
+      const { prompt, referenceImages, aspectRatio = "1:1" } = body;
+      console.log("🖼️ Image generation START via kie.ai Flux Kontext");
 
       const KIE_API_KEY = Deno.env.get("KIE_API_KEY");
       if (!KIE_API_KEY) {
@@ -175,7 +126,6 @@ serve(async (req) => {
         );
       }
 
-      // Check required env vars for DO Spaces
       const requiredEnv = ["DO_SPACES_ACCESS_KEY", "DO_SPACES_SECRET_KEY", "DO_SPACES_BUCKET"];
       for (const env of requiredEnv) {
         if (!Deno.env.get(env)) {
@@ -189,7 +139,6 @@ serve(async (req) => {
       let inputImageUrl: string | undefined;
       const spacesKeys: string[] = [];
 
-      // Upload first reference image to DO Spaces for kie.ai
       if (referenceImages && referenceImages.length > 0) {
         console.log("📤 Uploading reference image to DO Spaces...");
         const result = await uploadToSpaces(referenceImages[0], `ref-${Date.now()}.png`);
@@ -198,14 +147,12 @@ serve(async (req) => {
         console.log("✅ Reference image uploaded:", inputImageUrl);
       }
 
-      // Call kie.ai Flux Kontext generate API
       const generateBody: any = {
         prompt,
         aspectRatio,
         model: "flux-kontext-pro",
         outputFormat: "png",
       };
-
       if (inputImageUrl) {
         generateBody.inputImage = inputImageUrl;
       }
@@ -224,12 +171,10 @@ serve(async (req) => {
         const errText = await generateResponse.text();
         console.error("❌ Image generation failed:", generateResponse.status, errText);
         await deleteFromSpaces(spacesKeys);
-
         let errorMessage = `Bildgenerierung fehlgeschlagen: ${generateResponse.status}`;
         if (generateResponse.status === 429) errorMessage = "Rate limit erreicht. Bitte warte einen Moment.";
         else if (generateResponse.status === 401) errorMessage = "API-Key ungültig";
         else if (generateResponse.status === 402) errorMessage = "Nicht genügend kie.ai Credits";
-
         return new Response(
           JSON.stringify({ success: false, error: errorMessage }),
           { status: generateResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -248,32 +193,94 @@ serve(async (req) => {
         );
       }
 
-      console.log("⏳ Polling for result, taskId:", taskId);
+      console.log("✅ Job started, taskId:", taskId, "spacesKeys:", spacesKeys);
 
-      // Poll for result (block until done or timeout)
-      const result = await pollForResult(taskId, KIE_API_KEY, "/api/v1/flux/kontext/record-info");
-
-      // Cleanup uploaded images
-      await deleteFromSpaces(spacesKeys);
-
-      if (!result.success) {
-        return new Response(
-          JSON.stringify({ success: false, error: result.error || "Bildgenerierung fehlgeschlagen" }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const imageUrl = result.resultUrls![0];
-      console.log("✅ Image generated:", imageUrl);
-
+      // Return immediately with taskId - client will poll
       return new Response(
-        JSON.stringify({ success: true, imageUrl }),
+        JSON.stringify({ success: true, taskId, spacesKeys }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // ===== IMAGE-STATUS MODE - Check kie.ai task status =====
+    if (mode === "image-status") {
+      const { taskId, spacesKeys } = body;
+
+      const KIE_API_KEY = Deno.env.get("KIE_API_KEY");
+      if (!KIE_API_KEY) {
+        return new Response(
+          JSON.stringify({ success: false, error: "KIE_API_KEY nicht konfiguriert" }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const statusResponse = await fetch(
+        `${KIE_API_BASE}/api/v1/flux/kontext/record-info?taskId=${taskId}`,
+        {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${KIE_API_KEY}` },
+        }
+      );
+
+      if (!statusResponse.ok) {
+        const errText = await statusResponse.text();
+        console.error("❌ Status check failed:", statusResponse.status, errText);
+        return new Response(
+          JSON.stringify({ success: true, status: "processing" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const statusData = await statusResponse.json();
+      const data = statusData.data;
+
+      const resultUrls = data?.response?.resultUrls
+        || data?.resultUrls
+        || data?.works?.map((w: any) => w.resource?.resource)
+        || [];
+
+      if (data?.successFlag === 1 && resultUrls.length > 0) {
+        // Done! Cleanup temp images
+        if (spacesKeys && spacesKeys.length > 0) {
+          await deleteFromSpaces(spacesKeys);
+        }
+        const imageUrl = resultUrls[0];
+        console.log("✅ Image generated:", imageUrl);
+        return new Response(
+          JSON.stringify({ success: true, status: "completed", imageUrl }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (data?.errorCode || data?.errorMessage) {
+        if (spacesKeys && spacesKeys.length > 0) {
+          await deleteFromSpaces(spacesKeys);
+        }
+        return new Response(
+          JSON.stringify({ success: false, status: "failed", error: data?.errorMessage || `Error code: ${data?.errorCode}` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Still processing
+      return new Response(
+        JSON.stringify({ success: true, status: "processing" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== LEGACY IMAGE MODE (kept for backward compatibility) =====
+    if (mode === "image") {
+      // Redirect to new start+poll flow from server side for backward compat
+      // But this will likely timeout - recommend using image-start + image-status
+      return new Response(
+        JSON.stringify({ success: false, error: "Bitte aktualisiere die App. Der alte Image-Modus wird nicht mehr unterstützt." }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ success: false, error: "Unbekannter Modus. Verwende 'text' oder 'image'." }),
+      JSON.stringify({ success: false, error: "Unbekannter Modus. Verwende 'text', 'image-start' oder 'image-status'." }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
