@@ -239,8 +239,11 @@ serve(async (req) => {
         || data?.resultUrls
         || data?.works?.map((w: any) => w.resource?.resource)
         || [];
+      
+      // Also check for single resultImageUrl (newer API format)
+      const singleResultUrl = data?.response?.resultImageUrl;
 
-      if (data?.successFlag === 1 && resultUrls.length > 0) {
+      if (data?.successFlag === 1 && (resultUrls.length > 0 || singleResultUrl)) {
         // Done! Cleanup temp images
         if (spacesKeys && spacesKeys.length > 0) {
           await deleteFromSpaces(spacesKeys);
