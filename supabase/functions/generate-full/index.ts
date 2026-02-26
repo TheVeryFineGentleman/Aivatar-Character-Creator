@@ -232,6 +232,7 @@ serve(async (req) => {
       }
 
       const statusData = await statusResponse.json();
+      console.log("📊 Status response:", JSON.stringify(statusData).slice(0, 500));
       const data = statusData.data;
 
       const resultUrls = data?.response?.resultUrls
