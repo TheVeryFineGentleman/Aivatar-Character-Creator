@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const KIE_API_BASE = "https://api.kie.ai";
-const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 function getS3Client(bucket: string) {
   return new S3Client({
@@ -99,54 +99,54 @@ serve(async (req) => {
   try {
     const { mode, prompt, referenceImages, aspectRatio = "1:1" } = await req.json();
 
-    // ===== TEXT MODE - Lovable AI Gateway =====
+    // ===== TEXT MODE - Gemini API with backend key =====
     if (mode === "text") {
-      console.log("📝 Text generation via Lovable AI Gateway");
+      console.log("📝 Text generation via Gemini (backend key)");
 
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (!LOVABLE_API_KEY) {
+      const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+      if (!GEMINI_API_KEY) {
         return new Response(
-          JSON.stringify({ success: false, error: "LOVABLE_API_KEY nicht konfiguriert" }),
+          JSON.stringify({ success: false, error: "GEMINI_API_KEY nicht konfiguriert" }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Build messages - support optional reference images as base64
-      const userContent: any[] = [{ type: "text", text: prompt }];
+      const model = "gemini-2.5-flash";
+
+      // Build parts array for Gemini
+      const parts: any[] = [{ text: prompt }];
 
       if (referenceImages && referenceImages.length > 0) {
         for (const base64Image of referenceImages) {
           const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-          userContent.push({
-            type: "image_url",
-            image_url: { url: `data:image/png;base64,${cleanBase64}` }
+          parts.push({
+            inlineData: { mimeType: "image/png", data: cleanBase64 }
           });
         }
       }
 
-      const response = await fetch(LOVABLE_AI_GATEWAY, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "user", content: userContent }
-          ],
-          max_tokens: 2000,
-          temperature: 0.7,
-        }),
-      });
+      const response = await fetch(
+        `${GEMINI_API_BASE}/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2000,
+            },
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Lovable AI error:", response.status, errorText);
+        console.error("❌ Gemini error:", response.status, errorText);
 
         let errorMessage = `AI-Fehler: ${response.status}`;
         if (response.status === 429) errorMessage = "Rate limit erreicht. Bitte warte einen Moment.";
-        else if (response.status === 402) errorMessage = "Keine AI-Credits mehr verfügbar.";
+        else if (response.status === 403) errorMessage = "API-Key ungültig oder gesperrt.";
 
         return new Response(
           JSON.stringify({ success: false, error: errorMessage }),
@@ -155,7 +155,7 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      const text = data.choices?.[0]?.message?.content?.trim() || "";
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
       return new Response(
         JSON.stringify({ success: true, text }),
