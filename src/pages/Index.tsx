@@ -17,7 +17,9 @@ import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage, createManagedBlobUrl, revokeManagedBlobUrl, cleanupAllBlobUrls, getDetailedErrorMessage, checkBrowserCompatibility, getDeviceInfo, compressImageToFitSize } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
+import { useCredits } from "@/hooks/useCredits";
 import { LoginDialog } from "@/components/LoginDialog";
+import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
@@ -175,8 +177,11 @@ const Index = () => {
   
   // Helper: Check if user has Pro-level access (PREMIUM or FULL)
   const isPro = authData.planCode === "PREMIUM" || authData.planCode === "FULL";
+  const isFullPlan = authData.planCode === "FULL";
   const { theme, setTheme } = useTheme();
+  const { balance: creditsBalance, isLoading: creditsLoading, error: creditsError, consumeCredit, refreshBalance } = useCredits(authData.planCode, authData.isAuthenticated);
   const [apiKey, setApiKey] = useState("");
+  const canGenerate = isFullPlan || !!apiKey;
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [sceneDescription, setSceneDescription] = useState("");
@@ -347,6 +352,52 @@ const Index = () => {
   const sceneAiUpdateCamera = sceneAiMode === "camera" || sceneAiMode === "both";
   const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
 
+  // Helper: Call text AI - routes to edge function for FULL, direct Gemini for others
+  const callGeminiOrFull = async (
+    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>,
+    options?: { model?: string; temperature?: number; maxOutputTokens?: number }
+  ): Promise<string> => {
+    if (isFullPlan) {
+      let prompt = "";
+      const refImages: string[] = [];
+      for (const part of parts) {
+        if (part.text) prompt += (prompt ? '\n' : '') + part.text;
+        if (part.inlineData?.data) refImages.push(part.inlineData.data);
+      }
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "text", prompt, referenceImages: refImages.length > 0 ? refImages : undefined }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Fehler: ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Generierung fehlgeschlagen");
+      return data.text;
+    } else {
+      const model = options?.model || "gemini-2.5-flash";
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: {
+              temperature: options?.temperature ?? 0.7,
+              maxOutputTokens: options?.maxOutputTokens ?? 500,
+            },
+          }),
+        }
+      );
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    }
+  };
+
   // Browser compatibility check on mount
   useEffect(() => {
     const { compatible, issues } = checkBrowserCompatibility();
@@ -389,7 +440,7 @@ const Index = () => {
   ];
 
   const handleSceneAssistant = async () => {
-    if (!apiKey || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
+    if (!canGenerate || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
     
     const currentPoint = storyPoints[expandedStoryPointIndex];
     const currentStory = currentPoint.versions[currentPoint.currentVersion];
@@ -473,7 +524,7 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
 
   // Video Prompt AI Assistant - optimizes existing video prompt based on user input
   const handleVideoPromptAssistant = async () => {
-    if (!apiKey || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
+    if (!canGenerate || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
     
     const currentPoint = storyPoints[expandedStoryPointIndex];
     if (!currentPoint.videoPrompt && !sceneAssistantInput.trim()) return;
@@ -553,7 +604,7 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
 
   // Story Idea AI Assistant handler
   const handleGenerateStoryIdea = async () => {
-    if (!apiKey || isGeneratingStoryAiIdea) return;
+    if (!canGenerate || isGeneratingStoryAiIdea) return;
     
     setIsGeneratingStoryAiIdea(true);
     try {
@@ -660,7 +711,7 @@ WICHTIGE REGELN:
   };
 
   const generateStoryboard = async () => {
-    if (!apiKey || !storyIdea.trim() || isGeneratingStoryboard) return;
+    if (!canGenerate || !storyIdea.trim() || isGeneratingStoryboard) return;
     
     setIsGeneratingStoryboard(true);
     // Clear existing storypoints when regenerating
@@ -2896,9 +2947,11 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
 
   // Load saved data on mount
   useEffect(() => {
-    const savedApiKey = getCookie("gemini_api_key");
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
+    if (!isFullPlan) {
+      const savedApiKey = getCookie("gemini_api_key");
+      if (savedApiKey) {
+        setApiKey(savedApiKey);
+      }
     }
 
     const savedImages = getFromLocalStorage("reference_images");
@@ -2917,10 +2970,10 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
 
   // Save API key when it changes
   useEffect(() => {
-    if (apiKey) {
+    if (!isFullPlan && apiKey) {
       setCookie("gemini_api_key", apiKey, 30);
     }
-  }, [apiKey]);
+  }, [apiKey, isFullPlan]);
 
   // Save reference images when they change
   useEffect(() => {
@@ -3114,7 +3167,40 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
-      // ===== Gemini 2.5 Flash Image Generation =====
+      // ===== FULL PLAN: Use kie.ai Flux Kontext via edge function =====
+      if (isFullPlan) {
+        const fullResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: externalSignal,
+            body: JSON.stringify({
+              mode: "image",
+              prompt: (parts[0] as any).text || "",
+              referenceImages: cleanBase64Images,
+              aspectRatio: formatOption?.ratio || "1:1",
+            }),
+          }
+        );
+        
+        if (!fullResponse.ok) {
+          const errData = await fullResponse.json().catch(() => ({}));
+          throw new Error(errData.error || `Fehler: ${fullResponse.status}`);
+        }
+        
+        const fullData = await fullResponse.json();
+        if (!fullData.success) throw new Error(fullData.error || "Bildgenerierung fehlgeschlagen");
+        
+        // Fetch the image URL and create a local blob
+        const imgResp = await fetch(fullData.imageUrl);
+        const imgBlob = await imgResp.blob();
+        const objectUrl = createManagedBlobUrl(imgBlob);
+        console.log(`✅ Image ${index + 1} generated via kie.ai:`, objectUrl);
+        return objectUrl;
+      }
+
+      // ===== Gemini 2.5 Flash Image Generation (BASIC/PREMIUM) =====
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20_000); // 20 Sekunden Timeout
 
@@ -3407,9 +3493,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🎯 Hintergrund:", selectedBackground);
     console.log("🔢 Anzahl zu generierende Bilder:", imageCount[0]);
     
-    if (!apiKey) {
-      console.log("❌ Fehler: Kein API Key");
+    if (!canGenerate) {
+      console.log("❌ Fehler: Keine Generierung möglich");
       return;
+    }
+    
+    // Consume credit for FULL users
+    if (isFullPlan) {
+      const creditResult = await consumeCredit(1);
+      if (!creditResult.success) {
+        console.error("❌ Credit-Fehler:", creditResult.error);
+        return;
+      }
     }
 
     if (referenceImages.length === 0) {
@@ -3458,8 +3553,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   const handleGenerateMore = async () => {
-    if (!apiKey) {
+    if (!canGenerate) {
       return;
+    }
+    
+    if (isFullPlan) {
+      const creditResult = await consumeCredit(1);
+      if (!creditResult.success) {
+        console.error("❌ Credit-Fehler:", creditResult.error);
+        return;
+      }
     }
 
     if (referenceImages.length === 0) {
@@ -3847,7 +3950,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
   // Regenerate a single image slot (creates a new version)
   const handleRegenerateSlot = async (index: number) => {
-    if (!apiKey || referenceImages.length === 0) return;
+    if (!canGenerate || referenceImages.length === 0) return;
+    if (isFullPlan) {
+      const creditResult = await consumeCredit(1);
+      if (!creditResult.success) return;
+    }
     
     // Set slot to loading state, keep versions
     setImageSlots(prev => {
@@ -4086,7 +4193,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   const handleGenerateVideoPrompt = async () => {
-    if (!apiKey) {
+    if (!canGenerate) {
       return;
     }
 
@@ -4192,7 +4299,7 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
   };
 
   const generateNewAiSuggestions = async (contextPrompt: string) => {
-    if (!apiKey) return;
+    if (!canGenerate) return;
     
     setIsGeneratingSuggestions(true);
     
@@ -4267,7 +4374,7 @@ Antworte NUR mit den 5 Vorschlägen, einer pro Zeile, ohne Nummerierung oder zus
   };
 
   const handleEditPromptWithAI = async () => {
-    if (!apiKey || !promptChatInput.trim() || !currentVideoPrompt) return;
+    if (!canGenerate || !promptChatInput.trim() || !currentVideoPrompt) return;
 
     setIsEditingPrompt(true);
 
@@ -4347,7 +4454,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
 
   // Custom Prompt AI Generation (handles prompt, background, or both based on aiAssistantTarget)
   const handleGenerateCustomPromptWithAI = async () => {
-    if (!apiKey) {
+    if (!canGenerate) {
       return;
     }
 
@@ -4538,7 +4645,7 @@ REGELN FÜR SCENE (nur wenn scenery):
 
   // Generate AI background suggestion for scenery when prompt exists (legacy)
   const handleGenerateBackgroundSuggestion = async () => {
-    if (!apiKey || !customPrompt.trim() || isGeneratingBackgroundSuggestion) return;
+    if (!canGenerate || !customPrompt.trim() || isGeneratingBackgroundSuggestion) return;
     
     setIsGeneratingBackgroundSuggestion(true);
     
@@ -4801,8 +4908,13 @@ Beispiel einer korrekten Antwort:
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Version Indicator */}
-        <div className="absolute top-4 left-4 text-[10px] text-muted-foreground/50 font-mono select-none">
-          v1.4.5
+        <div className="absolute top-4 left-4 flex flex-col gap-1">
+          <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
+            v1.4.5
+          </div>
+          {isFullPlan && (
+            <CreditsDisplay balance={creditsBalance} isLoading={creditsLoading} error={creditsError} />
+          )}
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
@@ -4821,6 +4933,7 @@ Beispiel einer korrekten Antwort:
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-6">
+                {!isFullPlan ? (
                 <div className="space-y-2">
                   <Label htmlFor="settings-api-key">Google Gemini API Key</Label>
                   <Input
@@ -4835,6 +4948,20 @@ Beispiel einer korrekten Antwort:
                     Dein API Key wird sicher gespeichert und nur lokal verwendet.
                   </p>
                 </div>
+                ) : (
+                <div className="space-y-2">
+                  <Label>Credits</Label>
+                  <div className="flex items-center gap-2">
+                    <CreditsDisplay balance={creditsBalance} isLoading={creditsLoading} error={creditsError} />
+                    <Button variant="outline" size="sm" onClick={refreshBalance} className="ml-auto">
+                      <RefreshCw className="w-3 h-3 mr-1" /> Aktualisieren
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Jede Generierung verbraucht 1 Credit.
+                  </p>
+                </div>
+                )}
                 
                 {/* Theme Selector - Pro Only */}
                 <div className="pt-6 border-t border-border">
@@ -5564,7 +5691,7 @@ Beispiel einer korrekten Antwort:
                           {/* Main button - transfers prompt to left */}
                           <Button
                             onClick={handleGenerateCustomPromptWithAI}
-                            disabled={!apiKey || !customPromptChatInput.trim() || isGeneratingCustomPrompt || isGeneratingBackgroundSuggestion}
+                            disabled={!canGenerate || !customPromptChatInput.trim() || isGeneratingCustomPrompt || isGeneratingBackgroundSuggestion}
                             className="w-10 flex-1 rounded-lg"
                             title={aiAssistantTarget === "background" ? "Hintergrund generieren" : aiAssistantTarget === "both" ? "Prompt & Hintergrund generieren" : "Prompt generieren und links einfügen"}
                           >
@@ -5663,29 +5790,31 @@ Beispiel einer korrekten Antwort:
               {imageSlots.length === 0 ? (
                 <Button
                   onClick={handleGenerate}
-                  disabled={!apiKey || referenceImages.length === 0}
+                  disabled={!canGenerate || referenceImages.length === 0}
                   className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
                   Bilder generieren
+                  {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                 </Button>
               ) : (
                 <>
                   <Button
                     onClick={handleGenerateMore}
-                    disabled={!apiKey || referenceImages.length === 0}
+                    disabled={!canGenerate || referenceImages.length === 0}
                     className="flex-[2] bg-primary hover:bg-primary/90 animate-in slide-in-from-left-5"
                     size="lg"
                   >
                     <Plus className="w-5 h-5 mr-2" />
                     {isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}
+                    {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                   </Button>
                   
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
-                        disabled={!apiKey || referenceImages.length === 0}
+                        disabled={!canGenerate || referenceImages.length === 0}
                         className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground animate-in slide-in-from-right-5"
                         size="lg"
                         variant="destructive"
