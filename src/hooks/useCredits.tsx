@@ -9,6 +9,9 @@ interface CreditsState {
   error: string | null;
 }
 
+// Dev accounts bypass credits entirely
+const DEV_EMAILS = ["1", "2", "3"];
+
 export const useCredits = (planCode: string, isAuthenticated: boolean) => {
   const [credits, setCredits] = useState<CreditsState>({
     balance: null,
@@ -17,6 +20,11 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
   });
 
   const isFullPlan = planCode === "FULL";
+
+  const isDevAccount = (): boolean => {
+    const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
+    return DEV_EMAILS.includes(savedCredentials?.email);
+  };
 
   const fetchBalance = useCallback(async () => {
     if (!isFullPlan || !isAuthenticated) return;
