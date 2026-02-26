@@ -232,19 +232,23 @@ serve(async (req) => {
       }
 
       const statusData = await statusResponse.json();
+      console.log("📊 Status response:", JSON.stringify(statusData).slice(0, 500));
       const data = statusData.data;
 
       const resultUrls = data?.response?.resultUrls
         || data?.resultUrls
         || data?.works?.map((w: any) => w.resource?.resource)
         || [];
+      
+      // Also check for single resultImageUrl (newer API format)
+      const singleResultUrl = data?.response?.resultImageUrl;
 
-      if (data?.successFlag === 1 && resultUrls.length > 0) {
+      if (data?.successFlag === 1 && (resultUrls.length > 0 || singleResultUrl)) {
         // Done! Cleanup temp images
         if (spacesKeys && spacesKeys.length > 0) {
           await deleteFromSpaces(spacesKeys);
         }
-        const imageUrl = resultUrls[0];
+        const imageUrl = resultUrls[0] || singleResultUrl;
         console.log("✅ Image generated:", imageUrl);
         return new Response(
           JSON.stringify({ success: true, status: "completed", imageUrl }),
