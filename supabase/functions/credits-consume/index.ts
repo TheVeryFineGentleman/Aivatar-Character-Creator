@@ -34,6 +34,16 @@ serve(async (req) => {
       }),
     });
 
+    const contentType = response.headers.get("content-type");
+    if (!contentType?.includes("application/json")) {
+      const textResponse = await response.text();
+      console.error("Expected JSON but got:", contentType, "Preview:", textResponse.substring(0, 200));
+      return new Response(
+        JSON.stringify({ valid: false, error: "Key Manager nicht erreichbar" }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const data = await response.json();
     console.log("💰 Credits consume response:", JSON.stringify(data));
 
