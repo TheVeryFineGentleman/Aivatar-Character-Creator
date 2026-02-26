@@ -49,7 +49,7 @@ async function deleteFromSpaces(keys: string[]) {
   }
 }
 
-async function pollForResult(taskId: string, apiKey: string, endpoint: string, maxWaitMs = 55000): Promise<{ success: boolean; resultUrls?: string[]; error?: string }> {
+async function pollForResult(taskId: string, apiKey: string, endpoint: string, maxWaitMs = 150000): Promise<{ success: boolean; resultUrls?: string[]; error?: string }> {
   const startTime = Date.now();
   const pollInterval = 2000;
 
