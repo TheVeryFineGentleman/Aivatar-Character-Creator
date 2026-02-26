@@ -248,7 +248,7 @@ serve(async (req) => {
         if (spacesKeys && spacesKeys.length > 0) {
           await deleteFromSpaces(spacesKeys);
         }
-        const imageUrl = resultUrls[0];
+        const imageUrl = resultUrls[0] || singleResultUrl;
         console.log("✅ Image generated:", imageUrl);
         return new Response(
           JSON.stringify({ success: true, status: "completed", imageUrl }),
