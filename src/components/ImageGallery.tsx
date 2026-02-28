@@ -64,7 +64,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemo
             onDelete={() => onDelete?.(index)}
             onRemoveFromQueue={slot.status === "pending" ? () => onRemoveFromQueue?.(index) : undefined}
             onCancel={slot.status === "loading" ? () => onCancelGeneration?.(index) : undefined}
-            onRegenerate={slot.status === "completed" ? () => onRegenerate?.(index) : undefined}
+            onRegenerate={(slot.status === "completed" || slot.status === "error") ? () => onRegenerate?.(index) : undefined}
             imageVersions={slot.imageVersions}
             currentVersionIndex={slot.currentVersionIndex}
             onVersionChange={onVersionChange ? (vi) => onVersionChange(index, vi) : undefined}
