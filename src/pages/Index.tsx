@@ -1414,12 +1414,11 @@ TECHNICAL REQUIREMENTS:
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: Structured prompt with keyAction="${sceneKeyAction}", emotion="${sceneEmotion}", location="${globalMainLocation}/${sceneSpecificArea}"`);
 
-        // === USE EDGE FUNCTION FOR IMAGE GENERATION ===
-        // Clean base64 images (remove data URL prefix if present)
+        // === PARALLEL: Image + Video Prompt generation simultaneously ===
         const cleanBase64Images = characterBase64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
         
-        // Call the edge function instead of direct API call
-        const imageResponse = await fetch(
+        // 1) Start image generation (don't await yet)
+        const imagePromise = fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
           {
             method: "POST",
@@ -1431,44 +1430,14 @@ TECHNICAL REQUIREMENTS:
             body: JSON.stringify({
               prompt: imagePromptText,
               referenceImages: cleanBase64Images,
-            aspectRatio: storyboardFormat,
+              aspectRatio: storyboardFormat,
               mode: "image",
               apiKey: apiKey
             }),
           }
         );
 
-        if (!imageResponse.ok) {
-          const errorData = await imageResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1}`));
-        }
-
-        const imageResult = await imageResponse.json();
-        
-        if (!imageResult.success) {
-          console.warn(`Scene ${sceneIndex + 1} attempt ${attempt}: ${imageResult.error}`);
-          throw new Error(imageResult.error || `Kein Bild generiert`);
-        }
-
-        let generatedImageUrl = "";
-        
-        // The edge function returns base64 and mimeType, convert to blob URL
-        if (imageResult.imageBase64) {
-          const binary = atob(imageResult.imageBase64);
-          const bytes = new Uint8Array(binary.length);
-          for (let j = 0; j < binary.length; j++) {
-            bytes[j] = binary.charCodeAt(j);
-          }
-          const blob = new Blob([bytes], { type: imageResult.mimeType || "image/png" });
-          generatedImageUrl = URL.createObjectURL(blob);
-        }
-        
-        if (!generatedImageUrl) {
-          throw new Error(`Kein Bild generiert`);
-        }
-
-        // Generate Veo3 video prompt IN PARALLEL with image (already completed above)
-        // Start video prompt generation immediately (doesn't depend on the image result)
+        // 2) Start video prompt generation simultaneously
         const videoPromptPromise = (async () => {
           try {
             const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
@@ -1482,7 +1451,7 @@ ${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Sz
 Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
 Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
 
-            const videoPromptResponse = await fetch(
+            const vpResponse = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
               {
                 method: "POST",
@@ -1491,18 +1460,14 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
                   "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
                 },
                 signal: controller.signal,
-                body: JSON.stringify({
-                  prompt: videoPromptText,
-                  mode: "text",
-                  apiKey: apiKey
-                })
+                body: JSON.stringify({ prompt: videoPromptText, mode: "text", apiKey })
               }
             );
             
-            if (videoPromptResponse.ok) {
-              const vpResult = await videoPromptResponse.json();
-              if (vpResult.success && vpResult.text) {
-                const vpText = vpResult.text.trim();
+            if (vpResponse.ok) {
+              const vpData = await vpResponse.json();
+              if (vpData.success && vpData.text) {
+                const vpText = vpData.text.trim();
                 try {
                   const jsonMatch = vpText.match(/\{[\s\S]*\}/);
                   if (jsonMatch) {
@@ -1526,8 +1491,35 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
           return { videoPrompt: "", veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
         })();
 
-        // Wait for video prompt (image already done at this point)
-        const vpResult = await videoPromptPromise;
+        // 3) Await BOTH in parallel
+        const [imageResponse, vpResult] = await Promise.all([imagePromise, videoPromptPromise]);
+
+        if (!imageResponse.ok) {
+          const errorData = await imageResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || getErrorMessageFromStatus(imageResponse.status, `Szene ${sceneIndex + 1}`));
+        }
+
+        const imageResult = await imageResponse.json();
+        
+        if (!imageResult.success) {
+          console.warn(`Scene ${sceneIndex + 1} attempt ${attempt}: ${imageResult.error}`);
+          throw new Error(imageResult.error || `Kein Bild generiert`);
+        }
+
+        let generatedImageUrl = "";
+        if (imageResult.imageBase64) {
+          const binary = atob(imageResult.imageBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) {
+            bytes[j] = binary.charCodeAt(j);
+          }
+          const blob = new Blob([bytes], { type: imageResult.mimeType || "image/png" });
+          generatedImageUrl = URL.createObjectURL(blob);
+        }
+        
+        if (!generatedImageUrl) {
+          throw new Error(`Kein Bild generiert`);
+        }
 
         clearTimeout(timeoutId);
         return {
