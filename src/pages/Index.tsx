@@ -1414,12 +1414,11 @@ TECHNICAL REQUIREMENTS:
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: Structured prompt with keyAction="${sceneKeyAction}", emotion="${sceneEmotion}", location="${globalMainLocation}/${sceneSpecificArea}"`);
 
-        // === USE EDGE FUNCTION FOR IMAGE GENERATION ===
-        // Clean base64 images (remove data URL prefix if present)
+        // === PARALLEL: Image + Video Prompt generation simultaneously ===
         const cleanBase64Images = characterBase64Images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ''));
         
-        // Call the edge function instead of direct API call
-        const imageResponse = await fetch(
+        // 1) Start image generation (don't await yet)
+        const imagePromise = fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
           {
             method: "POST",
@@ -1431,12 +1430,69 @@ TECHNICAL REQUIREMENTS:
             body: JSON.stringify({
               prompt: imagePromptText,
               referenceImages: cleanBase64Images,
-            aspectRatio: storyboardFormat,
+              aspectRatio: storyboardFormat,
               mode: "image",
               apiKey: apiKey
             }),
           }
         );
+
+        // 2) Start video prompt generation simultaneously
+        const videoPromptPromise = (async () => {
+          try {
+            const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
+            const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
+            const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
+            
+            const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Speech: "${storyPoints[sceneIndex].dialogText}" - The character must visibly speak these EXACT words in their ORIGINAL language. Do NOT translate the dialogue.` : '';
+            
+            const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"${dialogInfo}
+${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
+Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
+Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
+
+            const vpResponse = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+              {
+                method: "POST",
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+                },
+                signal: controller.signal,
+                body: JSON.stringify({ prompt: videoPromptText, mode: "text", apiKey })
+              }
+            );
+            
+            if (vpResponse.ok) {
+              const vpData = await vpResponse.json();
+              if (vpData.success && vpData.text) {
+                const vpText = vpData.text.trim();
+                try {
+                  const jsonMatch = vpText.match(/\{[\s\S]*\}/);
+                  if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    return {
+                      videoPrompt: parsed.fullPrompt || "",
+                      veo3CameraMovement: parsed.cameraMovement || "",
+                      veo3StartState: parsed.startState || "",
+                      veo3Motion: parsed.motion || "",
+                      veo3EndState: parsed.endState || "",
+                    };
+                  }
+                } catch (e) {
+                  return { videoPrompt: vpText, veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("Video prompt generation failed:", e);
+          }
+          return { videoPrompt: "", veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
+        })();
+
+        // 3) Await BOTH in parallel
+        const [imageResponse, vpResult] = await Promise.all([imagePromise, videoPromptPromise]);
 
         if (!imageResponse.ok) {
           const errorData = await imageResponse.json().catch(() => ({}));
@@ -1451,8 +1507,6 @@ TECHNICAL REQUIREMENTS:
         }
 
         let generatedImageUrl = "";
-        
-        // The edge function returns base64 and mimeType, convert to blob URL
         if (imageResult.imageBase64) {
           const binary = atob(imageResult.imageBase64);
           const bytes = new Uint8Array(binary.length);
@@ -1467,77 +1521,18 @@ TECHNICAL REQUIREMENTS:
           throw new Error(`Kein Bild generiert`);
         }
 
-        // Generate Veo3 video prompt after successful image generation
-        let videoPrompt = "";
-        let veo3CameraMovement = "";
-        let veo3StartState = "";
-        let veo3Motion = "";
-        let veo3EndState = "";
-        
-        try {
-          const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
-          const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
-          const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
-          
-          const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Speech: "${storyPoints[sceneIndex].dialogText}" - The character must visibly speak these EXACT words in their ORIGINAL language. Do NOT translate the dialogue.` : '';
-          
-          const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"${dialogInfo}
-${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
-Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
-Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
-
-          const videoPromptResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-            {
-              method: "POST",
-              headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-              },
-              signal: controller.signal,
-              body: JSON.stringify({
-                prompt: videoPromptText,
-                mode: "text",
-                apiKey: apiKey
-              })
-            }
-          );
-          
-          if (videoPromptResponse.ok) {
-            const vpResult = await videoPromptResponse.json();
-            if (vpResult.success && vpResult.text) {
-              const vpText = vpResult.text.trim();
-              try {
-                const jsonMatch = vpText.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                  const parsed = JSON.parse(jsonMatch[0]);
-                  veo3CameraMovement = parsed.cameraMovement || "";
-                  veo3StartState = parsed.startState || "";
-                  veo3Motion = parsed.motion || "";
-                  veo3EndState = parsed.endState || "";
-                  videoPrompt = parsed.fullPrompt || "";
-                }
-              } catch (e) {
-                videoPrompt = vpText;
-              }
-            }
-          }
-        } catch (e) {
-          console.warn("Video prompt generation failed:", e);
-        }
-
         clearTimeout(timeoutId);
         return {
           success: true,
           generatedImageUrl,
           detailedImagePrompt: imagePromptText,
-          videoPrompt,
+          videoPrompt: vpResult.videoPrompt,
           sceneTitle: storyText.split(/[.!?]/)[0].substring(0, 50).trim(),
           sceneDescription: storyText,
-          veo3CameraMovement,
-          veo3StartState,
-          veo3Motion,
-          veo3EndState
+          veo3CameraMovement: vpResult.veo3CameraMovement,
+          veo3StartState: vpResult.veo3StartState,
+          veo3Motion: vpResult.veo3Motion,
+          veo3EndState: vpResult.veo3EndState
         };
 
       } catch (error) {
