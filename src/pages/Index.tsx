@@ -3167,17 +3167,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
-      // ===== FULL PLAN: Use kie.ai Flux Kontext via edge function (start + poll) =====
+      // ===== FULL PLAN: Use Gemini API via edge function (backend key) =====
       if (isFullPlan) {
-        // Step 1: Start the generation job
-        const startResponse = await fetch(
+        const fullResponse = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             signal: externalSignal,
             body: JSON.stringify({
-              mode: "image-start",
+              mode: "image",
               prompt: (parts[0] as any).text || "",
               referenceImages: cleanBase64Images,
               aspectRatio: formatOption?.ratio || "1:1",
@@ -3185,61 +3184,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           }
         );
         
-        if (!startResponse.ok) {
-          const errData = await startResponse.json().catch(() => ({}));
-          throw new Error(errData.error || `Fehler: ${startResponse.status}`);
+        if (!fullResponse.ok) {
+          const errData = await fullResponse.json().catch(() => ({}));
+          throw new Error(errData.error || `Fehler: ${fullResponse.status}`);
         }
         
-        const startData = await startResponse.json();
-        if (!startData.success) throw new Error(startData.error || "Job konnte nicht gestartet werden");
+        const fullData = await fullResponse.json();
+        if (!fullData.success) throw new Error(fullData.error || "Bildgenerierung fehlgeschlagen");
         
-        const { taskId, spacesKeys } = startData;
-        console.log(`🚀 Image ${index + 1} job started, taskId: ${taskId}`);
-        
-        // Step 2: Poll for result (client-side, max 3 minutes)
-        const pollStart = Date.now();
-        const maxPollMs = 180_000; // 3 minutes
-        const pollIntervalMs = 3_000; // 3 seconds
-        
-        while (Date.now() - pollStart < maxPollMs) {
-          if (externalSignal?.aborted) throw new Error("Generierung abgebrochen");
-          
-          await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
-          
-          const statusResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              signal: externalSignal,
-              body: JSON.stringify({
-                mode: "image-status",
-                taskId,
-                spacesKeys,
-              }),
-            }
-          );
-          
-          const statusData = await statusResponse.json();
-          
-          if (statusData.status === "completed" && statusData.imageUrl) {
-            // Fetch the image URL and create a local blob
-            const imgResp = await fetch(statusData.imageUrl);
-            const imgBlob = await imgResp.blob();
-            const objectUrl = createManagedBlobUrl(imgBlob);
-            console.log(`✅ Image ${index + 1} generated via kie.ai:`, objectUrl);
-            return objectUrl;
-          }
-          
-          if (statusData.status === "failed") {
-            throw new Error(statusData.error || "Bildgenerierung fehlgeschlagen");
-          }
-          
-          // Still processing, continue polling
-          console.log(`⏳ Image ${index + 1} still processing...`);
+        if (fullData.imageBase64) {
+          const binary = atob(fullData.imageBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const blob = new Blob([bytes], { type: fullData.mimeType || "image/png" });
+          const objectUrl = createManagedBlobUrl(blob);
+          console.log(`✅ Image ${index + 1} generated via FULL plan Gemini:`, objectUrl);
+          return objectUrl;
         }
         
-        throw new Error("Zeitüberschreitung - Bild konnte nicht innerhalb von 3 Minuten generiert werden");
+        throw new Error("Kein Bild generiert");
       }
 
       // ===== Gemini 2.5 Flash Image Generation (BASIC/PREMIUM) =====
@@ -3257,7 +3220,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       let response: Response;
       try {
         response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(apiKey)}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${encodeURIComponent(apiKey)}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
