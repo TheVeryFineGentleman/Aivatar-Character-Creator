@@ -232,9 +232,30 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
             <p className="text-xs text-destructive text-center max-w-[90%] leading-tight font-medium">
               {errorMessage || "Generierung fehlgeschlagen"}
             </p>
-            <p className="text-[10px] text-muted-foreground/60 text-center">
-              Bitte erneut versuchen
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              {onRegenerate && (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Neu generieren
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  variant="destructive"
+                  size="sm"
+                  className="text-xs"
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Löschen
+                </Button>
+              )}
+            </div>
           </div>
         )}
         
