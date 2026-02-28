@@ -3358,7 +3358,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🔄 totalCount:", totalCount);
     console.log("🔄 base64Images Länge:", base64Images.length);
     
-    const CONCURRENT_REQUESTS = isFullPlan ? generationQueueRef.current.length || totalCount : (isPro ? 2 : 1);
+    const CONCURRENT_REQUESTS = isFullPlan ? Math.min(generationQueueRef.current.length || totalCount, 10) : (isPro ? 2 : 1);
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
     console.log("🔄 Starte while-Schleife...");
