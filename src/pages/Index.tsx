@@ -295,9 +295,9 @@ const Index = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
   const [isAnimatingSuggestion, setIsAnimatingSuggestion] = useState(false);
   const [storySuggestions, setStorySuggestions] = useState<string[]>([
-    "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt.",
-    "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
-    "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
+    "Zufälliges Wiedersehen im Supermarkt",
+    "Stilles Treffen ohne Worte",
+    "Verlorener Brief verändert alles"
   ]);
   const [lastSuggestionMode, setLastSuggestionMode] = useState<string | null>(null);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
