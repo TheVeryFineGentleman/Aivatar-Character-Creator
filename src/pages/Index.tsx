@@ -3391,17 +3391,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const progressInterval = setInterval(() => {
             setImageSlots((prev) => {
               const updated = [...prev];
-              // Safety check: ensure index is valid
               if (index >= updated.length || updated[index]?.status !== "loading") {
                 return prev;
               }
+              const current = updated[index].progress || 0;
+              if (current >= 95) return prev;
               updated[index] = { 
                 ...updated[index],
-                progress: Math.min((updated[index].progress || 0) + (Math.random() * 3 + 1.5), 90) 
+                progress: current + 1
               };
               return updated;
             });
-          }, 1500);
+          }, 350);
 
           try {
             const imageUrl = await generateSingleImage(
@@ -3687,15 +3688,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     try {
       progressInterval = setInterval(() => {
         setImageSlots((prev) => {
-          // Safety check: ensure index is valid
           if (newIndex >= prev.length) return prev;
           const updated = [...prev];
           if (updated[newIndex]?.status === "loading") {
-            updated[newIndex].progress = Math.min((updated[newIndex].progress || 0) + (Math.random() * 3 + 1.5), 90);
+            const current = updated[newIndex].progress || 0;
+            if (current >= 95) return prev;
+            updated[newIndex].progress = current + 1;
           }
           return updated;
         });
-      }, 1500);
+      }, 350);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
@@ -4050,11 +4052,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Progress animation
       const progressInterval = setInterval(() => {
-        updateSlotSafe(index, (slot) => ({
-          ...slot,
-          progress: Math.min((slot.progress || 0) + (Math.random() * 3 + 1.5), 85),
-        }));
-      }, 1500);
+        updateSlotSafe(index, (slot) => {
+          const current = slot.progress || 0;
+          if (current >= 95) return slot;
+          return { ...slot, progress: current + 1 };
+        });
+      }, 350);
 
       // Build request parts
       const parts: any[] = [];
