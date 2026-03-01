@@ -2414,7 +2414,13 @@ Antworte NUR mit einem JSON-Objekt:
   ): string => {
     const lines: string[] = [];
     
+    // === SECTION 0: ART STYLE (FIRST - highest priority) ===
+    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
+    lines.push(`CRITICAL ART STYLE OVERRIDE (apply to the ENTIRE image, override any style from reference images): ${styleDesc}`);
+    lines.push("DO NOT replicate the visual style or medium of reference images. Reference images are ONLY for character identity (face, body). Render EVERYTHING in the art style specified above.");
+    
     // === SECTION 1: MANDATORY CAMERA FRAMING ===
+    lines.push("");
     lines.push("MANDATORY CAMERA FRAMING:");
     const shotType = point.shotType ? (shotTypeToEnglish[point.shotType] || point.shotType) : "medium shot";
     lines.push(`Shot Type: ${shotType}`);
@@ -2449,8 +2455,8 @@ Antworte NUR mit einem JSON-Objekt:
     lines.push("");
     lines.push("CHARACTER IDENTITY:");
     lines.push(sceneIndex === 0
-      ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image."
-      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly."
+      ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image. But DO NOT copy the visual style/medium of the reference — render in the art style specified above."
+      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly. Render in the art style specified above, NOT in the style of reference images."
     );
     
     // === SECTION 4: CHARACTER POSE & EXPRESSION ===
@@ -2504,10 +2510,9 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: ART STYLE (from setup) - ALWAYS included ===
-    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
+    // === SECTION 11: ART STYLE REMINDER ===
     lines.push("");
-    lines.push(`ART STYLE (IMPORTANT - apply this visual style to the ENTIRE image): ${styleDesc}`);
+    lines.push(`REMINDER - ART STYLE: ${styleDesc}. This overrides any photographic or realistic look from reference images.`);
     
     // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
     if (storyCustomDetails && storyCustomDetails.trim()) {
