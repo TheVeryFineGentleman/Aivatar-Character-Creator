@@ -1155,17 +1155,7 @@ REGELN:
       }
       
       // Parse the structured JSON response
-      const cleanedText = text
-        .replace(/```json\s*/gi, '')
-        .replace(/```\s*/g, '')
-        .trim();
-      
-      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("KI-Antwort konnte nicht verarbeitet werden");
-      }
-      
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = extractJsonFromAiResponse(text);
       
       // Step 2: Update the story point with ALL new AI-chosen metadata
       const updatedPoint = {
