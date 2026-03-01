@@ -4052,9 +4052,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const progressInterval = setInterval(() => {
         updateSlotSafe(index, (slot) => ({
           ...slot,
-          progress: Math.min((slot.progress || 0) + Math.random() * 8, 85),
+          progress: Math.min((slot.progress || 0) + (Math.random() * 3 + 1.5), 85),
         }));
-      }, 500);
+      }, 1500);
 
       // Build request parts
       const parts: any[] = [];
