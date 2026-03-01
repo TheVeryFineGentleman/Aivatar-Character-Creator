@@ -798,8 +798,8 @@ WICHTIG: Antworte NUR mit diesem validen JSON-Format:
       "specificArea": "Welcher Bereich des Hauptorts (z.B. 'im Flur', 'auf dem Balkon', 'in der Küche')",
       "keyAction": "Die EINE zentrale Aktion/Gestik der Person (z.B. 'lehnt nachdenklich am Fenster', 'sitzt zusammengesunken auf der Couch', 'steht mit verschränkten Armen')",
       "emotion": "Die sichtbare Emotion (z.B. 'melancholisch', 'hoffnungsvoll', 'nachdenklich', 'entschlossen')",
-      "detailedDescription": "Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut, wichtige Details",
-      "dialogText": "Was der Charakter in dieser Szene sagt (1-3 Sätze gesprochener Dialog, in Anführungszeichen). Leer lassen wenn keine Rede.",
+      "detailedDescription": "${storyEnableSceneDescription ? 'Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut, wichtige Details' : '(wird vom Nutzer manuell erstellt)'}",
+      ${storyEnableSpeaker ? '"dialogText": "Was der Charakter in dieser Szene sagt (1-3 Sätze gesprochener Dialog, in Anführungszeichen). Leer lassen wenn keine Rede.",' : ''}
       "cameraAngle": "eye-level|low-angle|high-angle|dutch-angle|over-shoulder|bird-eye|worm-eye",
       "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-full-shot|full-shot|long-shot|extreme-long-shot"
     }
