@@ -6178,48 +6178,39 @@ Beispiel einer korrekten Antwort:
                   <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${!storySetupCollapsed ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-4">
-                  {/* Row 1: Switches */}
-                  <div className="gap-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20 max-w-sm">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm">Sprechertext / Dialog</Label>
-                        <p className="text-xs text-muted-foreground">KI generiert Dialog pro Szene</p>
-                      </div>
-                      <Switch checked={storyEnableSpeaker} onCheckedChange={setStoryEnableSpeaker} />
-                    </div>
-                  </div>
-
-                  {/* Generation Direction Toggle - only visible when speaker is enabled */}
-                  {storyEnableSpeaker && (
-                    <div className="flex items-center gap-3 px-1">
-                      <button
-                        type="button"
-                        onClick={() => setStoryGenerationDirection(prev => prev === "speaker-from-description" ? "description-from-speaker" : "speaker-from-description")}
-                        className="relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/50 bg-muted/30 text-xs font-medium text-foreground hover:border-primary/50 transition-all duration-300 active:scale-95 overflow-hidden group"
-                      >
-                        <span className="absolute inset-0 bg-primary/10 opacity-0 group-active:opacity-100 transition-opacity duration-150 rounded-full" />
-                        <span
-                          key={storyGenerationDirection}
-                          className="relative animate-[slideIn_0.3s_ease-out]"
-                          style={{ display: 'inline-block' }}
-                        >
-                          {storyGenerationDirection === "speaker-from-description" ? "Details → Dialog" : "Dialog → Details"}
-                        </span>
-                      </button>
-                      <span
-                        key={storyGenerationDirection + "-desc"}
-                        className="text-xs text-muted-foreground animate-[fadeIn_0.3s_ease-out]"
-                      >
-                        {storyGenerationDirection === "speaker-from-description"
-                          ? "KI schreibt den Dialog passend zur Szenenbeschreibung"
-                          : "KI schreibt die Szene passend zum Dialog"}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Row 2: Dropdowns */}
-                  <div className="grid grid-cols-3 gap-4">
+                  {/* Row 1: All settings in one row */}
+                  <div className="flex items-end gap-4 flex-wrap">
+                    {/* Sprechertext Switch */}
                     <div className="space-y-1.5">
+                      <Label className="text-sm">Sprechertext</Label>
+                      <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-border/50 bg-muted/20">
+                        <Switch checked={storyEnableSpeaker} onCheckedChange={setStoryEnableSpeaker} />
+                      </div>
+                    </div>
+
+                    {/* Generation Direction Toggle */}
+                    {storyEnableSpeaker && (
+                      <div className="space-y-1.5">
+                        <Label className="text-sm">Richtung</Label>
+                        <button
+                          type="button"
+                          onClick={() => setStoryGenerationDirection(prev => prev === "speaker-from-description" ? "description-from-speaker" : "speaker-from-description")}
+                          className="relative flex items-center h-10 px-3 rounded-md border border-border/50 bg-muted/20 text-xs font-medium text-foreground hover:border-primary/50 transition-all duration-300 active:scale-95 overflow-hidden group whitespace-nowrap"
+                        >
+                          <span className="absolute inset-0 bg-primary/10 opacity-0 group-active:opacity-100 transition-opacity duration-150" />
+                          <span
+                            key={storyGenerationDirection}
+                            className="relative animate-[slideIn_0.3s_ease-out]"
+                            style={{ display: 'inline-block' }}
+                          >
+                            {storyGenerationDirection === "speaker-from-description" ? "Details → Dialog" : "Dialog → Details"}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Videomodell */}
+                    <div className="space-y-1.5 min-w-[130px]">
                       <Label className="text-sm">Videomodell</Label>
                       <Select value={storyVideoModel} onValueChange={setStoryVideoModel}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -6230,7 +6221,9 @@ Beispiel einer korrekten Antwort:
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1.5">
+
+                    {/* Artstyle */}
+                    <div className="space-y-1.5 min-w-[130px]">
                       <Label className="text-sm">Artstyle</Label>
                       <Select value={storyArtStyle} onValueChange={setStoryArtStyle}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -6241,8 +6234,10 @@ Beispiel einer korrekten Antwort:
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm">Standard-Übergang</Label>
+
+                    {/* Standard-Übergang */}
+                    <div className="space-y-1.5 min-w-[130px]">
+                      <Label className="text-sm">Übergang</Label>
                       <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
