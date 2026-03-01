@@ -4057,7 +4057,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           if (current >= 95) return slot;
           return { ...slot, progress: current + 1 };
         });
-      }, 350);
+      }, 210);
 
       // Build request parts
       const parts: any[] = [];
