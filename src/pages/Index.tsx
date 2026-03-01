@@ -1512,17 +1512,14 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
               if (vpData.success && vpData.text) {
                 const vpText = vpData.text.trim();
                 try {
-                  const jsonMatch = vpText.match(/\{[\s\S]*\}/);
-                  if (jsonMatch) {
-                    const parsed = JSON.parse(jsonMatch[0]);
-                    return {
-                      videoPrompt: parsed.fullPrompt || "",
-                      veo3CameraMovement: parsed.cameraMovement || "",
-                      veo3StartState: parsed.startState || "",
-                      veo3Motion: parsed.motion || "",
-                      veo3EndState: parsed.endState || "",
-                    };
-                  }
+                  const parsed = extractJsonFromAiResponse(vpText);
+                  return {
+                    videoPrompt: parsed.fullPrompt || "",
+                    veo3CameraMovement: parsed.cameraMovement || "",
+                    veo3StartState: parsed.startState || "",
+                    veo3Motion: parsed.motion || "",
+                    veo3EndState: parsed.endState || "",
+                  };
                 } catch (e) {
                   return { videoPrompt: vpText, veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
                 }
