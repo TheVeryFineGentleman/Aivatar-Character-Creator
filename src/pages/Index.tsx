@@ -2414,10 +2414,15 @@ Antworte NUR mit einem JSON-Objekt:
   ): string => {
     const lines: string[] = [];
     
-    // === SECTION 0: ART STYLE (FIRST - highest priority) ===
-    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
-    lines.push(`CRITICAL ART STYLE OVERRIDE (apply to the ENTIRE image, override any style from reference images): ${styleDesc}`);
-    lines.push("DO NOT replicate the visual style or medium of reference images. Reference images are ONLY for character identity (face, body). Render EVERYTHING in the art style specified above.");
+    // === SECTION 0: TASK DESCRIPTION ===
+    lines.push(`Generate an image for Scene ${sceneIndex + 1} of a story. Use all the details below to create the image.`);
+    
+    // Art style only if explicitly selected (not empty / not default)
+    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
+    if (styleDesc) {
+      lines.push("");
+      lines.push(`ART STYLE: ${styleDesc}. Apply this visual style consistently. Reference images are ONLY for character identity (face, body) — do NOT copy their visual style or medium.`);
+    }
     
     // === SECTION 1: MANDATORY CAMERA FRAMING ===
     lines.push("");
@@ -2455,8 +2460,8 @@ Antworte NUR mit einem JSON-Objekt:
     lines.push("");
     lines.push("CHARACTER IDENTITY:");
     lines.push(sceneIndex === 0
-      ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image. But DO NOT copy the visual style/medium of the reference — render in the art style specified above."
-      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly. Render in the art style specified above, NOT in the style of reference images."
+      ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image. Do NOT copy the visual style or medium of the reference."
+      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly. Do NOT copy the visual style of reference images."
     );
     
     // === SECTION 4: CHARACTER POSE & EXPRESSION ===
@@ -2510,9 +2515,11 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: ART STYLE REMINDER ===
-    lines.push("");
-    lines.push(`REMINDER - ART STYLE: ${styleDesc}. This overrides any photographic or realistic look from reference images.`);
+    // === SECTION 11: ART STYLE REMINDER (only if style was set) ===
+    if (styleDesc) {
+      lines.push("");
+      lines.push(`REMINDER — render in this art style: ${styleDesc}`);
+    }
     
     // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
     if (storyCustomDetails && storyCustomDetails.trim()) {
