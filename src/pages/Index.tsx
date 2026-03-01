@@ -299,6 +299,7 @@ const Index = () => {
     "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
     "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
   ]);
+  const [lastSuggestionMode, setLastSuggestionMode] = useState<string | null>(null);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
   const [storyReferenceImages, setStoryReferenceImages] = useState<string[]>(() => {
     const saved = getFromLocalStorage('storyReferenceImages');
