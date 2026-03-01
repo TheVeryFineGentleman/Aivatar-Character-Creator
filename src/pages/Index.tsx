@@ -2407,131 +2407,115 @@ Antworte NUR mit einem JSON-Objekt:
     "extreme-long-shot": "extreme long shot, wide establishing shot",
   };
 
-  // ===== BUILD FULL IMAGE PROMPT HELPER =====
-  const buildFullImagePrompt = (
+  // ===== BUILD SCENE CONTEXT (structured data for AI prompt generation) =====
+  const buildSceneContext = (
     point: typeof storyPoints[0],
     sceneIndex: number
   ): string => {
     const lines: string[] = [];
     
-    // === SECTION 0: TASK DESCRIPTION ===
-    lines.push(`Generate an image for Scene ${sceneIndex + 1} of a story. Use all the details below to create the image.`);
+    lines.push(`Scene ${sceneIndex + 1} of ${storyPoints.length}`);
     
-    // Art style only if explicitly selected (not empty / not default)
     const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
-    if (styleDesc) {
-      lines.push("");
-      lines.push(`ART STYLE: ${styleDesc}. Apply this visual style consistently. Reference images are ONLY for character identity (face, body) — do NOT copy their visual style or medium.`);
-    }
+    if (styleDesc) lines.push(`Art Style: ${styleDesc}`);
     
-    // === SECTION 1: MANDATORY CAMERA FRAMING ===
-    lines.push("");
-    lines.push("MANDATORY CAMERA FRAMING:");
     const shotType = point.shotType ? (shotTypeToEnglish[point.shotType] || point.shotType) : "medium shot";
     lines.push(`Shot Type: ${shotType}`);
-    
     if (point.cameraAngle && point.cameraAngle !== 'random') {
       lines.push(`Camera Angle: ${cameraAngleToEnglish[point.cameraAngle] || point.cameraAngle}`);
     }
-    
     if (point.composition) {
       lines.push(`Composition: ${compositionToEnglish[point.composition] || point.composition}`);
     }
     
-    // === SECTION 2: SCENE SETTING ===
-    lines.push("");
-    lines.push("SCENE SETTING:");
     const locationParts: string[] = [];
     if (storyboardMainLocation) locationParts.push(storyboardMainLocation);
-    if (point.specificArea) {
-      locationParts.push(areaToEnglish[point.specificArea] || point.specificArea);
-    }
-    if (locationParts.length > 0) {
-      lines.push(`Location: ${locationParts.join(", ")}`);
-    }
+    if (point.specificArea) locationParts.push(areaToEnglish[point.specificArea] || point.specificArea);
+    if (locationParts.length > 0) lines.push(`Location: ${locationParts.join(", ")}`);
     
-    // Scene description
     const sceneText = point.detailedDescription || point.versions[point.currentVersion] || "";
-    if (sceneText) {
-      lines.push(`Scene: ${sceneText}`);
-    }
+    if (sceneText) lines.push(`Scene Description: ${sceneText}`);
     
-    // === SECTION 3: CHARACTER IDENTITY ===
-    lines.push("");
-    lines.push("CHARACTER IDENTITY:");
-    lines.push(sceneIndex === 0
-      ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image. Do NOT copy the visual style or medium of the reference."
-      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly. Do NOT copy the visual style of reference images."
-    );
+    if (point.keyAction) lines.push(`Action: ${actionToEnglish[point.keyAction] || point.keyAction}`);
+    if (point.emotion) lines.push(`Expression: ${emotionToEnglish[point.emotion] || point.emotion}`);
+    if (point.participants && point.participants.trim()) lines.push(`Participants: ${point.participants}`);
     
-    // === SECTION 4: CHARACTER POSE & EXPRESSION ===
-    lines.push("");
-    lines.push("CHARACTER POSE:");
-    if (point.keyAction) {
-      lines.push(`Action: ${actionToEnglish[point.keyAction] || point.keyAction}`);
-    }
-    if (point.emotion) {
-      lines.push(`Expression: ${emotionToEnglish[point.emotion] || point.emotion}`);
-    }
-    lines.push("IGNORE the pose in reference images - generate a completely new pose matching this scene.");
-    
-    // === SECTION 5: PARTICIPANTS (if any) ===
-    if (point.participants && point.participants.trim()) {
-      lines.push("");
-      lines.push(`PARTICIPANTS: ${point.participants}`);
-    }
-    
-    // === SECTION 6: INTENDED EFFECT / MOOD ===
     if (point.audienceEffect) {
-      lines.push("");
-      const moodEnglish = effectToEnglish[point.audienceEffect] || point.audienceEffect;
-      lines.push(`INTENDED MOOD: Create a ${moodEnglish} atmosphere in this image.`);
+      lines.push(`Mood: ${effectToEnglish[point.audienceEffect] || point.audienceEffect}`);
     }
     
-    // === SECTION 7: MOVEMENT (camera movement if specified) ===
     if (point.movement && point.movement !== 'keine') {
       const movementEnglish = movementToEnglish[point.movement] || point.movement;
-      if (movementEnglish) {
-        lines.push("");
-        lines.push(`CAMERA MOVEMENT: ${movementEnglish}`);
-      }
+      if (movementEnglish) lines.push(`Camera Movement: ${movementEnglish}`);
     }
     
-    // === SECTION 8: STYLE NOTES ===
-    if (point.styleNotes && point.styleNotes.trim()) {
-      lines.push("");
-      lines.push(`STYLE: ${point.styleNotes}`);
-    }
-    
-    // === SECTION 9: CONTINUITY NOTES ===
-    if (point.continuityNotes && point.continuityNotes.trim()) {
-      lines.push("");
-      lines.push(`CONTINUITY: ${point.continuityNotes}`);
-    }
-    
-    // === SECTION 10: NEGATIVE PROMPTS / AVOID ===
-    if (point.negativePrompts && point.negativePrompts.trim()) {
-      lines.push("");
-      lines.push(`AVOID: ${point.negativePrompts}`);
-    }
-    
-    // === SECTION 11: ART STYLE REMINDER (only if style was set) ===
-    if (styleDesc) {
-      lines.push("");
-      lines.push(`REMINDER — render in this art style: ${styleDesc}`);
-    }
-    
-    // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
-    if (storyCustomDetails && storyCustomDetails.trim()) {
-      lines.push("");
-      lines.push(`GLOBAL INSTRUCTIONS: ${storyCustomDetails.trim()}`);
-    }
-    
-    // === SECTION 13: TECHNICAL REQUIREMENTS ===
-    lines.push("");
-    lines.push("TECHNICAL: 16:9 aspect ratio, ultra high resolution, single cohesive image, full-bleed edge-to-edge.");
+    if (point.styleNotes && point.styleNotes.trim()) lines.push(`Style Notes: ${point.styleNotes}`);
+    if (point.continuityNotes && point.continuityNotes.trim()) lines.push(`Continuity Notes: ${point.continuityNotes}`);
+    if (point.negativePrompts && point.negativePrompts.trim()) lines.push(`Avoid: ${point.negativePrompts}`);
+    if (storyCustomDetails && storyCustomDetails.trim()) lines.push(`Global Details: ${storyCustomDetails.trim()}`);
     
     return lines.join("\n");
+  };
+
+  // ===== GENERATE IMAGE PROMPT VIA TEXT-AI (Step 1: AI writes the prompt) =====
+  const generateImagePromptViaAI = async (
+    point: typeof storyPoints[0],
+    sceneIndex: number
+  ): Promise<string> => {
+    const sceneContext = buildSceneContext(point, sceneIndex);
+    
+    const systemInstruction = `You are an expert image prompt writer. Based on the scene details below, write a concise, vivid image generation prompt in English.
+
+Rules:
+- Write a single descriptive paragraph (max 150 words) that tells the image AI exactly what to render.
+- Include all visual details: composition, lighting, mood, character appearance, action, environment.
+- If an art style is specified, make it the dominant visual direction of the entire image.
+- Reference images will be provided separately for character identity — do NOT describe the character's face in detail, just mention "the character from reference".
+- The character should have a NEW pose matching the scene action — never copy the pose from references.
+- Do NOT copy the visual style or medium of reference images — only use them for character identity.
+- Output ONLY the image prompt text, nothing else. No explanations, no markdown, no quotes.
+
+Scene Details:
+${sceneContext}`;
+
+    console.log(`🤖 Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
+    
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
+          body: JSON.stringify({
+            prompt: systemInstruction,
+            mode: "text",
+            apiKey: apiKey
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        console.warn("⚠️ AI prompt generation failed, falling back to scene context");
+        return sceneContext;
+      }
+      
+      const result = await response.json();
+      const aiPrompt = result.text?.trim();
+      
+      if (!aiPrompt) {
+        console.warn("⚠️ Empty AI prompt, falling back to scene context");
+        return sceneContext;
+      }
+      
+      console.log(`✅ AI-generated image prompt for scene ${sceneIndex + 1}:`, aiPrompt.substring(0, 200) + '...');
+      return aiPrompt;
+    } catch (error) {
+      console.warn("⚠️ AI prompt generation error, falling back to scene context:", error);
+      return sceneContext;
+    }
   };
 
   // Regenerate a single failed story scene - uses FULL PROMPT with all metadata
@@ -2586,10 +2570,10 @@ Antworte NUR mit einem JSON-Objekt:
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
     
     try {
-      // Build FULL structured prompt with ALL metadata
-      const imagePromptText = buildFullImagePrompt(point, sceneIndex);
+      // Step 1: Let Text-AI write the image prompt
+      const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
       
-      console.log(`Regenerating scene ${sceneIndex + 1} with FULL metadata prompt:`, imagePromptText.substring(0, 200) + '...');
+      console.log(`🎨 Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
       
       // Build image parts - collect all reference images as base64
       const allReferenceImages: string[] = [...characterBase64Images];
@@ -2768,8 +2752,8 @@ Antworte NUR mit einem JSON-Objekt:
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
     
     try {
-      // Build FULL structured prompt with ALL metadata (same as regenerateSingleStoryScene)
-      const imagePromptText = buildFullImagePrompt(point, sceneIndex);
+      // Step 1: Let Text-AI write the image prompt
+      const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
 
       // Build reference images array
       const allReferenceImages: string[] = [...characterBase64Images];
