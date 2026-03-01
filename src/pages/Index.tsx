@@ -3422,35 +3422,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               slotController.signal
             );
 
-            // Animate progress quickly from current value to 100%
-            const animateTo100 = () => new Promise<void>(resolve => {
-              let currentProgress = 90;
-              const animationInterval = setInterval(() => {
-                currentProgress += 5;
-                if (currentProgress >= 100) {
-                  currentProgress = 100;
-                  clearInterval(animationInterval);
-                  setImageSlots((prev) => {
-                    const updated = [...prev];
-                    if (index < updated.length) {
-                      updated[index] = { ...updated[index], progress: 100 };
-                    }
-                    return updated;
-                  });
-                  setTimeout(resolve, 150); // Short pause at 100%
-                } else {
-                  setImageSlots((prev) => {
-                    const updated = [...prev];
-                    if (index < updated.length) {
-                      updated[index] = { ...updated[index], progress: currentProgress };
-                    }
-                    return updated;
-                  });
-                }
-              }, 50); // Fast animation: 50ms per step
+            // Progress already reaches 100% naturally via interval
+            // Just ensure it shows 100% before revealing the image
+            setImageSlots((prev) => {
+              const updated = [...prev];
+              if (index < updated.length) {
+                updated[index] = { ...updated[index], progress: 100 };
+              }
+              return updated;
             });
-
-            await animateTo100();
+            await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause at 100%
 
             // Now update with the actual result
             if (imageUrl) {
