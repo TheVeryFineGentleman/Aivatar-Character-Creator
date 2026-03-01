@@ -383,6 +383,9 @@ const Index = () => {
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
+  // "speaker-from-description" = KI generiert Sprechertext aus Szenenbeschreibung
+  // "description-from-speaker" = KI generiert Szenenbeschreibung aus Sprechertext
+  const [storyGenerationDirection, setStoryGenerationDirection] = useState<"speaker-from-description" | "description-from-speaker">("speaker-from-description");
   const [storyVideoModel, setStoryVideoModel] = useState("veo3");
   const [storyArtStyle, setStoryArtStyle] = useState("realistic");
   const [storyTransitionType, setStoryTransitionType] = useState("hard-cut");
