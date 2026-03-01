@@ -561,7 +561,8 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
             }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 500
+              maxOutputTokens: 500,
+              responseMimeType: "application/json"
             }
           })
         }
