@@ -145,7 +145,7 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
         {status === "completed" && imageUrl && (
           <div className="relative group w-full h-full cursor-pointer" onClick={onImageClick}>
             <img
-              src={imageUrl}
+              src={thumbnailUrl || imageUrl}
               alt={`Generiert ${index + 1}`}
               className="w-full h-full object-cover"
               style={{ imageRendering: 'auto' }}
