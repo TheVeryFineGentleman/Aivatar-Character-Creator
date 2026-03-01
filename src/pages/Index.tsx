@@ -3397,14 +3397,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               const current = updated[index].progress || 0;
               if (current >= 95) return prev;
               // Accelerate: starts ~0.5, ends ~1.5 near 95%
-              const step = 0.7 + (current / 95) * 1.5;
+              const step = 0.6 + (current / 100) * 1.2;
               updated[index] = { 
                 ...updated[index],
-                progress: Math.min(current + step, 95)
+                progress: Math.min(current + step, 100)
               };
               return updated;
             });
-          }, 210);
+          }, 250);
 
           try {
             const imageUrl = await generateSingleImage(
@@ -3422,35 +3422,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               slotController.signal
             );
 
-            // Animate progress quickly from current value to 100%
-            const animateTo100 = () => new Promise<void>(resolve => {
-              let currentProgress = 90;
-              const animationInterval = setInterval(() => {
-                currentProgress += 5;
-                if (currentProgress >= 100) {
-                  currentProgress = 100;
-                  clearInterval(animationInterval);
-                  setImageSlots((prev) => {
-                    const updated = [...prev];
-                    if (index < updated.length) {
-                      updated[index] = { ...updated[index], progress: 100 };
-                    }
-                    return updated;
-                  });
-                  setTimeout(resolve, 150); // Short pause at 100%
-                } else {
-                  setImageSlots((prev) => {
-                    const updated = [...prev];
-                    if (index < updated.length) {
-                      updated[index] = { ...updated[index], progress: currentProgress };
-                    }
-                    return updated;
-                  });
-                }
-              }, 50); // Fast animation: 50ms per step
+            // Progress already reaches 100% naturally via interval
+            // Just ensure it shows 100% before revealing the image
+            setImageSlots((prev) => {
+              const updated = [...prev];
+              if (index < updated.length) {
+                updated[index] = { ...updated[index], progress: 100 };
+              }
+              return updated;
             });
-
-            await animateTo100();
+            await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause at 100%
 
             // Now update with the actual result
             if (imageUrl) {
@@ -3694,13 +3675,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const updated = [...prev];
           if (updated[newIndex]?.status === "loading") {
             const current = updated[newIndex].progress || 0;
-            if (current >= 95) return prev;
-            const step = 0.7 + (current / 95) * 1.5;
-            updated[newIndex].progress = Math.min(current + step, 95);
+            if (current >= 100) return prev;
+            const step = 0.6 + (current / 100) * 1.2;
+            updated[newIndex].progress = Math.min(current + step, 100);
           }
           return updated;
         });
-      }, 210);
+      }, 250);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
@@ -4057,11 +4038,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const progressInterval = setInterval(() => {
         updateSlotSafe(index, (slot) => {
           const current = slot.progress || 0;
-          if (current >= 95) return slot;
-          const step = 0.7 + (current / 95) * 1.5;
-          return { ...slot, progress: Math.min(current + step, 95) };
+          if (current >= 100) return slot;
+          const step = 0.6 + (current / 100) * 1.2;
+          return { ...slot, progress: Math.min(current + step, 100) };
         });
-      }, 210);
+      }, 250);
 
       // Build request parts
       const parts: any[] = [];
