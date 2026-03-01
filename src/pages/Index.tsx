@@ -295,9 +295,9 @@ const Index = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
   const [isAnimatingSuggestion, setIsAnimatingSuggestion] = useState(false);
   const [storySuggestions, setStorySuggestions] = useState<string[]>([
-    "Ein Influencer entdeckt ein magisches Café, das Wünsche erfüllt.",
-    "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
-    "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
+    "Zufälliges Wiedersehen im Supermarkt",
+    "Stilles Treffen ohne Worte",
+    "Verlorener Brief verändert alles"
   ]);
   const [lastSuggestionMode, setLastSuggestionMode] = useState<string | null>(null);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
@@ -2913,15 +2913,54 @@ Antworte NUR mit einem JSON-Objekt:
     }
   };
 
-  const handleSuggestionClick = (suggestion: string, index: number) => {
+  const handleSuggestionClick = async (suggestion: string, index: number) => {
     setSelectedSuggestionIndex(index);
     setIsAnimatingSuggestion(true);
     
-    // After animation completes, set the actual value
-    setTimeout(() => {
-      setStoryIdea(suggestion);
-      setSelectedSuggestionIndex(null);
+    // After animation completes, expand the short summary into full text
+    setTimeout(async () => {
       setIsAnimatingSuggestion(false);
+      setSelectedSuggestionIndex(null);
+      
+      // Show loading in the textarea
+      setStoryIdea("⏳ Wird generiert...");
+      
+      try {
+        const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
+        const expandPrompt = isDialogMode
+          ? `Erweitere diese Dialog-Zusammenfassung zu einem ausführlichen, natürlich klingenden Dialog zwischen Charakteren. Der Dialog soll 4-8 Sätze lang sein, filmisch und emotional. Zusammenfassung: "${suggestion}"
+
+Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
+          : `Erweitere diese kurze Story-Zusammenfassung zu einer detaillierten Szenenbeschreibung. Beschreibe die Szene visuell und atmosphärisch in 3-6 Sätzen. Zusammenfassung: "${suggestion}"
+
+Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: expandPrompt }] }]
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const expandedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (expandedText) {
+            setStoryIdea(expandedText);
+          } else {
+            setStoryIdea(suggestion);
+          }
+        } else {
+          setStoryIdea(suggestion);
+        }
+      } catch (error) {
+        console.error("Failed to expand suggestion:", error);
+        setStoryIdea(suggestion);
+      }
     }, 400);
   };
 
@@ -2940,29 +2979,24 @@ Antworte NUR mit einem JSON-Objekt:
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 kurze DIALOG-Beispiele für Charaktere in realistischen Szenen. Jeder Dialog soll 1-2 Sätze gesprochener Text sein, den ein Charakter in einer filmischen Szene sagen könnte.
-
-WICHTIG: NUR realistische, alltägliche Dialoge! Natürlich klingende Sprache.
+                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs.
 
 Gute Beispiele:
-- "Ich hätte nie gedacht, dass ich dich hier wiedersehe. Wie lange ist das her – zehn Jahre?"
-- "Wenn du jetzt gehst, brauchst du nicht wiederkommen."
-- "Weißt du noch, als wir hier jeden Sommer waren? Damals war alles einfacher."
+- Wiedersehen nach zehn Jahren
+- Streit vor dem Abschied
+- Erinnerung an alte Zeiten
 
-Antworte NUR mit den 3 Dialogen, einer pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
+Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen realistischen Geschichte.
 
-WICHTIG: NUR realistische, lebensnahe Geschichten! KEINE Fantasy, Magie, übernatürlichen Elemente, Sci-Fi oder unrealistische Szenarien.
+WICHTIG: NUR realistische Themen! KEINE Fantasy, Magie oder Sci-Fi.
 
-Gute Beispiele (realistisch, alltäglich):
-- "Eine Frau trifft nach 10 Jahren ihren Jugendfreund zufällig im Supermarkt."
-- "Ein Student muss sich zwischen seinem Traumjob und seiner Beziehung entscheiden."
-- "Eine ältere Dame findet einen verlorenen Brief, der ihr Leben verändert."
+Gute Beispiele:
+- Zufälliges Wiedersehen im Supermarkt
+- Traumjob oder Beziehung
+- Verlorener Brief verändert alles
 
-SCHLECHTE Beispiele (NICHT verwenden):
-- Magische Cafés, Zeitreisen, Superhelden, Zauberer, sprechende Tiere, Portale
-
-Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
             }]
           }),
