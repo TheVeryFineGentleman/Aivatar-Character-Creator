@@ -2939,7 +2939,18 @@ Antworte NUR mit einem JSON-Objekt:
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
+                text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
+                  ? `Generiere genau 3 kurze DIALOG-Beispiele für Charaktere in realistischen Szenen. Jeder Dialog soll 1-2 Sätze gesprochener Text sein, den ein Charakter in einer filmischen Szene sagen könnte.
+
+WICHTIG: NUR realistische, alltägliche Dialoge! Natürlich klingende Sprache.
+
+Gute Beispiele:
+- "Ich hätte nie gedacht, dass ich dich hier wiedersehe. Wie lange ist das her – zehn Jahre?"
+- "Wenn du jetzt gehst, brauchst du nicht wiederkommen."
+- "Weißt du noch, als wir hier jeden Sommer waren? Damals war alles einfacher."
+
+Antworte NUR mit den 3 Dialogen, einer pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
 
 WICHTIG: NUR realistische, lebensnahe Geschichten! KEINE Fantasy, Magie, übernatürlichen Elemente, Sci-Fi oder unrealistische Szenarien.
 
