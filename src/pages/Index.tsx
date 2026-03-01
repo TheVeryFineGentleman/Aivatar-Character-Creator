@@ -4058,7 +4058,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         updateSlotSafe(index, (slot) => {
           const current = slot.progress || 0;
           if (current >= 95) return slot;
-          const step = 0.5 + (current / 95) * 1.0;
+          const step = 0.7 + (current / 95) * 1.5;
           return { ...slot, progress: Math.min(current + step, 95) };
         });
       }, 210);
