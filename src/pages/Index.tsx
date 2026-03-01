@@ -2913,15 +2913,54 @@ Antworte NUR mit einem JSON-Objekt:
     }
   };
 
-  const handleSuggestionClick = (suggestion: string, index: number) => {
+  const handleSuggestionClick = async (suggestion: string, index: number) => {
     setSelectedSuggestionIndex(index);
     setIsAnimatingSuggestion(true);
     
-    // After animation completes, set the actual value
-    setTimeout(() => {
-      setStoryIdea(suggestion);
-      setSelectedSuggestionIndex(null);
+    // After animation completes, expand the short summary into full text
+    setTimeout(async () => {
       setIsAnimatingSuggestion(false);
+      setSelectedSuggestionIndex(null);
+      
+      // Show loading in the textarea
+      setStoryIdea("⏳ Wird generiert...");
+      
+      try {
+        const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
+        const expandPrompt = isDialogMode
+          ? `Erweitere diese Dialog-Zusammenfassung zu einem ausführlichen, natürlich klingenden Dialog zwischen Charakteren. Der Dialog soll 4-8 Sätze lang sein, filmisch und emotional. Zusammenfassung: "${suggestion}"
+
+Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
+          : `Erweitere diese kurze Story-Zusammenfassung zu einer detaillierten Szenenbeschreibung. Beschreibe die Szene visuell und atmosphärisch in 3-6 Sätzen. Zusammenfassung: "${suggestion}"
+
+Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: expandPrompt }] }]
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const expandedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (expandedText) {
+            setStoryIdea(expandedText);
+          } else {
+            setStoryIdea(suggestion);
+          }
+        } else {
+          setStoryIdea(suggestion);
+        }
+      } catch (error) {
+        console.error("Failed to expand suggestion:", error);
+        setStoryIdea(suggestion);
+      }
     }, 400);
   };
 
