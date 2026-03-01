@@ -4052,11 +4052,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Progress animation
       const progressInterval = setInterval(() => {
-        updateSlotSafe(index, (slot) => ({
-          ...slot,
-          progress: Math.min((slot.progress || 0) + (Math.random() * 3 + 1.5), 85),
-        }));
-      }, 1500);
+        updateSlotSafe(index, (slot) => {
+          const current = slot.progress || 0;
+          if (current >= 95) return slot;
+          return { ...slot, progress: current + 1 };
+        });
+      }, 350);
 
       // Build request parts
       const parts: any[] = [];
