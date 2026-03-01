@@ -94,6 +94,45 @@ const SHOT_OPTIONS = [
   { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
+// Story Builder Setup Constants
+const STORY_VIDEO_MODELS = [
+  { id: "veo3", label: "Veo 3 (Standard)" },
+  { id: "veo2", label: "Veo 2 (Schneller)" },
+  { id: "kling", label: "Kling 1.6" },
+];
+
+const STORY_ART_STYLES = [
+  { id: "realistic", label: "Realistisch" },
+  { id: "cinematic", label: "Cinematic" },
+  { id: "anime", label: "Anime" },
+  { id: "comic", label: "Comic" },
+  { id: "illustration", label: "Illustration" },
+  { id: "watercolor", label: "Aquarell" },
+  { id: "3d-render", label: "3D Render" },
+  { id: "noir", label: "Film Noir" },
+];
+
+const STORY_TRANSITION_TYPES = [
+  { id: "hard-cut", label: "Harter Cut" },
+  { id: "smooth", label: "Smooth Transition" },
+  { id: "fade", label: "Fade" },
+  { id: "dissolve", label: "Dissolve" },
+  { id: "swipe-left", label: "Swipe Links" },
+  { id: "swipe-right", label: "Swipe Rechts" },
+  { id: "zoom", label: "Zoom Übergang" },
+];
+
+const ART_STYLE_ENGLISH: Record<string, string> = {
+  "realistic": "photorealistic, natural lighting, true-to-life",
+  "cinematic": "cinematic film look, dramatic lighting, shallow depth of field, anamorphic lens flare",
+  "anime": "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic",
+  "comic": "comic book style, bold outlines, halftone dots, dynamic composition",
+  "illustration": "digital illustration, painterly, artistic, stylized",
+  "watercolor": "watercolor painting, soft washes, bleeding colors, paper texture",
+  "3d-render": "3D rendered, CGI, Pixar-quality, volumetric lighting",
+  "noir": "film noir, high contrast black and white, dramatic shadows, moody atmosphere",
+};
+
 const SKIN_OPTIONS = [
   { id: "soft", label: "Weiche Haut", description: "soft, smooth, flawless skin with subtle glow" },
   { id: "realistic", label: "Realistische Haut", description: "realistic natural skin with visible pores and natural texture" },
