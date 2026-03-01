@@ -2510,10 +2510,9 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: ART STYLE (from setup) - ALWAYS included ===
-    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
+    // === SECTION 11: ART STYLE REMINDER ===
     lines.push("");
-    lines.push(`ART STYLE (IMPORTANT - apply this visual style to the ENTIRE image): ${styleDesc}`);
+    lines.push(`REMINDER - ART STYLE: ${styleDesc}. This overrides any photographic or realistic look from reference images.`);
     
     // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
     if (storyCustomDetails && storyCustomDetails.trim()) {
