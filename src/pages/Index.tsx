@@ -860,17 +860,8 @@ REGELN:
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          // Clean markdown code block markers before parsing
-          const cleanedText = text
-            .replace(/```json\s*/gi, '')
-            .replace(/```\s*/g, '')
-            .trim();
-          
-          // Extract JSON object from response (new format with mainLocation)
-          const jsonObjectMatch = cleanedText.match(/\{[\s\S]*\}/);
-          if (jsonObjectMatch) {
-            try {
-              const parsed = JSON.parse(jsonObjectMatch[0]);
+          try {
+              const parsed = extractJsonFromAiResponse(text);
               const mainLocation = parsed.mainLocation || "";
               const scenes = parsed.scenes || [];
               
