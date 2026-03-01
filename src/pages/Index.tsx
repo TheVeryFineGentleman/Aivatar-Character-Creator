@@ -573,10 +573,7 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
       const data = await response.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
-      // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = extractJsonFromAiResponse(text);
         
         // Update the story point with all fields
         const idx = expandedStoryPointIndex;
