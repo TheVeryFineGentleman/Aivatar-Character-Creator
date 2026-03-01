@@ -2461,7 +2461,7 @@ Antworte NUR mit einem JSON-Objekt:
     lines.push("CHARACTER IDENTITY:");
     lines.push(sceneIndex === 0
       ? "STRICTLY copy face, hair, body type, and ALL clothing/accessories from the reference image. But DO NOT copy the visual style/medium of the reference — render in the art style specified above."
-      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly. Render in the art style specified above, NOT in the style of reference images."
+      : "STRICTLY maintain the SAME person from previous scenes. Copy face, hair, body type, outfit exactly. Do NOT copy the visual style of reference images."
     );
     
     // === SECTION 4: CHARACTER POSE & EXPRESSION ===
