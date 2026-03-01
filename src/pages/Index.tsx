@@ -94,6 +94,34 @@ const SHOT_OPTIONS = [
   { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
+// Robust JSON extraction from AI responses
+function extractJsonFromAiResponse(text: string): any {
+  let cleaned = text
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+
+  const jsonStart = cleaned.search(/[\{\[]/);
+  const isArray = jsonStart !== -1 && cleaned[jsonStart] === '[';
+  const jsonEnd = cleaned.lastIndexOf(isArray ? ']' : '}');
+
+  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+    throw new Error("No JSON found in AI response");
+  }
+
+  cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    cleaned = cleaned
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      .replace(/[\x00-\x1F\x7F]/g, '');
+    return JSON.parse(cleaned);
+  }
+}
+
 // Story Builder Setup Constants
 const STORY_VIDEO_MODELS = [
   { id: "veo3", label: "Veo 3 (Standard)" },
