@@ -2504,12 +2504,10 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: ART STYLE (from setup) ===
-    if (storyArtStyle && storyArtStyle !== "realistic") {
-      const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle;
-      lines.push("");
-      lines.push(`ART STYLE: ${styleDesc}`);
-    }
+    // === SECTION 11: ART STYLE (from setup) - ALWAYS included ===
+    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
+    lines.push("");
+    lines.push(`ART STYLE (IMPORTANT - apply this visual style to the ENTIRE image): ${styleDesc}`);
     
     // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
     if (storyCustomDetails && storyCustomDetails.trim()) {
