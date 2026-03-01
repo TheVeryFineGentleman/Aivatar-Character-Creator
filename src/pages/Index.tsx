@@ -2515,9 +2515,11 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: ART STYLE REMINDER ===
-    lines.push("");
-    lines.push(`REMINDER - ART STYLE: ${styleDesc}. This overrides any photographic or realistic look from reference images.`);
+    // === SECTION 11: ART STYLE REMINDER (only if style was set) ===
+    if (styleDesc) {
+      lines.push("");
+      lines.push(`REMINDER — render in this art style: ${styleDesc}`);
+    }
     
     // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
     if (storyCustomDetails && storyCustomDetails.trim()) {
