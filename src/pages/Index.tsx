@@ -380,6 +380,15 @@ const Index = () => {
   const [storyAiAssistantInput, setStoryAiAssistantInput] = useState("");
   const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
   
+  // Story Builder Setup Options
+  const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
+  const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
+  const [storyVideoModel, setStoryVideoModel] = useState("veo3");
+  const [storyArtStyle, setStoryArtStyle] = useState("realistic");
+  const [storyTransitionType, setStoryTransitionType] = useState("hard-cut");
+  const [storyCustomDetails, setStoryCustomDetails] = useState("");
+  const [storySetupCollapsed, setStorySetupCollapsed] = useState(false);
+  
   // Scene Edit Popup - Tab-based UI state
   const [sceneEditTab, setSceneEditTab] = useState<"content" | "image" | "video">("content");
   
