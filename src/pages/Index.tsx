@@ -3397,11 +3397,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               }
               updated[index] = { 
                 ...updated[index],
-                progress: Math.min((updated[index].progress || 0) + 10, 90) 
+                progress: Math.min((updated[index].progress || 0) + (Math.random() * 3 + 1.5), 90) 
               };
               return updated;
             });
-          }, 1000);
+          }, 1500);
 
           try {
             const imageUrl = await generateSingleImage(
