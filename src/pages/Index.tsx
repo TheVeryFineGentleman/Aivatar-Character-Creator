@@ -574,25 +574,24 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
       const parsed = extractJsonFromAiResponse(text);
+      
+      // Update the story point with all fields
+      const idx = expandedStoryPointIndex;
+      setStoryPoints(prev => prev.map((p, i) => {
+        if (i !== idx) return p;
         
-        // Update the story point with all fields
-        const idx = expandedStoryPointIndex;
-        setStoryPoints(prev => prev.map((p, i) => {
-          if (i !== idx) return p;
-          
-          // Add new version for story
-          const newVersions = [...p.versions, parsed.story];
-          return {
-            ...p,
-            versions: newVersions,
-            currentVersion: newVersions.length - 1,
-            cameraAngle: parsed.cameraAngle,
-            shotType: parsed.shotType
-          };
-        }));
-        
-        setSceneAssistantInput("");
-      }
+        // Add new version for story
+        const newVersions = [...p.versions, parsed.story];
+        return {
+          ...p,
+          versions: newVersions,
+          currentVersion: newVersions.length - 1,
+          cameraAngle: parsed.cameraAngle,
+          shotType: parsed.shotType
+        };
+      }));
+      
+      setSceneAssistantInput("");
     } catch (error) {
       console.error("Scene assistant error:", error);
     } finally {
