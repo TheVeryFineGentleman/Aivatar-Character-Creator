@@ -3397,7 +3397,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               const current = updated[index].progress || 0;
               if (current >= 95) return prev;
               // Accelerate: starts ~0.5, ends ~1.5 near 95%
-              const step = 0.7 + (current / 100) * 1.5;
+              const step = Math.min(0.7 + (current / 100) * 1.5, 4);
               updated[index] = { 
                 ...updated[index],
                 progress: Math.min(current + step, 100)
