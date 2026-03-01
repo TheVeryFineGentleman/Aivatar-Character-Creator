@@ -40,7 +40,7 @@ const getAspectClass = (format: string) => {
   }
 };
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
   const totalVersions = imageVersions?.length || 0;
   const hasMultipleVersions = totalVersions > 1;
   const aspectClass = getAspectClass(format);
