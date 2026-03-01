@@ -6145,6 +6145,92 @@ Beispiel einer korrekten Antwort:
                 </div>
               </div>
 
+              {/* Setup Options Panel */}
+              <Collapsible 
+                open={!storySetupCollapsed} 
+                onOpenChange={(open) => setStorySetupCollapsed(!open)}
+                className="pt-4 border-t border-border/50"
+              >
+                <CollapsibleTrigger className="flex items-center justify-between w-full group cursor-pointer">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="w-4 h-4 text-muted-foreground" />
+                    Produktions-Einstellungen
+                  </Label>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${!storySetupCollapsed ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 space-y-4">
+                  {/* Row 1: Switches */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm">Sprechertext / Dialog</Label>
+                        <p className="text-xs text-muted-foreground">KI generiert Dialog pro Szene</p>
+                      </div>
+                      <Switch checked={storyEnableSpeaker} onCheckedChange={setStoryEnableSpeaker} />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm">Szenenbeschreibung</Label>
+                        <p className="text-xs text-muted-foreground">KI erstellt detaillierte Beschreibungen</p>
+                      </div>
+                      <Switch checked={storyEnableSceneDescription} onCheckedChange={setStoryEnableSceneDescription} />
+                    </div>
+                  </div>
+
+                  {/* Row 2: Dropdowns */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Videomodell</Label>
+                      <Select value={storyVideoModel} onValueChange={setStoryVideoModel}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_VIDEO_MODELS.map(m => (
+                            <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Artstyle</Label>
+                      <Select value={storyArtStyle} onValueChange={setStoryArtStyle}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_ART_STYLES.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Transition */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Standard-Übergang</Label>
+                      <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_TRANSITION_TYPES.map(t => (
+                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 4: Custom Details */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Besondere Details / Anweisungen</Label>
+                    <Textarea
+                      placeholder="z.B. 'Immer warmes Abendlicht', 'Film-Noir Stil', 'Keine Nahaufnahmen'..."
+                      value={storyCustomDetails}
+                      onChange={(e) => setStoryCustomDetails(e.target.value)}
+                      className="min-h-[60px] resize-y text-sm"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               {/* Storyboard Generator */}
               <div className="space-y-4 pt-4 border-t border-border/50">
                 <div className="flex items-center justify-between">
