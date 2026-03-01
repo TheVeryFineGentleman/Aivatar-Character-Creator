@@ -3694,13 +3694,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const updated = [...prev];
           if (updated[newIndex]?.status === "loading") {
             const current = updated[newIndex].progress || 0;
-            if (current >= 95) return prev;
-            const step = 0.7 + (current / 95) * 1.5;
-            updated[newIndex].progress = Math.min(current + step, 95);
+            if (current >= 100) return prev;
+            const step = 0.6 + (current / 100) * 1.2;
+            updated[newIndex].progress = Math.min(current + step, 100);
           }
           return updated;
         });
-      }, 210);
+      }, 250);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
