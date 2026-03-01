@@ -6216,8 +6216,7 @@ Beispiel einer korrekten Antwort:
                         <span className={`text-xs ${storyGenerationDirection === "description-from-speaker" ? "text-foreground font-medium" : "text-muted-foreground"}`}>Dialog → Details</span>
                       </div>
                     </div>
-                  )
-                  </div>
+                  )}
 
                   {/* Row 2: Dropdowns */}
                   <div className="grid grid-cols-2 gap-4">
