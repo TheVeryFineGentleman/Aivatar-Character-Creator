@@ -3697,7 +3697,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           }
           return updated;
         });
-      }, 350);
+      }, 210);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
