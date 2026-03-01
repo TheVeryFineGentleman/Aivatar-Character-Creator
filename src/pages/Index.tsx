@@ -3688,15 +3688,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     try {
       progressInterval = setInterval(() => {
         setImageSlots((prev) => {
-          // Safety check: ensure index is valid
           if (newIndex >= prev.length) return prev;
           const updated = [...prev];
           if (updated[newIndex]?.status === "loading") {
-            updated[newIndex].progress = Math.min((updated[newIndex].progress || 0) + (Math.random() * 3 + 1.5), 90);
+            const current = updated[newIndex].progress || 0;
+            if (current >= 95) return prev;
+            updated[newIndex].progress = current + 1;
           }
           return updated;
         });
-      }, 1500);
+      }, 350);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
