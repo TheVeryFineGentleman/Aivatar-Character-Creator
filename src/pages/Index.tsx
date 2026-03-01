@@ -3402,7 +3402,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               };
               return updated;
             });
-          }, 350);
+          }, 210);
 
           try {
             const imageUrl = await generateSingleImage(
