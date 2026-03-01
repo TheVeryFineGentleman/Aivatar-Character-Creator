@@ -2991,11 +2991,19 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
   };
 
   // Generate suggestions when API key becomes available (preload for story tab)
+  const currentSuggestionMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker" ? "dialog" : "story";
+  
   useEffect(() => {
     if (apiKey && authData.planCode === "FULL") {
-      generateStorySuggestions(apiKey);
+      // Regenerate suggestions when mode changes
+      if (lastSuggestionMode !== null && lastSuggestionMode !== currentSuggestionMode) {
+        generateStorySuggestions(apiKey);
+      } else if (lastSuggestionMode === null) {
+        generateStorySuggestions(apiKey);
+      }
+      setLastSuggestionMode(currentSuggestionMode);
     }
-  }, [apiKey, authData.planCode]);
+  }, [apiKey, authData.planCode, currentSuggestionMode]);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
