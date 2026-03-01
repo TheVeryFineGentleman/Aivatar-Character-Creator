@@ -2414,10 +2414,15 @@ Antworte NUR mit einem JSON-Objekt:
   ): string => {
     const lines: string[] = [];
     
-    // === SECTION 0: ART STYLE (FIRST - highest priority) ===
-    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
-    lines.push(`CRITICAL ART STYLE OVERRIDE (apply to the ENTIRE image, override any style from reference images): ${styleDesc}`);
-    lines.push("DO NOT replicate the visual style or medium of reference images. Reference images are ONLY for character identity (face, body). Render EVERYTHING in the art style specified above.");
+    // === SECTION 0: TASK DESCRIPTION ===
+    lines.push(`Generate an image for Scene ${sceneIndex + 1} of a story. Use all the details below to create the image.`);
+    
+    // Art style only if explicitly selected (not empty / not default)
+    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
+    if (styleDesc) {
+      lines.push("");
+      lines.push(`ART STYLE: ${styleDesc}. Apply this visual style consistently. Reference images are ONLY for character identity (face, body) — do NOT copy their visual style or medium.`);
+    }
     
     // === SECTION 1: MANDATORY CAMERA FRAMING ===
     lines.push("");
