@@ -6218,7 +6218,7 @@ Beispiel einer korrekten Antwort:
                   )}
 
                   {/* Row 2: Dropdowns */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-sm">Videomodell</Label>
                       <Select value={storyVideoModel} onValueChange={setStoryVideoModel}>
@@ -6241,10 +6241,6 @@ Beispiel einer korrekten Antwort:
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  {/* Row 3: Transition */}
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-sm">Standard-Übergang</Label>
                       <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
