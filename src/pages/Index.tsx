@@ -4092,7 +4092,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               [Uint8Array.from(atob(part.inline_data.data), c => c.charCodeAt(0))],
               { type: part.inline_data.mime_type || "image/png" }
             );
-            imageUrl = URL.createObjectURL(blob);
+            imageUrl = createManagedBlobUrl(blob);
             break;
           }
         }
