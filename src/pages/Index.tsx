@@ -778,6 +778,8 @@ WICHTIGE REGELN:
                 text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
 STORY-IDEE: "${storyIdea}"
+${storyArtStyle !== "realistic" ? `\nVISUELLER STIL: ${STORY_ART_STYLES.find(s => s.id === storyArtStyle)?.label || storyArtStyle} - Alle Szenen sollen in diesem Stil beschrieben werden.` : ""}
+${storyCustomDetails.trim() ? `\nBESONDERE ANWEISUNGEN: ${storyCustomDetails.trim()}` : ""}
 
 WICHTIGSTE REGEL - RÄUMLICHE EINHEIT:
 Definiere ZUERST einen HAUPTORT für die gesamte Geschichte. 
