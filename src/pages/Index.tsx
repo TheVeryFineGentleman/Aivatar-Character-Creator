@@ -3396,9 +3396,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               }
               const current = updated[index].progress || 0;
               if (current >= 95) return prev;
+              // Accelerate: starts ~0.5, ends ~1.5 near 95%
+              const step = 0.5 + (current / 95) * 1.0;
               updated[index] = { 
                 ...updated[index],
-                progress: current + 1
+                progress: Math.min(current + step, 95)
               };
               return updated;
             });
