@@ -45,6 +45,20 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
   const totalVersions = imageVersions?.length || 0;
   const hasMultipleVersions = totalVersions > 1;
   const aspectClass = getAspectClass(format);
+  
+  // Track transition from loading → completed
+  const [showReveal, setShowReveal] = useState(false);
+  const prevStatusRef = useRef(status);
+  
+  useEffect(() => {
+    if (prevStatusRef.current === "loading" && status === "completed") {
+      setShowReveal(true);
+      const timer = setTimeout(() => setShowReveal(false), 600);
+      return () => clearTimeout(timer);
+    }
+    prevStatusRef.current = status;
+  }, [status]);
+
   return (
     <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className={`p-0 relative ${aspectClass}`}>
