@@ -1947,27 +1947,18 @@ Antworte NUR mit einem JSON-Objekt:
           if (result.success && result.text) {
             const text = result.text.trim();
             try {
-              const jsonMatch = text.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[0]);
-                setStoryPoints(prev => prev.map((p, idx) => {
-                  if (idx !== i) return p;
-                  return {
-                    ...p,
-                    videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
-                    veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
-                    veo3StartState: parsed.startState || p.veo3StartState || "",
-                    veo3Motion: parsed.motion || p.veo3Motion || "",
-                    veo3EndState: parsed.endState || p.veo3EndState || "",
-                  };
-                }));
-              } else {
-                // Fallback: use raw text as video prompt
-                setStoryPoints(prev => prev.map((p, idx) => {
-                  if (idx !== i) return p;
-                  return { ...p, videoPrompt: text };
-                }));
-              }
+              const parsed = extractJsonFromAiResponse(text);
+              setStoryPoints(prev => prev.map((p, idx) => {
+                if (idx !== i) return p;
+                return {
+                  ...p,
+                  videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
+                  veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
+                  veo3StartState: parsed.startState || p.veo3StartState || "",
+                  veo3Motion: parsed.motion || p.veo3Motion || "",
+                  veo3EndState: parsed.endState || p.veo3EndState || "",
+                };
+              }));
             } catch (e) {
               setStoryPoints(prev => prev.map((p, idx) => {
                 if (idx !== i) return p;
