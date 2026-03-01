@@ -6198,23 +6198,16 @@ Beispiel einer korrekten Antwort:
 
                   {/* Generation Direction Switch - only visible when speaker is enabled */}
                   {storyEnableSpeaker && (
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm">Generierungsrichtung</Label>
-                        <p className="text-xs text-muted-foreground">
-                          {storyGenerationDirection === "speaker-from-description"
-                            ? "Sprechertext wird aus der Szenenbeschreibung generiert"
-                            : "Szenenbeschreibung wird aus dem Sprechertext generiert"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs ${storyGenerationDirection === "speaker-from-description" ? "text-foreground font-medium" : "text-muted-foreground"}`}>Details → Dialog</span>
-                        <Switch
-                          checked={storyGenerationDirection === "description-from-speaker"}
-                          onCheckedChange={(checked) => setStoryGenerationDirection(checked ? "description-from-speaker" : "speaker-from-description")}
-                        />
-                        <span className={`text-xs ${storyGenerationDirection === "description-from-speaker" ? "text-foreground font-medium" : "text-muted-foreground"}`}>Dialog → Details</span>
-                      </div>
+                    <div className="flex items-center gap-3 px-1">
+                      <Switch
+                        checked={storyGenerationDirection === "description-from-speaker"}
+                        onCheckedChange={(checked) => setStoryGenerationDirection(checked ? "description-from-speaker" : "speaker-from-description")}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {storyGenerationDirection === "speaker-from-description"
+                          ? "Dialog wird aus Szenenbeschreibung generiert"
+                          : "Szenenbeschreibung wird aus Dialog generiert"}
+                      </span>
                     </div>
                   )}
 
