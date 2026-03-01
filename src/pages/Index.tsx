@@ -2752,8 +2752,8 @@ ${sceneContext}`;
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
     
     try {
-      // Build FULL structured prompt with ALL metadata (same as regenerateSingleStoryScene)
-      const imagePromptText = buildFullImagePrompt(point, sceneIndex);
+      // Step 1: Let Text-AI write the image prompt
+      const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
 
       // Build reference images array
       const allReferenceImages: string[] = [...characterBase64Images];
