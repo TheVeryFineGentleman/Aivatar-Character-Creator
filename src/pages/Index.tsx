@@ -6179,8 +6179,8 @@ Beispiel einer korrekten Antwort:
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-4">
                   {/* Row 1: Switches */}
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
+                  <div className="gap-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20 max-w-sm">
                       <div className="space-y-0.5">
                         <Label className="text-sm">Sprechertext / Dialog</Label>
                         <p className="text-xs text-muted-foreground">KI generiert Dialog pro Szene</p>
