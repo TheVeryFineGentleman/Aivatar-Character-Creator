@@ -6075,7 +6075,10 @@ Beispiel einer korrekten Antwort:
                     {(!storyIdea || isAnimatingSuggestion) && (
                       <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
                         <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
-                          Wähle eine Idee oder schreibe deine eigene...
+                          {storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
+                            ? "Wähle einen Dialog oder schreibe deinen eigenen..."
+                            : "Wähle eine Idee oder schreibe deine eigene..."
+                          }
                         </p>
                         <div className="relative pointer-events-auto pb-6">
                           {isLoadingStorySuggestions ? (
