@@ -8,6 +8,7 @@ export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 interface ImageSlotProps {
   status: ImageSlotStatus;
   imageUrl?: string;
+  thumbnailUrl?: string;
   progress?: number;
   index: number;
   onDownload?: () => void;
