@@ -1426,7 +1426,14 @@ REGELN:
         const globalMainLocation = storyboardMainLocation || mainLocation;
         
         // Build the new structured image prompt
+        const selectedArtStyle = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "comic illustration";
+        const enforceNonPhotoreal = !/photoreal|realistic|cinematic/i.test(selectedArtStyle);
+
         const imagePromptText = `
+MANDATORY ART STYLE OVERRIDE (follow exactly):
+Render the ENTIRE image in this visual style: ${selectedArtStyle}.
+${enforceNonPhotoreal ? "DO NOT make this photorealistic. DO NOT make it look like a photograph." : ""}
+
 MANDATORY CAMERA FRAMING (follow exactly):
 ${cameraInstruction || "Standard eye-level, medium shot framing."}
 
@@ -1450,7 +1457,7 @@ The person must wear the SAME clothing/accessories as in the reference, but in a
 TECHNICAL REQUIREMENTS:
 - Exactly ONE person in the image
 - Single cohesive image, NO collage or split screen
-- Ultra high resolution photography
+- Ultra high resolution final render in the selected art style (not photographic unless style requires it)
 - Match lighting and atmosphere to the scene description
 - 16:9 aspect ratio
 `.trim();
