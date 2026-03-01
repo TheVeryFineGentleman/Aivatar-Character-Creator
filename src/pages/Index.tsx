@@ -4039,7 +4039,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         updateSlotSafe(index, (slot) => {
           const current = slot.progress || 0;
           if (current >= 100) return slot;
-          const step = 0.6 + (current / 100) * 1.2;
+          const step = 0.7 + (current / 100) * 1.5;
           return { ...slot, progress: Math.min(current + step, 100) };
         });
       }, 250);
