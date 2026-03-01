@@ -2414,7 +2414,13 @@ Antworte NUR mit einem JSON-Objekt:
   ): string => {
     const lines: string[] = [];
     
+    // === SECTION 0: ART STYLE (FIRST - highest priority) ===
+    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "photorealistic, natural lighting, true-to-life";
+    lines.push(`CRITICAL ART STYLE OVERRIDE (apply to the ENTIRE image, override any style from reference images): ${styleDesc}`);
+    lines.push("DO NOT replicate the visual style or medium of reference images. Reference images are ONLY for character identity (face, body). Render EVERYTHING in the art style specified above.");
+    
     // === SECTION 1: MANDATORY CAMERA FRAMING ===
+    lines.push("");
     lines.push("MANDATORY CAMERA FRAMING:");
     const shotType = point.shotType ? (shotTypeToEnglish[point.shotType] || point.shotType) : "medium shot";
     lines.push(`Shot Type: ${shotType}`);
