@@ -1612,6 +1612,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
     
     setIsGeneratingStoryImages(true);
+    setStorySetupCollapsed(true); // Auto-collapse setup panel
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
