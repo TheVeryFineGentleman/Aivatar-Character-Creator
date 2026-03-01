@@ -159,10 +159,20 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
         
         {status === "completed" && imageUrl && (
           <div className="relative group w-full h-full cursor-pointer" onClick={onImageClick}>
+            {/* Fade-up-out overlay when transitioning from loading */}
+            {showReveal && (
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 p-4 bg-muted/20 animate-[fade-up-out_500ms_ease-out_forwards]">
+                <Loader2 className="w-8 h-8 text-primary" />
+                <div className="w-full space-y-2">
+                  <Progress value={100} className="h-2" />
+                  <p className="text-xs text-center text-muted-foreground">100%</p>
+                </div>
+              </div>
+            )}
             <img
               src={thumbnailUrl || imageUrl}
               alt={`Generiert ${index + 1}`}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${showReveal ? 'animate-[fade-in_500ms_ease-out_150ms_both]' : ''}`}
               style={{ imageRendering: 'auto' }}
               loading="lazy"
               decoding="async"
