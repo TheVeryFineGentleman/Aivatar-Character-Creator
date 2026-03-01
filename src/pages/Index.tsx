@@ -6198,15 +6198,29 @@ Beispiel einer korrekten Antwort:
 
                   {/* Generation Direction Toggle - only visible when speaker is enabled */}
                   {storyEnableSpeaker && (
-                    <div className="flex items-center gap-2 px-1">
+                    <div className="flex items-center gap-3 px-1">
                       <button
                         type="button"
                         onClick={() => setStoryGenerationDirection(prev => prev === "speaker-from-description" ? "description-from-speaker" : "speaker-from-description")}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 bg-muted/30 text-xs text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all duration-200"
+                        className="relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/50 bg-muted/30 text-xs font-medium text-foreground hover:border-primary/50 transition-all duration-300 active:scale-95 overflow-hidden group"
                       >
-                        <ArrowRightLeft className="w-3 h-3" />
-                        {storyGenerationDirection === "speaker-from-description" ? "Details → Dialog" : "Dialog → Details"}
+                        <span className="absolute inset-0 bg-primary/10 opacity-0 group-active:opacity-100 transition-opacity duration-150 rounded-full" />
+                        <span
+                          key={storyGenerationDirection}
+                          className="relative animate-[slideIn_0.3s_ease-out]"
+                          style={{ display: 'inline-block' }}
+                        >
+                          {storyGenerationDirection === "speaker-from-description" ? "Details → Dialog" : "Dialog → Details"}
+                        </span>
                       </button>
+                      <span
+                        key={storyGenerationDirection + "-desc"}
+                        className="text-xs text-muted-foreground animate-[fadeIn_0.3s_ease-out]"
+                      >
+                        {storyGenerationDirection === "speaker-from-description"
+                          ? "KI schreibt den Dialog passend zur Szenenbeschreibung"
+                          : "KI schreibt die Szene passend zum Dialog"}
+                      </span>
                     </div>
                   )}
 
