@@ -3402,7 +3402,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               };
               return updated;
             });
-          }, 350);
+          }, 210);
 
           try {
             const imageUrl = await generateSingleImage(
@@ -3697,7 +3697,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           }
           return updated;
         });
-      }, 350);
+      }, 210);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
@@ -4057,7 +4057,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           if (current >= 95) return slot;
           return { ...slot, progress: current + 1 };
         });
-      }, 350);
+      }, 210);
 
       // Build request parts
       const parts: any[] = [];
