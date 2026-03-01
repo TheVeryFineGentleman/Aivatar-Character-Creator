@@ -2570,10 +2570,10 @@ ${sceneContext}`;
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
     
     try {
-      // Build FULL structured prompt with ALL metadata
-      const imagePromptText = buildFullImagePrompt(point, sceneIndex);
+      // Step 1: Let Text-AI write the image prompt
+      const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
       
-      console.log(`Regenerating scene ${sceneIndex + 1} with FULL metadata prompt:`, imagePromptText.substring(0, 200) + '...');
+      console.log(`🎨 Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
       
       // Build image parts - collect all reference images as base64
       const allReferenceImages: string[] = [...characterBase64Images];
