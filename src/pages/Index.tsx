@@ -3450,20 +3450,44 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             await animateTo100();
 
             // Now update with the actual result
-            setImageSlots((prev) => {
-              const updated = [...prev];
-              if (index >= updated.length) {
-                console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
-                return prev;
+            if (imageUrl) {
+              // Create thumbnail for gallery (PRO/FULL get full-res in viewer, thumbnail in gallery)
+              let thumbUrl: string | undefined;
+              if (isPro || isFullPlan) {
+                try {
+                  thumbUrl = await createThumbnailFromBlob(imageUrl, 512);
+                } catch (e) {
+                  console.warn("Thumbnail creation failed:", e);
+                }
               }
-              if (imageUrl) {
+              
+              setImageSlots((prev) => {
+                const updated = [...prev];
+                if (index >= updated.length) {
+                  console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
+                  return prev;
+                }
                 const prevVersions = updated[index]?.imageVersions || [];
-                updated[index] = { status: "completed", imageUrl, progress: 100, imageVersions: [...prevVersions, imageUrl], currentVersionIndex: prevVersions.length };
-              } else {
+                const prevThumbs = updated[index]?.thumbnailVersions || [];
+                updated[index] = {
+                  status: "completed",
+                  imageUrl,
+                  thumbnailUrl: thumbUrl || imageUrl,
+                  progress: 100,
+                  imageVersions: [...prevVersions, imageUrl],
+                  thumbnailVersions: [...prevThumbs, thumbUrl || imageUrl],
+                  currentVersionIndex: prevVersions.length,
+                };
+                return updated;
+              });
+            } else {
+              setImageSlots((prev) => {
+                const updated = [...prev];
+                if (index >= updated.length) return prev;
                 updated[index] = { status: "error", progress: 0, errorMessage: "Kein Bild generiert - bitte erneut versuchen" };
-              }
-              return updated;
-            });
+                return updated;
+              });
+            }
           } catch (error) {
             console.error(`❌ Error in processQueue for index ${index}:`, error);
             // Use centralized error message helper for consistent, detailed messages
