@@ -3691,11 +3691,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           if (newIndex >= prev.length) return prev;
           const updated = [...prev];
           if (updated[newIndex]?.status === "loading") {
-            updated[newIndex].progress = Math.min((updated[newIndex].progress || 0) + 10, 90);
+            updated[newIndex].progress = Math.min((updated[newIndex].progress || 0) + (Math.random() * 3 + 1.5), 90);
           }
           return updated;
         });
-      }, 1000);
+      }, 1500);
 
       // Use ref to get current images (avoids stale closure issues)
       const currentImages = referenceImagesRef.current;
