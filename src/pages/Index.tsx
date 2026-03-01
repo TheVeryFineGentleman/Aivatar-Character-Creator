@@ -860,51 +860,32 @@ REGELN:
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
           try {
-              const parsed = extractJsonFromAiResponse(text);
-              const mainLocation = parsed.mainLocation || "";
-              const scenes = parsed.scenes || [];
+            const parsed = extractJsonFromAiResponse(text);
+            const mainLocation = parsed.mainLocation || "";
+            const scenes = parsed.scenes || [];
+            
+            if (Array.isArray(scenes) && scenes.length > 0) {
+              setStoryboardMainLocation(mainLocation);
               
-              if (Array.isArray(scenes) && scenes.length > 0) {
-                // Store main location globally for image generation
-                setStoryboardMainLocation(mainLocation);
-                
-                setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
-                  versions: [scene.detailedDescription || scene.summary || ""],
-                  currentVersion: 0,
-                  summary: scene.summary || "",
-                  detailedDescription: scene.detailedDescription || "",
-                  dialogText: scene.dialogText || "",
-                  // Leave dropdown fields empty so "Von KI wählen lassen..." is shown
-                  // The AI will choose appropriate values during image generation
-                  specificArea: "",
-                  keyAction: "",
-                  emotion: "",
-                  cameraAngle: "",
-                  shotType: ""
-                })));
-                setStoryboardAnimationKey(prev => prev + 1);
-              }
-            } catch (parseError) {
-              console.error("JSON parse error, falling back to line-based parsing:", parseError);
-              // Fallback to line-based parsing
-              const points = text.split('\n')
-                .map((line: string) => line.trim())
-                .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
-                .slice(0, storyPointCount);
-              
-              setStoryPoints(points.map((point: string) => ({
-                versions: [point],
+              setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
+                versions: [scene.detailedDescription || scene.summary || ""],
                 currentVersion: 0,
-                summary: point.length > 80 ? point.substring(0, 80) + "..." : point,
-                detailedDescription: point
+                summary: scene.summary || "",
+                detailedDescription: scene.detailedDescription || "",
+                dialogText: scene.dialogText || "",
+                specificArea: "",
+                keyAction: "",
+                emotion: "",
+                cameraAngle: "",
+                shotType: ""
               })));
               setStoryboardAnimationKey(prev => prev + 1);
             }
-          } else {
-            // Fallback to line-based parsing if no JSON found
+          } catch (parseError) {
+            console.error("JSON parse error, falling back to line-based parsing:", parseError);
             const points = text.split('\n')
               .map((line: string) => line.trim())
-              .filter((line: string) => line.length > 5)
+              .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
               .slice(0, storyPointCount);
             
             setStoryPoints(points.map((point: string) => ({
