@@ -3391,17 +3391,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           const progressInterval = setInterval(() => {
             setImageSlots((prev) => {
               const updated = [...prev];
-              // Safety check: ensure index is valid
               if (index >= updated.length || updated[index]?.status !== "loading") {
                 return prev;
               }
+              const current = updated[index].progress || 0;
+              if (current >= 95) return prev;
               updated[index] = { 
                 ...updated[index],
-                progress: Math.min((updated[index].progress || 0) + (Math.random() * 3 + 1.5), 90) 
+                progress: current + 1
               };
               return updated;
             });
-          }, 1500);
+          }, 350);
 
           try {
             const imageUrl = await generateSingleImage(
