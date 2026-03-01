@@ -3861,6 +3861,36 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     });
   };
 
+  // Create a thumbnail blob URL from a full-res blob URL (for gallery preview)
+  const createThumbnailFromBlob = async (fullResUrl: string, maxWidth: number = 512): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { resolve(fullResUrl); return; } // fallback to full-res
+          const scale = Math.min(1, maxWidth / img.width);
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            if (!blob) { resolve(fullResUrl); return; }
+            const thumbUrl = createManagedBlobUrl(blob);
+            console.log(`🖼️ Thumbnail created: ${canvas.width}x${canvas.height}`);
+            resolve(thumbUrl);
+          }, "image/jpeg", 0.85);
+        } catch (e) {
+          console.warn("Thumbnail creation failed, using full-res:", e);
+          resolve(fullResUrl);
+        }
+      };
+      img.onerror = () => resolve(fullResUrl); // fallback
+      img.src = fullResUrl;
+    });
+  };
+
   const handleDownloadSingle = async (index: number) => {
     const slot = imageSlots[index];
     if (slot.status === "completed" && slot.imageUrl) {
