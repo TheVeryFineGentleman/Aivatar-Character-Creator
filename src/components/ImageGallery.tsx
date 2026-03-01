@@ -3,10 +3,12 @@ import { ImageSlot, ImageSlotStatus } from "./ImageSlot";
 export interface ImageSlotData {
   status: ImageSlotStatus;
   imageUrl?: string;
+  thumbnailUrl?: string;
   progress?: number;
   retrying?: boolean;
   errorMessage?: string;
   imageVersions?: string[];
+  thumbnailVersions?: string[];
   currentVersionIndex?: number;
 }
 
