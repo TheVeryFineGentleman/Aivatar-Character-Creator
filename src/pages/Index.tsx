@@ -2979,29 +2979,24 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 kurze DIALOG-Beispiele für Charaktere in realistischen Szenen. Jeder Dialog soll 1-2 Sätze gesprochener Text sein, den ein Charakter in einer filmischen Szene sagen könnte.
-
-WICHTIG: NUR realistische, alltägliche Dialoge! Natürlich klingende Sprache.
+                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs.
 
 Gute Beispiele:
-- "Ich hätte nie gedacht, dass ich dich hier wiedersehe. Wie lange ist das her – zehn Jahre?"
-- "Wenn du jetzt gehst, brauchst du nicht wiederkommen."
-- "Weißt du noch, als wir hier jeden Sommer waren? Damals war alles einfacher."
+- Wiedersehen nach zehn Jahren
+- Streit vor dem Abschied
+- Erinnerung an alte Zeiten
 
-Antworte NUR mit den 3 Dialogen, einer pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
+Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen realistischen Geschichte.
 
-WICHTIG: NUR realistische, lebensnahe Geschichten! KEINE Fantasy, Magie, übernatürlichen Elemente, Sci-Fi oder unrealistische Szenarien.
+WICHTIG: NUR realistische Themen! KEINE Fantasy, Magie oder Sci-Fi.
 
-Gute Beispiele (realistisch, alltäglich):
-- "Eine Frau trifft nach 10 Jahren ihren Jugendfreund zufällig im Supermarkt."
-- "Ein Student muss sich zwischen seinem Traumjob und seiner Beziehung entscheiden."
-- "Eine ältere Dame findet einen verlorenen Brief, der ihr Leben verändert."
+Gute Beispiele:
+- Zufälliges Wiedersehen im Supermarkt
+- Traumjob oder Beziehung
+- Verlorener Brief verändert alles
 
-SCHLECHTE Beispiele (NICHT verwenden):
-- Magische Cafés, Zeitreisen, Superhelden, Zauberer, sprechende Tiere, Portale
-
-Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
             }]
           }),
