@@ -3397,7 +3397,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               const current = updated[index].progress || 0;
               if (current >= 95) return prev;
               // Accelerate: starts ~0.5, ends ~1.5 near 95%
-              const step = 0.5 + (current / 95) * 1.0;
+              const step = 0.7 + (current / 95) * 1.5;
               updated[index] = { 
                 ...updated[index],
                 progress: Math.min(current + step, 95)
@@ -3695,7 +3695,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           if (updated[newIndex]?.status === "loading") {
             const current = updated[newIndex].progress || 0;
             if (current >= 95) return prev;
-            const step = 0.5 + (current / 95) * 1.0;
+            const step = 0.7 + (current / 95) * 1.5;
             updated[newIndex].progress = Math.min(current + step, 95);
           }
           return updated;
@@ -4058,7 +4058,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         updateSlotSafe(index, (slot) => {
           const current = slot.progress || 0;
           if (current >= 95) return slot;
-          const step = 0.5 + (current / 95) * 1.0;
+          const step = 0.7 + (current / 95) * 1.5;
           return { ...slot, progress: Math.min(current + step, 95) };
         });
       }, 210);
