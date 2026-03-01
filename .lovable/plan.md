@@ -1,85 +1,37 @@
 
-# Story Builder: Erweiterte Setup-Optionen -- Phase 1
 
-Da wir schrittweise vorgehen, beginnen wir mit dem **Setup-Panel** das vor der Storyboard-Generierung erscheint. Die weiteren Phasen (KI-Chat-Panel, Transitions, dynamische KI-Steuerung) folgen danach.
+# Fix: Fehlende Referenzbilder bei Video-Prompt-Generierung
 
----
+## Problem
+Bei der Video-Prompt-Generierung werden aktuell nur die globalen Referenzbilder und das Bild der vorherigen Szene mitgeschickt. Es fehlen:
+1. Das Bild der **aktuellen Szene** (Start-Frame) - die KI kann nicht "sehen" wovon sie ausgeht
+2. Das Bild der **naechsten Szene** (End-Frame) - die KI kann den Zielzustand des Hard Cuts nicht sehen
 
-## Phase 1: Setup-Optionen vor der Generierung
+## Loesung
 
-### Was gebaut wird
+### Datei: `src/pages/Index.tsx` (Zeilen ~1750-1785)
 
-Ein neues **Setup-Panel** zwischen "Story-Idee + Referenzbilder" und dem "Storyboard generieren"-Button mit folgenden Optionen:
-
-1. **Sprechertext (Switch)** -- Soll es gesprochenen Dialog geben? Wenn JA, generiert die KI automatisch `dialogText` pro Szene.
-
-2. **Szenenbeschreibung (Switch)** -- Soll die KI detaillierte Szenenbeschreibungen generieren? Wenn NEIN, muss der Nutzer sie selbst schreiben.
-
-3. **Videomodell-Auswahl (Select)** -- Welches Modell von kie.ai soll verwendet werden (z.B. Veo 3, andere verfuegbare Modelle).
-
-4. **Artstyle (Select)** -- Visueller Stil fuer die gesamte Story (z.B. Realistisch, Cinematic, Anime, Comic, Illustration, etc.)
-
-5. **Uebergaenge / Transitions (Select)** -- Standard-Uebergangstyp zwischen Szenen (Harter Cut, Smooth Transition, Swipe, Fade, etc.)
-
-6. **Besondere Details / Custom (Textarea)** -- Freitextfeld fuer globale Anweisungen die auf alle Szenen angewandt werden (z.B. "Immer warmes Licht", "Noir-Stil", etc.)
-
-### UI-Layout
+Die Referenzbild-Sammlung wird erweitert um drei zusaetzliche Bilder:
 
 ```text
-+--------------------------------------------------+
-|  Story-Idee + KI-Assistent (bestehend)           |
-+--------------------------------------------------+
-|  Referenzbilder (bestehend)                       |
-+--------------------------------------------------+
-|                                                    |
-|  --- Neue Setup-Optionen ---                      |
-|                                                    |
-|  [Switch] Sprechertext    [Switch] Szenenbeschr.  |
-|                                                    |
-|  Videomodell: [Dropdown]   Artstyle: [Dropdown]   |
-|                                                    |
-|  Uebergang: [Dropdown]                            |
-|                                                    |
-|  Besondere Details:                               |
-|  [Textarea - optionales Freitextfeld]             |
-|                                                    |
-+--------------------------------------------------+
-|  Storyboard generieren (bestehend)                |
-+--------------------------------------------------+
+Reihenfolge der Referenzbilder:
+1. Globale Story-Referenzbilder (Charakter-Konsistenz)
+2. Bild der VORHERIGEN Szene (i-1) - fuer Kontext/Uebergang
+3. Bild der AKTUELLEN Szene (i) - START-FRAME
+4. Bild der NAECHSTEN Szene (i+1) - END-FRAME fuer den Hard Cut
 ```
 
-Die Optionen werden in einem kompakten 2-Spalten-Grid dargestellt.
+### Konkrete Aenderung
 
-### Verhalten nach Bildgenerierung
+Im Block nach den globalen Referenzbildern (Zeile ~1769) werden zwei weitere Bild-Ladebloecke ergaenzt:
 
-Sobald Szenenbilder generiert wurden, wird das Setup-Panel **eingeklappt** (Collapsible) mit einem kleinen "Einstellungen"-Button zum erneuten Oeffnen. Ab diesem Punkt erfolgt die Feinsteuerung ueber die Detailansicht der einzelnen Szenen.
+1. **Aktuelles Szenen-Bild** (`storyPoints[i].generatedImage`): Wird immer hinzugefuegt (ist garantiert vorhanden, da wir mit `if (!point.generatedImage) continue;` pruefen)
 
----
+2. **Naechstes Szenen-Bild** (`storyPoints[i + 1]?.generatedImage`): Wird hinzugefuegt wenn vorhanden (nicht bei der letzten Szene)
 
-## Technische Details
+### Betroffene Datei
 
-### Neue State-Variablen in Index.tsx
+| Datei | Aenderung |
+|---|---|
+| `src/pages/Index.tsx` | Zeilen ~1769-1785: Zwei neue fetch+base64 Bloecke fuer aktuelles und naechstes Szenen-Bild, Log-Meldung aktualisieren |
 
-- `storyEnableSpeaker: boolean` (default: true)
-- `storyEnableSceneDescription: boolean` (default: true)  
-- `storyVideoModel: string` (default: "veo3")
-- `storyArtStyle: string` (default: "realistic")
-- `storyTransitionType: string` (default: "hard-cut")
-- `storyCustomDetails: string` (default: "")
-
-### Konstanten fuer Dropdown-Optionen
-
-- `STORY_VIDEO_MODELS`: Liste der verfuegbaren kie.ai Modelle
-- `STORY_ART_STYLES`: Realistisch, Cinematic, Anime, Comic, Illustration, Watercolor, etc.
-- `STORY_TRANSITION_TYPES`: Harter Cut, Smooth Transition, Swipe Links, Swipe Rechts, Fade, Dissolve
-
-### Integration in Generierungslogik
-
-- Der `storyArtStyle` wird in die `buildFullImagePrompt`-Funktion integriert
-- `storyEnableSpeaker` steuert ob `dialogText` generiert wird
-- `storyTransitionType` wird als Default fuer neue Szenen gesetzt
-- `storyCustomDetails` wird als globaler Kontext an alle Prompts angehaengt
-
-### Dateien die geaendert werden
-
-- `src/pages/Index.tsx` -- Neue States, Konstanten, UI-Bereich, Logik-Integration

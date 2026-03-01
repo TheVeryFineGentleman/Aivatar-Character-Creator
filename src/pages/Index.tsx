@@ -94,6 +94,45 @@ const SHOT_OPTIONS = [
   { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
+// Story Builder Setup Constants
+const STORY_VIDEO_MODELS = [
+  { id: "veo3", label: "Veo 3 (Standard)" },
+  { id: "veo2", label: "Veo 2 (Schneller)" },
+  { id: "kling", label: "Kling 1.6" },
+];
+
+const STORY_ART_STYLES = [
+  { id: "realistic", label: "Realistisch" },
+  { id: "cinematic", label: "Cinematic" },
+  { id: "anime", label: "Anime" },
+  { id: "comic", label: "Comic" },
+  { id: "illustration", label: "Illustration" },
+  { id: "watercolor", label: "Aquarell" },
+  { id: "3d-render", label: "3D Render" },
+  { id: "noir", label: "Film Noir" },
+];
+
+const STORY_TRANSITION_TYPES = [
+  { id: "hard-cut", label: "Harter Cut" },
+  { id: "smooth", label: "Smooth Transition" },
+  { id: "fade", label: "Fade" },
+  { id: "dissolve", label: "Dissolve" },
+  { id: "swipe-left", label: "Swipe Links" },
+  { id: "swipe-right", label: "Swipe Rechts" },
+  { id: "zoom", label: "Zoom Übergang" },
+];
+
+const ART_STYLE_ENGLISH: Record<string, string> = {
+  "realistic": "photorealistic, natural lighting, true-to-life",
+  "cinematic": "cinematic film look, dramatic lighting, shallow depth of field, anamorphic lens flare",
+  "anime": "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic",
+  "comic": "comic book style, bold outlines, halftone dots, dynamic composition",
+  "illustration": "digital illustration, painterly, artistic, stylized",
+  "watercolor": "watercolor painting, soft washes, bleeding colors, paper texture",
+  "3d-render": "3D rendered, CGI, Pixar-quality, volumetric lighting",
+  "noir": "film noir, high contrast black and white, dramatic shadows, moody atmosphere",
+};
+
 const SKIN_OPTIONS = [
   { id: "soft", label: "Weiche Haut", description: "soft, smooth, flawless skin with subtle glow" },
   { id: "realistic", label: "Realistische Haut", description: "realistic natural skin with visible pores and natural texture" },
@@ -340,6 +379,15 @@ const Index = () => {
   // Story Idea AI Assistant state
   const [storyAiAssistantInput, setStoryAiAssistantInput] = useState("");
   const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
+  
+  // Story Builder Setup Options
+  const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
+  const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
+  const [storyVideoModel, setStoryVideoModel] = useState("veo3");
+  const [storyArtStyle, setStoryArtStyle] = useState("realistic");
+  const [storyTransitionType, setStoryTransitionType] = useState("hard-cut");
+  const [storyCustomDetails, setStoryCustomDetails] = useState("");
+  const [storySetupCollapsed, setStorySetupCollapsed] = useState(false);
   
   // Scene Edit Popup - Tab-based UI state
   const [sceneEditTab, setSceneEditTab] = useState<"content" | "image" | "video">("content");
@@ -730,6 +778,8 @@ WICHTIGE REGELN:
                 text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
 STORY-IDEE: "${storyIdea}"
+${storyArtStyle !== "realistic" ? `\nVISUELLER STIL: ${STORY_ART_STYLES.find(s => s.id === storyArtStyle)?.label || storyArtStyle} - Alle Szenen sollen in diesem Stil beschrieben werden.` : ""}
+${storyCustomDetails.trim() ? `\nBESONDERE ANWEISUNGEN: ${storyCustomDetails.trim()}` : ""}
 
 WICHTIGSTE REGEL - RÄUMLICHE EINHEIT:
 Definiere ZUERST einen HAUPTORT für die gesamte Geschichte. 
@@ -750,8 +800,8 @@ WICHTIG: Antworte NUR mit diesem validen JSON-Format:
       "specificArea": "Welcher Bereich des Hauptorts (z.B. 'im Flur', 'auf dem Balkon', 'in der Küche')",
       "keyAction": "Die EINE zentrale Aktion/Gestik der Person (z.B. 'lehnt nachdenklich am Fenster', 'sitzt zusammengesunken auf der Couch', 'steht mit verschränkten Armen')",
       "emotion": "Die sichtbare Emotion (z.B. 'melancholisch', 'hoffnungsvoll', 'nachdenklich', 'entschlossen')",
-      "detailedDescription": "Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut, wichtige Details",
-      "dialogText": "Was der Charakter in dieser Szene sagt (1-3 Sätze gesprochener Dialog, in Anführungszeichen). Leer lassen wenn keine Rede.",
+      "detailedDescription": "${storyEnableSceneDescription ? 'Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut, wichtige Details' : '(wird vom Nutzer manuell erstellt)'}",
+      ${storyEnableSpeaker ? '"dialogText": "Was der Charakter in dieser Szene sagt (1-3 Sätze gesprochener Dialog, in Anführungszeichen). Leer lassen wenn keine Rede.",' : ''}
       "cameraAngle": "eye-level|low-angle|high-angle|dutch-angle|over-shoulder|bird-eye|worm-eye",
       "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-full-shot|full-shot|long-shot|extreme-long-shot"
     }
@@ -1564,6 +1614,7 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
     if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
     
     setIsGeneratingStoryImages(true);
+    setStorySetupCollapsed(true); // Auto-collapse setup panel
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
@@ -2472,7 +2523,20 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: TECHNICAL REQUIREMENTS ===
+    // === SECTION 11: ART STYLE (from setup) ===
+    if (storyArtStyle && storyArtStyle !== "realistic") {
+      const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle;
+      lines.push("");
+      lines.push(`ART STYLE: ${styleDesc}`);
+    }
+    
+    // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
+    if (storyCustomDetails && storyCustomDetails.trim()) {
+      lines.push("");
+      lines.push(`GLOBAL INSTRUCTIONS: ${storyCustomDetails.trim()}`);
+    }
+    
+    // === SECTION 13: TECHNICAL REQUIREMENTS ===
     lines.push("");
     lines.push("TECHNICAL: 16:9 aspect ratio, ultra high resolution, single cohesive image, full-bleed edge-to-edge.");
     
@@ -6096,6 +6160,92 @@ Beispiel einer korrekten Antwort:
                   )}
                 </div>
               </div>
+
+              {/* Setup Options Panel */}
+              <Collapsible 
+                open={!storySetupCollapsed} 
+                onOpenChange={(open) => setStorySetupCollapsed(!open)}
+                className="pt-4 border-t border-border/50"
+              >
+                <CollapsibleTrigger className="flex items-center justify-between w-full group cursor-pointer">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="w-4 h-4 text-muted-foreground" />
+                    Produktions-Einstellungen
+                  </Label>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${!storySetupCollapsed ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 space-y-4">
+                  {/* Row 1: Switches */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm">Sprechertext / Dialog</Label>
+                        <p className="text-xs text-muted-foreground">KI generiert Dialog pro Szene</p>
+                      </div>
+                      <Switch checked={storyEnableSpeaker} onCheckedChange={setStoryEnableSpeaker} />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm">Szenenbeschreibung</Label>
+                        <p className="text-xs text-muted-foreground">KI erstellt detaillierte Beschreibungen</p>
+                      </div>
+                      <Switch checked={storyEnableSceneDescription} onCheckedChange={setStoryEnableSceneDescription} />
+                    </div>
+                  </div>
+
+                  {/* Row 2: Dropdowns */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Videomodell</Label>
+                      <Select value={storyVideoModel} onValueChange={setStoryVideoModel}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_VIDEO_MODELS.map(m => (
+                            <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Artstyle</Label>
+                      <Select value={storyArtStyle} onValueChange={setStoryArtStyle}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_ART_STYLES.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Transition */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Standard-Übergang</Label>
+                      <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_TRANSITION_TYPES.map(t => (
+                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 4: Custom Details */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Besondere Details / Anweisungen</Label>
+                    <Textarea
+                      placeholder="z.B. 'Immer warmes Abendlicht', 'Film-Noir Stil', 'Keine Nahaufnahmen'..."
+                      value={storyCustomDetails}
+                      onChange={(e) => setStoryCustomDetails(e.target.value)}
+                      className="min-h-[60px] resize-y text-sm"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Storyboard Generator */}
               <div className="space-y-4 pt-4 border-t border-border/50">
