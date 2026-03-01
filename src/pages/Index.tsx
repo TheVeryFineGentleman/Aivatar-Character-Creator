@@ -94,6 +94,34 @@ const SHOT_OPTIONS = [
   { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
+// Robust JSON extraction from AI responses
+function extractJsonFromAiResponse(text: string): any {
+  let cleaned = text
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+
+  const jsonStart = cleaned.search(/[\{\[]/);
+  const isArray = jsonStart !== -1 && cleaned[jsonStart] === '[';
+  const jsonEnd = cleaned.lastIndexOf(isArray ? ']' : '}');
+
+  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+    throw new Error("No JSON found in AI response");
+  }
+
+  cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    cleaned = cleaned
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      .replace(/[\x00-\x1F\x7F]/g, '');
+    return JSON.parse(cleaned);
+  }
+}
+
 // Story Builder Setup Constants
 const STORY_VIDEO_MODELS = [
   { id: "veo3", label: "Veo 3 (Standard)" },
@@ -533,7 +561,8 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
             }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 500
+              maxOutputTokens: 500,
+              responseMimeType: "application/json"
             }
           })
         }
@@ -544,29 +573,25 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
       const data = await response.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
-      // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = extractJsonFromAiResponse(text);
+      
+      // Update the story point with all fields
+      const idx = expandedStoryPointIndex;
+      setStoryPoints(prev => prev.map((p, i) => {
+        if (i !== idx) return p;
         
-        // Update the story point with all fields
-        const idx = expandedStoryPointIndex;
-        setStoryPoints(prev => prev.map((p, i) => {
-          if (i !== idx) return p;
-          
-          // Add new version for story
-          const newVersions = [...p.versions, parsed.story];
-          return {
-            ...p,
-            versions: newVersions,
-            currentVersion: newVersions.length - 1,
-            cameraAngle: parsed.cameraAngle,
-            shotType: parsed.shotType
-          };
-        }));
-        
-        setSceneAssistantInput("");
-      }
+        // Add new version for story
+        const newVersions = [...p.versions, parsed.story];
+        return {
+          ...p,
+          versions: newVersions,
+          currentVersion: newVersions.length - 1,
+          cameraAngle: parsed.cameraAngle,
+          shotType: parsed.shotType
+        };
+      }));
+      
+      setSceneAssistantInput("");
     } catch (error) {
       console.error("Scene assistant error:", error);
     } finally {
@@ -823,7 +848,8 @@ REGELN:
             }],
             generationConfig: {
               temperature: 0.8,
-              maxOutputTokens: 4000
+              maxOutputTokens: 4000,
+              responseMimeType: "application/json"
             }
           }),
         }
@@ -833,61 +859,33 @@ REGELN:
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          // Clean markdown code block markers before parsing
-          const cleanedText = text
-            .replace(/```json\s*/gi, '')
-            .replace(/```\s*/g, '')
-            .trim();
-          
-          // Extract JSON object from response (new format with mainLocation)
-          const jsonObjectMatch = cleanedText.match(/\{[\s\S]*\}/);
-          if (jsonObjectMatch) {
-            try {
-              const parsed = JSON.parse(jsonObjectMatch[0]);
-              const mainLocation = parsed.mainLocation || "";
-              const scenes = parsed.scenes || [];
+          try {
+            const parsed = extractJsonFromAiResponse(text);
+            const mainLocation = parsed.mainLocation || "";
+            const scenes = parsed.scenes || [];
+            
+            if (Array.isArray(scenes) && scenes.length > 0) {
+              setStoryboardMainLocation(mainLocation);
               
-              if (Array.isArray(scenes) && scenes.length > 0) {
-                // Store main location globally for image generation
-                setStoryboardMainLocation(mainLocation);
-                
-                setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
-                  versions: [scene.detailedDescription || scene.summary || ""],
-                  currentVersion: 0,
-                  summary: scene.summary || "",
-                  detailedDescription: scene.detailedDescription || "",
-                  dialogText: scene.dialogText || "",
-                  // Leave dropdown fields empty so "Von KI wählen lassen..." is shown
-                  // The AI will choose appropriate values during image generation
-                  specificArea: "",
-                  keyAction: "",
-                  emotion: "",
-                  cameraAngle: "",
-                  shotType: ""
-                })));
-                setStoryboardAnimationKey(prev => prev + 1);
-              }
-            } catch (parseError) {
-              console.error("JSON parse error, falling back to line-based parsing:", parseError);
-              // Fallback to line-based parsing
-              const points = text.split('\n')
-                .map((line: string) => line.trim())
-                .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
-                .slice(0, storyPointCount);
-              
-              setStoryPoints(points.map((point: string) => ({
-                versions: [point],
+              setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
+                versions: [scene.detailedDescription || scene.summary || ""],
                 currentVersion: 0,
-                summary: point.length > 80 ? point.substring(0, 80) + "..." : point,
-                detailedDescription: point
+                summary: scene.summary || "",
+                detailedDescription: scene.detailedDescription || "",
+                dialogText: scene.dialogText || "",
+                specificArea: "",
+                keyAction: "",
+                emotion: "",
+                cameraAngle: "",
+                shotType: ""
               })));
               setStoryboardAnimationKey(prev => prev + 1);
             }
-          } else {
-            // Fallback to line-based parsing if no JSON found
+          } catch (parseError) {
+            console.error("JSON parse error, falling back to line-based parsing:", parseError);
             const points = text.split('\n')
               .map((line: string) => line.trim())
-              .filter((line: string) => line.length > 5)
+              .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
               .slice(0, storyPointCount);
             
             setStoryPoints(points.map((point: string) => ({
@@ -1136,7 +1134,8 @@ REGELN:
             }],
             generationConfig: {
               temperature: 0.9,
-              maxOutputTokens: 4000
+              maxOutputTokens: 4000,
+              responseMimeType: "application/json"
             }
           }),
         }
@@ -1156,17 +1155,7 @@ REGELN:
       }
       
       // Parse the structured JSON response
-      const cleanedText = text
-        .replace(/```json\s*/gi, '')
-        .replace(/```\s*/g, '')
-        .trim();
-      
-      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("KI-Antwort konnte nicht verarbeitet werden");
-      }
-      
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = extractJsonFromAiResponse(text);
       
       // Step 2: Update the story point with ALL new AI-chosen metadata
       const updatedPoint = {
@@ -1523,17 +1512,14 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
               if (vpData.success && vpData.text) {
                 const vpText = vpData.text.trim();
                 try {
-                  const jsonMatch = vpText.match(/\{[\s\S]*\}/);
-                  if (jsonMatch) {
-                    const parsed = JSON.parse(jsonMatch[0]);
-                    return {
-                      videoPrompt: parsed.fullPrompt || "",
-                      veo3CameraMovement: parsed.cameraMovement || "",
-                      veo3StartState: parsed.startState || "",
-                      veo3Motion: parsed.motion || "",
-                      veo3EndState: parsed.endState || "",
-                    };
-                  }
+                  const parsed = extractJsonFromAiResponse(vpText);
+                  return {
+                    videoPrompt: parsed.fullPrompt || "",
+                    veo3CameraMovement: parsed.cameraMovement || "",
+                    veo3StartState: parsed.startState || "",
+                    veo3Motion: parsed.motion || "",
+                    veo3EndState: parsed.endState || "",
+                  };
                 } catch (e) {
                   return { videoPrompt: vpText, veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
                 }
@@ -1961,27 +1947,18 @@ Antworte NUR mit einem JSON-Objekt:
           if (result.success && result.text) {
             const text = result.text.trim();
             try {
-              const jsonMatch = text.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[0]);
-                setStoryPoints(prev => prev.map((p, idx) => {
-                  if (idx !== i) return p;
-                  return {
-                    ...p,
-                    videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
-                    veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
-                    veo3StartState: parsed.startState || p.veo3StartState || "",
-                    veo3Motion: parsed.motion || p.veo3Motion || "",
-                    veo3EndState: parsed.endState || p.veo3EndState || "",
-                  };
-                }));
-              } else {
-                // Fallback: use raw text as video prompt
-                setStoryPoints(prev => prev.map((p, idx) => {
-                  if (idx !== i) return p;
-                  return { ...p, videoPrompt: text };
-                }));
-              }
+              const parsed = extractJsonFromAiResponse(text);
+              setStoryPoints(prev => prev.map((p, idx) => {
+                if (idx !== i) return p;
+                return {
+                  ...p,
+                  videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
+                  veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
+                  veo3StartState: parsed.startState || p.veo3StartState || "",
+                  veo3Motion: parsed.motion || p.veo3Motion || "",
+                  veo3EndState: parsed.endState || p.veo3EndState || "",
+                };
+              }));
             } catch (e) {
               setStoryPoints(prev => prev.map((p, idx) => {
                 if (idx !== i) return p;
