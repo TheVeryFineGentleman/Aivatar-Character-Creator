@@ -2520,7 +2520,20 @@ Antworte NUR mit einem JSON-Objekt:
       lines.push(`AVOID: ${point.negativePrompts}`);
     }
     
-    // === SECTION 11: TECHNICAL REQUIREMENTS ===
+    // === SECTION 11: ART STYLE (from setup) ===
+    if (storyArtStyle && storyArtStyle !== "realistic") {
+      const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle;
+      lines.push("");
+      lines.push(`ART STYLE: ${styleDesc}`);
+    }
+    
+    // === SECTION 12: CUSTOM GLOBAL DETAILS (from setup) ===
+    if (storyCustomDetails && storyCustomDetails.trim()) {
+      lines.push("");
+      lines.push(`GLOBAL INSTRUCTIONS: ${storyCustomDetails.trim()}`);
+    }
+    
+    // === SECTION 13: TECHNICAL REQUIREMENTS ===
     lines.push("");
     lines.push("TECHNICAL: 16:9 aspect ratio, ultra high resolution, single cohesive image, full-bleed edge-to-edge.");
     
