@@ -299,6 +299,7 @@ const Index = () => {
     "Zwei Fremde treffen sich jeden Tag am selben Ort, ohne ein Wort zu wechseln.",
     "Ein verlorener Brief führt zu einer unerwarteten Freundschaft."
   ]);
+  const [lastSuggestionMode, setLastSuggestionMode] = useState<string | null>(null);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
   const [storyReferenceImages, setStoryReferenceImages] = useState<string[]>(() => {
     const saved = getFromLocalStorage('storyReferenceImages');
@@ -2938,7 +2939,18 @@ Antworte NUR mit einem JSON-Objekt:
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
+                text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
+                  ? `Generiere genau 3 kurze DIALOG-Beispiele für Charaktere in realistischen Szenen. Jeder Dialog soll 1-2 Sätze gesprochener Text sein, den ein Charakter in einer filmischen Szene sagen könnte.
+
+WICHTIG: NUR realistische, alltägliche Dialoge! Natürlich klingende Sprache.
+
+Gute Beispiele:
+- "Ich hätte nie gedacht, dass ich dich hier wiedersehe. Wie lange ist das her – zehn Jahre?"
+- "Wenn du jetzt gehst, brauchst du nicht wiederkommen."
+- "Weißt du noch, als wir hier jeden Sommer waren? Damals war alles einfacher."
+
+Antworte NUR mit den 3 Dialogen, einer pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau 3 REALISTISCHE, alltägliche Story-Ideen für Bilder. Jede Idee soll EIN SATZ sein, interessant und visuell umsetzbar.
 
 WICHTIG: NUR realistische, lebensnahe Geschichten! KEINE Fantasy, Magie, übernatürlichen Elemente, Sci-Fi oder unrealistische Szenarien.
 
@@ -2979,11 +2991,19 @@ Antworte NUR mit den 3 Ideen, eine pro Zeile, ohne Nummerierung oder Aufzählung
   };
 
   // Generate suggestions when API key becomes available (preload for story tab)
+  const currentSuggestionMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker" ? "dialog" : "story";
+  
   useEffect(() => {
     if (apiKey && authData.planCode === "FULL") {
-      generateStorySuggestions(apiKey);
+      // Regenerate suggestions when mode changes
+      if (lastSuggestionMode !== null && lastSuggestionMode !== currentSuggestionMode) {
+        generateStorySuggestions(apiKey);
+      } else if (lastSuggestionMode === null) {
+        generateStorySuggestions(apiKey);
+      }
+      setLastSuggestionMode(currentSuggestionMode);
     }
-  }, [apiKey, authData.planCode]);
+  }, [apiKey, authData.planCode, currentSuggestionMode]);
 
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
@@ -6063,7 +6083,10 @@ Beispiel einer korrekten Antwort:
                     {(!storyIdea || isAnimatingSuggestion) && (
                       <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
                         <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
-                          Wähle eine Idee oder schreibe deine eigene...
+                          {storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
+                            ? "Wähle einen Dialog oder schreibe deinen eigenen..."
+                            : "Wähle eine Idee oder schreibe deine eigene..."
+                          }
                         </p>
                         <div className="relative pointer-events-auto pb-6">
                           {isLoadingStorySuggestions ? (
