@@ -6196,17 +6196,27 @@ Beispiel einer korrekten Antwort:
                     </div>
                   </div>
 
-                  {/* Generation Direction Switch - only visible when speaker is enabled */}
+                  {/* Generation Direction Toggle - only visible when speaker is enabled */}
                   {storyEnableSpeaker && (
-                    <div className="flex items-center gap-3 px-1">
-                      <Switch
-                        checked={storyGenerationDirection === "description-from-speaker"}
-                        onCheckedChange={(checked) => setStoryGenerationDirection(checked ? "description-from-speaker" : "speaker-from-description")}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {storyGenerationDirection === "speaker-from-description"
-                          ? "Dialog wird aus Szenenbeschreibung generiert"
-                          : "Szenenbeschreibung wird aus Dialog generiert"}
+                    <div className="flex items-center gap-2 px-1">
+                      <div className="inline-flex rounded-full border border-border/50 bg-muted/30 p-0.5 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setStoryGenerationDirection("speaker-from-description")}
+                          className={`px-3 py-1 rounded-full transition-all duration-200 ${storyGenerationDirection === "speaker-from-description" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                        >
+                          Details → Dialog
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStoryGenerationDirection("description-from-speaker")}
+                          className={`px-3 py-1 rounded-full transition-all duration-200 ${storyGenerationDirection === "description-from-speaker" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                        >
+                          Dialog → Details
+                        </button>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        KI generiert {storyGenerationDirection === "speaker-from-description" ? "den Dialog" : "die Szene"}
                       </span>
                     </div>
                   )}
