@@ -6049,7 +6049,7 @@ Beispiel einer korrekten Antwort:
               <div className="flex gap-4">
                 {/* Left: Story Idea Field */}
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="story-idea">{storyEnableSpeaker ? "Dein Dialog" : "Deine Story-Idee"}</Label>
+                  <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
                   <div className="relative">
                     <Textarea
                       id="story-idea"
