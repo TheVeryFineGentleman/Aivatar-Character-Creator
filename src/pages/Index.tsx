@@ -4107,15 +4107,28 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       }
       await new Promise(resolve => setTimeout(resolve, 150));
 
+      // Create thumbnail for gallery
+      let thumbUrl: string | undefined;
+      if (isPro || isFullPlan) {
+        try {
+          thumbUrl = await createThumbnailFromBlob(imageUrl, 512);
+        } catch (e) {
+          console.warn("Thumbnail creation failed:", e);
+        }
+      }
+
       // Add as new version
       updateSlotSafe(index, (slot) => {
         const prevVersions = slot.imageVersions || [];
+        const prevThumbs = slot.thumbnailVersions || [];
         return {
           ...slot,
           status: "completed" as const,
           imageUrl,
+          thumbnailUrl: thumbUrl || imageUrl,
           progress: 100,
           imageVersions: [...prevVersions, imageUrl],
+          thumbnailVersions: [...prevThumbs, thumbUrl || imageUrl],
           currentVersionIndex: prevVersions.length,
         };
       });
