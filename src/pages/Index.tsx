@@ -2464,15 +2464,19 @@ Antworte NUR mit einem JSON-Objekt:
   ): Promise<string> => {
     const sceneContext = buildSceneContext(point, sceneIndex);
     
+    const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
+    const styleBlock = styleDesc
+      ? `\n\n!!! MANDATORY ART STYLE: "${styleDesc}" !!!\nThe ENTIRE image MUST be rendered in this style. Every element — characters, background, lighting, textures — must look like a ${styleDesc}. Do NOT render anything photorealistically unless the style explicitly says so. Describe the visual medium, textures, colors, and rendering technique of "${styleDesc}" in your prompt.\n`
+      : "";
+    
     const systemInstruction = `You are an expert image prompt writer. Based on the scene details below, write a concise, vivid image generation prompt in English.
-
+${styleBlock}
 Rules:
 - Write a single descriptive paragraph (max 150 words) that tells the image AI exactly what to render.
-- Include all visual details: composition, lighting, mood, character appearance, action, environment.
-- If an art style is specified, make it the dominant visual direction of the entire image.
+- Include all visual details: composition, lighting, mood, character appearance, action, environment.${styleDesc ? `\n- START the prompt by describing the art style/medium (e.g. "A ${styleDesc} depicting..."). This is critical.` : ""}
 - Reference images will be provided separately for character identity — do NOT describe the character's face in detail, just mention "the character from reference".
 - The character should have a NEW pose matching the scene action — never copy the pose from references.
-- Do NOT copy the visual style or medium of reference images — only use them for character identity.
+- Do NOT copy the visual style or medium of reference images — only use them for character identity.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
 - Output ONLY the image prompt text, nothing else. No explanations, no markdown, no quotes.
 
 Scene Details:
