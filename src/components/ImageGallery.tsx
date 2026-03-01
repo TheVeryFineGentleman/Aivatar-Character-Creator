@@ -58,6 +58,7 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemo
             index={index}
             status={slot.status}
             imageUrl={slot.imageUrl}
+            thumbnailUrl={slot.thumbnailUrl}
             progress={slot.progress}
             retrying={slot.retrying}
             errorMessage={slot.errorMessage}
