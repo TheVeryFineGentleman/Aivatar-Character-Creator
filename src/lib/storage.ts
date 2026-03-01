@@ -24,7 +24,7 @@ export const deleteCookie = (name: string) => {
 
 // ============= BLOB URL MEMORY MANAGEMENT =============
 // Prevents memory leaks on older/weaker devices
-const MAX_BLOB_URLS = 30;
+const MAX_BLOB_URLS = 80; // Increased for thumbnail + full-res pairs
 const blobUrlRegistry: string[] = [];
 
 export const createManagedBlobUrl = (blob: Blob): string => {

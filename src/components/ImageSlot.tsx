@@ -8,6 +8,7 @@ export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 interface ImageSlotProps {
   status: ImageSlotStatus;
   imageUrl?: string;
+  thumbnailUrl?: string;
   progress?: number;
   index: number;
   onDownload?: () => void;
@@ -39,7 +40,7 @@ const getAspectClass = (format: string) => {
   }
 };
 
-export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
   const totalVersions = imageVersions?.length || 0;
   const hasMultipleVersions = totalVersions > 1;
   const aspectClass = getAspectClass(format);
@@ -144,7 +145,7 @@ export const ImageSlot = ({ status, imageUrl, progress = 0, index, onDownload, o
         {status === "completed" && imageUrl && (
           <div className="relative group w-full h-full cursor-pointer" onClick={onImageClick}>
             <img
-              src={imageUrl}
+              src={thumbnailUrl || imageUrl}
               alt={`Generiert ${index + 1}`}
               className="w-full h-full object-cover"
               style={{ imageRendering: 'auto' }}

@@ -3450,20 +3450,44 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
             await animateTo100();
 
             // Now update with the actual result
-            setImageSlots((prev) => {
-              const updated = [...prev];
-              if (index >= updated.length) {
-                console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
-                return prev;
+            if (imageUrl) {
+              // Create thumbnail for gallery (PRO/FULL get full-res in viewer, thumbnail in gallery)
+              let thumbUrl: string | undefined;
+              if (isPro || isFullPlan) {
+                try {
+                  thumbUrl = await createThumbnailFromBlob(imageUrl, 512);
+                } catch (e) {
+                  console.warn("Thumbnail creation failed:", e);
+                }
               }
-              if (imageUrl) {
+              
+              setImageSlots((prev) => {
+                const updated = [...prev];
+                if (index >= updated.length) {
+                  console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
+                  return prev;
+                }
                 const prevVersions = updated[index]?.imageVersions || [];
-                updated[index] = { status: "completed", imageUrl, progress: 100, imageVersions: [...prevVersions, imageUrl], currentVersionIndex: prevVersions.length };
-              } else {
+                const prevThumbs = updated[index]?.thumbnailVersions || [];
+                updated[index] = {
+                  status: "completed",
+                  imageUrl,
+                  thumbnailUrl: thumbUrl || imageUrl,
+                  progress: 100,
+                  imageVersions: [...prevVersions, imageUrl],
+                  thumbnailVersions: [...prevThumbs, thumbUrl || imageUrl],
+                  currentVersionIndex: prevVersions.length,
+                };
+                return updated;
+              });
+            } else {
+              setImageSlots((prev) => {
+                const updated = [...prev];
+                if (index >= updated.length) return prev;
                 updated[index] = { status: "error", progress: 0, errorMessage: "Kein Bild generiert - bitte erneut versuchen" };
-              }
-              return updated;
-            });
+                return updated;
+              });
+            }
           } catch (error) {
             console.error(`❌ Error in processQueue for index ${index}:`, error);
             // Use centralized error message helper for consistent, detailed messages
@@ -3861,6 +3885,36 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     });
   };
 
+  // Create a thumbnail blob URL from a full-res blob URL (for gallery preview)
+  const createThumbnailFromBlob = async (fullResUrl: string, maxWidth: number = 512): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { resolve(fullResUrl); return; } // fallback to full-res
+          const scale = Math.min(1, maxWidth / img.width);
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            if (!blob) { resolve(fullResUrl); return; }
+            const thumbUrl = createManagedBlobUrl(blob);
+            console.log(`🖼️ Thumbnail created: ${canvas.width}x${canvas.height}`);
+            resolve(thumbUrl);
+          }, "image/jpeg", 0.85);
+        } catch (e) {
+          console.warn("Thumbnail creation failed, using full-res:", e);
+          resolve(fullResUrl);
+        }
+      };
+      img.onerror = () => resolve(fullResUrl); // fallback
+      img.src = fullResUrl;
+    });
+  };
+
   const handleDownloadSingle = async (index: number) => {
     const slot = imageSlots[index];
     if (slot.status === "completed" && slot.imageUrl) {
@@ -3943,7 +3997,8 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const updated = [...prev];
       const slot = updated[slotIndex];
       if (!slot?.imageVersions || versionIndex < 0 || versionIndex >= slot.imageVersions.length) return prev;
-      updated[slotIndex] = { ...slot, imageUrl: slot.imageVersions[versionIndex], currentVersionIndex: versionIndex };
+      const thumbUrl = slot.thumbnailVersions?.[versionIndex] || slot.imageVersions[versionIndex];
+      updated[slotIndex] = { ...slot, imageUrl: slot.imageVersions[versionIndex], thumbnailUrl: thumbUrl, currentVersionIndex: versionIndex };
       return updated;
     });
   };
@@ -4037,7 +4092,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               [Uint8Array.from(atob(part.inline_data.data), c => c.charCodeAt(0))],
               { type: part.inline_data.mime_type || "image/png" }
             );
-            imageUrl = URL.createObjectURL(blob);
+            imageUrl = createManagedBlobUrl(blob);
             break;
           }
         }
@@ -4052,15 +4107,28 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       }
       await new Promise(resolve => setTimeout(resolve, 150));
 
+      // Create thumbnail for gallery
+      let thumbUrl: string | undefined;
+      if (isPro || isFullPlan) {
+        try {
+          thumbUrl = await createThumbnailFromBlob(imageUrl, 512);
+        } catch (e) {
+          console.warn("Thumbnail creation failed:", e);
+        }
+      }
+
       // Add as new version
       updateSlotSafe(index, (slot) => {
         const prevVersions = slot.imageVersions || [];
+        const prevThumbs = slot.thumbnailVersions || [];
         return {
           ...slot,
           status: "completed" as const,
           imageUrl,
+          thumbnailUrl: thumbUrl || imageUrl,
           progress: 100,
           imageVersions: [...prevVersions, imageUrl],
+          thumbnailVersions: [...prevThumbs, thumbUrl || imageUrl],
           currentVersionIndex: prevVersions.length,
         };
       });
