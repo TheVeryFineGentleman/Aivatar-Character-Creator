@@ -1491,15 +1491,41 @@ TECHNICAL REQUIREMENTS:
         const videoPromptPromise = (async () => {
           try {
             const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
-            const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
-            const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
             
-            const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Speech: "${storyPoints[sceneIndex].dialogText}" - The character must visibly speak these EXACT words in their ORIGINAL language. Do NOT translate the dialogue.` : '';
+            // Build story synopsis for full narrative context
+            const storySynopsis = storyPoints.map((sp, idx) => {
+              const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
+              const marker = idx === sceneIndex ? " ← YOU ARE HERE" : "";
+              return `${idx + 1}. "${spText}"${marker}`;
+            }).join('\n');
             
-            const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"${dialogInfo}
-${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
-Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
-Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
+            const prevScene = sceneIndex > 0 ? storyPoints[sceneIndex - 1] : null;
+            const prevText = prevScene ? (prevScene.detailedDescription || prevScene.versions[prevScene.currentVersion] || "").slice(0, 80) : "";
+            const nextScene = sceneIndex < storyPoints.length - 1 ? storyPoints[sceneIndex + 1] : null;
+            const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
+            
+            const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${storyPoints[sceneIndex].dialogText}"` : '';
+            
+            const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
+
+FULL STORY ARC (${storyPoints.length} scenes):
+${storySynopsis}
+
+CURRENT SCENE (${sceneIndex + 1}/${storyPoints.length}): "${storyText}"${dialogInfo}
+
+NARRATIVE CONTEXT:
+- Previous: ${prevText ? `"${prevText}" — end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
+- Next: ${nextText ? `"${nextText}" — this scene must set up a logical visual transition` : "None (this is the final scene — end with impact)"}
+
+Write a punchy video prompt (80-120 words, English):
+- HOOK: Opening frame must grab attention instantly
+- ACTION: Core movement and emotion that drives the story forward
+- CONTINUITY: Visual elements must logically connect to previous/next scene
+- PACING: Fast, dynamic, social-media energy
+- Choose ONE camera movement that amplifies the emotion
+
+Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
 
             const vpResponse = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
