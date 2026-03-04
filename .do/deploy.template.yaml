@@ -12,15 +12,8 @@ spec:
       branch: main
       deploy_on_push: true
     
-    build_command: npm run build
-    run_command: npm run start
-    
-    environment_slug: node-js
-    
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    
-    http_port: 8080
+    dockerfile_path: Dockerfile.nginx
+    source_dir: /
     
     routes:
     - path: /
