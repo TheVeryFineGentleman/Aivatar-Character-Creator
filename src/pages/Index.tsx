@@ -2938,10 +2938,28 @@ ${sceneContext}`;
       try {
         const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
         const expandPrompt = isDialogMode
-          ? `Erweitere diese Dialog-Zusammenfassung zu einem ausführlichen, natürlich klingenden Dialog zwischen Charakteren. Der Dialog soll 4-8 Sätze lang sein, filmisch und emotional. Zusammenfassung: "${suggestion}"
+          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog — optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
+
+REGELN:
+- 4-8 Sätze gesprochener Dialog, filmisch und emotional
+- Hook-First: Der ERSTE Satz muss sofort fesseln (provokant, überraschend, emotional)
+- Natürlich klingende Sprache, keine steifen Formulierungen
+- Emotionale Intensität: Jeder Satz muss eine Reaktion auslösen
+- Denke an Pacing: Kurze, punchy Sätze wechseln sich mit emotionalen Momenten ab
+
+Zusammenfassung: "${suggestion}"
 
 Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
-          : `Erweitere diese kurze Story-Zusammenfassung zu einer detaillierten Szenenbeschreibung. Beschreibe die Szene visuell und atmosphärisch in 3-6 Sätzen. Zusammenfassung: "${suggestion}"
+          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung — optimiert für kurze Social-Media-Videos (TikTok/Reels/Shorts, 15-60 Sekunden).
+
+REGELN:
+- 3-6 Sätze, visuell und atmosphärisch
+- Hook-First: Die Beschreibung muss mit dem visuell stärksten Moment starten
+- Dynamisch: Beschreibe Bewegung, Aktion, Emotionen — keine statischen Bilder
+- Emotional: Jede Szene braucht einen klaren emotionalen Beat
+- Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik
+
+Zusammenfassung: "${suggestion}"
 
 Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
 
@@ -2989,22 +3007,24 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs.
+                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+
+Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
 Gute Beispiele:
-- Wiedersehen nach zehn Jahren
-- Streit vor dem Abschied
-- Erinnerung an alte Zeiten
+- Konfrontation nach dem Betrug
+- Liebesgeständnis im Regen
+- Letzte Nachricht vor dem Abflug
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen realistischen Geschichte.
+                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 
-WICHTIG: NUR realistische Themen! KEINE Fantasy, Magie oder Sci-Fi.
+WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
 Gute Beispiele:
-- Zufälliges Wiedersehen im Supermarkt
-- Traumjob oder Beziehung
-- Verlorener Brief verändert alles
+- Fremder rettet Kind im Park
+- Traumjob-Absage verändert alles
+- Zufälliges Wiedersehen nach Jahren
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
