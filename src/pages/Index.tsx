@@ -1491,15 +1491,41 @@ TECHNICAL REQUIREMENTS:
         const videoPromptPromise = (async () => {
           try {
             const previousEndState = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.veo3EndState : null;
-            const usedMovements = storyPoints.slice(0, sceneIndex).map(p => p.veo3CameraMovement).filter(Boolean);
-            const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id)).map(m => `- "${m.id}": ${m.label}`);
             
-            const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDialog/Speech: "${storyPoints[sceneIndex].dialogText}" - The character must visibly speak these EXACT words in their ORIGINAL language. Do NOT translate the dialogue.` : '';
+            // Build story synopsis for full narrative context
+            const storySynopsis = storyPoints.map((sp, idx) => {
+              const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
+              const marker = idx === sceneIndex ? " ← YOU ARE HERE" : "";
+              return `${idx + 1}. "${spText}"${marker}`;
+            }).join('\n');
             
-            const videoPromptText = `Erstelle einen VEO3-Video-Prompt für Szene ${sceneIndex + 1}: "${storyText}"${dialogInfo}
-${previousEndState ? `Vorherige Szene endete: "${previousEndState}"` : 'Erste Szene.'}
-Verfügbare Kamerabewegungen: ${availableMovements.length > 0 ? availableMovements.join(', ') : VEO3_CAMERA_MOVEMENTS.map(m => m.id).join(', ')}
-Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
+            const prevScene = sceneIndex > 0 ? storyPoints[sceneIndex - 1] : null;
+            const prevText = prevScene ? (prevScene.detailedDescription || prevScene.versions[prevScene.currentVersion] || "").slice(0, 80) : "";
+            const nextScene = sceneIndex < storyPoints.length - 1 ? storyPoints[sceneIndex + 1] : null;
+            const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
+            
+            const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${storyPoints[sceneIndex].dialogText}"` : '';
+            
+            const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
+
+FULL STORY ARC (${storyPoints.length} scenes):
+${storySynopsis}
+
+CURRENT SCENE (${sceneIndex + 1}/${storyPoints.length}): "${storyText}"${dialogInfo}
+
+NARRATIVE CONTEXT:
+- Previous: ${prevText ? `"${prevText}" — end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
+- Next: ${nextText ? `"${nextText}" — this scene must set up a logical visual transition` : "None (this is the final scene — end with impact)"}
+
+Write a punchy video prompt (80-120 words, English):
+- HOOK: Opening frame must grab attention instantly
+- ACTION: Core movement and emotion that drives the story forward
+- CONTINUITY: Visual elements must logically connect to previous/next scene
+- PACING: Fast, dynamic, social-media energy
+- Choose ONE camera movement that amplifies the emotion
+
+Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
 
             const vpResponse = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
@@ -1818,45 +1844,47 @@ Antworte NUR mit JSON: {"cameraMovement":"id","startState":"...","motion":"...",
       const nextScene = !isLastScene ? storyPoints[i + 1] : null;
       const nextSceneText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "") : "";
       
-      const videoPromptRequest = `Du bist ein professioneller Video-Prompt-Autor für KI-Video-Generatoren wie Veo3 oder Kling.
+      // Build story synopsis for full narrative context
+      const storySynopsis = storyPoints.map((sp, idx) => {
+        const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
+        const marker = idx === i ? " ← YOU ARE HERE" : "";
+        return `${idx + 1}. "${spText}"${marker}`;
+      }).join('\n');
+      
+      const prevScene = i > 0 ? storyPoints[i - 1] : null;
+      const prevText = prevScene ? (prevScene.detailedDescription || prevScene.versions[prevScene.currentVersion] || "").slice(0, 80) : "";
+      
+      const dialogLine = point.dialogText ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${point.dialogText}"` : '';
 
-Erstelle einen DETAILLIERTEN Video-Animations-Prompt (ca. 200 Wörter, auf Englisch) für folgende Szene:
+      const videoPromptRequest = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
 
-SZENE ${i + 1} VON ${storyPoints.length}:
-"${sceneText}"
+FULL STORY ARC (${storyPoints.length} scenes):
+${storySynopsis}
 
-SZENEN-METADATEN:
-${metadataLines.length > 0 ? metadataLines.join('\n') : 'Keine spezifischen Einstellungen'}
+CURRENT SCENE (${i + 1}/${storyPoints.length}): "${sceneText}"${dialogLine}
 
-${previousEndState ? `VORHERIGE SZENE ENDETE MIT: "${previousEndState}" - Stelle einen nahtlosen Übergang sicher.` : 'Dies ist die ERSTE Szene. Beginne mit einem eindrucksvollen Einstieg.'}
+SCENE METADATA:
+${metadataLines.length > 0 ? metadataLines.join('\n') : 'No specific settings'}
 
-${nextScene ? `NÄCHSTE SZENE (Szene ${i + 2}): "${nextSceneText}" - Das End-Frame dieser Szene soll visuell zur nächsten Szene hinführen.` : 'Dies ist die LETZTE Szene. Beende mit einem starken Abschluss.'}
+NARRATIVE CONTEXT:
+- Previous: ${prevText ? `"${prevText}" — end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene — open with a strong hook)"}
+- Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
+- Next: ${nextSceneText ? `"${nextSceneText}" — this scene must set up a logical visual transition to the next` : "None (this is the final scene — end with maximum impact)"}
 
-VERFÜGBARE KAMERABEWEGUNGEN (wähle eine passende):
-${availableMovements.length > 0 ? availableMovements.map(m => `- "${m.id}": ${m.label} - ${m.description}`).join('\n') : VEO3_CAMERA_MOVEMENTS.map(m => `- "${m.id}": ${m.label}`).join('\n')}
+Write a punchy video prompt (80-120 words, English):
+- HOOK: Opening frame must grab attention instantly
+- ACTION: Core movement and emotion that drives the story forward
+- CONTINUITY: Visual elements must logically connect to previous/next scene
+- PACING: Fast, dynamic, social-media energy
+- Choose ONE camera movement that amplifies the emotion
 
-WICHTIGES KONZEPT - START-FRAME UND END-FRAME UND MID-VIDEO HARD CUT:
-- Das VIDEO wird später so generiert: Das Bild der AKTUELLEN Szene (Szene ${i + 1}) ist der START-FRAME, das Bild der NÄCHSTEN Szene (Szene ${i + 2}) ist der END-FRAME
-- Die Video-KI bekommt beide Frames und generiert ein Video dazwischen
-- STRUKTUR DES VIDEOS: Die erste Hälfte zeigt die Animation/Bewegung der AKTUELLEN Szene (Start-Frame). Dann gibt es einen ABRUPTEN HARD CUT (kein Fade, kein Dissolve, kein Morphing, kein sanfter Übergang!) und das Video springt sofort zum END-FRAME (nächste Szene). Die restliche kurze Zeit zeigt die nächste Szene kurz in Bewegung.
-- Der Hard Cut soll ca. 70-80% durch das Video passieren (also relativ spät, kurz vor Ende)
-- Beschreibe im Prompt EXPLIZIT: "At approximately 70-80% through the video, there is an abrupt hard cut - an instantaneous, jarring transition with no fade, dissolve or morphing - cutting directly to [END-FRAME Beschreibung]."
-
-ANFORDERUNGEN:
-- Beschreibe präzise: Startzustand (= das generierte Bild dieser Szene), Kamerabewegung, Charakter-Bewegung
-- Integriere ALLE oben genannten Metadaten in den Prompt
-- Beschreibe Licht, Atmosphäre, Tempo und Stimmung
-- Der Prompt MUSS den Hard Cut als dramatisches Stilmittel beschreiben - es ist ein bewusster, abrupter Schnitt mitten im Video
-- Nach dem Hard Cut: Beschreibe kurz was im End-Frame (nächste Szene) zu sehen ist und welche minimale Bewegung dort stattfindet
-- KEIN "fade to black", KEIN "dissolve", KEIN "smooth transition" - NUR ein harter, sofortiger Schnitt
-
-Antworte NUR mit einem JSON-Objekt:
+Respond ONLY with JSON:
 {
-  "videoPrompt": "Der vollständige englische Video-Prompt (ca. 200 Wörter)",
-  "cameraMovement": "eine der verfügbaren Kamerabewegungen-IDs",
-  "startState": "Beschreibung des Startframes (deutsch, 1 Satz)",
-  "motion": "Beschreibung der Bewegung (deutsch, 1 Satz)",
-  "endState": "Beschreibung des Endframes (deutsch, 1 Satz)"
+  "videoPrompt": "The complete English video prompt (80-120 words)",
+  "cameraMovement": "descriptive camera movement id",
+  "startState": "Start frame description (1 sentence)",
+  "motion": "Motion description (1 sentence)",
+  "endState": "End frame description (1 sentence)"
 }`;
 
       // Collect reference images for visual context
