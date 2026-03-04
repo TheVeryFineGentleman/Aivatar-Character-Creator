@@ -2989,22 +2989,24 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs.
+                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+
+Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
 Gute Beispiele:
-- Wiedersehen nach zehn Jahren
-- Streit vor dem Abschied
-- Erinnerung an alte Zeiten
+- Konfrontation nach dem Betrug
+- Liebesgeständnis im Regen
+- Letzte Nachricht vor dem Abflug
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen realistischen Geschichte.
+                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 
-WICHTIG: NUR realistische Themen! KEINE Fantasy, Magie oder Sci-Fi.
+WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
 Gute Beispiele:
-- Zufälliges Wiedersehen im Supermarkt
-- Traumjob oder Beziehung
-- Verlorener Brief verändert alles
+- Fremder rettet Kind im Park
+- Traumjob-Absage verändert alles
+- Zufälliges Wiedersehen nach Jahren
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
