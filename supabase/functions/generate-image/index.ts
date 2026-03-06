@@ -118,7 +118,6 @@ serve(async (req) => {
             generationConfig: {
               responseModalities: ["IMAGE", "TEXT"],
               imageConfig: {
-                imageSize: "4K",
                 aspectRatio: aspectRatio
               }
             }
