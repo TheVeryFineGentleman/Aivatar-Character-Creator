@@ -79,7 +79,8 @@ serve(async (req) => {
       console.log("🖼️ Reference images:", referenceImages?.length || 0);
 
       const model = "gemini-3.1-flash-image-preview";
-      const parts: any[] = [{ text: prompt }];
+      const enhancedPrompt = `${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
+      const parts: any[] = [{ text: enhancedPrompt }];
 
       if (referenceImages && referenceImages.length > 0) {
         for (const base64Image of referenceImages) {
