@@ -103,7 +103,7 @@ serve(async (req) => {
 
     // Create AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout for 4K
 
     let response;
     try {
@@ -118,6 +118,7 @@ serve(async (req) => {
             generationConfig: {
               responseModalities: ["IMAGE", "TEXT"],
               imageConfig: {
+                imageSize: "4K",
                 aspectRatio: aspectRatio
               }
             }
