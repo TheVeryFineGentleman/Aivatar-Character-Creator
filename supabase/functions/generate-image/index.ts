@@ -86,7 +86,8 @@ serve(async (req) => {
     console.log("🖼️ Using direct Gemini API for image generation");
     
     // Build parts array: text FIRST, then reference images
-    const parts: any[] = [{ text: prompt }];
+    const enhancedPrompt = `${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
+    const parts: any[] = [{ text: enhancedPrompt }];
 
     if (referenceImages && referenceImages.length > 0) {
       for (const base64Image of referenceImages) {
