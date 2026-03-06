@@ -105,7 +105,7 @@ serve(async (req) => {
               contents: [{ role: "user", parts }],
               generationConfig: {
                 responseModalities: ["IMAGE", "TEXT"],
-                imageConfig: { imageSize: "4K", aspectRatio },
+                imageConfig: { aspectRatio },
               },
             }),
           }
