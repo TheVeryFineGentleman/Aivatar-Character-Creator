@@ -5486,7 +5486,7 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Format, Shot Type, Skin Type, and Camera Angle Selection */}
-            <div className="grid gap-4 grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
               {/* Image Format Dropdown - Pro Only */}
               {isPro ? (
               <div className="space-y-2">
