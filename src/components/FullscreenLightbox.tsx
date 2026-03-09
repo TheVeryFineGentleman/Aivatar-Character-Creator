@@ -105,14 +105,13 @@ export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
       </div>
 
       {/* Download button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute bottom-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-        onClick={handleDownload}
-      >
-        <Download className="w-5 h-5" />
-      </Button>
+      <div className="absolute bottom-4 right-4 z-10">
+        <DownloadButton
+          imageUrl={src}
+          fileName={`szene-${expandedIndex + 1}-${aspectRatio.replace(":", "x")}.png`}
+          variant="lightbox"
+        />
+      </div>
 
       {/* Zoom indicator */}
       {zoom > 1 && (

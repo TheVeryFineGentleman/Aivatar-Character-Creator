@@ -212,17 +212,11 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
               </div>
             )}
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDownload?.();
-                }}
-                variant="secondary"
-                size="icon"
-                className="rounded-full"
-              >
-                <Download className="w-5 h-5" />
-              </Button>
+              <DownloadButton
+                imageUrl={imageUrl}
+                fileName={`character-${index + 1}.png`}
+                variant="gallery"
+              />
               {onRegenerate && (
                 <Button
                   onClick={(e) => {
