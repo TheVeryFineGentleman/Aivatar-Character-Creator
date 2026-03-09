@@ -5741,7 +5741,7 @@ Beispiel einer korrekten Antwort:
               }`}>
                 <div className="space-y-3">
                   {/* Textarea with AI button next to it */}
-                  <div className="flex gap-3 items-start w-fit">
+                  <div className="flex gap-3 items-start w-full sm:w-fit">
                     <Textarea
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
