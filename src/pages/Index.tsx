@@ -7087,15 +7087,12 @@ Beispiel einer korrekten Antwort:
                 {/* Header with counter, version nav, and download */}
                 <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/50">
                   <div className="flex items-center gap-2">
-                    {imageSlots[selectedImageIndex].status === "completed" && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleDownloadSingle(selectedImageIndex)}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
+                    {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl && (
+                      <DownloadButton
+                        imageUrl={imageSlots[selectedImageIndex].imageUrl!}
+                        fileName={`character-${selectedImageIndex + 1}.png`}
+                        variant="gallery"
+                      />
                     )}
                     {/* Regenerate button in viewer */}
                     {imageSlots[selectedImageIndex].status === "completed" && (
