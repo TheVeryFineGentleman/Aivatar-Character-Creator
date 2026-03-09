@@ -6197,11 +6197,11 @@ Beispiel einer korrekten Antwort:
                 </div>
 
                 {/* Generate Button (like poses generator) - aligned with textareas */}
-                <div className="flex items-end pb-[2px]">
+                <div className="flex items-center md:items-end pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="w-10 h-[160px] rounded-lg"
+                    className="w-full md:w-10 h-10 md:h-[160px] rounded-lg"
                     title="Story-Idee generieren"
                   >
                     {isGeneratingStoryAiIdea ? (
