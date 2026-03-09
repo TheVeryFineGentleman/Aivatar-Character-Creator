@@ -5116,7 +5116,7 @@ Beispiel einer korrekten Antwort:
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Version Indicator */}
-        <div className="absolute top-4 left-4 flex flex-col gap-1">
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-1 z-20">
           <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
             v1.4.5
           </div>
@@ -5126,7 +5126,7 @@ Beispiel einer korrekten Antwort:
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex flex-col gap-2 z-20">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="rounded-full">
@@ -5486,7 +5486,7 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Format, Shot Type, Skin Type, and Camera Angle Selection */}
-            <div className="grid gap-4 grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
               {/* Image Format Dropdown - Pro Only */}
               {isPro ? (
               <div className="space-y-2">
@@ -5741,12 +5741,12 @@ Beispiel einer korrekten Antwort:
               }`}>
                 <div className="space-y-3">
                   {/* Textarea with AI button next to it */}
-                  <div className="flex gap-3 items-start w-fit">
+                  <div className="flex gap-3 items-start w-full sm:w-fit">
                     <Textarea
                       placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
                       value={sceneDescription}
                       onChange={(e) => setSceneDescription(e.target.value)}
-                      className="min-h-[80px] w-[calc(3*120px+2*4px)] resize-y focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[80px] w-full sm:w-[calc(3*120px+2*4px)] resize-y focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       maxLength={300}
                     />
                   </div>
@@ -5994,7 +5994,7 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Generate Buttons */}
-            <div className="flex gap-3 justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 justify-between">
               {imageSlots.length === 0 ? (
                 <Button
                   onClick={handleGenerate}
@@ -6015,7 +6015,8 @@ Beispiel einer korrekten Antwort:
                     size="lg"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    {isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}
+                    <span className="hidden sm:inline">{isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}</span>
+                    <span className="sm:hidden">{isGenerating ? 'Hinzufügen' : 'Mehr generieren'}</span>
                     {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                   </Button>
                   
@@ -6131,7 +6132,7 @@ Beispiel einer korrekten Antwort:
               </div>
 
               {/* Story Idea and AI Assistant side by side */}
-              <div className="flex gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
                 {/* Left: Story Idea Field */}
                 <div className="flex-1 space-y-2">
                   <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
@@ -6196,11 +6197,11 @@ Beispiel einer korrekten Antwort:
                 </div>
 
                 {/* Generate Button (like poses generator) - aligned with textareas */}
-                <div className="flex items-end pb-[2px]">
+                <div className="flex items-center md:items-end pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="w-10 h-[160px] rounded-lg"
+                    className="w-full md:w-10 h-10 md:h-[160px] rounded-lg"
                     title="Story-Idee generieren"
                   >
                     {isGeneratingStoryAiIdea ? (
@@ -6305,7 +6306,7 @@ Beispiel einer korrekten Antwort:
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-4">
                   {/* Row 1: Dropdowns */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-sm">Videomodell</Label>
                       <Select value={storyVideoModel} onValueChange={setStoryVideoModel}>

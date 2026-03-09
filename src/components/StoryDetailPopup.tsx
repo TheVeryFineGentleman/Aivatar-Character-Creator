@@ -641,8 +641,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
       <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={onClose} />
       
       {/* Main Container - NOT fullscreen, centered with solid background */}
-      <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-8 px-4`}>
-        <div className={`bg-card border border-border rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
+      <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-2 px-2 sm:py-8 sm:px-4`}>
+        <div className={`bg-card border border-border rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] flex flex-col ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
           {/* Sticky Header */}
           <div className="bg-card border-b border-border/30 flex items-center justify-between px-4 py-3 shrink-0 rounded-t-xl">
             <div className="flex items-center gap-3">
