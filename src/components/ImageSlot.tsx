@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle, Ban, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle, Ban, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { DownloadButton } from "@/components/DownloadButton";
 
 export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
 
