@@ -6132,7 +6132,7 @@ Beispiel einer korrekten Antwort:
               </div>
 
               {/* Story Idea and AI Assistant side by side */}
-              <div className="flex gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
                 {/* Left: Story Idea Field */}
                 <div className="flex-1 space-y-2">
                   <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
