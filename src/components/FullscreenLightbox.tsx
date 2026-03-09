@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Download, ZoomIn } from "lucide-react";
+import { X, ZoomIn } from "lucide-react";
+import { DownloadButton } from "@/components/DownloadButton";
 
 interface FullscreenLightboxProps {
   src: string;
@@ -80,15 +81,6 @@ export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
     }
   };
 
-  const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const link = document.createElement("a");
-    link.href = src;
-    link.download = `szene-${expandedIndex + 1}-${aspectRatio.replace(":", "x")}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div
@@ -113,14 +105,13 @@ export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
       </div>
 
       {/* Download button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute bottom-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-        onClick={handleDownload}
-      >
-        <Download className="w-5 h-5" />
-      </Button>
+      <div className="absolute bottom-4 right-4 z-10">
+        <DownloadButton
+          imageUrl={src}
+          fileName={`szene-${expandedIndex + 1}-${aspectRatio.replace(":", "x")}.png`}
+          variant="lightbox"
+        />
+      </div>
 
       {/* Zoom indicator */}
       {zoom > 1 && (
