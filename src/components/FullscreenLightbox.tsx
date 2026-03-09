@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Download, ZoomIn } from "lucide-react";
+import { X, ZoomIn } from "lucide-react";
+import { DownloadButton } from "@/components/DownloadButton";
 
 interface FullscreenLightboxProps {
   src: string;
