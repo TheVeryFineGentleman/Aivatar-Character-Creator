@@ -5994,7 +5994,7 @@ Beispiel einer korrekten Antwort:
             </div>
 
             {/* Generate Buttons */}
-            <div className="flex gap-3 justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 justify-between">
               {imageSlots.length === 0 ? (
                 <Button
                   onClick={handleGenerate}
@@ -6015,7 +6015,8 @@ Beispiel einer korrekten Antwort:
                     size="lg"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    {isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}
+                    <span className="hidden sm:inline">{isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}</span>
+                    <span className="sm:hidden">{isGenerating ? 'Hinzufügen' : 'Mehr generieren'}</span>
                     {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                   </Button>
                   
