@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera, ArrowRightLeft } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
+import { DownloadButton } from "@/components/DownloadButton";
 import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
@@ -7087,15 +7088,12 @@ Beispiel einer korrekten Antwort:
                 {/* Header with counter, version nav, and download */}
                 <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/50">
                   <div className="flex items-center gap-2">
-                    {imageSlots[selectedImageIndex].status === "completed" && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleDownloadSingle(selectedImageIndex)}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
+                    {imageSlots[selectedImageIndex].status === "completed" && imageSlots[selectedImageIndex].imageUrl && (
+                      <DownloadButton
+                        imageUrl={imageSlots[selectedImageIndex].imageUrl!}
+                        fileName={`character-${selectedImageIndex + 1}.png`}
+                        variant="gallery"
+                      />
                     )}
                     {/* Regenerate button in viewer */}
                     {imageSlots[selectedImageIndex].status === "completed" && (
