@@ -17,7 +17,7 @@ interface DownloadButtonProps {
 }
 
 const RESOLUTION_OPTIONS = [
-  { label: "500px", maxWidth: 500 },
+  { label: "512px", maxWidth: 512 },
   { label: "1K", maxWidth: 1024 },
   { label: "2K", maxWidth: 2048 },
   { label: "4K (Original)", maxWidth: 0 }, // 0 = no resize
