@@ -9,6 +9,8 @@ interface FullscreenLightboxProps {
   aspectRatio: string;
   expandedIndex: number;
   onClose: () => void;
+  isBasicPlan?: boolean;
+  onLockedClick?: () => void;
 }
 
 export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
@@ -16,6 +18,8 @@ export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
   aspectRatio,
   expandedIndex,
   onClose,
+  isBasicPlan = false,
+  onLockedClick,
 }) => {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
