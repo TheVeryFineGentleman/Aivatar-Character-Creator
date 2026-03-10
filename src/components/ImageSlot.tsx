@@ -27,6 +27,8 @@ interface ImageSlotProps {
   isInQueue?: boolean;
   format?: string;
   errorMessage?: string;
+  isBasicPlan?: boolean;
+  onLockedClick?: () => void;
 }
 
 const getAspectClass = (format: string) => {
@@ -42,7 +44,7 @@ const getAspectClass = (format: string) => {
   }
 };
 
-export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage }: ImageSlotProps) => {
+export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage, isBasicPlan = false, onLockedClick }: ImageSlotProps) => {
   const totalVersions = imageVersions?.length || 0;
   const hasMultipleVersions = totalVersions > 1;
   const aspectClass = getAspectClass(format);
@@ -216,6 +218,8 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
                 imageUrl={imageUrl}
                 fileName={`character-${index + 1}.png`}
                 variant="gallery"
+                isBasicPlan={isBasicPlan}
+                onLockedClick={onLockedClick}
               />
               {onRegenerate && (
                 <Button

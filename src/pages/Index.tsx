@@ -6081,6 +6081,7 @@ Beispiel einer korrekten Antwort:
             isBasicPlan={!isPro}
             isGenerating={isGenerating}
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
+            onLockedClick={() => setShowUpgradePopup(true)}
           />
         </div>
           </>
@@ -7094,6 +7095,8 @@ Beispiel einer korrekten Antwort:
                         imageUrl={imageSlots[selectedImageIndex].imageUrl!}
                         fileName={`character-${selectedImageIndex + 1}.png`}
                         variant="gallery"
+                        isBasicPlan={!isPro}
+                        onLockedClick={() => setShowUpgradePopup(true)}
                       />
                     )}
                     {/* Regenerate button in viewer */}
