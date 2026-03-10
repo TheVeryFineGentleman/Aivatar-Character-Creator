@@ -218,6 +218,8 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
                 imageUrl={imageUrl}
                 fileName={`character-${index + 1}.png`}
                 variant="gallery"
+                isBasicPlan={isBasicPlan}
+                onLockedClick={onLockedClick}
               />
               {onRegenerate && (
                 <Button
