@@ -203,6 +203,8 @@ export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
           imageUrl={src}
           fileName={`szene-${expandedIndex + 1}-${aspectRatio.replace(":", "x")}.png`}
           variant="lightbox"
+          isBasicPlan={isBasicPlan}
+          onLockedClick={onLockedClick}
         />
       </div>
 
