@@ -27,6 +27,8 @@ interface ImageSlotProps {
   isInQueue?: boolean;
   format?: string;
   errorMessage?: string;
+  isBasicPlan?: boolean;
+  onLockedClick?: () => void;
 }
 
 const getAspectClass = (format: string) => {

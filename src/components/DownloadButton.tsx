@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download } from "lucide-react";
+import { Download, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DownloadButtonProps {
@@ -14,13 +14,15 @@ interface DownloadButtonProps {
   fileName: string;
   variant?: "gallery" | "lightbox";
   className?: string;
+  isBasicPlan?: boolean;
+  onLockedClick?: () => void;
 }
 
 const RESOLUTION_OPTIONS = [
-  { label: "512px", maxWidth: 512 },
-  { label: "1K", maxWidth: 1024 },
-  { label: "2K", maxWidth: 2048 },
-  { label: "4K (Original)", maxWidth: 0 }, // 0 = no resize
+  { label: "512px", maxWidth: 512, minPlan: "basic" as const },
+  { label: "1K", maxWidth: 1024, minPlan: "basic" as const },
+  { label: "2K", maxWidth: 2048, minPlan: "pro" as const },
+  { label: "4K (Original)", maxWidth: 0, minPlan: "pro" as const },
 ];
 
 const resizeImage = (src: string, maxWidth: number): Promise<string> => {
@@ -51,6 +53,8 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
   fileName,
   variant = "gallery",
   className,
+  isBasicPlan = false,
+  onLockedClick,
 }) => {
   const [isResizing, setIsResizing] = useState(false);
 
@@ -66,7 +70,6 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
       document.body.removeChild(link);
     } catch (err) {
       console.error("Download resize failed:", err);
-      // Fallback: download original
       const link = document.createElement("a");
       link.href = imageUrl;
       link.download = fileName;
@@ -103,18 +106,31 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
         className="min-w-[140px]"
         onClick={(e) => e.stopPropagation()}
       >
-        {RESOLUTION_OPTIONS.map((opt) => (
-          <DropdownMenuItem
-            key={opt.label}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDownload(opt.maxWidth);
-            }}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {opt.label}
-          </DropdownMenuItem>
-        ))}
+        {RESOLUTION_OPTIONS.map((opt) => {
+          const isLocked = isBasicPlan && opt.minPlan === "pro";
+          return (
+            <DropdownMenuItem
+              key={opt.label}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isLocked) {
+                  onLockedClick?.();
+                } else {
+                  handleDownload(opt.maxWidth);
+                }
+              }}
+              className={cn(isLocked && "opacity-50")}
+            >
+              {isLocked ? (
+                <Lock className="w-4 h-4 mr-2 text-muted-foreground" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              {opt.label}
+              {isLocked && <span className="ml-auto text-[10px] text-muted-foreground">Pro</span>}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
