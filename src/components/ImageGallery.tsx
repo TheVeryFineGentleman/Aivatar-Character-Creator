@@ -75,6 +75,8 @@ export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemo
             isWaitingForPro={index === waitingIndex}
             isInQueue={isSlotInQueue(index, slot.status)}
             format={format}
+            isBasicPlan={isBasicPlan}
+            onLockedClick={onLockedClick}
           />
         ))}
       </div>
