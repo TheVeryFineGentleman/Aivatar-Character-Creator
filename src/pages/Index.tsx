@@ -6081,6 +6081,7 @@ Beispiel einer korrekten Antwort:
             isBasicPlan={!isPro}
             isGenerating={isGenerating}
             format={FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.ratio || "1:1"}
+            onLockedClick={() => setShowUpgradePopup(true)}
           />
         </div>
           </>
