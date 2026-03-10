@@ -24,9 +24,10 @@ interface ImageGalleryProps {
   isBasicPlan?: boolean;
   isGenerating?: boolean;
   format?: string;
+  onLockedClick?: () => void;
 }
 
-export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancelGeneration, onRegenerate, onVersionChange, isBasicPlan = false, isGenerating = false, format = "1:1" }: ImageGalleryProps) => {
+export const ImageGallery = ({ slots, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancelGeneration, onRegenerate, onVersionChange, isBasicPlan = false, isGenerating = false, format = "1:1", onLockedClick }: ImageGalleryProps) => {
   if (slots.length === 0) return null;
 
   // Find first loading slot index
