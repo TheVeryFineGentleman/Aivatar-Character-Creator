@@ -3432,11 +3432,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       if (data.promptFeedback?.blockReason) {
         const blockReason = data.promptFeedback.blockReason;
         console.error("❌ Prompt blocked:", blockReason);
-        const blockMessages: Record<string, string> = {
-          "SAFETY": "Prompt wurde durch Sicherheitsfilter blockiert – bitte anpassen",
-          "OTHER": "Prompt wurde blockiert – bitte Referenzbild oder Text ändern",
-          "BLOCKLIST": "Prompt enthält blockierte Begriffe – bitte anpassen",
-          "PROHIBITED_CONTENT": "Verbotener Inhalt erkannt – bitte Prompt ändern",
+      const blockMessages: Record<string, string> = {
+          "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "⚠️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "⚠️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
         };
         throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
       }
