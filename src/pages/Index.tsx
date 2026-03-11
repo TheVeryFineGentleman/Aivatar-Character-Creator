@@ -3434,11 +3434,23 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         throw new Error("No candidates returned by Gemini");
       }
 
-      // Check for IMAGE_OTHER error (model couldn't generate from reference)
-      if (candidates[0]?.finishReason === "IMAGE_OTHER") {
+      // Check finishReason for specific error causes
+      const finishReason = candidates[0]?.finishReason;
+      if (finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        // NO AUTO RETRY - return null immediately
-        return null;
+        throw new Error("Modell konnte kein Bild aus dem Referenzbild generieren");
+      }
+      if (finishReason === "SAFETY") {
+        console.warn("⚠️ SAFETY filter triggered");
+        throw new Error("Sicherheitsfilter ausgelöst – bitte Prompt anpassen");
+      }
+      if (finishReason === "MAX_TOKENS") {
+        console.warn("⚠️ MAX_TOKENS reached");
+        throw new Error("Token-Limit erreicht – bitte kürzeren Prompt verwenden");
+      }
+      if (finishReason === "RECITATION") {
+        console.warn("⚠️ RECITATION detected");
+        throw new Error("Urheberrechtsfilter ausgelöst – bitte Prompt ändern");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
@@ -3475,23 +3487,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       console.error("❌ Gemini did not return an image. Text response:", textFallback);
       
       console.error("❌ No image in response for image", index + 1);
-      console.error("❌ Response structure did not match expected format");
-      
-      // NO AUTO RETRY - return null immediately
-      return null;
+      throw new Error("Kein Bild in der Antwort – bitte erneut versuchen");
     } catch (error) {
       console.error(`❌ Error generating image ${index}:`, error);
-      console.error("❌ Error type:", error instanceof Error ? error.constructor.name : typeof error);
-      console.error("❌ Error message:", error instanceof Error ? error.message : String(error));
-      console.error("❌ Full error object:", error);
-      
-      // Check for CORS errors
+      // Re-throw with user-friendly message so processQueue catches it
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        console.error("⚠️ POSSIBLE CORS ERROR - Direct API call from browser may be blocked!");
+        throw new Error("Netzwerkfehler – prüfe deine Internetverbindung");
       }
-      
-      // NO AUTO RETRY - return null immediately
-      return null;
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error("Zeitüberschreitung – keine Antwort nach 20s");
+      }
+      // Re-throw original error if it already has a message
+      throw error;
     }
   };
 
