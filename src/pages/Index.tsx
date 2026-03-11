@@ -3487,10 +3487,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       console.error("❌ Gemini did not return an image. Text response:", textFallback);
       
       console.error("❌ No image in response for image", index + 1);
-      console.error("❌ Response structure did not match expected format");
-      
-      // NO AUTO RETRY - return null immediately
-      return null;
+      throw new Error("Kein Bild in der Antwort – bitte erneut versuchen");
     } catch (error) {
       console.error(`❌ Error generating image ${index}:`, error);
       console.error("❌ Error type:", error instanceof Error ? error.constructor.name : typeof error);
