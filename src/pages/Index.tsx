@@ -3428,10 +3428,23 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const data = await response.json();
       console.log("📦 Full API Response for image", index + 1);
 
+      // Check promptFeedback for block reasons
+      if (data.promptFeedback?.blockReason) {
+        const blockReason = data.promptFeedback.blockReason;
+        console.error("❌ Prompt blocked:", blockReason);
+        const blockMessages: Record<string, string> = {
+          "SAFETY": "Prompt wurde durch Sicherheitsfilter blockiert – bitte anpassen",
+          "OTHER": "Prompt wurde blockiert – bitte Referenzbild oder Text ändern",
+          "BLOCKLIST": "Prompt enthält blockierte Begriffe – bitte anpassen",
+          "PROHIBITED_CONTENT": "Verbotener Inhalt erkannt – bitte Prompt ändern",
+        };
+        throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
+      }
+
       // ===== IMAGE EXTRACTION =====
       const candidates = data.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("No candidates returned by Gemini");
+        throw new Error("Keine Antwort von der API – bitte erneut versuchen");
       }
 
       // Check finishReason for specific error causes
