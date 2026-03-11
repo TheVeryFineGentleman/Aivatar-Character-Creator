@@ -3444,7 +3444,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // ===== IMAGE EXTRACTION =====
       const candidates = data.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("Keine Antwort von der API – bitte erneut versuchen");
+        throw new Error("⚠️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
       }
 
       // Check finishReason for specific error causes
