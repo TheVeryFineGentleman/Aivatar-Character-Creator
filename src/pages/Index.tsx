@@ -3432,11 +3432,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       if (data.promptFeedback?.blockReason) {
         const blockReason = data.promptFeedback.blockReason;
         console.error("❌ Prompt blocked:", blockReason);
-        const blockMessages: Record<string, string> = {
-          "SAFETY": "Prompt wurde durch Sicherheitsfilter blockiert – bitte anpassen",
-          "OTHER": "Prompt wurde blockiert – bitte Referenzbild oder Text ändern",
-          "BLOCKLIST": "Prompt enthält blockierte Begriffe – bitte anpassen",
-          "PROHIBITED_CONTENT": "Verbotener Inhalt erkannt – bitte Prompt ändern",
+      const blockMessages: Record<string, string> = {
+          "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "⚠️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "⚠️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
         };
         throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
       }
@@ -3444,26 +3444,26 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // ===== IMAGE EXTRACTION =====
       const candidates = data.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("Keine Antwort von der API – bitte erneut versuchen");
+        throw new Error("⚠️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
       }
 
       // Check finishReason for specific error causes
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        throw new Error("Modell konnte kein Bild aus dem Referenzbild generieren");
+        throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
         console.warn("⚠️ SAFETY filter triggered");
-        throw new Error("Sicherheitsfilter ausgelöst – bitte Prompt anpassen");
+        throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
       if (finishReason === "MAX_TOKENS") {
         console.warn("⚠️ MAX_TOKENS reached");
-        throw new Error("Token-Limit erreicht – bitte kürzeren Prompt verwenden");
+        throw new Error("⚠️ Token-Limit erreicht. Bitte verwende einen kürzeren Prompt.");
       }
       if (finishReason === "RECITATION") {
         console.warn("⚠️ RECITATION detected");
-        throw new Error("Urheberrechtsfilter ausgelöst – bitte Prompt ändern");
+        throw new Error("⚠️ Urheberrechtsfilter ausgelöst. Bitte ändere deinen Prompt.");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
@@ -3500,7 +3500,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       console.error("❌ Gemini did not return an image. Text response:", textFallback);
       
       console.error("❌ No image in response for image", index + 1);
-      throw new Error("Kein Bild in der Antwort – bitte erneut versuchen");
+      throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
     } catch (error) {
       console.error(`❌ Error generating image ${index}:`, error);
       // Re-throw with user-friendly message so processQueue catches it
@@ -3640,7 +3640,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               setImageSlots((prev) => {
                 const updated = [...prev];
                 if (index >= updated.length) return prev;
-                updated[index] = { status: "error", progress: 0, errorMessage: "Kein Bild generiert - bitte erneut versuchen" };
+                updated[index] = { status: "error", progress: 0, errorMessage: "⚠️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
                 return updated;
               });
             }
@@ -4239,26 +4239,57 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       clearInterval(progressInterval);
 
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      if (!response.ok) {
+        const statusMessages: Record<number, string> = {
+          400: "⚠️ Ungültige Anfrage. Bitte passe deinen Prompt oder dein Referenzbild an.",
+          429: "⚠️ Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
+          403: "⚠️ API-Key ungültig oder gesperrt.",
+          500: "⚠️ Server-Fehler bei Google. Bitte versuche es erneut.",
+        };
+        throw new Error(statusMessages[response.status] || `API-Fehler (${response.status})`);
+      }
 
       const result = await response.json();
-      const candidate = result?.candidates?.[0]?.content?.parts;
-      let imageUrl = "";
 
-      if (candidate) {
-        for (const part of candidate) {
-          if (part.inline_data) {
-            const blob = new Blob(
-              [Uint8Array.from(atob(part.inline_data.data), c => c.charCodeAt(0))],
-              { type: part.inline_data.mime_type || "image/png" }
-            );
-            imageUrl = createManagedBlobUrl(blob);
-            break;
-          }
+      // Check promptFeedback for block reasons
+      if (result.promptFeedback?.blockReason) {
+        const blockReason = result.promptFeedback.blockReason;
+        const blockMessages: Record<string, string> = {
+          "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "⚠️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "⚠️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
+        };
+        throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
+      }
+
+      const candidates = result.candidates ?? [];
+      if (candidates.length === 0) {
+        throw new Error("⚠️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
+      }
+
+      const finishReason = candidates[0]?.finishReason;
+      if (finishReason === "IMAGE_OTHER") {
+        throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
+      }
+      if (finishReason === "SAFETY") {
+        throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
+      }
+
+      const partsOut = candidates[0]?.content?.parts ?? [];
+      let imageUrl = "";
+      for (const part of partsOut) {
+        if (part.inlineData?.data && part.inlineData.mimeType?.startsWith("image/")) {
+          const blob = new Blob(
+            [Uint8Array.from(atob(part.inlineData.data), c => c.charCodeAt(0))],
+            { type: part.inlineData.mimeType || "image/png" }
+          );
+          imageUrl = createManagedBlobUrl(blob);
+          break;
         }
       }
 
-      if (!imageUrl) throw new Error("No image in response");
+      if (!imageUrl) throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
 
       // Animate to 100%
       for (let p = 85; p <= 100; p += 5) {
@@ -4295,18 +4326,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
     } catch (error) {
       console.error("❌ Regeneration error:", error);
-      // Revert to completed state with previous version
-      updateSlotSafe(index, (slot) => {
-        const versions = slot.imageVersions || [];
-        const lastVersion = versions.length > 0 ? versions[versions.length - 1] : slot.imageUrl;
-        return {
-          ...slot,
-          status: "completed" as const,
-          imageUrl: lastVersion || "",
-          progress: 100,
-          currentVersionIndex: versions.length - 1,
-        };
-      });
+      const errorMsg = error instanceof Error ? error.message : "Unbekannter Fehler";
+      // Show error state with message so user can see reason and retry
+      updateSlotSafe(index, (slot) => ({
+        ...slot,
+        status: "error" as const,
+        progress: 0,
+        errorMessage: errorMsg,
+      }));
     }
   };
 
