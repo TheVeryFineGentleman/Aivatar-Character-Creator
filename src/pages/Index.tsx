@@ -4239,26 +4239,57 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       clearInterval(progressInterval);
 
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      if (!response.ok) {
+        const statusMessages: Record<number, string> = {
+          400: "⚠️ Ungültige Anfrage. Bitte passe deinen Prompt oder dein Referenzbild an.",
+          429: "⚠️ Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
+          403: "⚠️ API-Key ungültig oder gesperrt.",
+          500: "⚠️ Server-Fehler bei Google. Bitte versuche es erneut.",
+        };
+        throw new Error(statusMessages[response.status] || `API-Fehler (${response.status})`);
+      }
 
       const result = await response.json();
-      const candidate = result?.candidates?.[0]?.content?.parts;
-      let imageUrl = "";
 
-      if (candidate) {
-        for (const part of candidate) {
-          if (part.inline_data) {
-            const blob = new Blob(
-              [Uint8Array.from(atob(part.inline_data.data), c => c.charCodeAt(0))],
-              { type: part.inline_data.mime_type || "image/png" }
-            );
-            imageUrl = createManagedBlobUrl(blob);
-            break;
-          }
+      // Check promptFeedback for block reasons
+      if (result.promptFeedback?.blockReason) {
+        const blockReason = result.promptFeedback.blockReason;
+        const blockMessages: Record<string, string> = {
+          "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "⚠️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "⚠️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
+        };
+        throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
+      }
+
+      const candidates = result.candidates ?? [];
+      if (candidates.length === 0) {
+        throw new Error("⚠️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
+      }
+
+      const finishReason = candidates[0]?.finishReason;
+      if (finishReason === "IMAGE_OTHER") {
+        throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
+      }
+      if (finishReason === "SAFETY") {
+        throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
+      }
+
+      const partsOut = candidates[0]?.content?.parts ?? [];
+      let imageUrl = "";
+      for (const part of partsOut) {
+        if (part.inlineData?.data && part.inlineData.mimeType?.startsWith("image/")) {
+          const blob = new Blob(
+            [Uint8Array.from(atob(part.inlineData.data), c => c.charCodeAt(0))],
+            { type: part.inlineData.mimeType || "image/png" }
+          );
+          imageUrl = createManagedBlobUrl(blob);
+          break;
         }
       }
 
-      if (!imageUrl) throw new Error("No image in response");
+      if (!imageUrl) throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
 
       // Animate to 100%
       for (let p = 85; p <= 100; p += 5) {
