@@ -3451,19 +3451,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        throw new Error("Modell konnte kein Bild aus dem Referenzbild generieren");
+        throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
         console.warn("⚠️ SAFETY filter triggered");
-        throw new Error("Sicherheitsfilter ausgelöst – bitte Prompt anpassen");
+        throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
       if (finishReason === "MAX_TOKENS") {
         console.warn("⚠️ MAX_TOKENS reached");
-        throw new Error("Token-Limit erreicht – bitte kürzeren Prompt verwenden");
+        throw new Error("⚠️ Token-Limit erreicht. Bitte verwende einen kürzeren Prompt.");
       }
       if (finishReason === "RECITATION") {
         console.warn("⚠️ RECITATION detected");
-        throw new Error("Urheberrechtsfilter ausgelöst – bitte Prompt ändern");
+        throw new Error("⚠️ Urheberrechtsfilter ausgelöst. Bitte ändere deinen Prompt.");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
