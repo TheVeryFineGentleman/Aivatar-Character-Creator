@@ -3533,136 +3533,109 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     const CONCURRENT_REQUESTS = isFullPlan ? 2 : (isPro ? 2 : 1);
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
-    console.log("🔄 Starte while-Schleife...");
-    while (generationQueueRef.current.length > 0 && isGeneratingRef.current) {
-      console.log("🔄 While-Iteration startet, Queue:", generationQueueRef.current.length);
-      const batch = generationQueueRef.current.splice(0, CONCURRENT_REQUESTS);
-      console.log("🔄 Batch erstellt:", batch);
+    console.log("🔄 Starte worker-pool...");
+    
+    const processSlot = async (index: number) => {
+      console.log(`🎨 Starte Generierung für Index ${index}`);
       
-      await Promise.all(
-        batch.map(async (index) => {
-          console.log(`🎨 Starte Generierung für Index ${index}`);
-          
-          // Create AbortController for this slot
-          const slotController = new AbortController();
-          abortControllersRef.current.set(index, slotController);
-          
-          // Update to loading - ensure index exists
+      const slotController = new AbortController();
+      abortControllersRef.current.set(index, slotController);
+      
+      setImageSlots((prev) => {
+        const updated = [...prev];
+        if (index >= updated.length) return prev;
+        updated[index] = { status: "loading", progress: 0 };
+        return updated;
+      });
+
+      const progressInterval = setInterval(() => {
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          if (index >= updated.length || updated[index]?.status !== "loading") return prev;
+          const current = updated[index].progress || 0;
+          if (current >= 95) return prev;
+          const step = Math.min(0.7 + (current / 100) * 1.5, 4);
+          updated[index] = { ...updated[index], progress: Math.min(current + step, 100) };
+          return updated;
+        });
+      }, 250);
+
+      try {
+        const imageUrl = await generateSingleImage(
+          index, apiKey, base64Images, background, totalCount,
+          selectedFormat, selectedShot, customPromptText,
+          undefined, 0, false, slotController.signal
+        );
+
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          if (index < updated.length) updated[index] = { ...updated[index], progress: 100 };
+          return updated;
+        });
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (imageUrl) {
+          let thumbUrl: string | undefined;
+          if (isPro || isFullPlan) {
+            try { thumbUrl = await createThumbnailFromBlob(imageUrl, 1024); } catch (e) { console.warn("Thumbnail creation failed:", e); }
+          }
           setImageSlots((prev) => {
             const updated = [...prev];
-            // Safety check: ensure index is valid
-            if (index >= updated.length) {
-              console.warn(`Index ${index} out of bounds, current length: ${updated.length}`);
-              return prev;
-            }
-            updated[index] = { status: "loading", progress: 0 };
+            if (index >= updated.length) return prev;
+            const prevVersions = updated[index]?.imageVersions || [];
+            const prevThumbs = updated[index]?.thumbnailVersions || [];
+            updated[index] = {
+              status: "completed", imageUrl, thumbnailUrl: thumbUrl || imageUrl, progress: 100,
+              imageVersions: [...prevVersions, imageUrl],
+              thumbnailVersions: [...prevThumbs, thumbUrl || imageUrl],
+              currentVersionIndex: prevVersions.length,
+            };
             return updated;
           });
+        } else {
+          setImageSlots((prev) => {
+            const updated = [...prev];
+            if (index >= updated.length) return prev;
+            updated[index] = { status: "error", progress: 0, errorMessage: "⚠️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
+            return updated;
+          });
+        }
+      } catch (error) {
+        console.error(`❌ Error in processQueue for index ${index}:`, error);
+        const errorMessage = getDetailedErrorMessage(error);
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          if (index < updated.length) updated[index] = { status: "error", progress: 0, errorMessage };
+          return updated;
+        });
+      } finally {
+        clearInterval(progressInterval);
+        abortControllersRef.current.delete(index);
+      }
+    };
 
-          // Simulate progress - declare outside try for cleanup in finally
-          const progressInterval = setInterval(() => {
-            setImageSlots((prev) => {
-              const updated = [...prev];
-              if (index >= updated.length || updated[index]?.status !== "loading") {
-                return prev;
-              }
-              const current = updated[index].progress || 0;
-              if (current >= 95) return prev;
-              // Accelerate: starts ~0.5, ends ~1.5 near 95%
-              const step = Math.min(0.7 + (current / 100) * 1.5, 4);
-              updated[index] = { 
-                ...updated[index],
-                progress: Math.min(current + step, 100)
-              };
-              return updated;
-            });
-          }, 250);
-
-          try {
-            const imageUrl = await generateSingleImage(
-              index,
-              apiKey,
-              base64Images,
-              background,
-              totalCount,
-              selectedFormat,
-              selectedShot,
-              customPromptText,
-              undefined,
-              0,
-              false,
-              slotController.signal
-            );
-
-            // Progress already reaches 100% naturally via interval
-            // Just ensure it shows 100% before revealing the image
-            setImageSlots((prev) => {
-              const updated = [...prev];
-              if (index < updated.length) {
-                updated[index] = { ...updated[index], progress: 100 };
-              }
-              return updated;
-            });
-            await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause at 100%
-
-            // Now update with the actual result
-            if (imageUrl) {
-              // Create thumbnail for gallery (PRO/FULL get full-res in viewer, thumbnail in gallery)
-              let thumbUrl: string | undefined;
-              if (isPro || isFullPlan) {
-                try {
-                  thumbUrl = await createThumbnailFromBlob(imageUrl, 1024);
-                } catch (e) {
-                  console.warn("Thumbnail creation failed:", e);
-                }
-              }
-              
-              setImageSlots((prev) => {
-                const updated = [...prev];
-                if (index >= updated.length) {
-                  console.warn(`Index ${index} out of bounds after generation, current length: ${updated.length}`);
-                  return prev;
-                }
-                const prevVersions = updated[index]?.imageVersions || [];
-                const prevThumbs = updated[index]?.thumbnailVersions || [];
-                updated[index] = {
-                  status: "completed",
-                  imageUrl,
-                  thumbnailUrl: thumbUrl || imageUrl,
-                  progress: 100,
-                  imageVersions: [...prevVersions, imageUrl],
-                  thumbnailVersions: [...prevThumbs, thumbUrl || imageUrl],
-                  currentVersionIndex: prevVersions.length,
-                };
-                return updated;
-              });
-            } else {
-              setImageSlots((prev) => {
-                const updated = [...prev];
-                if (index >= updated.length) return prev;
-                updated[index] = { status: "error", progress: 0, errorMessage: "⚠️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
-                return updated;
-              });
+    // Worker-pool: always keep CONCURRENT_REQUESTS running
+    let activeCount = 0;
+    await new Promise<void>((resolveAll) => {
+      const tryStartNext = () => {
+        while (activeCount < CONCURRENT_REQUESTS && generationQueueRef.current.length > 0 && isGeneratingRef.current) {
+          const nextIndex = generationQueueRef.current.shift()!;
+          activeCount++;
+          processSlot(nextIndex).finally(() => {
+            activeCount--;
+            if (generationQueueRef.current.length > 0 && isGeneratingRef.current) {
+              tryStartNext();
+            } else if (activeCount === 0) {
+              resolveAll();
             }
-          } catch (error) {
-            console.error(`❌ Error in processQueue for index ${index}:`, error);
-            // Use centralized error message helper for consistent, detailed messages
-            const errorMessage = getDetailedErrorMessage(error);
-            setImageSlots((prev) => {
-              const updated = [...prev];
-              if (index < updated.length) {
-                updated[index] = { status: "error", progress: 0, errorMessage };
-              }
-              return updated;
-            });
-          } finally {
-            // CRITICAL: Always clear interval and remove controller
-            clearInterval(progressInterval);
-            abortControllersRef.current.delete(index);
-          }
-        })
-      );
-    }
+          });
+        }
+        if (activeCount === 0 && generationQueueRef.current.length === 0) {
+          resolveAll();
+        }
+      };
+      tryStartNext();
+    });
   };
 
   const handleGenerate = async () => {
