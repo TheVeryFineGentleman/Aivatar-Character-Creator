@@ -4326,18 +4326,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
     } catch (error) {
       console.error("❌ Regeneration error:", error);
-      // Revert to completed state with previous version
-      updateSlotSafe(index, (slot) => {
-        const versions = slot.imageVersions || [];
-        const lastVersion = versions.length > 0 ? versions[versions.length - 1] : slot.imageUrl;
-        return {
-          ...slot,
-          status: "completed" as const,
-          imageUrl: lastVersion || "",
-          progress: 100,
-          currentVersionIndex: versions.length - 1,
-        };
-      });
+      const errorMsg = error instanceof Error ? error.message : "Unbekannter Fehler";
+      // Show error state with message so user can see reason and retry
+      updateSlotSafe(index, (slot) => ({
+        ...slot,
+        status: "error" as const,
+        progress: 0,
+        errorMessage: errorMsg,
+      }));
     }
   };
 
