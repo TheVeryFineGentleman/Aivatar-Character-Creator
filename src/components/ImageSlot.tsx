@@ -254,7 +254,7 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
             <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
               <AlertCircle className="w-5 h-5 text-destructive" />
             </div>
-            <p className="text-xs text-destructive text-center max-w-[90%] leading-tight font-medium">
+            <p className="text-sm text-destructive text-center max-w-[95%] leading-snug font-medium whitespace-normal break-words line-clamp-3">
               {errorMessage || "Generierung fehlgeschlagen"}
             </p>
             <div className="flex items-center gap-2 mt-1">
