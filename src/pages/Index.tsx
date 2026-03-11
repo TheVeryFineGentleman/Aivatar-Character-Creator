@@ -3640,7 +3640,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               setImageSlots((prev) => {
                 const updated = [...prev];
                 if (index >= updated.length) return prev;
-                updated[index] = { status: "error", progress: 0, errorMessage: "Kein Bild generiert - bitte erneut versuchen" };
+                updated[index] = { status: "error", progress: 0, errorMessage: "⚠️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
                 return updated;
               });
             }
