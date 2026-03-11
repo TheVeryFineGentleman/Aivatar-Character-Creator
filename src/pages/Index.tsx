@@ -3500,7 +3500,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // Re-throw original error if it already has a message
       throw error;
     }
-    }
   };
 
   const processQueue = async (
