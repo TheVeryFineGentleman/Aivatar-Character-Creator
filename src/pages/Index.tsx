@@ -3434,11 +3434,23 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         throw new Error("No candidates returned by Gemini");
       }
 
-      // Check for IMAGE_OTHER error (model couldn't generate from reference)
-      if (candidates[0]?.finishReason === "IMAGE_OTHER") {
+      // Check finishReason for specific error causes
+      const finishReason = candidates[0]?.finishReason;
+      if (finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        // NO AUTO RETRY - return null immediately
-        return null;
+        throw new Error("Modell konnte kein Bild aus dem Referenzbild generieren");
+      }
+      if (finishReason === "SAFETY") {
+        console.warn("⚠️ SAFETY filter triggered");
+        throw new Error("Sicherheitsfilter ausgelöst – bitte Prompt anpassen");
+      }
+      if (finishReason === "MAX_TOKENS") {
+        console.warn("⚠️ MAX_TOKENS reached");
+        throw new Error("Token-Limit erreicht – bitte kürzeren Prompt verwenden");
+      }
+      if (finishReason === "RECITATION") {
+        console.warn("⚠️ RECITATION detected");
+        throw new Error("Urheberrechtsfilter ausgelöst – bitte Prompt ändern");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
