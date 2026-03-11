@@ -3500,7 +3500,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       console.error("❌ Gemini did not return an image. Text response:", textFallback);
       
       console.error("❌ No image in response for image", index + 1);
-      throw new Error("Kein Bild in der Antwort – bitte erneut versuchen");
+      throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
     } catch (error) {
       console.error(`❌ Error generating image ${index}:`, error);
       // Re-throw with user-friendly message so processQueue catches it
