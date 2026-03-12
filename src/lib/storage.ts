@@ -296,10 +296,8 @@ export const getDetailedErrorMessage = (error: any): string => {
     return "Ungültige Anfrage - Prompt prüfen";
   }
   
-  // Generic - truncate if too long
-  if (errorMessage.length > 40) {
-    return errorMessage.substring(0, 37) + "...";
-  }
+  // Generic - return full message (no truncation)
+  return errorMessage;
   
   return errorMessage;
 };
