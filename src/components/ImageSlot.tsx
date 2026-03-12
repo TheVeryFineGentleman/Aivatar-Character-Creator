@@ -250,29 +250,29 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
         )}
         
         {status === "error" && (
-          <div className="w-full h-full flex flex-col bg-destructive/10">
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center justify-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
-                <AlertCircle className="w-5 h-5 text-destructive" />
+          <div className="w-full h-full absolute inset-0 flex flex-col bg-destructive/10">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col items-center justify-center gap-1.5">
+              <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-4 h-4 text-destructive" />
               </div>
-              <p className={`text-destructive text-center w-full leading-snug font-medium whitespace-pre-wrap break-words ${
-                (errorMessage?.length || 0) > 200 ? 'text-[9px]' :
-                (errorMessage?.length || 0) > 100 ? 'text-[10px]' :
-                (errorMessage?.length || 0) > 50 ? 'text-xs' : 'text-sm'
-              }`}>
+              <p className={`text-destructive text-center w-full leading-tight font-medium break-words overflow-wrap-anywhere ${
+                (errorMessage?.length || 0) > 200 ? 'text-[8px]' :
+                (errorMessage?.length || 0) > 100 ? 'text-[9px]' :
+                (errorMessage?.length || 0) > 50 ? 'text-[10px]' : 'text-xs'
+              }`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                 {errorMessage || "Generierung fehlgeschlagen"}
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2 p-2 shrink-0">
+            <div className="flex items-center justify-center gap-2 p-1.5 shrink-0">
               {onRegenerate && (
                 <Button
                   onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
                   variant="secondary"
                   size="sm"
-                  className="text-xs"
+                  className="text-[10px] h-6 px-2"
                 >
                   <RefreshCw className="w-3 h-3 mr-1" />
-                  Neu generieren
+                  Retry
                 </Button>
               )}
               {onDelete && (
@@ -280,7 +280,7 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   variant="destructive"
                   size="sm"
-                  className="text-xs"
+                  className="text-[10px] h-6 px-2"
                 >
                   <Trash2 className="w-3 h-3 mr-1" />
                   Löschen
