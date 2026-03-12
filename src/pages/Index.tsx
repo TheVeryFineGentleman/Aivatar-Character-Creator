@@ -2607,7 +2607,7 @@ ${sceneContext}`;
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
