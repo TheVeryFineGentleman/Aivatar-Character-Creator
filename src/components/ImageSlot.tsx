@@ -255,12 +255,11 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
               <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
                 <AlertCircle className="w-4 h-4 text-destructive" />
               </div>
-              <p
-                className="text-destructive text-center w-full leading-snug font-medium text-xs"
-                style={{ whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-word' }}
-              >
-                {errorMessage || "Generierung fehlgeschlagen"}
-              </p>
+              <div className="w-full text-center" style={{ whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                <span className="text-destructive leading-snug font-medium text-xs">
+                  {errorMessage || "Generierung fehlgeschlagen"}
+                </span>
+              </div>
             </div>
             <div className="flex items-center justify-center gap-2 p-2 shrink-0">
               {onRegenerate && (
