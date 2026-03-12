@@ -1085,7 +1085,7 @@ Viel Spaß beim Erstellen deines Videos!
     }));
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout for text
+    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout for text
     
     try {
       const point = storyPoints[index];
@@ -2607,7 +2607,7 @@ ${sceneContext}`;
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
@@ -2789,7 +2789,7 @@ ${sceneContext}`;
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
@@ -3354,7 +3354,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // ===== Gemini 2.5 Flash Image Generation (BASIC/PREMIUM) =====
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20_000); // 20 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 40_000); // 40 Sekunden Timeout
 
       // If external signal is already aborted, abort immediately
       if (externalSignal?.aborted) {
@@ -3889,7 +3889,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 40000); // 40 Sekunden Timeout
 
       // Call Google Gemini API with ALL reference images
       const response = await fetch(
