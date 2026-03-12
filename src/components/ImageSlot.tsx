@@ -250,14 +250,16 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
         )}
         
         {status === "error" && (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3 bg-destructive/10 overflow-y-auto">
-            <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
-              <AlertCircle className="w-5 h-5 text-destructive" />
+          <div className="w-full h-full flex flex-col bg-destructive/10">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center justify-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-destructive" />
+              </div>
+              <p className="text-xs text-destructive text-center w-full leading-snug font-medium whitespace-pre-wrap break-words">
+                {errorMessage || "Generierung fehlgeschlagen"}
+              </p>
             </div>
-            <p className="text-sm text-destructive text-center max-w-full leading-snug font-medium whitespace-pre-wrap break-all">
-              {errorMessage || "Generierung fehlgeschlagen"}
-            </p>
-            <div className="flex items-center gap-2 mt-1 shrink-0">
+            <div className="flex items-center justify-center gap-2 p-2 shrink-0">
               {onRegenerate && (
                 <Button
                   onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
