@@ -1085,7 +1085,7 @@ Viel Spaß beim Erstellen deines Videos!
     }));
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout for text
+    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout for text
     
     try {
       const point = storyPoints[index];
