@@ -259,7 +259,7 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
                 (errorMessage?.length || 0) > 200 ? 'text-[8px]' :
                 (errorMessage?.length || 0) > 100 ? 'text-[9px]' :
                 (errorMessage?.length || 0) > 50 ? 'text-[10px]' : 'text-xs'
-              }`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+              }`} style={{ whiteSpace: 'normal', overflowWrap: 'break-word' }}>
                 {errorMessage || "Generierung fehlgeschlagen"}
               </p>
             </div>
