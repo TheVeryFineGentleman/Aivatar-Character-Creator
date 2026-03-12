@@ -3889,7 +3889,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 40000); // 40 Sekunden Timeout
 
       // Call Google Gemini API with ALL reference images
       const response = await fetch(
