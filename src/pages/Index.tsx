@@ -5113,7 +5113,6 @@ Beispiel einer korrekten Antwort:
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-6">
-                {!isFullPlan ? (
                 <div className="space-y-2">
                   <Label htmlFor="settings-api-key">Google Gemini API Key</Label>
                   <Input
@@ -5128,20 +5127,6 @@ Beispiel einer korrekten Antwort:
                     Dein API Key wird sicher gespeichert und nur lokal verwendet.
                   </p>
                 </div>
-                ) : (
-                <div className="space-y-2">
-                  <Label>Credits</Label>
-                  <div className="flex items-center gap-2">
-                    <CreditsDisplay balance={creditsBalance} isLoading={creditsLoading} error={creditsError} />
-                    <Button variant="outline" size="sm" onClick={refreshBalance} className="ml-auto">
-                      <RefreshCw className="w-3 h-3 mr-1" /> Aktualisieren
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Jede Generierung verbraucht 1 Credit.
-                  </p>
-                </div>
-                )}
                 
                 {/* Theme Selector - Pro Only */}
                 <div className="pt-6 border-t border-border">
