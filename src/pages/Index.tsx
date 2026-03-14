@@ -4190,7 +4190,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create thumbnail for gallery
       let thumbUrl: string | undefined;
-      if (isPro || isFullPlan) {
+      if (isPro) {
         try {
           thumbUrl = await createThumbnailFromBlob(imageUrl, 1024);
         } catch (e) {
