@@ -1958,28 +1958,41 @@ Respond ONLY with JSON:
   };
 
   // Helper: Start Gemini Veo video generation via predictLongRunning
-  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, _endImageBase64?: string): Promise<string> => {
+  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
     const model = "veo-3.1-generate-preview";
     
-    // Build request body (endImage is NOT supported by this model)
-    const requestBody: any = {
-      instances: [{
-        prompt,
-      }],
-      parameters: {
-        aspectRatio: "16:9",
-        sampleCount: 1,
-        durationSeconds: 8,
-        personGeneration: "allow_adult",
+    // Build instance with prompt
+    const instance: any = { prompt };
+
+    // Add start image in official inlineData format
+    const cleanStartBase64 = startImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+    instance.image = {
+      inlineData: {
+        mimeType: "image/png",
+        data: cleanStartBase64,
       },
     };
 
-    // Add start image as reference
-    const cleanStartBase64 = startImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-    requestBody.instances[0].image = {
-      bytesBase64Encoded: cleanStartBase64,
-      mimeType: "image/png",
+    // Add end image (lastFrame) if provided
+    if (endImageBase64) {
+      const cleanEndBase64 = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      instance.lastFrame = {
+        inlineData: {
+          mimeType: "image/png",
+          data: cleanEndBase64,
+        },
+      };
+    }
+
+    const requestBody: any = {
+      instances: [instance],
+      parameters: {
+        aspectRatio: "16:9",
+        numberOfVideos: 1,
+        durationSeconds: 8,
+        personGeneration: "allow_adult",
+      },
     };
 
     const response = await fetch(
