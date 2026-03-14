@@ -431,31 +431,11 @@ const Index = () => {
   const sceneAiUpdateCamera = sceneAiMode === "camera" || sceneAiMode === "both";
   const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
 
-  // Helper: Call text AI - routes to edge function for FULL, direct Gemini for others
+  // Helper: Call text AI - direct Gemini for all plans
   const callGeminiOrFull = async (
     parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>,
     options?: { model?: string; temperature?: number; maxOutputTokens?: number }
   ): Promise<string> => {
-    if (isFullPlan) {
-      let prompt = "";
-      const refImages: string[] = [];
-      for (const part of parts) {
-        if (part.text) prompt += (prompt ? '\n' : '') + part.text;
-        if (part.inlineData?.data) refImages.push(part.inlineData.data);
-      }
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "text", prompt, referenceImages: refImages.length > 0 ? refImages : undefined }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Fehler: ${res.status}`);
-      }
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Generierung fehlgeschlagen");
-      return data.text;
-    } else {
       const model = options?.model || "gemini-2.5-flash";
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -474,7 +454,6 @@ const Index = () => {
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    }
   };
 
   // Browser compatibility check on mount
