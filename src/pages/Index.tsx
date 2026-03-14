@@ -18,9 +18,7 @@ import JSZip from "jszip";
 import { setCookie, getCookie, saveToLocalStorage, getFromLocalStorage, createManagedBlobUrl, revokeManagedBlobUrl, cleanupAllBlobUrls, getDetailedErrorMessage, checkBrowserCompatibility, getDeviceInfo, compressImageToFitSize } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
-import { useCredits } from "@/hooks/useCredits";
 import { LoginDialog } from "@/components/LoginDialog";
-import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
@@ -247,9 +245,8 @@ const Index = () => {
   const isPro = authData.planCode === "PREMIUM" || authData.planCode === "FULL";
   const isFullPlan = authData.planCode === "FULL";
   const { theme, setTheme } = useTheme();
-  const { balance: creditsBalance, isLoading: creditsLoading, error: creditsError, consumeCredit, refreshBalance } = useCredits(authData.planCode, authData.isAuthenticated);
   const [apiKey, setApiKey] = useState("");
-  const canGenerate = isFullPlan || !!apiKey;
+  const canGenerate = !!apiKey;
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [sceneDescription, setSceneDescription] = useState("");
@@ -433,31 +430,11 @@ const Index = () => {
   const sceneAiUpdateCamera = sceneAiMode === "camera" || sceneAiMode === "both";
   const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
 
-  // Helper: Call text AI - routes to edge function for FULL, direct Gemini for others
+  // Helper: Call text AI - direct Gemini for all plans
   const callGeminiOrFull = async (
     parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>,
     options?: { model?: string; temperature?: number; maxOutputTokens?: number }
   ): Promise<string> => {
-    if (isFullPlan) {
-      let prompt = "";
-      const refImages: string[] = [];
-      for (const part of parts) {
-        if (part.text) prompt += (prompt ? '\n' : '') + part.text;
-        if (part.inlineData?.data) refImages.push(part.inlineData.data);
-      }
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "text", prompt, referenceImages: refImages.length > 0 ? refImages : undefined }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Fehler: ${res.status}`);
-      }
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Generierung fehlgeschlagen");
-      return data.text;
-    } else {
       const model = options?.model || "gemini-2.5-flash";
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -476,7 +453,6 @@ const Index = () => {
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    }
   };
 
   // Browser compatibility check on mount
@@ -2017,24 +1993,120 @@ Respond ONLY with JSON:
     setIsGeneratingVideoPrompts(false);
   };
 
-  // Generate videos via kie.ai Veo3 API for all scenes
+  // Helper: Start Gemini Veo video generation via predictLongRunning
+  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
+    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
+    const model = "veo-3.1-generate-preview";
+    
+    // Build request body
+    const requestBody: any = {
+      instances: [{
+        prompt,
+      }],
+      parameters: {
+        aspectRatio: "16:9",
+        sampleCount: 1,
+        durationSeconds: 8,
+        personGeneration: "allow_adult",
+      },
+    };
+
+    // Add start image as reference
+    const cleanStartBase64 = startImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+    requestBody.instances[0].image = {
+      bytesBase64Encoded: cleanStartBase64,
+      mimeType: "image/png",
+    };
+
+    // Add end image if available
+    if (endImageBase64) {
+      const cleanEndBase64 = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      requestBody.instances[0].endImage = {
+        bytesBase64Encoded: cleanEndBase64,
+        mimeType: "image/png",
+      };
+    }
+
+    const response = await fetch(
+      `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("❌ Video generation failed:", response.status, errText);
+      if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
+      if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
+      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const operationName = data.name;
+    if (!operationName) throw new Error("Keine Operation-ID erhalten");
+    return operationName;
+  };
+
+  // Helper: Poll Gemini Veo video operation status
+  const pollGeminiVideoOperation = async (operationName: string): Promise<{ status: string; videoUrl?: string; error?: string }> => {
+    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
+    
+    const response = await fetch(
+      `${GEMINI_BASE}/${operationName}?key=${apiKey}`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn("Status-Abfrage fehlgeschlagen:", response.status, errText);
+      return { status: "processing" };
+    }
+
+    const data = await response.json();
+    
+    if (data.done) {
+      if (data.error) {
+        return { status: "failed", error: data.error.message || "Video-Generierung fehlgeschlagen" };
+      }
+      
+      // Extract video URL from response
+      const videos = data.response?.generatedVideos || data.response?.videos || [];
+      const videoUri = videos[0]?.video?.uri;
+      
+      if (videoUri) {
+        // If it's a file URI, we need to fetch it with the API key
+        const videoUrl = videoUri.startsWith("http") 
+          ? videoUri 
+          : `${GEMINI_BASE}/files/${videoUri}?key=${apiKey}`;
+        return { status: "completed", videoUrl };
+      }
+      
+      return { status: "failed", error: "Kein Video in der Antwort" };
+    }
+    
+    return { status: "processing" };
+  };
+
+  // Generate videos via Gemini Veo API for all scenes
   const generateVideos = async () => {
-    if (storyPoints.length === 0 || isGeneratingVideos) return;
+    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey) return;
     
     setIsGeneratingVideos(true);
     setVideoErrors(new Map());
     setVideoResults(new Map());
     setVideoTaskIds(new Map());
     
-    const newTaskIds = new Map<number, string>();
-    const allUploadedKeys: string[] = [];
+    const newOperations = new Map<number, string>();
     
     for (let i = 0; i < storyPoints.length; i++) {
       const point = storyPoints[i];
       if (!point.generatedImage || !point.videoPrompt) continue;
       
       setGeneratingVideoIndex(i);
-      setVideoGenerationPhase("uploading");
+      setVideoGenerationPhase("generating");
       
       try {
         const startImgResponse = await fetch(point.generatedImage);
@@ -2056,39 +2128,10 @@ Respond ONLY with JSON:
           });
         }
         
-        setVideoGenerationPhase("generating");
-        
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({
-              action: "generate",
-              prompt: point.videoPrompt,
-              startFrameBase64: startBase64,
-              endFrameBase64: endBase64,
-              model: "veo3_fast",
-            })
-          }
-        );
-        
-        const result = await response.json();
-        
-        if (result.success && result.taskId) {
-          console.log(`✅ Szene ${i + 1}: Video-Task gestartet, ID: ${result.taskId}`);
-          newTaskIds.set(i, result.taskId);
-          setVideoTaskIds(prev => new Map(prev).set(i, result.taskId));
-          if (result.uploadedKeys) {
-            allUploadedKeys.push(...result.uploadedKeys);
-          }
-        } else {
-          console.error(`❌ Szene ${i + 1}: ${result.error}`);
-          setVideoErrors(prev => new Map(prev).set(i, result.error || "Unbekannter Fehler"));
-        }
+        const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
+        console.log(`✅ Szene ${i + 1}: Video-Operation gestartet: ${operationName}`);
+        newOperations.set(i, operationName);
+        setVideoTaskIds(prev => new Map(prev).set(i, operationName));
       } catch (error) {
         console.error(`❌ Szene ${i + 1} Video-Generierung fehlgeschlagen:`, error);
         setVideoErrors(prev => new Map(prev).set(i, error instanceof Error ? error.message : "Netzwerkfehler"));
@@ -2099,54 +2142,32 @@ Respond ONLY with JSON:
       }
     }
     
+    // Poll for results
     setVideoGenerationPhase("polling");
     setGeneratingVideoIndex(null);
     
-    const pendingTasks = new Map<number, string>(newTaskIds);
-    const maxPolls = 60;
+    const pendingOps = new Map<number, string>(newOperations);
+    const maxPolls = 90;
     let pollCount = 0;
     
-    while (pendingTasks.size > 0 && pollCount < maxPolls) {
+    while (pendingOps.size > 0 && pollCount < maxPolls) {
       await new Promise(resolve => setTimeout(resolve, 10000));
       pollCount++;
       
-      for (const [sceneIndex, taskId] of Array.from(pendingTasks.entries())) {
+      for (const [sceneIndex, opName] of Array.from(pendingOps.entries())) {
         try {
-          const statusResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-              },
-              body: JSON.stringify({ action: "status", taskId })
-            }
-          );
+          const result = await pollGeminiVideoOperation(opName);
+          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
           
-          const statusResult = await statusResponse.json();
-          
-          if (statusResult.success) {
-            const status = statusResult.status;
-            console.log(`📊 Szene ${sceneIndex + 1} Status: ${status}`);
-            
-            if (status === "completed" || status === "success") {
-              const videoUrl = statusResult.resultUrls?.[0];
-              if (videoUrl) {
-                setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
-                // Save video URL directly on the story point
-                setStoryPoints(prev => prev.map((p, i) => 
-                  i === sceneIndex ? { ...p, generatedVideo: videoUrl } : p
-                ));
-              }
-              pendingTasks.delete(sceneIndex);
-            } else if (status === "failed" || status === "error") {
-              const apiError = statusResult.rawData?.errorMessage || statusResult.rawData?.errorCode 
-                ? `${statusResult.rawData.errorMessage || ''} (Code: ${statusResult.rawData.errorCode || 'unknown'})`
-                : "Video-Generierung fehlgeschlagen";
-              setVideoErrors(prev => new Map(prev).set(sceneIndex, apiError));
-              pendingTasks.delete(sceneIndex);
-            }
+          if (result.status === "completed" && result.videoUrl) {
+            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
+            setStoryPoints(prev => prev.map((p, i) => 
+              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
+            ));
+            pendingOps.delete(sceneIndex);
+          } else if (result.status === "failed") {
+            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
+            pendingOps.delete(sceneIndex);
           }
         } catch (error) {
           console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
@@ -2154,30 +2175,9 @@ Respond ONLY with JSON:
       }
     }
     
-    if (pendingTasks.size > 0) {
-      for (const [sceneIndex] of pendingTasks.entries()) {
+    if (pendingOps.size > 0) {
+      for (const [sceneIndex] of pendingOps.entries()) {
         setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-      }
-    }
-    
-    // Cleanup temporary images from DO Spaces
-    if (allUploadedKeys.length > 0) {
-      console.log(`🗑️ Cleaning up ${allUploadedKeys.length} temporary images from DO Spaces...`);
-      try {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({ action: "cleanup", uploadedKeys: allUploadedKeys })
-          }
-        );
-        console.log("✅ Temporary images cleaned up");
-      } catch (err) {
-        console.warn("⚠️ Cleanup failed:", err);
       }
     }
     
@@ -2189,18 +2189,15 @@ Respond ONLY with JSON:
   // Regenerate a single video for a specific scene
   const regenerateSingleVideo = async (sceneIndex: number) => {
     const point = storyPoints[sceneIndex];
-    if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos) return;
+    if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos || !apiKey) return;
     
-    // Clear previous results/errors for this scene
     setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
     setVideoResults(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
     setStoryPoints(prev => prev.map((p, i) => i === sceneIndex ? { ...p, generatedVideo: undefined } : p));
     
     setIsGeneratingVideos(true);
     setGeneratingVideoIndex(sceneIndex);
-    setVideoGenerationPhase("uploading");
-    
-    let uploadedKeys: string[] = [];
+    setVideoGenerationPhase("generating");
     
     try {
       const startImgResponse = await fetch(point.generatedImage);
@@ -2222,113 +2219,46 @@ Respond ONLY with JSON:
         });
       }
       
-      setVideoGenerationPhase("generating");
+      const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
+      console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
+      setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
       
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-          },
-          body: JSON.stringify({
-            action: "generate",
-            prompt: point.videoPrompt,
-            startFrameBase64: startBase64,
-            endFrameBase64: endBase64,
-            model: "veo3_fast",
-          })
-        }
-      );
+      // Poll for result
+      setVideoGenerationPhase("polling");
+      setGeneratingVideoIndex(null);
       
-      const result = await response.json();
+      let pollCount = 0;
+      const maxPolls = 90;
       
-      if (result.success && result.taskId) {
-        console.log(`✅ Szene ${sceneIndex + 1}: Video-Task gestartet, ID: ${result.taskId}`);
-        setVideoTaskIds(prev => new Map(prev).set(sceneIndex, result.taskId));
-        if (result.uploadedKeys) uploadedKeys = result.uploadedKeys;
+      while (pollCount < maxPolls) {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        pollCount++;
         
-        // Poll for result
-        setVideoGenerationPhase("polling");
-        setGeneratingVideoIndex(null);
-        
-        let pollCount = 0;
-        const maxPolls = 60;
-        
-        while (pollCount < maxPolls) {
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          pollCount++;
+        try {
+          const result = await pollGeminiVideoOperation(operationName);
+          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
           
-          try {
-            const statusResponse = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-                },
-                body: JSON.stringify({ action: "status", taskId: result.taskId })
-              }
-            );
-            
-            const statusResult = await statusResponse.json();
-            
-            if (statusResult.success) {
-              const status = statusResult.status;
-              console.log(`📊 Szene ${sceneIndex + 1} Status: ${status}`);
-              
-              if (status === "completed" || status === "success") {
-                const videoUrl = statusResult.resultUrls?.[0];
-                if (videoUrl) {
-                  setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
-                  setStoryPoints(prev => prev.map((p, i) => 
-                    i === sceneIndex ? { ...p, generatedVideo: videoUrl } : p
-                  ));
-                }
-                break;
-              } else if (status === "failed" || status === "error") {
-                const apiError = statusResult.rawData?.errorMessage || statusResult.rawData?.errorCode 
-                  ? `${statusResult.rawData.errorMessage || ''} (Code: ${statusResult.rawData.errorCode || 'unknown'})`
-                  : "Video-Generierung fehlgeschlagen";
-                setVideoErrors(prev => new Map(prev).set(sceneIndex, apiError));
-                break;
-              }
-            }
-          } catch (error) {
-            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+          if (result.status === "completed" && result.videoUrl) {
+            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
+            setStoryPoints(prev => prev.map((p, i) => 
+              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
+            ));
+            break;
+          } else if (result.status === "failed") {
+            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
+            break;
           }
+        } catch (error) {
+          console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
         }
-        
-        if (pollCount >= maxPolls) {
-          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-        }
-      } else {
-        setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Unbekannter Fehler"));
+      }
+      
+      if (pollCount >= maxPolls) {
+        setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
       }
     } catch (error) {
       console.error(`❌ Szene ${sceneIndex + 1} Video-Generierung fehlgeschlagen:`, error);
       setVideoErrors(prev => new Map(prev).set(sceneIndex, error instanceof Error ? error.message : "Netzwerkfehler"));
-    }
-    
-    // Cleanup
-    if (uploadedKeys.length > 0) {
-      try {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({ action: "cleanup", uploadedKeys })
-          }
-        );
-      } catch (err) {
-        console.warn("⚠️ Cleanup failed:", err);
-      }
     }
     
     setVideoGenerationPhase("idle");
@@ -3094,11 +3024,9 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
 
   // Load saved data on mount
   useEffect(() => {
-    if (!isFullPlan) {
-      const savedApiKey = getCookie("gemini_api_key");
-      if (savedApiKey) {
-        setApiKey(savedApiKey);
-      }
+    const savedApiKey = getCookie("gemini_api_key");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
     }
 
     const savedImages = getFromLocalStorage("reference_images");
@@ -3117,10 +3045,10 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
 
   // Save API key when it changes
   useEffect(() => {
-    if (!isFullPlan && apiKey) {
+    if (apiKey) {
       setCookie("gemini_api_key", apiKey, 30);
     }
-  }, [apiKey, isFullPlan]);
+  }, [apiKey]);
 
   // Save reference images when they change
   useEffect(() => {
@@ -3314,45 +3242,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
-      // ===== FULL PLAN: Use Gemini API via edge function (backend key) =====
-      if (isFullPlan) {
-        const fullResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: externalSignal,
-            body: JSON.stringify({
-              mode: "image",
-              prompt: (parts[0] as any).text || "",
-              referenceImages: cleanBase64Images,
-              aspectRatio: formatOption?.ratio || "1:1",
-            }),
-          }
-        );
-        
-        if (!fullResponse.ok) {
-          const errData = await fullResponse.json().catch(() => ({}));
-          throw new Error(errData.error || `Fehler: ${fullResponse.status}`);
-        }
-        
-        const fullData = await fullResponse.json();
-        if (!fullData.success) throw new Error(fullData.error || "Bildgenerierung fehlgeschlagen");
-        
-        if (fullData.imageBase64) {
-          const binary = atob(fullData.imageBase64);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const blob = new Blob([bytes], { type: fullData.mimeType || "image/png" });
-          const objectUrl = createManagedBlobUrl(blob);
-          console.log(`✅ Image ${index + 1} generated via FULL plan Gemini:`, objectUrl);
-          return objectUrl;
-        }
-        
-        throw new Error("Kein Bild generiert");
-      }
-
-      // ===== Gemini 2.5 Flash Image Generation (BASIC/PREMIUM) =====
+      // ===== Gemini Image Generation =====
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 40_000); // 40 Sekunden Timeout
 
@@ -3530,7 +3420,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🔄 totalCount:", totalCount);
     console.log("🔄 base64Images Länge:", base64Images.length);
     
-    const CONCURRENT_REQUESTS = isFullPlan ? 2 : (isPro ? 2 : 1);
+    const CONCURRENT_REQUESTS = isPro ? 2 : 1;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
     console.log("🔄 Starte worker-pool...");
@@ -3576,7 +3466,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
         if (imageUrl) {
           let thumbUrl: string | undefined;
-          if (isPro || isFullPlan) {
+          if (isPro) {
             try { thumbUrl = await createThumbnailFromBlob(imageUrl, 1024); } catch (e) { console.warn("Thumbnail creation failed:", e); }
           }
           setImageSlots((prev) => {
@@ -3651,14 +3541,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
     
-    // Consume credit for FULL users
-    if (isFullPlan) {
-      const creditResult = await consumeCredit(1);
-      if (!creditResult.success) {
-        console.error("❌ Credit-Fehler:", creditResult.error);
-        return;
-      }
-    }
 
     if (referenceImages.length === 0) {
       console.log("❌ Fehler: Keine Reference Images");
@@ -3710,13 +3592,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
     
-    if (isFullPlan) {
-      const creditResult = await consumeCredit(1);
-      if (!creditResult.success) {
-        console.error("❌ Credit-Fehler:", creditResult.error);
-        return;
-      }
-    }
 
     if (referenceImages.length === 0) {
       return;
@@ -4137,10 +4012,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   // Regenerate a single image slot (creates a new version)
   const handleRegenerateSlot = async (index: number) => {
     if (!canGenerate || referenceImages.length === 0) return;
-    if (isFullPlan) {
-      const creditResult = await consumeCredit(1);
-      if (!creditResult.success) return;
-    }
     
     // Set slot to loading state, keep versions
     setImageSlots(prev => {
@@ -4273,7 +4144,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create thumbnail for gallery
       let thumbUrl: string | undefined;
-      if (isPro || isFullPlan) {
+      if (isPro) {
         try {
           thumbUrl = await createThumbnailFromBlob(imageUrl, 1024);
         } catch (e) {
@@ -5140,9 +5011,6 @@ Beispiel einer korrekten Antwort:
           <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
             v1.4.5
           </div>
-          {isFullPlan && (
-            <CreditsDisplay balance={creditsBalance} isLoading={creditsLoading} error={creditsError} />
-          )}
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
@@ -5161,7 +5029,6 @@ Beispiel einer korrekten Antwort:
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-6">
-                {!isFullPlan ? (
                 <div className="space-y-2">
                   <Label htmlFor="settings-api-key">Google Gemini API Key</Label>
                   <Input
@@ -5176,20 +5043,6 @@ Beispiel einer korrekten Antwort:
                     Dein API Key wird sicher gespeichert und nur lokal verwendet.
                   </p>
                 </div>
-                ) : (
-                <div className="space-y-2">
-                  <Label>Credits</Label>
-                  <div className="flex items-center gap-2">
-                    <CreditsDisplay balance={creditsBalance} isLoading={creditsLoading} error={creditsError} />
-                    <Button variant="outline" size="sm" onClick={refreshBalance} className="ml-auto">
-                      <RefreshCw className="w-3 h-3 mr-1" /> Aktualisieren
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Jede Generierung verbraucht 1 Credit.
-                  </p>
-                </div>
-                )}
                 
                 {/* Theme Selector - Pro Only */}
                 <div className="pt-6 border-t border-border">
@@ -6024,7 +5877,6 @@ Beispiel einer korrekten Antwort:
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
                   Bilder generieren
-                  {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                 </Button>
               ) : (
                 <>
@@ -6037,7 +5889,6 @@ Beispiel einer korrekten Antwort:
                     <Plus className="w-5 h-5 mr-2" />
                     <span className="hidden sm:inline">{isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}</span>
                     <span className="sm:hidden">{isGenerating ? 'Hinzufügen' : 'Mehr generieren'}</span>
-                    {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                   </Button>
                   
                   <AlertDialog>
