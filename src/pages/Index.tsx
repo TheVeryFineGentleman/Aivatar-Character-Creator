@@ -2042,29 +2042,13 @@ Respond ONLY with JSON:
       
       console.log("📦 Veo done response:", JSON.stringify(data.response, null, 2).substring(0, 500));
       
-      // Try multiple response structures:
-      // 1. predictLongRunning format: response.predictions[0].bytesBase64Encoded
-      const predictions = data.response?.predictions || [];
-      if (predictions[0]?.bytesBase64Encoded) {
-        const mimeType = predictions[0].mimeType || "video/mp4";
-        const videoUrl = `data:${mimeType};base64,${predictions[0].bytesBase64Encoded}`;
-        return { status: "completed", videoUrl };
-      }
-      
-      // 2. generateVideos format: response.generatedVideos[0].video.uri
-      const videos = data.response?.generatedVideos || data.response?.videos || [];
-      const videoUri = videos[0]?.video?.uri;
+      // Official Veo 3.1 response: response.generateVideoResponse.generatedSamples[0].video.uri
+      const generatedSamples = data.response?.generateVideoResponse?.generatedSamples || [];
+      const videoUri = generatedSamples[0]?.video?.uri;
       if (videoUri) {
         const videoUrl = videoUri.startsWith("http") 
           ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
           : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
-        return { status: "completed", videoUrl };
-      }
-      
-      // 3. Direct video URI in response
-      if (data.response?.video?.uri) {
-        const uri = data.response.video.uri;
-        const videoUrl = `${uri}${uri.includes('?') ? '&' : '?'}key=${apiKey}`;
         return { status: "completed", videoUrl };
       }
       
