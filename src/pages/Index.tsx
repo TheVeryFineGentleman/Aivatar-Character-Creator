@@ -3676,13 +3676,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
     
-    if (isFullPlan) {
-      const creditResult = await consumeCredit(1);
-      if (!creditResult.success) {
-        console.error("❌ Credit-Fehler:", creditResult.error);
-        return;
-      }
-    }
 
     if (referenceImages.length === 0) {
       return;
