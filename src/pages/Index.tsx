@@ -6068,16 +6068,50 @@ Beispiel einer korrekten Antwort:
                     </AlertDialogContent>
                   </AlertDialog>
                   
-                  <Button
-                    onClick={handleDownloadAll}
-                    disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
-                    variant="secondary"
-                    className="h-12"
-                    size="lg"
-                  >
-                    <Download className="mr-2" />
-                    Alle herunterladen
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
+                        variant="secondary"
+                        className="h-12"
+                        size="lg"
+                      >
+                        <Download className="mr-2" />
+                        Alle herunterladen
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      {[
+                        { label: "512px", maxWidth: 512, minPlan: "basic" as const },
+                        { label: "1K", maxWidth: 1024, minPlan: "basic" as const },
+                        { label: "2K", maxWidth: 2048, minPlan: "pro" as const },
+                        { label: "4K (Original)", maxWidth: 0, minPlan: "pro" as const },
+                      ].map((opt) => {
+                        const isLocked = !isPro && opt.minPlan === "pro";
+                        return (
+                          <DropdownMenuItem
+                            key={opt.label}
+                            onClick={() => {
+                              if (isLocked) {
+                                handleLockedClick();
+                              } else {
+                                handleDownloadAll(opt.maxWidth);
+                              }
+                            }}
+                            className={cn(isLocked && "opacity-50")}
+                          >
+                            {isLocked ? (
+                              <Lock className="w-4 h-4 mr-2 text-muted-foreground" />
+                            ) : (
+                              <Download className="w-4 h-4 mr-2" />
+                            )}
+                            {opt.label}
+                            {isLocked && <span className="ml-auto text-[10px] text-muted-foreground">Pro</span>}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               )}
             </div>
