@@ -3288,45 +3288,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         })),
       ];
       
-      // ===== FULL PLAN: Use Gemini API via edge function (backend key) =====
-      if (isFullPlan) {
-        const fullResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-full`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: externalSignal,
-            body: JSON.stringify({
-              mode: "image",
-              prompt: (parts[0] as any).text || "",
-              referenceImages: cleanBase64Images,
-              aspectRatio: formatOption?.ratio || "1:1",
-            }),
-          }
-        );
-        
-        if (!fullResponse.ok) {
-          const errData = await fullResponse.json().catch(() => ({}));
-          throw new Error(errData.error || `Fehler: ${fullResponse.status}`);
-        }
-        
-        const fullData = await fullResponse.json();
-        if (!fullData.success) throw new Error(fullData.error || "Bildgenerierung fehlgeschlagen");
-        
-        if (fullData.imageBase64) {
-          const binary = atob(fullData.imageBase64);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const blob = new Blob([bytes], { type: fullData.mimeType || "image/png" });
-          const objectUrl = createManagedBlobUrl(blob);
-          console.log(`✅ Image ${index + 1} generated via FULL plan Gemini:`, objectUrl);
-          return objectUrl;
-        }
-        
-        throw new Error("Kein Bild generiert");
-      }
-
-      // ===== Gemini 2.5 Flash Image Generation (BASIC/PREMIUM) =====
+      // ===== Gemini Image Generation =====
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 40_000); // 40 Sekunden Timeout
 
