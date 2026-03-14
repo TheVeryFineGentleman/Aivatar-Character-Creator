@@ -3091,10 +3091,10 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
 
   // Save API key when it changes
   useEffect(() => {
-    if (!isFullPlan && apiKey) {
+    if (apiKey) {
       setCookie("gemini_api_key", apiKey, 30);
     }
-  }, [apiKey, isFullPlan]);
+  }, [apiKey]);
 
   // Save reference images when they change
   useEffect(() => {
