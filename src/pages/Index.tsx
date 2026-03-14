@@ -3512,7 +3512,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
         if (imageUrl) {
           let thumbUrl: string | undefined;
-          if (isPro || isFullPlan) {
+          if (isPro) {
             try { thumbUrl = await createThumbnailFromBlob(imageUrl, 1024); } catch (e) { console.warn("Thumbnail creation failed:", e); }
           }
           setImageSlots((prev) => {
