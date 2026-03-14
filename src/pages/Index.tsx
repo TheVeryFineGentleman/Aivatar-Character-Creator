@@ -1993,24 +1993,120 @@ Respond ONLY with JSON:
     setIsGeneratingVideoPrompts(false);
   };
 
-  // Generate videos via kie.ai Veo3 API for all scenes
+  // Helper: Start Gemini Veo video generation via predictLongRunning
+  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
+    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
+    const model = "veo-3.1-generate-preview";
+    
+    // Build request body
+    const requestBody: any = {
+      instances: [{
+        prompt,
+      }],
+      parameters: {
+        aspectRatio: "16:9",
+        sampleCount: 1,
+        durationSeconds: 8,
+        personGeneration: "allow_adult",
+      },
+    };
+
+    // Add start image as reference
+    const cleanStartBase64 = startImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+    requestBody.instances[0].image = {
+      bytesBase64Encoded: cleanStartBase64,
+      mimeType: "image/png",
+    };
+
+    // Add end image if available
+    if (endImageBase64) {
+      const cleanEndBase64 = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      requestBody.instances[0].endImage = {
+        bytesBase64Encoded: cleanEndBase64,
+        mimeType: "image/png",
+      };
+    }
+
+    const response = await fetch(
+      `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("❌ Video generation failed:", response.status, errText);
+      if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
+      if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
+      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const operationName = data.name;
+    if (!operationName) throw new Error("Keine Operation-ID erhalten");
+    return operationName;
+  };
+
+  // Helper: Poll Gemini Veo video operation status
+  const pollGeminiVideoOperation = async (operationName: string): Promise<{ status: string; videoUrl?: string; error?: string }> => {
+    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
+    
+    const response = await fetch(
+      `${GEMINI_BASE}/${operationName}?key=${apiKey}`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn("Status-Abfrage fehlgeschlagen:", response.status, errText);
+      return { status: "processing" };
+    }
+
+    const data = await response.json();
+    
+    if (data.done) {
+      if (data.error) {
+        return { status: "failed", error: data.error.message || "Video-Generierung fehlgeschlagen" };
+      }
+      
+      // Extract video URL from response
+      const videos = data.response?.generatedVideos || data.response?.videos || [];
+      const videoUri = videos[0]?.video?.uri;
+      
+      if (videoUri) {
+        // If it's a file URI, we need to fetch it with the API key
+        const videoUrl = videoUri.startsWith("http") 
+          ? videoUri 
+          : `${GEMINI_BASE}/files/${videoUri}?key=${apiKey}`;
+        return { status: "completed", videoUrl };
+      }
+      
+      return { status: "failed", error: "Kein Video in der Antwort" };
+    }
+    
+    return { status: "processing" };
+  };
+
+  // Generate videos via Gemini Veo API for all scenes
   const generateVideos = async () => {
-    if (storyPoints.length === 0 || isGeneratingVideos) return;
+    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey) return;
     
     setIsGeneratingVideos(true);
     setVideoErrors(new Map());
     setVideoResults(new Map());
     setVideoTaskIds(new Map());
     
-    const newTaskIds = new Map<number, string>();
-    const allUploadedKeys: string[] = [];
+    const newOperations = new Map<number, string>();
     
     for (let i = 0; i < storyPoints.length; i++) {
       const point = storyPoints[i];
       if (!point.generatedImage || !point.videoPrompt) continue;
       
       setGeneratingVideoIndex(i);
-      setVideoGenerationPhase("uploading");
+      setVideoGenerationPhase("generating");
       
       try {
         const startImgResponse = await fetch(point.generatedImage);
@@ -2032,39 +2128,10 @@ Respond ONLY with JSON:
           });
         }
         
-        setVideoGenerationPhase("generating");
-        
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({
-              action: "generate",
-              prompt: point.videoPrompt,
-              startFrameBase64: startBase64,
-              endFrameBase64: endBase64,
-              model: "veo3_fast",
-            })
-          }
-        );
-        
-        const result = await response.json();
-        
-        if (result.success && result.taskId) {
-          console.log(`✅ Szene ${i + 1}: Video-Task gestartet, ID: ${result.taskId}`);
-          newTaskIds.set(i, result.taskId);
-          setVideoTaskIds(prev => new Map(prev).set(i, result.taskId));
-          if (result.uploadedKeys) {
-            allUploadedKeys.push(...result.uploadedKeys);
-          }
-        } else {
-          console.error(`❌ Szene ${i + 1}: ${result.error}`);
-          setVideoErrors(prev => new Map(prev).set(i, result.error || "Unbekannter Fehler"));
-        }
+        const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
+        console.log(`✅ Szene ${i + 1}: Video-Operation gestartet: ${operationName}`);
+        newOperations.set(i, operationName);
+        setVideoTaskIds(prev => new Map(prev).set(i, operationName));
       } catch (error) {
         console.error(`❌ Szene ${i + 1} Video-Generierung fehlgeschlagen:`, error);
         setVideoErrors(prev => new Map(prev).set(i, error instanceof Error ? error.message : "Netzwerkfehler"));
@@ -2075,54 +2142,32 @@ Respond ONLY with JSON:
       }
     }
     
+    // Poll for results
     setVideoGenerationPhase("polling");
     setGeneratingVideoIndex(null);
     
-    const pendingTasks = new Map<number, string>(newTaskIds);
-    const maxPolls = 60;
+    const pendingOps = new Map<number, string>(newOperations);
+    const maxPolls = 90;
     let pollCount = 0;
     
-    while (pendingTasks.size > 0 && pollCount < maxPolls) {
+    while (pendingOps.size > 0 && pollCount < maxPolls) {
       await new Promise(resolve => setTimeout(resolve, 10000));
       pollCount++;
       
-      for (const [sceneIndex, taskId] of Array.from(pendingTasks.entries())) {
+      for (const [sceneIndex, opName] of Array.from(pendingOps.entries())) {
         try {
-          const statusResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-              },
-              body: JSON.stringify({ action: "status", taskId })
-            }
-          );
+          const result = await pollGeminiVideoOperation(opName);
+          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
           
-          const statusResult = await statusResponse.json();
-          
-          if (statusResult.success) {
-            const status = statusResult.status;
-            console.log(`📊 Szene ${sceneIndex + 1} Status: ${status}`);
-            
-            if (status === "completed" || status === "success") {
-              const videoUrl = statusResult.resultUrls?.[0];
-              if (videoUrl) {
-                setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
-                // Save video URL directly on the story point
-                setStoryPoints(prev => prev.map((p, i) => 
-                  i === sceneIndex ? { ...p, generatedVideo: videoUrl } : p
-                ));
-              }
-              pendingTasks.delete(sceneIndex);
-            } else if (status === "failed" || status === "error") {
-              const apiError = statusResult.rawData?.errorMessage || statusResult.rawData?.errorCode 
-                ? `${statusResult.rawData.errorMessage || ''} (Code: ${statusResult.rawData.errorCode || 'unknown'})`
-                : "Video-Generierung fehlgeschlagen";
-              setVideoErrors(prev => new Map(prev).set(sceneIndex, apiError));
-              pendingTasks.delete(sceneIndex);
-            }
+          if (result.status === "completed" && result.videoUrl) {
+            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
+            setStoryPoints(prev => prev.map((p, i) => 
+              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
+            ));
+            pendingOps.delete(sceneIndex);
+          } else if (result.status === "failed") {
+            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
+            pendingOps.delete(sceneIndex);
           }
         } catch (error) {
           console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
@@ -2130,30 +2175,9 @@ Respond ONLY with JSON:
       }
     }
     
-    if (pendingTasks.size > 0) {
-      for (const [sceneIndex] of pendingTasks.entries()) {
+    if (pendingOps.size > 0) {
+      for (const [sceneIndex] of pendingOps.entries()) {
         setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-      }
-    }
-    
-    // Cleanup temporary images from DO Spaces
-    if (allUploadedKeys.length > 0) {
-      console.log(`🗑️ Cleaning up ${allUploadedKeys.length} temporary images from DO Spaces...`);
-      try {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({ action: "cleanup", uploadedKeys: allUploadedKeys })
-          }
-        );
-        console.log("✅ Temporary images cleaned up");
-      } catch (err) {
-        console.warn("⚠️ Cleanup failed:", err);
       }
     }
     
@@ -2165,18 +2189,15 @@ Respond ONLY with JSON:
   // Regenerate a single video for a specific scene
   const regenerateSingleVideo = async (sceneIndex: number) => {
     const point = storyPoints[sceneIndex];
-    if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos) return;
+    if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos || !apiKey) return;
     
-    // Clear previous results/errors for this scene
     setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
     setVideoResults(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
     setStoryPoints(prev => prev.map((p, i) => i === sceneIndex ? { ...p, generatedVideo: undefined } : p));
     
     setIsGeneratingVideos(true);
     setGeneratingVideoIndex(sceneIndex);
-    setVideoGenerationPhase("uploading");
-    
-    let uploadedKeys: string[] = [];
+    setVideoGenerationPhase("generating");
     
     try {
       const startImgResponse = await fetch(point.generatedImage);
@@ -2198,113 +2219,46 @@ Respond ONLY with JSON:
         });
       }
       
-      setVideoGenerationPhase("generating");
+      const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
+      console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
+      setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
       
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-          },
-          body: JSON.stringify({
-            action: "generate",
-            prompt: point.videoPrompt,
-            startFrameBase64: startBase64,
-            endFrameBase64: endBase64,
-            model: "veo3_fast",
-          })
-        }
-      );
+      // Poll for result
+      setVideoGenerationPhase("polling");
+      setGeneratingVideoIndex(null);
       
-      const result = await response.json();
+      let pollCount = 0;
+      const maxPolls = 90;
       
-      if (result.success && result.taskId) {
-        console.log(`✅ Szene ${sceneIndex + 1}: Video-Task gestartet, ID: ${result.taskId}`);
-        setVideoTaskIds(prev => new Map(prev).set(sceneIndex, result.taskId));
-        if (result.uploadedKeys) uploadedKeys = result.uploadedKeys;
+      while (pollCount < maxPolls) {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        pollCount++;
         
-        // Poll for result
-        setVideoGenerationPhase("polling");
-        setGeneratingVideoIndex(null);
-        
-        let pollCount = 0;
-        const maxPolls = 60;
-        
-        while (pollCount < maxPolls) {
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          pollCount++;
+        try {
+          const result = await pollGeminiVideoOperation(operationName);
+          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
           
-          try {
-            const statusResponse = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-                },
-                body: JSON.stringify({ action: "status", taskId: result.taskId })
-              }
-            );
-            
-            const statusResult = await statusResponse.json();
-            
-            if (statusResult.success) {
-              const status = statusResult.status;
-              console.log(`📊 Szene ${sceneIndex + 1} Status: ${status}`);
-              
-              if (status === "completed" || status === "success") {
-                const videoUrl = statusResult.resultUrls?.[0];
-                if (videoUrl) {
-                  setVideoResults(prev => new Map(prev).set(sceneIndex, videoUrl));
-                  setStoryPoints(prev => prev.map((p, i) => 
-                    i === sceneIndex ? { ...p, generatedVideo: videoUrl } : p
-                  ));
-                }
-                break;
-              } else if (status === "failed" || status === "error") {
-                const apiError = statusResult.rawData?.errorMessage || statusResult.rawData?.errorCode 
-                  ? `${statusResult.rawData.errorMessage || ''} (Code: ${statusResult.rawData.errorCode || 'unknown'})`
-                  : "Video-Generierung fehlgeschlagen";
-                setVideoErrors(prev => new Map(prev).set(sceneIndex, apiError));
-                break;
-              }
-            }
-          } catch (error) {
-            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+          if (result.status === "completed" && result.videoUrl) {
+            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
+            setStoryPoints(prev => prev.map((p, i) => 
+              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
+            ));
+            break;
+          } else if (result.status === "failed") {
+            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
+            break;
           }
+        } catch (error) {
+          console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
         }
-        
-        if (pollCount >= maxPolls) {
-          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-        }
-      } else {
-        setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Unbekannter Fehler"));
+      }
+      
+      if (pollCount >= maxPolls) {
+        setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
       }
     } catch (error) {
       console.error(`❌ Szene ${sceneIndex + 1} Video-Generierung fehlgeschlagen:`, error);
       setVideoErrors(prev => new Map(prev).set(sceneIndex, error instanceof Error ? error.message : "Netzwerkfehler"));
-    }
-    
-    // Cleanup
-    if (uploadedKeys.length > 0) {
-      try {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({ action: "cleanup", uploadedKeys })
-          }
-        );
-      } catch (err) {
-        console.warn("⚠️ Cleanup failed:", err);
-      }
     }
     
     setVideoGenerationPhase("idle");
