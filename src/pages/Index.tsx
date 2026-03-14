@@ -1496,18 +1496,17 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
             );
             
             if (vpText) {
-                try {
-                  const parsed = extractJsonFromAiResponse(vpText);
-                  return {
-                    videoPrompt: parsed.fullPrompt || "",
-                    veo3CameraMovement: parsed.cameraMovement || "",
-                    veo3StartState: parsed.startState || "",
-                    veo3Motion: parsed.motion || "",
-                    veo3EndState: parsed.endState || "",
-                  };
-                } catch (e) {
-                  return { videoPrompt: vpText, veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
-                }
+              try {
+                const parsed = extractJsonFromAiResponse(vpText);
+                return {
+                  videoPrompt: parsed.fullPrompt || "",
+                  veo3CameraMovement: parsed.cameraMovement || "",
+                  veo3StartState: parsed.startState || "",
+                  veo3Motion: parsed.motion || "",
+                  veo3EndState: parsed.endState || "",
+                };
+              } catch (e) {
+                return { videoPrompt: vpText, veo3CameraMovement: "", veo3StartState: "", veo3Motion: "", veo3EndState: "" };
               }
             }
           } catch (e) {
