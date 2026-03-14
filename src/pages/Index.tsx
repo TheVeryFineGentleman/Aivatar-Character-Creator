@@ -5923,7 +5923,6 @@ Beispiel einer korrekten Antwort:
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
                   Bilder generieren
-                  {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                 </Button>
               ) : (
                 <>
