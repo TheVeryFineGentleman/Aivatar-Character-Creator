@@ -6093,7 +6093,7 @@ Beispiel einer korrekten Antwort:
                             key={opt.label}
                             onClick={() => {
                               if (isLocked) {
-                                handleLockedClick();
+                                setShowUpgradePopup(true);
                               } else {
                                 handleDownloadAll(opt.maxWidth);
                               }
