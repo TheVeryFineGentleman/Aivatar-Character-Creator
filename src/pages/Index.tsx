@@ -3070,11 +3070,9 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
 
   // Load saved data on mount
   useEffect(() => {
-    if (!isFullPlan) {
-      const savedApiKey = getCookie("gemini_api_key");
-      if (savedApiKey) {
-        setApiKey(savedApiKey);
-      }
+    const savedApiKey = getCookie("gemini_api_key");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
     }
 
     const savedImages = getFromLocalStorage("reference_images");
