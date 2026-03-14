@@ -246,9 +246,8 @@ const Index = () => {
   const isPro = authData.planCode === "PREMIUM" || authData.planCode === "FULL";
   const isFullPlan = authData.planCode === "FULL";
   const { theme, setTheme } = useTheme();
-  const { balance: creditsBalance, isLoading: creditsLoading, error: creditsError, consumeCredit, refreshBalance } = useCredits(authData.planCode, authData.isAuthenticated);
   const [apiKey, setApiKey] = useState("");
-  const canGenerate = isFullPlan || !!apiKey;
+  const canGenerate = !!apiKey;
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [sceneDescription, setSceneDescription] = useState("");
