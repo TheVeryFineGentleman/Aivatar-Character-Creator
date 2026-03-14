@@ -5935,7 +5935,6 @@ Beispiel einer korrekten Antwort:
                     <Plus className="w-5 h-5 mr-2" />
                     <span className="hidden sm:inline">{isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}</span>
                     <span className="sm:hidden">{isGenerating ? 'Hinzufügen' : 'Mehr generieren'}</span>
-                    {isFullPlan && <span className="ml-1.5 text-xs opacity-70">(1 Credit)</span>}
                   </Button>
                   
                   <AlertDialog>
