@@ -2027,19 +2027,36 @@ Respond ONLY with JSON:
         return { status: "failed", error: data.error.message || "Video-Generierung fehlgeschlagen" };
       }
       
-      // Extract video URL from response
-      const videos = data.response?.generatedVideos || data.response?.videos || [];
-      const videoUri = videos[0]?.video?.uri;
+      console.log("📦 Veo done response:", JSON.stringify(data.response, null, 2).substring(0, 500));
       
-      if (videoUri) {
-        // If it's a file URI, we need to fetch it with the API key
-        const videoUrl = videoUri.startsWith("http") 
-          ? videoUri 
-          : `${GEMINI_BASE}/files/${videoUri}?key=${apiKey}`;
+      // Try multiple response structures:
+      // 1. predictLongRunning format: response.predictions[0].bytesBase64Encoded
+      const predictions = data.response?.predictions || [];
+      if (predictions[0]?.bytesBase64Encoded) {
+        const mimeType = predictions[0].mimeType || "video/mp4";
+        const videoUrl = `data:${mimeType};base64,${predictions[0].bytesBase64Encoded}`;
         return { status: "completed", videoUrl };
       }
       
-      return { status: "failed", error: "Kein Video in der Antwort" };
+      // 2. generateVideos format: response.generatedVideos[0].video.uri
+      const videos = data.response?.generatedVideos || data.response?.videos || [];
+      const videoUri = videos[0]?.video?.uri;
+      if (videoUri) {
+        const videoUrl = videoUri.startsWith("http") 
+          ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
+          : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
+        return { status: "completed", videoUrl };
+      }
+      
+      // 3. Direct video URI in response
+      if (data.response?.video?.uri) {
+        const uri = data.response.video.uri;
+        const videoUrl = `${uri}${uri.includes('?') ? '&' : '?'}key=${apiKey}`;
+        return { status: "completed", videoUrl };
+      }
+      
+      console.error("❌ Unbekannte Antwortstruktur:", JSON.stringify(data, null, 2).substring(0, 1000));
+      return { status: "failed", error: "Kein Video in der Antwort – unbekannte API-Struktur" };
     }
     
     return { status: "processing" };
