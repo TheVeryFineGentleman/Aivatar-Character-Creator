@@ -5061,25 +5061,25 @@ Beispiel einer korrekten Antwort:
           const slot = imageSlots[i];
           if (!slot.imageUrl) return;
           
-          try {
-            let imageData: Blob;
-            
-            if (isBasic) {
-              // Basic users get lower resolution
-              try {
-                const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
-                createdUrls.push(resizedUrl); // Track for cleanup
-                const response = await fetch(resizedUrl);
-                imageData = await response.blob();
-              } catch (error) {
-                console.error("Resize failed, using original:", error);
+            try {
+              let imageData: Blob;
+              
+              if (maxWidth > 0) {
+                // Resize to selected resolution
+                try {
+                  const resizedUrl = await resizeImageForBasic(slot.imageUrl, maxWidth);
+                  createdUrls.push(resizedUrl); // Track for cleanup
+                  const response = await fetch(resizedUrl);
+                  imageData = await response.blob();
+                } catch (error) {
+                  console.error("Resize failed, using original:", error);
+                  const response = await fetch(slot.imageUrl);
+                  imageData = await response.blob();
+                }
+              } else {
                 const response = await fetch(slot.imageUrl);
                 imageData = await response.blob();
               }
-            } else {
-              const response = await fetch(slot.imageUrl);
-              imageData = await response.blob();
-            }
             
             zip.file(`character-${i + 1}.png`, imageData);
           } catch (err) {
