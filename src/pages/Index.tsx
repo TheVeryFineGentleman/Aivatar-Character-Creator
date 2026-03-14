@@ -1911,46 +1911,36 @@ Respond ONLY with JSON:
       console.log(`🎬 Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nächste Szene)`);
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            body: JSON.stringify({
-              prompt: videoPromptRequest,
-              referenceImages: videoReferenceImages.length > 0 ? videoReferenceImages : undefined,
-              mode: "text",
-              apiKey: apiKey
-            })
+        // Build parts: text + optional reference images
+        const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [{ text: videoPromptRequest }];
+        if (videoReferenceImages.length > 0) {
+          for (const img of videoReferenceImages) {
+            const cleanB64 = img.replace(/^data:image\/[a-z]+;base64,/, '');
+            parts.push({ inlineData: { mimeType: "image/png", data: cleanB64 } });
           }
-        );
+        }
         
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.text) {
-            const text = result.text.trim();
-            try {
-              const parsed = extractJsonFromAiResponse(text);
-              setStoryPoints(prev => prev.map((p, idx) => {
-                if (idx !== i) return p;
-                return {
-                  ...p,
-                  videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
-                  veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
-                  veo3StartState: parsed.startState || p.veo3StartState || "",
-                  veo3Motion: parsed.motion || p.veo3Motion || "",
-                  veo3EndState: parsed.endState || p.veo3EndState || "",
-                };
-              }));
-            } catch (e) {
-              setStoryPoints(prev => prev.map((p, idx) => {
-                if (idx !== i) return p;
-                return { ...p, videoPrompt: text };
-              }));
-            }
+        const text = await callGeminiOrFull(parts, { model: "gemini-2.0-flash", temperature: 0.7, maxOutputTokens: 500 });
+        
+        if (text) {
+          try {
+            const parsed = extractJsonFromAiResponse(text);
+            setStoryPoints(prev => prev.map((p, idx) => {
+              if (idx !== i) return p;
+              return {
+                ...p,
+                videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
+                veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
+                veo3StartState: parsed.startState || p.veo3StartState || "",
+                veo3Motion: parsed.motion || p.veo3Motion || "",
+                veo3EndState: parsed.endState || p.veo3EndState || "",
+              };
+            }));
+          } catch (e) {
+            setStoryPoints(prev => prev.map((p, idx) => {
+              if (idx !== i) return p;
+              return { ...p, videoPrompt: text };
+            }));
           }
         }
       } catch (error) {
