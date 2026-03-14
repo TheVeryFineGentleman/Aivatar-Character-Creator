@@ -4096,10 +4096,6 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   // Regenerate a single image slot (creates a new version)
   const handleRegenerateSlot = async (index: number) => {
     if (!canGenerate || referenceImages.length === 0) return;
-    if (isFullPlan) {
-      const creditResult = await consumeCredit(1);
-      if (!creditResult.success) return;
-    }
     
     // Set slot to loading state, keep versions
     setImageSlots(prev => {
