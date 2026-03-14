@@ -5095,9 +5095,6 @@ Beispiel einer korrekten Antwort:
           <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
             v1.4.5
           </div>
-          {isFullPlan && (
-            <CreditsDisplay balance={creditsBalance} isLoading={creditsLoading} error={creditsError} />
-          )}
         </div>
         <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
