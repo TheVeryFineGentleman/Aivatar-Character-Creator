@@ -607,32 +607,18 @@ Der Prompt soll präzise Kamerabewegungen, Charakter-Aktionen, Licht und Atmosph
 
 Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklärungen.`;
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-          },
-          body: JSON.stringify({
-            prompt: promptRequest,
-            mode: "text",
-            apiKey: apiKey
-          })
-        }
+      const resultText = await callGeminiOrFull(
+        [{ text: promptRequest }],
+        { model: "gemini-2.0-flash", temperature: 0.7, maxOutputTokens: 500 }
       );
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.text) {
-          const idx = expandedStoryPointIndex;
-          setStoryPoints(prev => prev.map((p, i) => {
-            if (i !== idx) return p;
-            return { ...p, videoPrompt: result.text.trim() };
-          }));
-          setSceneAssistantInput("");
-        }
+      if (resultText) {
+        const idx = expandedStoryPointIndex;
+        setStoryPoints(prev => prev.map((p, i) => {
+          if (i !== idx) return p;
+          return { ...p, videoPrompt: resultText };
+        }));
+        setSceneAssistantInput("");
       }
     } catch (error) {
       console.error("Video prompt assistant error:", error);
