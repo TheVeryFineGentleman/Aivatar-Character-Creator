@@ -1958,11 +1958,11 @@ Respond ONLY with JSON:
   };
 
   // Helper: Start Gemini Veo video generation via predictLongRunning
-  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
+  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, _endImageBase64?: string): Promise<string> => {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
     const model = "veo-3.1-generate-preview";
     
-    // Build request body
+    // Build request body (endImage is NOT supported by this model)
     const requestBody: any = {
       instances: [{
         prompt,
@@ -1981,15 +1981,6 @@ Respond ONLY with JSON:
       bytesBase64Encoded: cleanStartBase64,
       mimeType: "image/png",
     };
-
-    // Add end image if available
-    if (endImageBase64) {
-      const cleanEndBase64 = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-      requestBody.instances[0].endImage = {
-        bytesBase64Encoded: cleanEndBase64,
-        mimeType: "image/png",
-      };
-    }
 
     const response = await fetch(
       `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
