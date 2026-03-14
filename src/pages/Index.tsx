@@ -1490,23 +1490,12 @@ Write a punchy video prompt (80-120 words, English):
 
 Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
 
-            const vpResponse = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-              {
-                method: "POST",
-                headers: { 
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-                },
-                signal: controller.signal,
-                body: JSON.stringify({ prompt: videoPromptText, mode: "text", apiKey })
-              }
+            const vpText = await callGeminiOrFull(
+              [{ text: videoPromptText }],
+              { model: "gemini-2.0-flash", temperature: 0.7, maxOutputTokens: 500 }
             );
             
-            if (vpResponse.ok) {
-              const vpData = await vpResponse.json();
-              if (vpData.success && vpData.text) {
-                const vpText = vpData.text.trim();
+            if (vpText) {
                 try {
                   const parsed = extractJsonFromAiResponse(vpText);
                   return {
