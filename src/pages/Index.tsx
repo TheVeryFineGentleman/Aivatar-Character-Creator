@@ -391,7 +391,7 @@ const Index = () => {
   const [isExportingVeo3, setIsExportingVeo3] = useState(false);
   const [storyboardFormat, setStoryboardFormat] = useState<string>("16:9");
   
-  // Video generation state (kie.ai Veo3)
+  // Video generation state (Gemini Veo)
   const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
   const [generatingVideoIndex, setGeneratingVideoIndex] = useState<number | null>(null);
   const [videoTaskIds, setVideoTaskIds] = useState<Map<number, string>>(new Map());
