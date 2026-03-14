@@ -2415,29 +2415,10 @@ ${sceneContext}`;
     console.log(`🤖 Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
     
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-        {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-          },
-          body: JSON.stringify({
-            prompt: systemInstruction,
-            mode: "text",
-            apiKey: apiKey
-          }),
-        }
+      const aiPrompt = await callGeminiOrFull(
+        [{ text: systemInstruction }],
+        { model: "gemini-2.0-flash", temperature: 0.7, maxOutputTokens: 500 }
       );
-      
-      if (!response.ok) {
-        console.warn("⚠️ AI prompt generation failed, falling back to scene context");
-        return sceneContext;
-      }
-      
-      const result = await response.json();
-      const aiPrompt = result.text?.trim();
       
       if (!aiPrompt) {
         console.warn("⚠️ Empty AI prompt, falling back to scene context");
