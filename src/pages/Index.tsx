@@ -2054,7 +2054,7 @@ Respond ONLY with JSON:
     throw new Error(`Alle Veo-Formate/Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
   };
 
-  // Helper: Poll Gemini Veo video operation status
+  // Helper: Poll Gemini Veo video operation status with multi-path extraction
   const pollGeminiVideoOperation = async (operationName: string): Promise<{ status: string; videoUrl?: string; error?: string }> => {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
     
@@ -2072,24 +2072,56 @@ Respond ONLY with JSON:
     const data = await response.json();
     
     if (data.done) {
+      // Check for error
       if (data.error) {
-        return { status: "failed", error: data.error.message || "Video-Generierung fehlgeschlagen" };
+        const errMsg = data.error.message || JSON.stringify(data.error);
+        console.error("❌ Veo operation error:", errMsg);
+        // Safety filter detection
+        if (errMsg.toLowerCase().includes('safety') || errMsg.toLowerCase().includes('blocked') || errMsg.toLowerCase().includes('filter')) {
+          return { status: "failed", error: `Video durch Sicherheitsfilter blockiert: ${errMsg}` };
+        }
+        return { status: "failed", error: errMsg };
       }
       
-      console.log("📦 Veo done response:", JSON.stringify(data.response, null, 2).substring(0, 500));
+      const resp = data.response || {};
+      console.log("📦 Veo done – response keys:", Object.keys(resp).join(", "));
       
-      // Official Veo 3.1 response: response.generateVideoResponse.generatedSamples[0].video.uri
-      const generatedSamples = data.response?.generateVideoResponse?.generatedSamples || [];
-      const videoUri = generatedSamples[0]?.video?.uri;
+      // Multi-path video URI extraction
+      const videoUri = 
+        resp.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ||
+        resp.generatedVideos?.[0]?.video?.uri ||
+        resp.video?.uri ||
+        resp.generateVideoResponse?.generatedSamples?.[0]?.uri ||
+        null;
+
       if (videoUri) {
         const videoUrl = videoUri.startsWith("http") 
           ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
           : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
+        console.log("✅ Video URL extrahiert");
         return { status: "completed", videoUrl };
       }
       
-      console.error("❌ Unbekannte Antwortstruktur:", JSON.stringify(data, null, 2).substring(0, 1000));
-      return { status: "failed", error: "Kein Video in der Antwort – unbekannte API-Struktur" };
+      // Fallback: direct base64 video in predictions
+      const prediction = resp.predictions?.[0];
+      if (prediction?.bytesBase64Encoded) {
+        console.log("✅ Video als Base64 in predictions erhalten");
+        const mimeType = prediction.mimeType || "video/mp4";
+        const videoUrl = `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
+        return { status: "completed", videoUrl };
+      }
+
+      // Structured diagnostics on failure
+      const diagKeys = JSON.stringify(Object.keys(resp));
+      const deepKeys = resp.generateVideoResponse ? JSON.stringify(Object.keys(resp.generateVideoResponse)) : "n/a";
+      console.error(`❌ Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
+      console.error("📋 Response preview:", JSON.stringify(resp).substring(0, 800));
+      return { status: "failed", error: `Kein Video in der Antwort (keys: ${diagKeys}). Bitte erneut versuchen.` };
+    }
+    
+    // Log progress metadata if available
+    if (data.metadata) {
+      console.log("⏳ Veo progress:", JSON.stringify(data.metadata).substring(0, 200));
     }
     
     return { status: "processing" };
