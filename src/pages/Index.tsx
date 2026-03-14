@@ -5029,7 +5029,7 @@ Beispiel einer korrekten Antwort:
     }
   };
 
-  const handleDownloadAll = async () => {
+  const handleDownloadAll = async (maxWidth: number = 0) => {
     const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
     
     if (completedImages.length === 0) {
