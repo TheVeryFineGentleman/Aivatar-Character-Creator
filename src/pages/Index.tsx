@@ -5029,7 +5029,7 @@ Beispiel einer korrekten Antwort:
     }
   };
 
-  const handleDownloadAll = async () => {
+  const handleDownloadAll = async (maxWidth: number = 0) => {
     const completedImages = imageSlots.filter((slot) => slot.status === "completed" && slot.imageUrl);
     
     if (completedImages.length === 0) {
@@ -5061,25 +5061,25 @@ Beispiel einer korrekten Antwort:
           const slot = imageSlots[i];
           if (!slot.imageUrl) return;
           
-          try {
-            let imageData: Blob;
-            
-            if (isBasic) {
-              // Basic users get lower resolution
-              try {
-                const resizedUrl = await resizeImageForBasic(slot.imageUrl, 512);
-                createdUrls.push(resizedUrl); // Track for cleanup
-                const response = await fetch(resizedUrl);
-                imageData = await response.blob();
-              } catch (error) {
-                console.error("Resize failed, using original:", error);
+            try {
+              let imageData: Blob;
+              
+              if (maxWidth > 0) {
+                // Resize to selected resolution
+                try {
+                  const resizedUrl = await resizeImageForBasic(slot.imageUrl, maxWidth);
+                  createdUrls.push(resizedUrl); // Track for cleanup
+                  const response = await fetch(resizedUrl);
+                  imageData = await response.blob();
+                } catch (error) {
+                  console.error("Resize failed, using original:", error);
+                  const response = await fetch(slot.imageUrl);
+                  imageData = await response.blob();
+                }
+              } else {
                 const response = await fetch(slot.imageUrl);
                 imageData = await response.blob();
               }
-            } else {
-              const response = await fetch(slot.imageUrl);
-              imageData = await response.blob();
-            }
             
             zip.file(`character-${i + 1}.png`, imageData);
           } catch (err) {
@@ -6068,16 +6068,50 @@ Beispiel einer korrekten Antwort:
                     </AlertDialogContent>
                   </AlertDialog>
                   
-                  <Button
-                    onClick={handleDownloadAll}
-                    disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
-                    variant="secondary"
-                    className="h-12"
-                    size="lg"
-                  >
-                    <Download className="mr-2" />
-                    Alle herunterladen
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        disabled={isGenerating || imageSlots.filter(s => s.status === "completed").length === 0}
+                        variant="secondary"
+                        className="h-12"
+                        size="lg"
+                      >
+                        <Download className="mr-2" />
+                        Alle herunterladen
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      {[
+                        { label: "512px", maxWidth: 512, minPlan: "basic" as const },
+                        { label: "1K", maxWidth: 1024, minPlan: "basic" as const },
+                        { label: "2K", maxWidth: 2048, minPlan: "pro" as const },
+                        { label: "4K (Original)", maxWidth: 0, minPlan: "pro" as const },
+                      ].map((opt) => {
+                        const isLocked = !isPro && opt.minPlan === "pro";
+                        return (
+                          <DropdownMenuItem
+                            key={opt.label}
+                            onClick={() => {
+                              if (isLocked) {
+                                setShowUpgradePopup(true);
+                              } else {
+                                handleDownloadAll(opt.maxWidth);
+                              }
+                            }}
+                            className={cn(isLocked && "opacity-50")}
+                          >
+                            {isLocked ? (
+                              <Lock className="w-4 h-4 mr-2 text-muted-foreground" />
+                            ) : (
+                              <Download className="w-4 h-4 mr-2" />
+                            )}
+                            {opt.label}
+                            {isLocked && <span className="ml-auto text-[10px] text-muted-foreground">Pro</span>}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               )}
             </div>
