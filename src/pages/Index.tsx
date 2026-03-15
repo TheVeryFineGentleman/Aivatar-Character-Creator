@@ -1960,23 +1960,15 @@ Respond ONLY with JSON:
   // Session-level cache for working Veo payload format and model
   const veoWorkingConfigRef = React.useRef<{ payloadFormat: 'inlineData' | 'bytesBase64Encoded' | null; model: string | null }>({ payloadFormat: null, model: null });
 
-  // Helper: Build Veo request body with a specific payload format
-  const buildVeoRequestBody = (prompt: string, startImageBase64: string, endImageBase64: string | undefined, payloadFormat: 'inlineData' | 'bytesBase64Encoded') => {
+  // Helper: Build Veo request body (bytesBase64Encoded only)
+  const buildVeoRequestBody = (prompt: string, startImageBase64: string, endImageBase64?: string) => {
     const cleanStartBase64 = startImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
     const instance: any = { prompt };
 
-    if (payloadFormat === 'inlineData') {
-      instance.image = { inlineData: { mimeType: "image/png", data: cleanStartBase64 } };
-      if (endImageBase64) {
-        const cleanEnd = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-        instance.lastFrame = { inlineData: { mimeType: "image/png", data: cleanEnd } };
-      }
-    } else {
-      instance.image = { bytesBase64Encoded: cleanStartBase64, mimeType: "image/png" };
-      if (endImageBase64) {
-        const cleanEnd = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-        instance.lastFrame = { bytesBase64Encoded: cleanEnd, mimeType: "image/png" };
-      }
+    instance.image = { bytesBase64Encoded: cleanStartBase64, mimeType: "image/png" };
+    if (endImageBase64) {
+      const cleanEnd = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      instance.lastFrame = { bytesBase64Encoded: cleanEnd, mimeType: "image/png" };
     }
 
     return {
@@ -1989,33 +1981,25 @@ Respond ONLY with JSON:
     };
   };
 
-  // Helper: Start Gemini Veo video generation with automatic format/model fallback
+  // Helper: Start Gemini Veo video generation (bytesBase64Encoded, model fallback only)
   const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
     const models = ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"];
-    const formats: Array<'inlineData' | 'bytesBase64Encoded'> = ['inlineData', 'bytesBase64Encoded'];
 
-    // Build attempt order: cached working config first, then all combos
-    const attempts: Array<{ model: string; format: 'inlineData' | 'bytesBase64Encoded' }> = [];
+    // Try cached model first
     const cached = veoWorkingConfigRef.current;
-    if (cached.model && cached.payloadFormat) {
-      attempts.push({ model: cached.model, format: cached.payloadFormat });
-    }
-    for (const model of models) {
-      for (const format of formats) {
-        if (!attempts.some(a => a.model === model && a.format === format)) {
-          attempts.push({ model, format });
-        }
-      }
-    }
+    const orderedModels = cached.model 
+      ? [cached.model, ...models.filter(m => m !== cached.model)]
+      : models;
 
+    const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64);
     let lastError = "";
-    for (const attempt of attempts) {
-      const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64, attempt.format);
-      console.log(`🎬 Veo attempt: model=${attempt.model}, format=${attempt.format}`);
+
+    for (const model of orderedModels) {
+      console.log(`🎬 Veo attempt: model=${model}`);
 
       const response = await fetch(
-        `${GEMINI_BASE}/models/${attempt.model}:predictLongRunning?key=${apiKey}`,
+        `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2027,30 +2011,26 @@ Respond ONLY with JSON:
         const data = await response.json();
         const operationName = data.name;
         if (!operationName) throw new Error("Keine Operation-ID erhalten");
-        // Cache working config
-        veoWorkingConfigRef.current = { payloadFormat: attempt.format, model: attempt.model };
-        console.log(`✅ Veo OK: model=${attempt.model}, format=${attempt.format}, op=${operationName}`);
+        veoWorkingConfigRef.current = { payloadFormat: 'bytesBase64Encoded', model };
+        console.log(`✅ Veo OK: model=${model}, op=${operationName}`);
         return operationName;
       }
 
       const errText = await response.text();
-      console.warn(`⚠️ Veo ${attempt.model}/${attempt.format} → ${response.status}: ${errText.substring(0, 300)}`);
+      console.warn(`⚠️ Veo ${model} → ${response.status}: ${errText.substring(0, 300)}`);
 
-      // Non-retryable errors
       if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
       if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
 
-      // 400 INVALID_ARGUMENT → try next format/model
       if (response.status === 400) {
         lastError = errText.substring(0, 200);
         continue;
       }
 
-      // Other errors → abort
       throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} – ${errText.substring(0, 200)}`);
     }
 
-    throw new Error(`Alle Veo-Formate/Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
+    throw new Error(`Alle Veo-Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
   };
 
   // Helper: Poll Gemini Veo video operation status with multi-path extraction
@@ -2126,7 +2106,106 @@ Respond ONLY with JSON:
     return { status: "processing" };
   };
 
-  // Generate videos via Gemini Veo API for all scenes
+  // Helper: Convert image URL/blob to base64
+  const imageToBase64 = async (imageUrl: string): Promise<string> => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  // Helper: Start one video, poll until done, auto-retry on internal server errors
+  const generateAndPollSingleVideo = async (
+    sceneIndex: number, 
+    point: typeof storyPoints[0], 
+    nextImage?: string
+  ): Promise<void> => {
+    const MAX_RETRIES = 2;
+    
+    for (let retry = 0; retry <= MAX_RETRIES; retry++) {
+      try {
+        if (retry > 0) {
+          console.log(`🔄 Szene ${sceneIndex + 1}: Erneuter Versuch ${retry}/${MAX_RETRIES}...`);
+          setVideoErrors(prev => {
+            const n = new Map(prev);
+            n.set(sceneIndex, `Server-Fehler – erneuter Versuch ${retry}/${MAX_RETRIES}...`);
+            return n;
+          });
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 15000));
+        }
+
+        setGeneratingVideoIndex(sceneIndex);
+        setVideoGenerationPhase("generating");
+        // Clear previous error for this scene on new attempt
+        setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
+
+        const startBase64 = await imageToBase64(point.generatedImage!);
+        const endBase64 = nextImage ? await imageToBase64(nextImage) : undefined;
+
+        const operationName = await startGeminiVideoGeneration(point.videoPrompt!, startBase64, endBase64);
+        console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
+        setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
+
+        // Poll for result
+        setVideoGenerationPhase("polling");
+        const maxPolls = 90;
+        let pollCount = 0;
+
+        while (pollCount < maxPolls) {
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          pollCount++;
+
+          try {
+            const result = await pollGeminiVideoOperation(operationName);
+            console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
+
+            if (result.status === "completed" && result.videoUrl) {
+              setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
+              setStoryPoints(prev => prev.map((p, i) =>
+                i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
+              ));
+              return; // Success – exit retry loop
+            } else if (result.status === "failed") {
+              const isInternalError = result.error?.toLowerCase().includes('internal') || 
+                                      result.error?.toLowerCase().includes('server');
+              if (isInternalError && retry < MAX_RETRIES) {
+                console.warn(`⚠️ Szene ${sceneIndex + 1}: Interner Server-Fehler, wird erneut versucht...`);
+                break; // Break poll loop to retry
+              }
+              setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
+              return; // Non-retryable failure
+            }
+          } catch (error) {
+            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+          }
+        }
+
+        if (pollCount >= maxPolls) {
+          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
+          return;
+        }
+        // If we broke out of poll loop due to internal error, continue retry loop
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : "Netzwerkfehler";
+        // Don't retry rate limits or auth errors
+        if (errMsg.includes('Rate limit') || errMsg.includes('API-Key')) {
+          setVideoErrors(prev => new Map(prev).set(sceneIndex, errMsg));
+          return;
+        }
+        if (retry >= MAX_RETRIES) {
+          console.error(`❌ Szene ${sceneIndex + 1} endgültig fehlgeschlagen:`, error);
+          setVideoErrors(prev => new Map(prev).set(sceneIndex, errMsg));
+          return;
+        }
+      }
+    }
+  };
+
+  // Generate videos via Gemini Veo API – sequential, one at a time
   const generateVideos = async () => {
     if (storyPoints.length === 0 || isGeneratingVideos || !apiKey) return;
     
@@ -2135,86 +2214,12 @@ Respond ONLY with JSON:
     setVideoResults(new Map());
     setVideoTaskIds(new Map());
     
-    const newOperations = new Map<number, string>();
-    
     for (let i = 0; i < storyPoints.length; i++) {
       const point = storyPoints[i];
       if (!point.generatedImage || !point.videoPrompt) continue;
       
-      setGeneratingVideoIndex(i);
-      setVideoGenerationPhase("generating");
-      
-      try {
-        const startImgResponse = await fetch(point.generatedImage);
-        const startBlob = await startImgResponse.blob();
-        const startBase64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(startBlob);
-        });
-        
-        let endBase64: string | undefined;
-        if (storyPoints[i + 1]?.generatedImage) {
-          const endImgResponse = await fetch(storyPoints[i + 1].generatedImage!);
-          const endBlob = await endImgResponse.blob();
-          endBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(endBlob);
-          });
-        }
-        
-        const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
-        console.log(`✅ Szene ${i + 1}: Video-Operation gestartet: ${operationName}`);
-        newOperations.set(i, operationName);
-        setVideoTaskIds(prev => new Map(prev).set(i, operationName));
-      } catch (error) {
-        console.error(`❌ Szene ${i + 1} Video-Generierung fehlgeschlagen:`, error);
-        setVideoErrors(prev => new Map(prev).set(i, error instanceof Error ? error.message : "Netzwerkfehler"));
-      }
-      
-      if (i < storyPoints.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
-    
-    // Poll for results
-    setVideoGenerationPhase("polling");
-    setGeneratingVideoIndex(null);
-    
-    const pendingOps = new Map<number, string>(newOperations);
-    const maxPolls = 90;
-    let pollCount = 0;
-    
-    while (pendingOps.size > 0 && pollCount < maxPolls) {
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      pollCount++;
-      
-      for (const [sceneIndex, opName] of Array.from(pendingOps.entries())) {
-        try {
-          const result = await pollGeminiVideoOperation(opName);
-          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
-          
-          if (result.status === "completed" && result.videoUrl) {
-            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
-            setStoryPoints(prev => prev.map((p, i) => 
-              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
-            ));
-            pendingOps.delete(sceneIndex);
-          } else if (result.status === "failed") {
-            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
-            pendingOps.delete(sceneIndex);
-          }
-        } catch (error) {
-          console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
-        }
-      }
-    }
-    
-    if (pendingOps.size > 0) {
-      for (const [sceneIndex] of pendingOps.entries()) {
-        setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-      }
+      const nextImage = storyPoints[i + 1]?.generatedImage;
+      await generateAndPollSingleVideo(i, point, nextImage);
     }
     
     setVideoGenerationPhase("idle");
@@ -2222,7 +2227,7 @@ Respond ONLY with JSON:
     setGeneratingVideoIndex(null);
   };
 
-  // Regenerate a single video for a specific scene
+  // Regenerate a single video for a specific scene (uses shared helper with retry)
   const regenerateSingleVideo = async (sceneIndex: number) => {
     const point = storyPoints[sceneIndex];
     if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos || !apiKey) return;
@@ -2232,70 +2237,9 @@ Respond ONLY with JSON:
     setStoryPoints(prev => prev.map((p, i) => i === sceneIndex ? { ...p, generatedVideo: undefined } : p));
     
     setIsGeneratingVideos(true);
-    setGeneratingVideoIndex(sceneIndex);
-    setVideoGenerationPhase("generating");
     
-    try {
-      const startImgResponse = await fetch(point.generatedImage);
-      const startBlob = await startImgResponse.blob();
-      const startBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(startBlob);
-      });
-      
-      let endBase64: string | undefined;
-      if (storyPoints[sceneIndex + 1]?.generatedImage) {
-        const endImgResponse = await fetch(storyPoints[sceneIndex + 1].generatedImage!);
-        const endBlob = await endImgResponse.blob();
-        endBase64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(endBlob);
-        });
-      }
-      
-      const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
-      console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
-      setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
-      
-      // Poll for result
-      setVideoGenerationPhase("polling");
-      setGeneratingVideoIndex(null);
-      
-      let pollCount = 0;
-      const maxPolls = 90;
-      
-      while (pollCount < maxPolls) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        pollCount++;
-        
-        try {
-          const result = await pollGeminiVideoOperation(operationName);
-          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
-          
-          if (result.status === "completed" && result.videoUrl) {
-            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
-            setStoryPoints(prev => prev.map((p, i) => 
-              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
-            ));
-            break;
-          } else if (result.status === "failed") {
-            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
-            break;
-          }
-        } catch (error) {
-          console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
-        }
-      }
-      
-      if (pollCount >= maxPolls) {
-        setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-      }
-    } catch (error) {
-      console.error(`❌ Szene ${sceneIndex + 1} Video-Generierung fehlgeschlagen:`, error);
-      setVideoErrors(prev => new Map(prev).set(sceneIndex, error instanceof Error ? error.message : "Netzwerkfehler"));
-    }
+    const nextImage = storyPoints[sceneIndex + 1]?.generatedImage;
+    await generateAndPollSingleVideo(sceneIndex, point, nextImage);
     
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
