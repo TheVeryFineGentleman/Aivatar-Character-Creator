@@ -3006,15 +3006,20 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
   const currentSuggestionMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker" ? "dialog" : "story";
   
   useEffect(() => {
+    let cancelled = false;
+    
     if (apiKey && authData.planCode === "FULL") {
-      // Regenerate suggestions when mode changes
-      if (lastSuggestionMode !== null && lastSuggestionMode !== currentSuggestionMode) {
+      const shouldGenerate =
+        lastSuggestionMode === null || lastSuggestionMode !== currentSuggestionMode;
+      
+      if (shouldGenerate && !cancelled) {
         generateStorySuggestions(apiKey);
-      } else if (lastSuggestionMode === null) {
-        generateStorySuggestions(apiKey);
+        setLastSuggestionMode(currentSuggestionMode);
       }
-      setLastSuggestionMode(currentSuggestionMode);
     }
+    
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey, authData.planCode, currentSuggestionMode]);
 
   // Keep ref in sync with state to avoid stale closures
