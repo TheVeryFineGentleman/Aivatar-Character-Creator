@@ -20,11 +20,16 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
+    console.error(`🛑 [ErrorBoundary ${new Date().toISOString()}] getDerivedStateFromError:`, error.message);
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    console.error(
+      `🛑 [ErrorBoundary ${new Date().toISOString()}] componentDidCatch:`,
+      error.message,
+      "\nComponent stack:", errorInfo.componentStack
+    );
     this.setState({ errorInfo });
   }
 
