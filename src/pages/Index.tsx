@@ -1983,7 +1983,6 @@ Respond ONLY with JSON:
       instances: [instance],
       parameters: {
         aspectRatio: "16:9",
-        numberOfVideos: 1,
         durationSeconds: 8,
         personGeneration: "allow_adult",
       },
