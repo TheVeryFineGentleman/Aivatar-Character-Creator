@@ -769,44 +769,89 @@ WICHTIGE REGELN:
               parts: [{
                 text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
-STORY-IDEE: "${storyIdea}"
-${storyArtStyle !== "realistic" ? `\nVISUELLER STIL: ${STORY_ART_STYLES.find(s => s.id === storyArtStyle)?.label || storyArtStyle} - Alle Szenen sollen in diesem Stil beschrieben werden.` : ""}
-${storyCustomDetails.trim() ? `\nBESONDERE ANWEISUNGEN: ${storyCustomDetails.trim()}` : ""}
+AUFGABE:
+Erstelle ein einziges valides JSON-Objekt basierend auf diesen Eingaben.
 
-WICHTIGSTE REGEL - RÄUMLICHE EINHEIT:
-Definiere ZUERST einen HAUPTORT für die gesamte Geschichte. 
-ALLE ${storyPointCount} Szenen spielen an diesem EINEN Ort.
-Variiere nur den BEREICH innerhalb des Ortes.
+EINGABEN:
+- storyIdea: "${storyIdea}"
+- visualStyle: "${storyArtStyle}"
+- customDetails: "${storyCustomDetails.trim()}"
+- sceneCount: ${storyPointCount}
+- enableSceneDescription: ${storyEnableSceneDescription}
+- enableSpeaker: ${storyEnableSpeaker}
+- generationDirection: "${storyGenerationDirection}"
 
-Beispiel: Hauptort = "eine alte Villa am See"
-- Szene 1: Im Eingangsbereich der Villa
-- Szene 2: Im Wohnzimmer mit Blick auf den See  
-- Szene 3: Auf der Terrasse der Villa
+HARTE AUSGABEREGELN:
+- Antworte ausschließlich mit einem einzigen validen JSON-Objekt.
+- Das erste Zeichen deiner Antwort muss { sein.
+- Das letzte Zeichen deiner Antwort muss } sein.
+- Kein Markdown.
+- Keine Codeblöcke.
+- Keine Einleitung.
+- Keine Erklärung.
+- Keine Kommentare.
+- Keine zusätzlichen Zeichen vor oder nach dem JSON.
+- Keine umschließenden Anführungszeichen um das gesamte JSON.
+- Die Antwort muss mit JSON.parse() direkt parsebar sein.
 
-WICHTIG: Antworte NUR mit diesem validen JSON-Format:
+INHALTSREGELN:
+- Definiere zuerst einen einzigen Hauptort für die gesamte Geschichte.
+- Alle Szenen spielen nur an diesem Hauptort.
+- Nur der konkrete Bereich innerhalb des Hauptorts wechselt.
+- Alle Szenen müssen realistisch sein. Keine Fantasy, keine Magie.
+- Jede Szene hat genau eine klare zentrale Aktion oder Gestik.
+- Die Szenen bauen logisch aufeinander auf.
+- Emotionen müssen visuell erkennbar sein.
+
+ERLAUBTE WERTE:
+- cameraAngle: "eye-level" | "low-angle" | "high-angle" | "dutch-angle" | "over-shoulder" | "bird-eye" | "worm-eye"
+- shotType: "extreme-close-up" | "close-up" | "medium-close-up" | "medium-shot" | "medium-full-shot" | "full-shot" | "long-shot" | "extreme-long-shot"
+
+JSON-SCHEMA:
 {
-  "mainLocation": "Der Hauptort der gesamten Geschichte (z.B. 'eine moderne Stadtwohnung', 'ein altes Landhaus')",
+  "mainLocation": "string",
   "scenes": [
     {
-      "summary": "1-Satz Zusammenfassung (max. 15 Wörter)",
-      "specificArea": "Welcher Bereich des Hauptorts (z.B. 'im Flur', 'auf dem Balkon', 'in der Küche')",
-      "keyAction": "Die EINE zentrale Aktion/Gestik der Person (z.B. 'lehnt nachdenklich am Fenster', 'sitzt zusammengesunken auf der Couch', 'steht mit verschränkten Armen')",
-      "emotion": "Die sichtbare Emotion (z.B. 'melancholisch', 'hoffnungsvoll', 'nachdenklich', 'entschlossen')",
-      "detailedDescription": "${storyEnableSceneDescription ? (storyEnableSpeaker && storyGenerationDirection === 'description-from-speaker' ? 'Generiere die visuelle Szenenbeschreibung (3-4 Sätze) BASIEREND auf dem dialogText - was visuell passiert während der Charakter spricht' : 'Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut, wichtige Details') : '(wird vom Nutzer manuell erstellt)'}",
-      ${storyEnableSpeaker ? `"dialogText": "${storyGenerationDirection === 'speaker-from-description' ? 'Generiere den gesprochenen Dialog (1-3 Sätze) BASIEREND auf der detailedDescription - was der Charakter passend zur Szene sagt' : 'Was der Charakter in dieser Szene sagt (1-3 Sätze gesprochener Dialog). Generiere diesen ZUERST, die Szenenbeschreibung basiert darauf.'}",` : ''}
-      "cameraAngle": "eye-level|low-angle|high-angle|dutch-angle|over-shoulder|bird-eye|worm-eye",
-      "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-full-shot|full-shot|long-shot|extreme-long-shot"
+      "summary": "string, max 15 Wörter",
+      "specificArea": "string",
+      "keyAction": "string",
+      "emotion": "string",
+      "detailedDescription": "string",
+      "dialogText": "string",
+      "cameraAngle": "one of allowed values",
+      "shotType": "one of allowed values"
     }
   ]
 }
 
-REGELN:
-- Jede Szene hat EINE klare Aktion/Gestik
-- Die Szenen bauen logisch aufeinander auf
-- Der Hauptort bleibt IMMER gleich, nur der Bereich wechselt
-- NUR realistische Szenarien, keine Fantasy oder Magie
-- Emotionen müssen visuell darstellbar sein
-- Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen`
+FELDREGELN:
+- "mainLocation": der eine Hauptort der gesamten Geschichte
+- "summary": 1 Satz, maximal 15 Wörter
+- "specificArea": konkreter Bereich innerhalb des Hauptorts
+- "keyAction": genau eine zentrale sichtbare Aktion oder Gestik
+- "emotion": klar sichtbar und visuell darstellbar
+- "detailedDescription":
+  - falls enableSceneDescription = true:
+    - falls enableSpeaker = true und generationDirection = "description-from-speaker":
+      visuelle Beschreibung basierend auf dialogText, 3-4 Sätze
+    - sonst:
+      ausführliche visuelle Beschreibung, 3-4 Sätze
+  - falls enableSceneDescription = false:
+      "(wird vom Nutzer manuell erstellt)"
+- "dialogText":
+  - nur ausgeben, falls enableSpeaker = true
+  - falls generationDirection = "speaker-from-description":
+      gesprochener Dialog passend zur Szene, 1-3 Sätze
+  - falls generationDirection = "description-from-speaker":
+      Dialog zuerst inhaltlich erzeugen, damit die visuelle Beschreibung darauf basiert
+- "cameraAngle": nur erlaubter Enum-Wert
+- "shotType": nur erlaubter Enum-Wert
+
+WICHTIG:
+- Wenn enableSpeaker = false, darf "dialogText" nicht im JSON vorkommen.
+- Die Anzahl der Szenen muss exakt sceneCount entsprechen.
+- Verwende nur Strings, Arrays und Objekte, die in validem JSON erlaubt sind.
+- Gib jetzt nur das JSON zurück.`
               }]
             }],
             generationConfig: {
