@@ -1981,33 +1981,25 @@ Respond ONLY with JSON:
     };
   };
 
-  // Helper: Start Gemini Veo video generation with automatic format/model fallback
+  // Helper: Start Gemini Veo video generation (bytesBase64Encoded, model fallback only)
   const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
     const models = ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"];
-    const formats: Array<'inlineData' | 'bytesBase64Encoded'> = ['inlineData', 'bytesBase64Encoded'];
 
-    // Build attempt order: cached working config first, then all combos
-    const attempts: Array<{ model: string; format: 'inlineData' | 'bytesBase64Encoded' }> = [];
+    // Try cached model first
     const cached = veoWorkingConfigRef.current;
-    if (cached.model && cached.payloadFormat) {
-      attempts.push({ model: cached.model, format: cached.payloadFormat });
-    }
-    for (const model of models) {
-      for (const format of formats) {
-        if (!attempts.some(a => a.model === model && a.format === format)) {
-          attempts.push({ model, format });
-        }
-      }
-    }
+    const orderedModels = cached.model 
+      ? [cached.model, ...models.filter(m => m !== cached.model)]
+      : models;
 
+    const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64);
     let lastError = "";
-    for (const attempt of attempts) {
-      const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64, attempt.format);
-      console.log(`🎬 Veo attempt: model=${attempt.model}, format=${attempt.format}`);
+
+    for (const model of orderedModels) {
+      console.log(`🎬 Veo attempt: model=${model}`);
 
       const response = await fetch(
-        `${GEMINI_BASE}/models/${attempt.model}:predictLongRunning?key=${apiKey}`,
+        `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2019,30 +2011,26 @@ Respond ONLY with JSON:
         const data = await response.json();
         const operationName = data.name;
         if (!operationName) throw new Error("Keine Operation-ID erhalten");
-        // Cache working config
-        veoWorkingConfigRef.current = { payloadFormat: attempt.format, model: attempt.model };
-        console.log(`✅ Veo OK: model=${attempt.model}, format=${attempt.format}, op=${operationName}`);
+        veoWorkingConfigRef.current = { payloadFormat: 'bytesBase64Encoded', model };
+        console.log(`✅ Veo OK: model=${model}, op=${operationName}`);
         return operationName;
       }
 
       const errText = await response.text();
-      console.warn(`⚠️ Veo ${attempt.model}/${attempt.format} → ${response.status}: ${errText.substring(0, 300)}`);
+      console.warn(`⚠️ Veo ${model} → ${response.status}: ${errText.substring(0, 300)}`);
 
-      // Non-retryable errors
       if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
       if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
 
-      // 400 INVALID_ARGUMENT → try next format/model
       if (response.status === 400) {
         lastError = errText.substring(0, 200);
         continue;
       }
 
-      // Other errors → abort
       throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} – ${errText.substring(0, 200)}`);
     }
 
-    throw new Error(`Alle Veo-Formate/Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
+    throw new Error(`Alle Veo-Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
   };
 
   // Helper: Poll Gemini Veo video operation status with multi-path extraction
