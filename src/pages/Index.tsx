@@ -1960,23 +1960,15 @@ Respond ONLY with JSON:
   // Session-level cache for working Veo payload format and model
   const veoWorkingConfigRef = React.useRef<{ payloadFormat: 'inlineData' | 'bytesBase64Encoded' | null; model: string | null }>({ payloadFormat: null, model: null });
 
-  // Helper: Build Veo request body with a specific payload format
-  const buildVeoRequestBody = (prompt: string, startImageBase64: string, endImageBase64: string | undefined, payloadFormat: 'inlineData' | 'bytesBase64Encoded') => {
+  // Helper: Build Veo request body (bytesBase64Encoded only)
+  const buildVeoRequestBody = (prompt: string, startImageBase64: string, endImageBase64?: string) => {
     const cleanStartBase64 = startImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
     const instance: any = { prompt };
 
-    if (payloadFormat === 'inlineData') {
-      instance.image = { inlineData: { mimeType: "image/png", data: cleanStartBase64 } };
-      if (endImageBase64) {
-        const cleanEnd = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-        instance.lastFrame = { inlineData: { mimeType: "image/png", data: cleanEnd } };
-      }
-    } else {
-      instance.image = { bytesBase64Encoded: cleanStartBase64, mimeType: "image/png" };
-      if (endImageBase64) {
-        const cleanEnd = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-        instance.lastFrame = { bytesBase64Encoded: cleanEnd, mimeType: "image/png" };
-      }
+    instance.image = { bytesBase64Encoded: cleanStartBase64, mimeType: "image/png" };
+    if (endImageBase64) {
+      const cleanEnd = endImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      instance.lastFrame = { bytesBase64Encoded: cleanEnd, mimeType: "image/png" };
     }
 
     return {
