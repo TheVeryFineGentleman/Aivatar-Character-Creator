@@ -2227,7 +2227,7 @@ Respond ONLY with JSON:
     setGeneratingVideoIndex(null);
   };
 
-  // Regenerate a single video for a specific scene
+  // Regenerate a single video for a specific scene (uses shared helper with retry)
   const regenerateSingleVideo = async (sceneIndex: number) => {
     const point = storyPoints[sceneIndex];
     if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos || !apiKey) return;
@@ -2237,70 +2237,9 @@ Respond ONLY with JSON:
     setStoryPoints(prev => prev.map((p, i) => i === sceneIndex ? { ...p, generatedVideo: undefined } : p));
     
     setIsGeneratingVideos(true);
-    setGeneratingVideoIndex(sceneIndex);
-    setVideoGenerationPhase("generating");
     
-    try {
-      const startImgResponse = await fetch(point.generatedImage);
-      const startBlob = await startImgResponse.blob();
-      const startBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(startBlob);
-      });
-      
-      let endBase64: string | undefined;
-      if (storyPoints[sceneIndex + 1]?.generatedImage) {
-        const endImgResponse = await fetch(storyPoints[sceneIndex + 1].generatedImage!);
-        const endBlob = await endImgResponse.blob();
-        endBase64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(endBlob);
-        });
-      }
-      
-      const operationName = await startGeminiVideoGeneration(point.videoPrompt, startBase64, endBase64);
-      console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
-      setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
-      
-      // Poll for result
-      setVideoGenerationPhase("polling");
-      setGeneratingVideoIndex(null);
-      
-      let pollCount = 0;
-      const maxPolls = 90;
-      
-      while (pollCount < maxPolls) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        pollCount++;
-        
-        try {
-          const result = await pollGeminiVideoOperation(operationName);
-          console.log(`📊 Szene ${sceneIndex + 1} Status: ${result.status}`);
-          
-          if (result.status === "completed" && result.videoUrl) {
-            setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
-            setStoryPoints(prev => prev.map((p, i) => 
-              i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
-            ));
-            break;
-          } else if (result.status === "failed") {
-            setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
-            break;
-          }
-        } catch (error) {
-          console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
-        }
-      }
-      
-      if (pollCount >= maxPolls) {
-        setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
-      }
-    } catch (error) {
-      console.error(`❌ Szene ${sceneIndex + 1} Video-Generierung fehlgeschlagen:`, error);
-      setVideoErrors(prev => new Map(prev).set(sceneIndex, error instanceof Error ? error.message : "Netzwerkfehler"));
-    }
+    const nextImage = storyPoints[sceneIndex + 1]?.generatedImage;
+    await generateAndPollSingleVideo(sceneIndex, point, nextImage);
     
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
