@@ -34,20 +34,39 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
 
     setProgressMessage("FFmpeg wird geladen (~30 MB)...");
 
-    const timeoutMs = 60000;
-    const loadPromise = ffmpeg.load({
-      coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-      wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
-    });
-    
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("FFmpeg-Laden hat zu lange gedauert (60s Timeout). Bitte versuche es erneut.")), timeoutMs)
-    );
+    const cdnOptions = [
+      {
+        coreURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+        wasmURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
+      },
+      {
+        coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+        wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
+      },
+    ];
 
-    await Promise.race([loadPromise, timeoutPromise]);
-    ffmpegRef.current = ffmpeg;
-    console.log("[ffmpeg] Successfully loaded");
-    return ffmpeg;
+    const timeoutMs = 60000;
+
+    for (let i = 0; i < cdnOptions.length; i++) {
+      try {
+        console.log(`[ffmpeg] Trying CDN ${i + 1}/${cdnOptions.length}...`);
+        const loadPromise = ffmpeg.load(cdnOptions[i]);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), timeoutMs)
+        );
+        await Promise.race([loadPromise, timeoutPromise]);
+        ffmpegRef.current = ffmpeg;
+        console.log("[ffmpeg] Successfully loaded from CDN", i + 1);
+        return ffmpeg;
+      } catch (err) {
+        console.warn(`[ffmpeg] CDN ${i + 1} failed:`, err);
+        if (i === cdnOptions.length - 1) {
+          throw new Error("FFmpeg konnte nicht geladen werden. Bitte lade die Seite neu und versuche es erneut.");
+        }
+      }
+    }
+
+    throw new Error("FFmpeg konnte nicht geladen werden.");
   }, []);
 
   const mergeVideos = useCallback(async () => {
