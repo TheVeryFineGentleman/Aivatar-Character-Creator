@@ -5284,7 +5284,14 @@ Beispiel einer korrekten Antwort:
 
         {/* Main Tab Navigation */}
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
-          <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as "poses" | "story" | "character")} className="w-full">
+          <Tabs value={activeMainTab} onValueChange={(v) => {
+            const tab = v as "poses" | "story" | "character";
+            if (tab === "story" && authData.planCode !== "FULL") {
+              setShowUpgradePopup(true);
+              return;
+            }
+            setActiveMainTab(tab);
+          }} className="w-full">
             <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
               <TabsTrigger value="poses" className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
