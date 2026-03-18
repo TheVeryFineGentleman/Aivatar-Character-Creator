@@ -91,7 +91,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     const personalityVisual = personality ? (PERSONALITY_VISUAL_MAP[personality] || "") : "";
 
     let prompt = `Create a single image of exactly one ${genderLabel.toLowerCase()} character, ${ageLabel.toLowerCase()}. ${variationPrompt}.`;
-    if (name) prompt += ` The character's name is ${name}.`;
+    
     if (description) prompt += ` ${description}`;
     if (personalityVisual) prompt += ` ${personalityVisual}.`;
     prompt += ` Style: ${stylePrompt}. High quality, detailed, professional character design, neutral background.`;
