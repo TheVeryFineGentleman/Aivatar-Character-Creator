@@ -95,7 +95,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     if (description) prompt += ` ${description}`;
     if (personalityVisual) prompt += ` ${personalityVisual}.`;
     prompt += ` Style: ${stylePrompt}. High quality, detailed, professional character design, neutral background.`;
-    prompt += ` IMPORTANT: Show only ONE single character in the image. Do NOT show multiple people. Do NOT create a collage, grid, or split-screen. Generate exactly one standalone image of one person.`;
+    prompt += ` IMPORTANT: Show only ONE single character. Do NOT show multiple people. Do NOT create a collage or grid. This character must be COMPLETELY UNIQUE and look NOTHING like any other character.`;
 
     return prompt;
   };
