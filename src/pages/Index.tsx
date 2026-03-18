@@ -24,6 +24,7 @@ import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
+import { ImageDropZone } from "@/components/ImageDropZone";
 import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
@@ -5324,23 +5325,13 @@ Beispiel einer korrekten Antwort:
                   
                   if (canUpload) {
                     return (
-                      <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            if (!isPro && e.target.files && e.target.files.length > 1) {
-                              // Basic users can only upload 1 file
-                              const dt = new DataTransfer();
-                              dt.items.add(e.target.files[0]);
-                              e.target.files = dt.files;
-                            }
-                            handleImageUpload(e);
-                          }}
-                          className="hidden"
-                        />
-                        <Upload className="w-8 h-8 text-muted-foreground" />
-                      </label>
+                      <ImageDropZone
+                        onFiles={(files) => {
+                          const limited = isPro ? files : (() => { const dt = new DataTransfer(); dt.items.add(files[0]); return dt.files; })();
+                          const fakeEvent = { target: { files: limited } } as React.ChangeEvent<HTMLInputElement>;
+                          handleImageUpload(fakeEvent);
+                        }}
+                      />
                     );
                   } else if (isLockedSlot) {
                     return (
@@ -6195,15 +6186,14 @@ Beispiel einer korrekten Antwort:
                     </div>
                   ))}
                   {storyReferenceImages.length < 2 && (
-                    <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleStoryImageUpload}
-                        className="hidden"
-                      />
+                    <ImageDropZone
+                      onFiles={(files) => {
+                        const fakeEvent = { target: { files } } as React.ChangeEvent<HTMLInputElement>;
+                        handleStoryImageUpload(fakeEvent);
+                      }}
+                    >
                       <Upload className="w-6 h-6 text-muted-foreground" />
-                    </label>
+                    </ImageDropZone>
                   )}
                 </div>
               </div>
