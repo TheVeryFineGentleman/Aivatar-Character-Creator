@@ -345,16 +345,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
               <h3 className="text-lg font-semibold">Character Fragebogen</h3>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="char-name">Name (optional)</Label>
-              <Input
-                id="char-name"
-                placeholder="z.B. Luna, Kai, Shadow..."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Geschlecht *</Label>
