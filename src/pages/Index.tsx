@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera, ArrowRightLeft } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera, ArrowRightLeft, ArrowLeft, User } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import { DownloadButton } from "@/components/DownloadButton";
@@ -26,6 +26,8 @@ import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { LegalDialog } from "@/components/LegalDialog";
+import { HomeScreen } from "@/components/HomeScreen";
+import { CharacterCreator } from "@/components/CharacterCreator";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
 import {
@@ -314,8 +316,11 @@ const Index = () => {
   // AI Assistant Target (unified control for prompt/background)
   const [aiAssistantTarget, setAiAssistantTarget] = useState<"prompt" | "background" | "both">("prompt");
 
-  // Main Tab state - only for FULL users
-  const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
+  // View state: home screen vs tools
+  const [activeView, setActiveView] = useState<"home" | "tools">("home");
+  
+  // Main Tab state
+  const [activeMainTab, setActiveMainTab] = useState<"poses" | "story" | "character">("poses");
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
@@ -5250,26 +5255,63 @@ Beispiel einer korrekten Antwort:
           </p>
         </div>
 
-        {/* Main Tab Navigation - Only for FULL users */}
-        {authData.planCode === "FULL" && (
-          <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
-            <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as "poses" | "story")} className="w-full">
-              <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
-                <TabsTrigger value="poses" className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Posen
-                </TabsTrigger>
-                <TabsTrigger value="story" className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  Story Bilder
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+        {/* HOME SCREEN */}
+        {activeView === "home" && (
+          <HomeScreen
+            planCode={authData.planCode}
+            onSelectFeature={(feature) => {
+              setActiveMainTab(feature);
+              setActiveView("tools");
+            }}
+            onShowUpgrade={() => setShowUpgradePopup(true)}
+          />
         )}
 
-        {/* Poses Tab Content - Shows for non-FULL users or when poses tab is active */}
-        {(authData.planCode !== "FULL" || activeMainTab === "poses") && (
+        {/* TOOLS VIEW */}
+        {activeView === "tools" && (
+          <>
+        {/* Back to Home Button */}
+        <div className="mb-4 animate-fade-in">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveView("home")}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Zurück zur Übersicht
+          </Button>
+        </div>
+
+        {/* Main Tab Navigation */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
+          <Tabs value={activeMainTab} onValueChange={(v) => {
+            const tab = v as "poses" | "story" | "character";
+            if (tab === "story" && authData.planCode !== "FULL") {
+              setShowUpgradePopup(true);
+              return;
+            }
+            setActiveMainTab(tab);
+          }} className="w-full">
+            <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
+              <TabsTrigger value="poses" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Posen
+              </TabsTrigger>
+              <TabsTrigger value="story" className="flex items-center gap-2">
+                {authData.planCode !== "FULL" && <Lock className="w-3 h-3" />}
+                <BookOpen className="w-4 h-4" />
+                Story Bilder
+              </TabsTrigger>
+              <TabsTrigger value="character" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Character Creator
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* Poses Tab Content */}
+        {activeMainTab === "poses" && (
           <>
         {/* Main Controls */}
         <Card 
@@ -5994,8 +6036,8 @@ Beispiel einer korrekten Antwort:
           </>
         )}
 
-        {/* Story Tab Content - Only for FULL users when story tab is active */}
-        {authData.planCode === "FULL" && activeMainTab === "story" && (
+        {/* Story Tab Content */}
+        {activeMainTab === "story" && (
           <Card 
             className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
@@ -7461,6 +7503,14 @@ Beispiel einer korrekten Antwort:
               </div>
             </div>
           )}
+
+          {/* Character Creator Tab Content */}
+          {activeMainTab === "character" && (
+            <CharacterCreator apiKey={apiKey} />
+          )}
+
+          </>
+        )}
 
           {/* Aivatar Academy Promotion Section */}
           <div className="w-full mt-16 mb-8 px-4">
