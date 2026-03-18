@@ -24,6 +24,7 @@ import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
+import { ImageDropZone } from "@/components/ImageDropZone";
 import { LegalDialog } from "@/components/LegalDialog";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
