@@ -70,7 +70,7 @@ const COLLAGE_VARIATIONS = [
 ];
 
 export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) => {
-  const [name, setName] = useState("");
+  
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
@@ -91,7 +91,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     const personalityVisual = personality ? (PERSONALITY_VISUAL_MAP[personality] || "") : "";
 
     let prompt = `Create a single image of exactly one ${genderLabel.toLowerCase()} character, ${ageLabel.toLowerCase()}. ${variationPrompt}.`;
-    if (name) prompt += ` The character's name is ${name}.`;
+    
     if (description) prompt += ` ${description}`;
     if (personalityVisual) prompt += ` ${personalityVisual}.`;
     prompt += ` Style: ${stylePrompt}. High quality, detailed, professional character design, neutral background.`;
@@ -305,7 +305,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     // Download
     const link = document.createElement("a");
     link.href = canvas.toDataURL("image/png");
-    link.download = `character-collage-${name || "unnamed"}-${Date.now()}.png`;
+    link.download = `character-collage-${Date.now()}.png`;
     link.click();
   }, [collageImages, name]);
 
@@ -314,12 +314,11 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     if (!img) return;
     const link = document.createElement("a");
     link.href = img;
-    link.download = `character-${name || "unnamed"}-${COLLAGE_VARIATIONS[index]?.label || index}-${Date.now()}.png`;
+    link.download = `character-${COLLAGE_VARIATIONS[index]?.label || index}-${Date.now()}.png`;
     link.click();
   };
 
   const handleReset = () => {
-    setName("");
     setGender("");
     setAge("");
     setStyle("realistic");
@@ -343,16 +342,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
             <div className="flex items-center gap-2 mb-2">
               <User className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-semibold">Character Fragebogen</h3>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="char-name">Name (optional)</Label>
-              <Input
-                id="char-name"
-                placeholder="z.B. Luna, Kai, Shadow..."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -478,7 +467,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
                         <>
                           <img
                             src={collageImages[i]!}
-                            alt={`${name || "Character"} - ${variation.label}`}
+                            alt={`Character - ${variation.label}`}
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
