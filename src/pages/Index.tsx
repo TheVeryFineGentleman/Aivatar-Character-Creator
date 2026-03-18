@@ -6186,15 +6186,14 @@ Beispiel einer korrekten Antwort:
                     </div>
                   ))}
                   {storyReferenceImages.length < 2 && (
-                    <label className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleStoryImageUpload}
-                        className="hidden"
-                      />
+                    <ImageDropZone
+                      onFiles={(files) => {
+                        const fakeEvent = { target: { files } } as React.ChangeEvent<HTMLInputElement>;
+                        handleStoryImageUpload(fakeEvent);
+                      }}
+                    >
                       <Upload className="w-6 h-6 text-muted-foreground" />
-                    </label>
+                    </ImageDropZone>
                   )}
                 </div>
               </div>
