@@ -70,7 +70,7 @@ const COLLAGE_VARIATIONS = [
 ];
 
 export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) => {
-  const [name, setName] = useState("");
+  
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
