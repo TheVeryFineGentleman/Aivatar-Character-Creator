@@ -63,10 +63,10 @@ const PERSONALITY_VISUAL_MAP: Record<string, string> = {
 };
 
 const COLLAGE_VARIATIONS = [
-  { label: "Porträt (Nahaufnahme)", prompt: "close-up portrait, head and shoulders, facing the camera" },
-  { label: "Ganzkörper", prompt: "full body view, standing pose, showing full outfit and proportions" },
-  { label: "Action-Pose", prompt: "dynamic action pose, mid-movement, showing character personality" },
-  { label: "Profil (Seitenansicht)", prompt: "side profile view, elegant silhouette, showing facial features from the side" },
+  { label: "Charakter 1", prompt: "unique character design, distinctive features, memorable look, portrait view" },
+  { label: "Charakter 2", prompt: "completely different unique character, distinct facial features and body type, portrait view" },
+  { label: "Charakter 3", prompt: "another entirely unique character, different ethnicity and build, portrait view" },
+  { label: "Charakter 4", prompt: "yet another completely unique character, contrasting appearance from all others, portrait view" },
 ];
 
 export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) => {
@@ -95,27 +95,17 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     if (description) prompt += ` ${description}`;
     if (personalityVisual) prompt += ` ${personalityVisual}.`;
     prompt += ` Style: ${stylePrompt}. High quality, detailed, professional character design, neutral background.`;
-    prompt += ` IMPORTANT: Show only ONE single character in the image. Do NOT show multiple people. Do NOT create a collage, grid, or split-screen. Generate exactly one standalone image of one person.`;
+    prompt += ` IMPORTANT: Show only ONE single character. Do NOT show multiple people. Do NOT create a collage or grid. This character must be COMPLETELY UNIQUE and look NOTHING like any other character.`;
 
     return prompt;
   };
 
-  const generateSingleImage = async (variationIndex: number, referenceImage?: string): Promise<string | null> => {
+  const generateSingleImage = async (variationIndex: number): Promise<string | null> => {
     const variation = COLLAGE_VARIATIONS[variationIndex];
     const prompt = buildPrompt(variation.prompt);
     const model = "gemini-3.1-flash-image-preview";
 
     const parts: any[] = [{ text: prompt }];
-    
-    // If we have a reference image from a previous generation, include it for consistency
-    if (referenceImage) {
-      const base64Data = referenceImage.split(",")[1];
-      const mimeType = referenceImage.split(";")[0].split(":")[1] || "image/png";
-      parts.push({
-        inlineData: { data: base64Data, mimeType }
-      });
-      parts[0] = { text: prompt + " CRITICAL: The character must look EXACTLY like the person in the reference image. Same face, same features, same identity. Only the pose/angle changes." };
-    }
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -164,16 +154,12 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     setCollageImages([null, null, null, null]);
 
     try {
-      let referenceImage: string | null = null;
-
       for (let i = 0; i < COLLAGE_VARIATIONS.length; i++) {
         setGeneratingIndex(i);
         
         try {
-          const img = await generateSingleImage(i, referenceImage || undefined);
+          const img = await generateSingleImage(i);
           if (img) {
-            // Use first successful image as reference for consistency
-            if (!referenceImage) referenceImage = img;
             setCollageImages(prev => {
               const next = [...prev];
               next[i] = img;
