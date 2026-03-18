@@ -100,22 +100,12 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     return prompt;
   };
 
-  const generateSingleImage = async (variationIndex: number, referenceImage?: string): Promise<string | null> => {
+  const generateSingleImage = async (variationIndex: number): Promise<string | null> => {
     const variation = COLLAGE_VARIATIONS[variationIndex];
     const prompt = buildPrompt(variation.prompt);
     const model = "gemini-3.1-flash-image-preview";
 
     const parts: any[] = [{ text: prompt }];
-    
-    // If we have a reference image from a previous generation, include it for consistency
-    if (referenceImage) {
-      const base64Data = referenceImage.split(",")[1];
-      const mimeType = referenceImage.split(";")[0].split(":")[1] || "image/png";
-      parts.push({
-        inlineData: { data: base64Data, mimeType }
-      });
-      parts[0] = { text: prompt + " CRITICAL: The character must look EXACTLY like the person in the reference image. Same face, same features, same identity. Only the pose/angle changes." };
-    }
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
