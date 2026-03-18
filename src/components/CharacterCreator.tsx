@@ -154,16 +154,12 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     setCollageImages([null, null, null, null]);
 
     try {
-      let referenceImage: string | null = null;
-
       for (let i = 0; i < COLLAGE_VARIATIONS.length; i++) {
         setGeneratingIndex(i);
         
         try {
-          const img = await generateSingleImage(i, referenceImage || undefined);
+          const img = await generateSingleImage(i);
           if (img) {
-            // Use first successful image as reference for consistency
-            if (!referenceImage) referenceImage = img;
             setCollageImages(prev => {
               const next = [...prev];
               next[i] = img;
