@@ -316,8 +316,11 @@ const Index = () => {
   // AI Assistant Target (unified control for prompt/background)
   const [aiAssistantTarget, setAiAssistantTarget] = useState<"prompt" | "background" | "both">("prompt");
 
-  // Main Tab state - only for FULL users
-  const [activeMainTab, setActiveMainTab] = useState<"poses" | "story">("poses");
+  // View state: home screen vs tools
+  const [activeView, setActiveView] = useState<"home" | "tools">("home");
+  
+  // Main Tab state
+  const [activeMainTab, setActiveMainTab] = useState<"poses" | "story" | "character">("poses");
 
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
