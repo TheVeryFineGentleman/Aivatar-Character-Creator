@@ -7497,6 +7497,14 @@ Beispiel einer korrekten Antwort:
             </div>
           )}
 
+          {/* Character Creator Tab Content */}
+          {activeMainTab === "character" && (
+            <CharacterCreator apiKey={apiKey} />
+          )}
+
+          </>
+        )}
+
           {/* Aivatar Academy Promotion Section */}
           <div className="w-full mt-16 mb-8 px-4">
             <a
