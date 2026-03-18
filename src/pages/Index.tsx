@@ -5255,26 +5255,56 @@ Beispiel einer korrekten Antwort:
           </p>
         </div>
 
-        {/* Main Tab Navigation - Only for FULL users */}
-        {authData.planCode === "FULL" && (
-          <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
-            <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as "poses" | "story")} className="w-full">
-              <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
-                <TabsTrigger value="poses" className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Posen
-                </TabsTrigger>
-                <TabsTrigger value="story" className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  Story Bilder
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+        {/* HOME SCREEN */}
+        {activeView === "home" && (
+          <HomeScreen
+            planCode={authData.planCode}
+            onSelectFeature={(feature) => {
+              setActiveMainTab(feature);
+              setActiveView("tools");
+            }}
+            onShowUpgrade={() => setShowUpgradePopup(true)}
+          />
         )}
 
-        {/* Poses Tab Content - Shows for non-FULL users or when poses tab is active */}
-        {(authData.planCode !== "FULL" || activeMainTab === "poses") && (
+        {/* TOOLS VIEW */}
+        {activeView === "tools" && (
+          <>
+        {/* Back to Home Button */}
+        <div className="mb-4 animate-fade-in">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveView("home")}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Zurück zur Übersicht
+          </Button>
+        </div>
+
+        {/* Main Tab Navigation */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
+          <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as "poses" | "story" | "character")} className="w-full">
+            <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
+              <TabsTrigger value="poses" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Posen
+              </TabsTrigger>
+              <TabsTrigger value="story" className="flex items-center gap-2">
+                {authData.planCode !== "FULL" && <Lock className="w-3 h-3" />}
+                <BookOpen className="w-4 h-4" />
+                Story Bilder
+              </TabsTrigger>
+              <TabsTrigger value="character" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Character Creator
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* Poses Tab Content */}
+        {activeMainTab === "poses" && (
           <>
         {/* Main Controls */}
         <Card 
