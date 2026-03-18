@@ -1,37 +1,46 @@
 
 
-# Fix: Fehlende Referenzbilder bei Video-Prompt-Generierung
+# Plan: Home Screen mit 3 Feature-Karten + Character Creator
 
-## Problem
-Bei der Video-Prompt-Generierung werden aktuell nur die globalen Referenzbilder und das Bild der vorherigen Szene mitgeschickt. Es fehlen:
-1. Das Bild der **aktuellen Szene** (Start-Frame) - die KI kann nicht "sehen" wovon sie ausgeht
-2. Das Bild der **naechsten Szene** (End-Frame) - die KI kann den Zielzustand des Hard Cuts nicht sehen
+## Übersicht
 
-## Loesung
+Beim App-Start wird ein neuer Home-Screen angezeigt mit 3 Feature-Karten (Posen Generator, Story Bilder, Character Creator). Erst nach Klick auf eine Karte gelangt man zu den eigentlichen Tools mit der bekannten Tab-Navigation.
 
-### Datei: `src/pages/Index.tsx` (Zeilen ~1750-1785)
+## Änderungen
 
-Die Referenzbild-Sammlung wird erweitert um drei zusaetzliche Bilder:
+### 1. Neuer State für Navigation
 
-```text
-Reihenfolge der Referenzbilder:
-1. Globale Story-Referenzbilder (Charakter-Konsistenz)
-2. Bild der VORHERIGEN Szene (i-1) - fuer Kontext/Uebergang
-3. Bild der AKTUELLEN Szene (i) - START-FRAME
-4. Bild der NAECHSTEN Szene (i+1) - END-FRAME fuer den Hard Cut
-```
+In `src/pages/Index.tsx`:
+- Neuen State `activeView` hinzufügen: `"home" | "tools"` (startet mit `"home"`)
+- `activeMainTab` erweitern auf `"poses" | "story" | "character"`
+- Zurück-Button in der Tool-Ansicht, um zum Home-Screen zu navigieren
 
-### Konkrete Aenderung
+### 2. Home Screen (neuer Abschnitt in Index.tsx)
 
-Im Block nach den globalen Referenzbildern (Zeile ~1769) werden zwei weitere Bild-Ladebloecke ergaenzt:
+Wenn `activeView === "home"`, wird statt der Tools ein zentrierter Screen gezeigt:
+- Begrüßungstext ("Willkommen zurück!" / "Was möchtest du heute erstellen?")
+- 3 Karten nebeneinander (responsive: untereinander auf Mobile):
+  - **Fotoshooting Generator** (Sparkles-Icon) - setzt `activeMainTab="poses"` und `activeView="tools"`
+  - **Story Bilder** (BookOpen-Icon) - nur für FULL-Plan sichtbar/klickbar, sonst Lock-Icon + Upgrade-Popup
+  - **Character Creator** (neu, User-Icon) - setzt `activeMainTab="character"` und `activeView="tools"`
+- Karten im bestehenden glassmorphism-Stil (bg-card/50, backdrop-blur, border-border/50)
 
-1. **Aktuelles Szenen-Bild** (`storyPoints[i].generatedImage`): Wird immer hinzugefuegt (ist garantiert vorhanden, da wir mit `if (!point.generatedImage) continue;` pruefen)
+### 3. Tab-Navigation erweitern
 
-2. **Naechstes Szenen-Bild** (`storyPoints[i + 1]?.generatedImage`): Wird hinzugefuegt wenn vorhanden (nicht bei der letzten Szene)
+Die bestehende TabsList bekommt einen dritten Tab "Character Creator". Sichtbar für alle Pläne (oder plan-gated je nach Wunsch).
 
-### Betroffene Datei
+### 4. Character Creator Tab Content (Grundgerüst)
 
-| Datei | Aenderung |
-|---|---|
-| `src/pages/Index.tsx` | Zeilen ~1769-1785: Zwei neue fetch+base64 Bloecke fuer aktuelles und naechstes Szenen-Bild, Log-Meldung aktualisieren |
+Neuer Abschnitt wenn `activeMainTab === "character"`:
+- Fragebogen/Prompt-basierter Character-Ersteller
+- Felder: Name, Geschlecht, Alter, Stil, Persönlichkeit, visuelle Beschreibung
+- "Character generieren"-Button der per KI (Lovable AI) ein Character-Bild erstellt
+- Ergebnis-Anzeige mit generiertem Bild
+
+### 5. Technische Details
+
+- Der Home-Screen ersetzt den bisherigen direkten Einstieg in die Tools
+- Die gesamte bestehende Tool-UI wird in eine `activeView === "tools"` Bedingung gewrappt
+- Character Creator nutzt die bestehende Gemini API Key Infrastruktur (clientseitiger Key)
+- Kein neues Backend nötig für Phase 1 - die KI-Generierung läuft wie bei den anderen Features
 
