@@ -63,10 +63,10 @@ const PERSONALITY_VISUAL_MAP: Record<string, string> = {
 };
 
 const COLLAGE_VARIATIONS = [
-  { label: "Porträt (Nahaufnahme)", prompt: "close-up portrait, head and shoulders, facing the camera" },
-  { label: "Ganzkörper", prompt: "full body view, standing pose, showing full outfit and proportions" },
-  { label: "Action-Pose", prompt: "dynamic action pose, mid-movement, showing character personality" },
-  { label: "Profil (Seitenansicht)", prompt: "side profile view, elegant silhouette, showing facial features from the side" },
+  { label: "Charakter 1", prompt: "unique character design, distinctive features, memorable look, portrait view" },
+  { label: "Charakter 2", prompt: "completely different unique character, distinct facial features and body type, portrait view" },
+  { label: "Charakter 3", prompt: "another entirely unique character, different ethnicity and build, portrait view" },
+  { label: "Charakter 4", prompt: "yet another completely unique character, contrasting appearance from all others, portrait view" },
 ];
 
 export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) => {
