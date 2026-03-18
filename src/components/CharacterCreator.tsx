@@ -319,7 +319,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
   };
 
   const handleReset = () => {
-    setName("");
     setGender("");
     setAge("");
     setStyle("realistic");
