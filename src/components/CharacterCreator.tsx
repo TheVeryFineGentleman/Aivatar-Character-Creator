@@ -97,28 +97,39 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
 
     try {
       const prompt = buildPrompt();
+      const model = "gemini-3.1-flash-image-preview";
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
-              responseModalities: ["TEXT", "IMAGE"],
+              responseModalities: ["IMAGE", "TEXT"],
             },
           }),
         }
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Character generation API error:", response.status, errorText);
+        if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
+        if (response.status === 403) throw new Error("API-Key ungültig oder gesperrt.");
         throw new Error(`API Fehler: ${response.status}`);
       }
 
       const data = await response.json();
-      const parts = data?.candidates?.[0]?.content?.parts || [];
-      const imagePart = parts.find((p: any) => p.inlineData);
+      const candidates = data?.candidates ?? [];
+      
+      if (candidates[0]?.finishReason === "IMAGE_OTHER" || candidates[0]?.finishReason === "SAFETY") {
+        throw new Error(`Bild blockiert (${candidates[0]?.finishReason}). Versuche eine andere Beschreibung.`);
+      }
+
+      const parts = candidates[0]?.content?.parts ?? [];
+      const imagePart = parts.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
 
       if (imagePart?.inlineData) {
         const base64 = imagePart.inlineData.data;
