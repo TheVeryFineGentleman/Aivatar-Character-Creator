@@ -305,7 +305,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     // Download
     const link = document.createElement("a");
     link.href = canvas.toDataURL("image/png");
-    link.download = `character-collage-${name || "unnamed"}-${Date.now()}.png`;
+    link.download = `character-collage-${Date.now()}.png`;
     link.click();
   }, [collageImages, name]);
 
