@@ -314,7 +314,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
     if (!img) return;
     const link = document.createElement("a");
     link.href = img;
-    link.download = `character-${name || "unnamed"}-${COLLAGE_VARIATIONS[index]?.label || index}-${Date.now()}.png`;
+    link.download = `character-${COLLAGE_VARIATIONS[index]?.label || index}-${Date.now()}.png`;
     link.click();
   };
 
