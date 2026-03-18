@@ -26,6 +26,8 @@ import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { LegalDialog } from "@/components/LegalDialog";
+import { HomeScreen } from "@/components/HomeScreen";
+import { CharacterCreator } from "@/components/CharacterCreator";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
 import {
