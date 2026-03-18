@@ -6029,8 +6029,8 @@ Beispiel einer korrekten Antwort:
           </>
         )}
 
-        {/* Story Tab Content - Only for FULL users when story tab is active */}
-        {authData.planCode === "FULL" && activeMainTab === "story" && (
+        {/* Story Tab Content */}
+        {activeMainTab === "story" && (
           <Card 
             className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
