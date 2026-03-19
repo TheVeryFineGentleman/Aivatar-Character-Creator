@@ -6147,7 +6147,6 @@ Beispiel einer korrekten Antwort:
                                   style={{
                                     transitionDuration: '300ms',
                                   }}
-                                  }}
                                 >
                                   {isSelected ? suggestion : `• ${suggestion}`}
                                 </p>
