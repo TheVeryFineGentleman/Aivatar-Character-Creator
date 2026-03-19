@@ -7033,6 +7033,10 @@ Beispiel einer korrekten Antwort:
                           i === index ? { ...p, videoPrompt } : p
                         ));
                       }}
+                      onRegenerateVideo={(index) => regenerateSingleVideo(index)}
+                      isGeneratingVideo={isGeneratingVideos}
+                      generatingVideoIndex={generatingVideoIndex}
+                      videoErrors={videoErrors}
                       totalScenes={storyPoints.length}
                       finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}
                       aspectRatio={storyboardFormat}

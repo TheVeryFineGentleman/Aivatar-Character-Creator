@@ -59,6 +59,10 @@ interface StoryDetailPopupProps {
   onUpdateStoryPoint: (index: number, updates: Partial<StoryPoint>) => void;
   onNavigateScene: (direction: 'prev' | 'next') => void;
   onRegenerateImage: (index: number, updatedPoint?: StoryPoint) => void;
+  onRegenerateVideo?: (index: number) => void;
+  isGeneratingVideo?: boolean;
+  generatingVideoIndex?: number | null;
+  videoErrors?: Map<number, string>;
   onFinalizeScene: (index: number) => void;
   onDiscardChanges: (index: number) => void;
   regeneratingIndex: number | null;
@@ -71,7 +75,7 @@ interface StoryDetailPopupProps {
   onUpdateVideoPrompt: (index: number, videoPrompt: string) => void;
   totalScenes: number;
   finalizedCount: number;
-  aspectRatio?: string; // "16:9" or "9:16"
+  aspectRatio?: string;
 }
 
 // Auto option for all dropdowns
