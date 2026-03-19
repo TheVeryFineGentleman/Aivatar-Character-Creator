@@ -85,42 +85,46 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
   }, [allImages]);
 
   return (
-    <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
-      style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}>
-      <CardContent className="pt-6">
-        <canvas ref={canvasRef} className="hidden" />
+    <>
+      <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+        style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}>
+        <CardContent className="pt-6">
+          <canvas ref={canvasRef} className="hidden" />
 
-        {/* Mode Switcher */}
-        <div className="flex gap-2 mb-6">
-          {MODES.map(m => (
-            <button
-              key={m.id}
-              onClick={() => setMode(m.id)}
-              className={cn(
-                "flex-1 flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200",
-                mode === m.id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
-              )}
-            >
-              <m.icon className="w-4 h-4" />
-              <div className="text-left">
-                <div>{m.label}</div>
-                <div className="text-xs font-normal opacity-70">{m.desc}</div>
-              </div>
-            </button>
-          ))}
-        </div>
+          {/* Mode Switcher */}
+          <div className="flex gap-2 mb-6">
+            {MODES.map(m => (
+              <button
+                key={m.id}
+                onClick={() => setMode(m.id)}
+                className={cn(
+                  "flex-1 flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200",
+                  mode === m.id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                )}
+              >
+                <m.icon className="w-4 h-4" />
+                <div className="text-left">
+                  <div>{m.label}</div>
+                  <div className="text-xs font-normal opacity-70">{m.desc}</div>
+                </div>
+              </button>
+            ))}
+          </div>
 
-        {mode === "quick" ? (
-          <QuickModeCreator apiKey={apiKey} onImagesGenerated={handleImagesGenerated} />
-        ) : (
-          <ChatModeCreator apiKey={apiKey} onImagesGenerated={handleImagesGenerated} />
-        )}
+          {mode === "quick" ? (
+            <QuickModeCreator apiKey={apiKey} onImagesGenerated={handleImagesGenerated} />
+          ) : (
+            <ChatModeCreator apiKey={apiKey} onImagesGenerated={handleImagesGenerated} />
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Shared Image Gallery */}
-        {allImages.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-border/50">
+      {/* Separate Image Gallery Card */}
+      {allImages.length > 0 && (
+        <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-primary" />
@@ -150,9 +154,9 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) =>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 };
