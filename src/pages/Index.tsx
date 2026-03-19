@@ -7506,7 +7506,7 @@ Beispiel einer korrekten Antwort:
 
           {/* Character Creator Tab Content */}
           {activeMainTab === "character" && (
-            <CharacterCreator apiKey={apiKey} />
+            <CharacterCreator apiKey={apiKey} allImages={characterImages} setAllImages={setCharacterImages} />
           )}
 
           </>
