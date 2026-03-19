@@ -2877,8 +2877,9 @@ ${sceneContext}`;
       setIsAnimatingSuggestion(false);
       setSelectedSuggestionIndex(null);
       
-      // Show overlay instead of placeholder text
+      // Clear suggestions and text, show overlay
       setStoryIdea("");
+      setStorySuggestions([]);
       setIsExpandingSuggestion(true);
       
       try {
@@ -2927,16 +2928,14 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
           if (expandedText) finalText = expandedText;
         }
         
-        // Word-by-word animation
+        // Fast word-by-word animation
         setIsExpandingSuggestion(false);
-        const words = finalText.split(/(\s+)/);
+        const words = finalText.split(/\s+/);
         let accumulated = "";
         for (let w = 0; w < words.length; w++) {
-          accumulated += words[w];
+          accumulated += (w > 0 ? " " : "") + words[w];
           setStoryIdea(accumulated);
-          if (words[w].trim()) {
-            await new Promise(r => setTimeout(r, 30));
-          }
+          await new Promise(r => setTimeout(r, 12));
         }
       } catch (error) {
         console.error("Failed to expand suggestion:", error);
