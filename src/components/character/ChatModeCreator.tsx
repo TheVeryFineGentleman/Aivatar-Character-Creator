@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Download, RotateCcw, Send, User, Image as ImageIcon, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+
 
 interface ChatModeCreatorProps {
   apiKey: string;
