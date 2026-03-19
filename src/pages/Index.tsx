@@ -2424,7 +2424,7 @@ Respond ONLY with JSON:
         setTimeout(() => setJustFinishedImageOnlyIndex(null), 700);
         
         // Update point reference for video generation with new image
-        point = { ...point, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationSnapshot };
+        point = { ...point, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationSnapshot } as typeof storyPoints[number];
         
       } catch (error) {
         clearTimeout(timeoutId);
