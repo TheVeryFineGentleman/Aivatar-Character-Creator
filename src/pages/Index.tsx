@@ -3027,6 +3027,14 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey, authData.planCode, currentSuggestionMode]);
 
+  // Regenerate suggestions when text field is cleared
+  useEffect(() => {
+    if (storyIdea === "" && storySuggestions.length === 0 && apiKey && authData.planCode === "FULL" && !isExpandingSuggestion && !isLoadingStorySuggestions) {
+      generateStorySuggestions(apiKey);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyIdea, storySuggestions.length, isExpandingSuggestion]);
+
   // Keep ref in sync with state to avoid stale closures
   useEffect(() => {
     referenceImagesRef.current = referenceImages;
