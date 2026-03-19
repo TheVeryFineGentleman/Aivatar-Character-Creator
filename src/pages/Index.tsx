@@ -6133,24 +6133,20 @@ Beispiel einer korrekten Antwort:
                               const isSelected = selectedSuggestionIndex === index;
                               const isOther = selectedSuggestionIndex !== null && !isSelected;
                               
-                              // Calculate how far up this item needs to move to reach position 0
-                              // Each item is ~24px tall (text-sm + py-0.5), plus the header (~40px)
-                              const moveUpDistance = isSelected ? (index * 24 + 40) : 0;
-                              
                               return (
                                 <p
                                   key={index}
                                   onClick={() => !isAnimatingSuggestion && handleSuggestionClick(suggestion, index)}
                                   className={`text-sm cursor-pointer py-0.5 transition-all ease-out line-clamp-1 ${
                                     isSelected 
-                                      ? 'text-foreground font-medium' 
+                                      ? 'text-foreground font-medium opacity-0 scale-95' 
                                       : isOther
                                         ? 'opacity-0'
                                         : 'text-foreground/70 hover:text-primary'
                                   }`}
                                   style={{
-                                    transitionDuration: isSelected ? '350ms' : '200ms',
-                                    transform: isSelected ? `translateY(-${moveUpDistance}px)` : 'translateY(0)',
+                                    transitionDuration: '300ms',
+                                  }}
                                   }}
                                 >
                                   {isSelected ? suggestion : `• ${suggestion}`}
