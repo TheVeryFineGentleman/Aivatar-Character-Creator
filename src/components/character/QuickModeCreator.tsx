@@ -130,6 +130,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
     } finally {
       setIsGenerating(false);
       setGeneratingIndex(-1);
+      onGenerationEnd?.();
     }
   };
 
