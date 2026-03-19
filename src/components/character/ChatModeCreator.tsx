@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Download, RotateCcw, Send, User, Image as ImageIcon, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+
 
 interface ChatModeCreatorProps {
   apiKey: string;
@@ -51,22 +51,29 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     let assistantContent = "";
 
     try {
-      const resp = await supabase.functions.invoke("character-chat", {
-        body: { messages: newMessages },
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-chat`;
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ messages: newMessages }),
       });
 
-      // Check for error responses
-      if (resp.error) {
-        throw new Error(resp.error.message || "Fehler bei der Verbindung");
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Fehler: ${resp.status}`);
       }
 
-      // Handle streaming response
-      const response = resp.data;
-      
-      if (response instanceof ReadableStream) {
-        const reader = response.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      if (!resp.body) {
+        throw new Error("Keine Streaming-Antwort erhalten");
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -99,26 +106,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
             } catch {}
           }
         }
-      } else if (typeof response === "string") {
-        // Try to parse SSE from string
-        const lines = response.split("\n");
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content
-              || parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (content) assistantContent += content;
-          } catch {}
-        }
-        if (assistantContent) {
-          setMessages(prev => [...prev, { role: "assistant", content: assistantContent }]);
-        }
-      } else if (response && typeof response === "object" && response.error) {
-        throw new Error(response.error);
-      }
 
       // Check if the response contains prompts JSON
       if (assistantContent) {
