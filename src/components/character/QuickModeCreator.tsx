@@ -41,7 +41,7 @@ const STYLE_PROMPT_MAP: Record<string, string> = {
   pixar: "3D rendered, Pixar-quality, stylized, volumetric lighting",
 };
 
-export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onImagesGenerated }) => {
+export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
