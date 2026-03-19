@@ -379,6 +379,8 @@ const Index = () => {
     // Final/Draft State management
     finalSnapshot?: any;        // Snapshot of scene when finalized
     finalizedAt?: number;       // Timestamp when finalized
+    // Generation tracking
+    generationSnapshot?: Record<string, any>;
   }>>([]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
