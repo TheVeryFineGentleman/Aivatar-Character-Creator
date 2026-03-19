@@ -2286,11 +2286,11 @@ Respond ONLY with JSON:
   };
 
   // Check if image-affecting fields changed since last generation
-  const hasImageFieldsChanged = (point: StoryPoint): boolean => {
+  const hasImageFieldsChanged = (point: typeof storyPoints[number]): boolean => {
     if (!point.generationSnapshot) return false;
     const imageFields = ['summary', 'detailedDescription', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'cameraAngle', 'shotType', 'composition', 'movement', 'participants', 'negativePrompts', 'styleNotes', 'continuityNotes'];
     for (const field of imageFields) {
-      if (point[field as keyof StoryPoint] !== point.generationSnapshot[field as keyof StoryPoint]) {
+      if ((point as any)[field] !== point.generationSnapshot[field]) {
         return true;
       }
     }
