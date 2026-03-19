@@ -51,22 +51,29 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     let assistantContent = "";
 
     try {
-      const resp = await supabase.functions.invoke("character-chat", {
-        body: { messages: newMessages },
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-chat`;
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ messages: newMessages }),
       });
 
-      // Check for error responses
-      if (resp.error) {
-        throw new Error(resp.error.message || "Fehler bei der Verbindung");
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Fehler: ${resp.status}`);
       }
 
-      // Handle streaming response
-      const response = resp.data;
-      
-      if (response instanceof ReadableStream) {
-        const reader = response.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      if (!resp.body) {
+        throw new Error("Keine Streaming-Antwort erhalten");
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
