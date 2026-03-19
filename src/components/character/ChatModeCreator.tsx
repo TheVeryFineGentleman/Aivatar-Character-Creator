@@ -83,7 +83,9 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
             if (jsonStr === "[DONE]") break;
             try {
               const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content;
+              // Support both OpenAI and Gemini SSE formats
+              const content = parsed.choices?.[0]?.delta?.content
+                || parsed.candidates?.[0]?.content?.parts?.[0]?.text;
               if (content) {
                 assistantContent += content;
                 setMessages(prev => {
@@ -106,7 +108,8 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
           if (jsonStr === "[DONE]") continue;
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
+            const content = parsed.choices?.[0]?.delta?.content
+              || parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (content) assistantContent += content;
           } catch {}
         }
