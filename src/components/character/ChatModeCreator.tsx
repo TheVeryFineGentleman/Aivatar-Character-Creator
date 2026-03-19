@@ -31,9 +31,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
   const [chatOpen, setChatOpen] = useState(true);
   const [hasGenerated, setHasGenerated] = useState(false);
 
-  useEffect(() => {
-    if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chatOpen]);
+  // No auto-scroll on new messages
 
   // Auto-generate when prompts become available
   useEffect(() => {
