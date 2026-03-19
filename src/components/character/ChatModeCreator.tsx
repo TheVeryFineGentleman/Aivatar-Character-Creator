@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Download, RotateCcw, Send, User, Image as ImageIcon, MessageSquare } from "lucide-react";
+import { Loader2, Download, RotateCcw, Send, ImageIcon, MessageSquare, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-
+import { Image as LucideImage } from "lucide-react";
 
 interface ChatModeCreatorProps {
   apiKey: string;
@@ -28,14 +28,23 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [chatStarted, setChatStarted] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, chatOpen]);
+
+  // Auto-generate when prompts become available
+  useEffect(() => {
+    if (generatedPrompts && !hasGenerated && apiKey) {
+      setChatOpen(false);
+      generateImages(generatedPrompts);
+    }
+  }, [generatedPrompts]);
 
   const startChat = async () => {
     setChatStarted(true);
-    // Send initial empty message to trigger greeting
     await sendMessage("Hallo, ich möchte einen Charakter erstellen.");
   };
 
@@ -67,47 +76,43 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
         throw new Error(errData.error || `Fehler: ${resp.status}`);
       }
 
-      if (!resp.body) {
-        throw new Error("Keine Streaming-Antwort erhalten");
-      }
+      if (!resp.body) throw new Error("Keine Streaming-Antwort erhalten");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
 
-          let newlineIndex: number;
-          while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-            let line = buffer.slice(0, newlineIndex);
-            buffer = buffer.slice(newlineIndex + 1);
-            if (line.endsWith("\r")) line = line.slice(0, -1);
-            if (!line.startsWith("data: ")) continue;
-            const jsonStr = line.slice(6).trim();
-            if (jsonStr === "[DONE]") break;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              // Support both OpenAI and Gemini SSE formats
-              const content = parsed.choices?.[0]?.delta?.content
-                || parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (content) {
-                assistantContent += content;
-                setMessages(prev => {
-                  const last = prev[prev.length - 1];
-                  if (last?.role === "assistant") {
-                    return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
-                  }
-                  return [...prev, { role: "assistant", content: assistantContent }];
-                });
-              }
-            } catch {}
-          }
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content
+              || parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant") {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+                }
+                return [...prev, { role: "assistant", content: assistantContent }];
+              });
+            }
+          } catch {}
         }
+      }
 
-      // Check if the response contains prompts JSON
       if (assistantContent) {
         tryExtractPrompts(assistantContent);
       }
@@ -121,7 +126,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
 
   const tryExtractPrompts = (text: string) => {
     try {
-      // Try to find JSON in the response
       const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"ready"\s*:\s*true[\s\S]*\}/);
       if (jsonMatch) {
         const jsonStr = jsonMatch[1] || jsonMatch[0];
@@ -133,9 +137,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     } catch {}
   };
 
-  const handleSend = () => {
-    sendMessage(input);
-  };
+  const handleSend = () => sendMessage(input);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -144,9 +146,17 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     }
   };
 
-  const generateImages = async () => {
-    if (!generatedPrompts || !apiKey) return;
+  // Request prompts from the AI based on current conversation, then auto-generate
+  const requestGenerateNow = async () => {
+    if (isStreaming || !apiKey) return;
+    const triggerMsg = "Erstelle jetzt die 4 Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus.";
+    await sendMessage(triggerMsg);
+  };
+
+  const generateImages = async (prompts: string[]) => {
+    if (!prompts || !apiKey) return;
     setIsGenerating(true);
+    setHasGenerated(true);
     setError(null);
     setCollageImages([null, null, null, null]);
 
@@ -154,7 +164,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
       for (let i = 0; i < 4; i++) {
         setGeneratingIndex(i);
         try {
-          const img = await generateSingleImage(generatedPrompts[i]);
+          const img = await generateSingleImage(prompts[i]);
           if (img) {
             setCollageImages(prev => { const next = [...prev]; next[i] = img; return next; });
           }
@@ -260,8 +270,16 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
   };
 
   const handleRegenerate = () => {
+    if (!generatedPrompts) return;
     setCollageImages([null, null, null, null]);
-    generateImages();
+    generateImages(generatedPrompts);
+  };
+
+  const handleRegenerateWithChanges = async () => {
+    setGeneratedPrompts(null);
+    setHasGenerated(false);
+    const triggerMsg = "Erstelle jetzt neue 4 Prompts basierend auf allen bisherigen Angaben und Änderungen. Denke dir fehlende Details selbst aus.";
+    await sendMessage(triggerMsg);
   };
 
   const handleNewChat = () => {
@@ -270,48 +288,117 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     setCollageImages([null, null, null, null]);
     setError(null);
     setChatStarted(false);
+    setChatOpen(true);
+    setHasGenerated(false);
   };
 
   const hasAnyImage = collageImages.some(img => img !== null);
 
-  // Show image generation view when prompts are ready
-  if (generatedPrompts && !hasAnyImage && !isGenerating && collageImages.every(i => i === null)) {
+  // ─── Not started yet ───
+  if (!chatStarted) {
     return (
-      <>
-        <canvas ref={canvasRef} className="hidden" />
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-sm font-medium text-primary mb-2">✨ 4 Prompts erstellt!</p>
-            <p className="text-xs text-muted-foreground mb-3">Die KI hat 4 einzigartige Character-Prompts basierend auf deinem Gespräch erstellt.</p>
-            <div className="space-y-2 mb-4">
-              {generatedPrompts.map((p, i) => (
-                <div key={i} className="text-xs text-muted-foreground bg-muted/30 rounded p-2 line-clamp-2">
-                  <span className="font-medium text-foreground">{COLLAGE_LABELS[i]}:</span> {p.slice(0, 120)}...
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={generateImages} disabled={!apiKey} className="flex-1">
-                <ImageIcon className="w-4 h-4" />Bilder generieren
-              </Button>
-              <Button variant="outline" onClick={handleNewChat}>
-                <RotateCcw className="w-4 h-4" />Neuer Chat
-              </Button>
-            </div>
-            {!apiKey && <p className="text-sm text-amber-500 mt-2">⚠️ Bitte gib zuerst deinen Gemini API Key ein.</p>}
-          </div>
+      <div className="flex flex-col items-center justify-center min-h-[300px] text-center text-muted-foreground">
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+          <MessageSquare className="w-10 h-10 text-primary/60" />
         </div>
-      </>
+        <p className="text-sm mb-4">Beschreibe deinen Charakter im Chat und die KI erstellt 4 einzigartige Varianten.</p>
+        <Button onClick={startChat}>
+          <MessageSquare className="w-4 h-4" />Chat starten
+        </Button>
+      </div>
     );
   }
 
-  // Show collage results
-  if (hasAnyImage || isGenerating) {
-    return (
-      <>
-        <canvas ref={canvasRef} className="hidden" />
+  // ─── Main view: Chat + Images ───
+  return (
+    <div className="space-y-4">
+      <canvas ref={canvasRef} className="hidden" />
+
+      {/* Collapsible Chat */}
+      <div className="border border-border/50 rounded-xl overflow-hidden">
+        <button
+          onClick={() => setChatOpen(!chatOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-sm font-medium"
+        >
+          <span className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            Chat {messages.length > 0 && `(${messages.length} Nachrichten)`}
+          </span>
+          {chatOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {chatOpen && (
+          <div className="p-4 space-y-3">
+            {/* Messages */}
+            <div className="overflow-y-auto space-y-3 pr-1 max-h-[350px]">
+              {messages.map((msg, i) => (
+                <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted/50 text-foreground rounded-bl-md"
+                  )}>
+                    {msg.role === "assistant" && msg.content.includes('"ready"') 
+                      ? "✅ Prompts erstellt! Bilder werden generiert..."
+                      : msg.content}
+                  </div>
+                </div>
+              ))}
+              {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+                <div className="flex justify-start">
+                  <div className="bg-muted/50 rounded-2xl rounded-bl-md px-4 py-2.5">
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={hasGenerated ? "Beschreibe Änderungen..." : "Beschreibe deinen Charakter..."}
+                rows={2}
+                className="resize-none flex-1"
+                disabled={isStreaming}
+              />
+              <div className="flex flex-col gap-1.5 shrink-0 self-end">
+                <Button onClick={handleSend} disabled={!input.trim() || isStreaming} size="icon" title="Senden">
+                  {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {/* Action buttons under chat */}
+            {!isGenerating && (
+              <div className="flex gap-2 pt-1">
+                {hasGenerated ? (
+                  <Button onClick={handleRegenerateWithChanges} disabled={isStreaming} variant="outline" size="sm" className="flex-1">
+                    <RotateCcw className="w-3.5 h-3.5" />Mit Änderungen neu generieren
+                  </Button>
+                ) : (
+                  <Button onClick={requestGenerateNow} disabled={isStreaming || messages.length < 2} size="sm" className="flex-1">
+                    <Sparkles className="w-3.5 h-3.5" />Jetzt generieren
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">{error}</div>
+      )}
+
+      {/* Image Grid */}
+      {(hasAnyImage || isGenerating) && (
         <div className="space-y-4">
-          {error && <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">{error}</div>}
           <div className="grid grid-cols-2 gap-3">
             {COLLAGE_LABELS.map((label, i) => (
               <div key={i} className="relative rounded-xl overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
@@ -327,89 +414,37 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    {isGenerating && generatingIndex === i ? <Loader2 className="w-8 h-8 animate-spin text-primary" /> : <ImageIcon className="w-8 h-8 text-muted-foreground/30" />}
+                    {isGenerating && generatingIndex === i
+                      ? <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      : <LucideImage className="w-8 h-8 text-muted-foreground/30" />}
                     <p className="text-xs mt-2">{label}</p>
                   </div>
                 )}
               </div>
             ))}
           </div>
+
           {hasAnyImage && !isGenerating && (
             <div className="flex gap-3">
-              <Button onClick={handleDownloadCollage} variant="outline" className="flex-1"><Download className="w-4 h-4" />Collage herunterladen</Button>
-              <Button onClick={handleRegenerate} variant="outline" className="flex-1"><RotateCcw className="w-4 h-4" />Neu generieren</Button>
-              <Button onClick={handleNewChat} variant="outline"><MessageSquare className="w-4 h-4" />Neuer Chat</Button>
-            </div>
-          )}
-        </div>
-      </>
-    );
-  }
-
-  // Chat view
-  return (
-    <div className="flex flex-col h-full min-h-[400px]">
-      {!chatStarted ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <MessageSquare className="w-10 h-10 text-primary/60" />
-          </div>
-          <p className="text-sm mb-4">Beschreibe deinen Charakter im Chat und die KI erstellt 4 einzigartige Prompts für dich.</p>
-          <Button onClick={startChat}>
-            <MessageSquare className="w-4 h-4" />Chat starten
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 max-h-[400px]">
-            {messages.map((msg, i) => (
-              <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
-                <div className={cn(
-                  "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-muted/50 text-foreground rounded-bl-md"
-                )}>
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
-              <div className="flex justify-start">
-                <div className="bg-muted/50 rounded-2xl rounded-bl-md px-4 py-2.5">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {generatedPrompts ? (
-            <div className="flex gap-3">
-              <Button onClick={generateImages} disabled={!apiKey} className="flex-1">
-                <ImageIcon className="w-4 h-4" />Bilder generieren
+              <Button onClick={handleDownloadCollage} variant="outline" className="flex-1">
+                <Download className="w-4 h-4" />Collage herunterladen
               </Button>
-              <Button variant="outline" onClick={handleNewChat}>
-                <RotateCcw className="w-4 h-4" />Neuer Chat
+              <Button onClick={handleRegenerate} variant="outline" className="flex-1">
+                <RotateCcw className="w-4 h-4" />Gleiche Prompts
               </Button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Beschreibe deinen Charakter..."
-                rows={2}
-                className="resize-none flex-1"
-                disabled={isStreaming}
-              />
-              <Button onClick={handleSend} disabled={!input.trim() || isStreaming} size="icon" className="shrink-0 self-end">
-                {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <Button onClick={handleNewChat} variant="outline">
+                <MessageSquare className="w-4 h-4" />Neu
               </Button>
             </div>
           )}
-        </>
+        </div>
+      )}
+
+      {/* Hint when no images yet and chat is closed */}
+      {!hasAnyImage && !isGenerating && !chatOpen && (
+        <div className="text-center text-muted-foreground text-sm py-6">
+          <p>Öffne den Chat um deinen Charakter zu beschreiben oder klicke auf "Jetzt generieren".</p>
+        </div>
       )}
     </div>
   );
