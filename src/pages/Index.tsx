@@ -6106,6 +6106,14 @@ Beispiel einer korrekten Antwort:
                       className="min-h-[160px] resize-y"
                     />
                     
+                    {/* Generating overlay */}
+                    {isExpandingSuggestion && (
+                      <div className="absolute inset-0 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center gap-2 z-10 border border-primary/20">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        <span className="text-sm font-medium text-primary">Text wird generiert...</span>
+                      </div>
+                    )}
+                    
                     {/* Suggestions overlay - only when empty and not animating */}
                     {(!storyIdea || isAnimatingSuggestion) && (
                       <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
