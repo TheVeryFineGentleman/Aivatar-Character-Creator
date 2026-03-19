@@ -638,21 +638,25 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             placeholder="Video Prompt wird hier angezeigt..."
           />
           {/* Video Regenerate Button */}
-          {onRegenerateVideo && point.generatedImage && (
+          {onRegenerateVideo && (point.generatedImage || isDirty) && (
             <Button
               variant="default"
               className="w-full gap-2 h-10 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25"
               onClick={() => onRegenerateVideo(expandedIndex)}
               disabled={isGeneratingVideo || regeneratingIndex !== null}
             >
-              {isGeneratingVideo && generatingVideoIndex === expandedIndex ? (
+              {(isGeneratingVideo && generatingVideoIndex === expandedIndex) || regeneratingIndex === expandedIndex ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Video className="w-4 h-4" />
               )}
-              {isGeneratingVideo && generatingVideoIndex === expandedIndex 
-                ? 'Video wird generiert...' 
-                : 'Video neu generieren'}
+              {regeneratingIndex === expandedIndex 
+                ? 'Bild wird neu generiert...' 
+                : isGeneratingVideo && generatingVideoIndex === expandedIndex 
+                  ? 'Video wird generiert...' 
+                  : isDirty 
+                    ? 'Bild + Video neu generieren'
+                    : 'Video neu generieren'}
             </Button>
           )}
           {/* Video Error Display */}
