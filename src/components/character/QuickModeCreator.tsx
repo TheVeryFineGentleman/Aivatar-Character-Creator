@@ -112,6 +112,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
     try {
       for (let i = 0; i < 4; i++) {
         setGeneratingIndex(i);
+        onGenerationProgress?.(i);
         try {
           const img = await generateSingleImage(i);
           if (img) onImagesGenerated([img]); // Emit each image immediately
