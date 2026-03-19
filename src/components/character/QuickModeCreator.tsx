@@ -107,6 +107,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
     if (!canGenerate) return;
     setIsGenerating(true);
     setError(null);
+    onGenerationStart?.(4);
 
     try {
       for (let i = 0; i < 4; i++) {
