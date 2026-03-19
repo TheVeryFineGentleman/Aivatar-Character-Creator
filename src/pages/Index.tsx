@@ -322,6 +322,7 @@ const Index = () => {
   // Main Tab state
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story" | "character">("poses");
 
+  const [characterImages, setCharacterImages] = useState<string[]>([]);
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
@@ -7506,7 +7507,7 @@ Beispiel einer korrekten Antwort:
 
           {/* Character Creator Tab Content */}
           {activeMainTab === "character" && (
-            <CharacterCreator apiKey={apiKey} />
+            <CharacterCreator apiKey={apiKey} allImages={characterImages} setAllImages={setCharacterImages} />
           )}
 
           </>
