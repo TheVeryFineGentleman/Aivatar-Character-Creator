@@ -930,6 +930,9 @@ WICHTIG:
     setFlippedCards(new Set());
     setStoryboardAnimationKey(0);
     setUsedCameraMovements([]);
+    setVideoErrors(new Map());
+    setVideoResults(new Map());
+    setVideoTaskIds(new Map());
   };
 
   // Export Storyboard für Veo3 als ZIP-Datei
