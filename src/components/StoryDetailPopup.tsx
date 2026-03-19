@@ -59,6 +59,10 @@ interface StoryDetailPopupProps {
   onUpdateStoryPoint: (index: number, updates: Partial<StoryPoint>) => void;
   onNavigateScene: (direction: 'prev' | 'next') => void;
   onRegenerateImage: (index: number, updatedPoint?: StoryPoint) => void;
+  onRegenerateVideo?: (index: number) => void;
+  isGeneratingVideo?: boolean;
+  generatingVideoIndex?: number | null;
+  videoErrors?: Map<number, string>;
   onFinalizeScene: (index: number) => void;
   onDiscardChanges: (index: number) => void;
   regeneratingIndex: number | null;
@@ -71,7 +75,7 @@ interface StoryDetailPopupProps {
   onUpdateVideoPrompt: (index: number, videoPrompt: string) => void;
   totalScenes: number;
   finalizedCount: number;
-  aspectRatio?: string; // "16:9" or "9:16"
+  aspectRatio?: string;
 }
 
 // Auto option for all dropdowns
@@ -247,6 +251,10 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   onUpdateStoryPoint,
   onNavigateScene,
   onRegenerateImage,
+  onRegenerateVideo,
+  isGeneratingVideo = false,
+  generatingVideoIndex = null,
+  videoErrors,
   onFinalizeScene,
   onDiscardChanges,
   regeneratingIndex,
@@ -629,6 +637,31 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             className="text-xs min-h-[100px] resize-y bg-muted/30 border-border/30"
             placeholder="Video Prompt wird hier angezeigt..."
           />
+          {/* Video Regenerate Button */}
+          {onRegenerateVideo && point.generatedImage && (
+            <Button
+              variant="default"
+              className="w-full gap-2 h-10 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25"
+              onClick={() => onRegenerateVideo(expandedIndex)}
+              disabled={isGeneratingVideo || regeneratingIndex !== null}
+            >
+              {isGeneratingVideo && generatingVideoIndex === expandedIndex ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Video className="w-4 h-4" />
+              )}
+              {isGeneratingVideo && generatingVideoIndex === expandedIndex 
+                ? 'Video wird generiert...' 
+                : 'Video neu generieren'}
+            </Button>
+          )}
+          {/* Video Error Display */}
+          {videoErrors?.has(expandedIndex) && (
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-2.5 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+              <p className="text-xs text-destructive">{videoErrors.get(expandedIndex)}</p>
+            </div>
+          )}
         </div>
       )}
       
