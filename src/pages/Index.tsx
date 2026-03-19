@@ -413,6 +413,7 @@ const Index = () => {
   // Story Idea AI Assistant state
   const [storyAiAssistantInput, setStoryAiAssistantInput] = useState("");
   const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
+  const [isExpandingSuggestion, setIsExpandingSuggestion] = useState(false);
   
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
