@@ -72,7 +72,10 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents,
-          generationConfig: { maxOutputTokens: 4000 },
+          generationConfig: {
+            maxOutputTokens: 4000,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       }
     );
