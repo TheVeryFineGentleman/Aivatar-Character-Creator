@@ -106,26 +106,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
             } catch {}
           }
         }
-      } else if (typeof response === "string") {
-        // Try to parse SSE from string
-        const lines = response.split("\n");
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content
-              || parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (content) assistantContent += content;
-          } catch {}
-        }
-        if (assistantContent) {
-          setMessages(prev => [...prev, { role: "assistant", content: assistantContent }]);
-        }
-      } else if (response && typeof response === "object" && response.error) {
-        throw new Error(response.error);
-      }
 
       // Check if the response contains prompts JSON
       if (assistantContent) {
