@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 interface ChatModeCreatorProps {
   apiKey: string;
   onImagesGenerated: (images: string[]) => void;
+  onGenerationStart?: (total: number) => void;
+  onGenerationProgress?: (index: number) => void;
+  onGenerationEnd?: () => void;
 }
 
 type ChatMessage = {
