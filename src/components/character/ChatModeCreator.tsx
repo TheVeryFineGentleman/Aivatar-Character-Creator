@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Download, RotateCcw, Send, ImageIcon, MessageSquare, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Loader2, RotateCcw, Send, MessageSquare, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Image as LucideImage } from "lucide-react";
 
 interface ChatModeCreatorProps {
   apiKey: string;
+  onImagesGenerated: (images: string[]) => void;
 }
 
 type ChatMessage = {
@@ -14,26 +14,19 @@ type ChatMessage = {
   content: string;
 };
 
-const COLLAGE_LABELS = ["Charakter 1", "Charakter 2", "Charakter 3", "Charakter 4"];
-
-export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
+export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImagesGenerated }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [generatedPrompts, setGeneratedPrompts] = useState<string[] | null>(null);
-  const [collageImages, setCollageImages] = useState<(string | null)[]>([null, null, null, null]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [chatStarted, setChatStarted] = useState(false);
   const [chatOpen, setChatOpen] = useState(true);
   const [hasGenerated, setHasGenerated] = useState(false);
 
-  // No auto-scroll on new messages
-
-  // Auto-generate when prompts become available
   useEffect(() => {
     if (generatedPrompts && !hasGenerated && apiKey) {
       setChatOpen(false);
@@ -144,7 +137,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     }
   };
 
-  // Request prompts from the AI based on current conversation, then auto-generate
   const requestGenerateNow = async () => {
     if (isStreaming || !apiKey) return;
     const triggerMsg = "Erstelle jetzt die 4 Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus.";
@@ -156,16 +148,15 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     setIsGenerating(true);
     setHasGenerated(true);
     setError(null);
-    setCollageImages([null, null, null, null]);
+
+    const newImages: string[] = [];
 
     try {
       for (let i = 0; i < 4; i++) {
         setGeneratingIndex(i);
         try {
           const img = await generateSingleImage(prompts[i]);
-          if (img) {
-            setCollageImages(prev => { const next = [...prev]; next[i] = img; return next; });
-          }
+          if (img) newImages.push(img);
         } catch (err: any) {
           if (err.message === "rate_limit") {
             await new Promise(r => setTimeout(r, 5000));
@@ -175,6 +166,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
         }
         if (i < 3) await new Promise(r => setTimeout(r, 2000));
       }
+      if (newImages.length > 0) onImagesGenerated(newImages);
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
     } finally {
@@ -213,66 +205,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     return null;
   };
 
-  const handleDownloadCollage = useCallback(async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const imgSize = 512, padding = 12, cols = 2, rows = 2;
-    canvas.width = cols * imgSize + (cols + 1) * padding;
-    canvas.height = rows * imgSize + (rows + 1) * padding;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.fillStyle = "#1a1a2e";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const loadImage = (src: string): Promise<HTMLImageElement> =>
-      new Promise((resolve, reject) => { const img = new window.Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
-
-    for (let i = 0; i < 4; i++) {
-      const col = i % cols, row = Math.floor(i / cols);
-      const x = padding + col * (imgSize + padding), y = padding + row * (imgSize + padding);
-      if (collageImages[i]) {
-        try {
-          const img = await loadImage(collageImages[i]!);
-          const radius = 16;
-          ctx.save();
-          ctx.beginPath();
-          ctx.roundRect(x, y, imgSize, imgSize, radius);
-          ctx.clip();
-          const scale = Math.max(imgSize / img.width, imgSize / img.height);
-          const sw = imgSize / scale, sh = imgSize / scale;
-          ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, x, y, imgSize, imgSize);
-          ctx.restore();
-        } catch { ctx.fillStyle = "#2a2a3e"; ctx.fillRect(x, y, imgSize, imgSize); }
-      } else {
-        ctx.fillStyle = "#2a2a3e"; ctx.fillRect(x, y, imgSize, imgSize);
-      }
-      ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(x, y + imgSize - 36, imgSize, 36);
-      ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center";
-      ctx.fillText(COLLAGE_LABELS[i], x + imgSize / 2, y + imgSize - 12);
-    }
-
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = `character-collage-${Date.now()}.png`;
-    link.click();
-  }, [collageImages]);
-
-  const handleDownloadSingle = (index: number) => {
-    const img = collageImages[index];
-    if (!img) return;
-    const link = document.createElement("a");
-    link.href = img;
-    link.download = `character-${index + 1}-${Date.now()}.png`;
-    link.click();
-  };
-
-  const handleRegenerate = () => {
-    if (!generatedPrompts) return;
-    setCollageImages([null, null, null, null]);
-    generateImages(generatedPrompts);
-  };
-
   const handleRegenerateWithChanges = async () => {
     setGeneratedPrompts(null);
     setHasGenerated(false);
@@ -283,21 +215,17 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
   const handleNewChat = () => {
     setMessages([]);
     setGeneratedPrompts(null);
-    setCollageImages([null, null, null, null]);
     setError(null);
     setChatStarted(false);
     setChatOpen(true);
     setHasGenerated(false);
   };
 
-  const hasAnyImage = collageImages.some(img => img !== null);
-
-  // ─── Not started yet ───
   if (!chatStarted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] text-center text-muted-foreground">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <MessageSquare className="w-10 h-10 text-primary/60" />
+      <div className="flex flex-col items-center justify-center min-h-[200px] text-center text-muted-foreground">
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+          <MessageSquare className="w-8 h-8 text-primary/60" />
         </div>
         <p className="text-sm mb-4">Beschreibe deinen Charakter im Chat und die KI erstellt 4 einzigartige Varianten.</p>
         <Button onClick={startChat}>
@@ -307,11 +235,8 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
     );
   }
 
-  // ─── Main view: Chat + Images ───
   return (
     <div className="space-y-4">
-      <canvas ref={canvasRef} className="hidden" />
-
       {/* Collapsible Chat */}
       <div className="border border-border/50 rounded-xl overflow-hidden">
         <button
@@ -327,7 +252,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
 
         {chatOpen && (
           <div className="p-4 space-y-3">
-            {/* Messages */}
             <div className="overflow-y-auto space-y-3 pr-1 max-h-[350px]">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
@@ -337,7 +261,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
                       ? "bg-primary text-primary-foreground rounded-br-md"
                       : "bg-muted/50 text-foreground rounded-bl-md"
                   )}>
-                    {msg.role === "assistant" && msg.content.includes('"ready"') 
+                    {msg.role === "assistant" && msg.content.includes('"ready"')
                       ? "✅ Prompts erstellt! Bilder werden generiert..."
                       : msg.content}
                   </div>
@@ -353,7 +277,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input */}
             <div className="flex gap-2">
               <Textarea
                 value={input}
@@ -371,7 +294,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
               </div>
             </div>
 
-            {/* Action buttons under chat */}
             {!isGenerating && (
               <div className="flex gap-2 pt-1">
                 {hasGenerated ? (
@@ -383,65 +305,23 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
                     <Sparkles className="w-3.5 h-3.5" />Jetzt generieren
                   </Button>
                 )}
+                <Button onClick={handleNewChat} variant="outline" size="sm">
+                  <MessageSquare className="w-3.5 h-3.5" />Neu
+                </Button>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Error */}
       {error && (
         <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">{error}</div>
       )}
 
-      {/* Image Grid */}
-      {(hasAnyImage || isGenerating) && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-2 max-w-xl">
-            {COLLAGE_LABELS.map((label, i) => (
-              <div key={i} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
-                {collageImages[i] ? (
-                  <>
-                    <img src={collageImages[i]!} alt={label} className="w-full h-full object-cover" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
-                      <p className="text-[10px] text-white font-medium text-center">{label}</p>
-                    </div>
-                    <button onClick={() => handleDownloadSingle(i)} className="absolute top-1 right-1 p-1 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Download className="w-3 h-3" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    {isGenerating && generatingIndex === i
-                      ? <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                      : <LucideImage className="w-5 h-5 text-muted-foreground/30" />}
-                    <p className="text-[10px] mt-1">{label}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {hasAnyImage && !isGenerating && (
-            <div className="flex gap-3">
-              <Button onClick={handleDownloadCollage} variant="outline" className="flex-1">
-                <Download className="w-4 h-4" />Collage herunterladen
-              </Button>
-              <Button onClick={handleRegenerate} variant="outline" className="flex-1">
-                <RotateCcw className="w-4 h-4" />Gleiche Prompts
-              </Button>
-              <Button onClick={handleNewChat} variant="outline">
-                <MessageSquare className="w-4 h-4" />Neu
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Hint when no images yet and chat is closed */}
-      {!hasAnyImage && !isGenerating && !chatOpen && (
-        <div className="text-center text-muted-foreground text-sm py-6">
-          <p>Öffne den Chat um deinen Charakter zu beschreiben oder klicke auf "Jetzt generieren".</p>
+      {isGenerating && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          Generiere Bild {generatingIndex + 1} von 4...
         </div>
       )}
     </div>
