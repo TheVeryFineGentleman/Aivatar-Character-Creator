@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 interface QuickModeCreatorProps {
   apiKey: string;
   onImagesGenerated: (images: string[]) => void;
+  onGenerationStart?: (total: number) => void;
+  onGenerationProgress?: (index: number) => void;
+  onGenerationEnd?: () => void;
 }
 
 const GENDER_OPTIONS = [
@@ -38,7 +41,7 @@ const STYLE_PROMPT_MAP: Record<string, string> = {
   pixar: "3D rendered, Pixar-quality, stylized, volumetric lighting",
 };
 
-export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onImagesGenerated }) => {
+export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
@@ -104,14 +107,15 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
     if (!canGenerate) return;
     setIsGenerating(true);
     setError(null);
-    const newImages: string[] = [];
+    onGenerationStart?.(4);
 
     try {
       for (let i = 0; i < 4; i++) {
         setGeneratingIndex(i);
+        onGenerationProgress?.(i);
         try {
           const img = await generateSingleImage(i);
-          if (img) newImages.push(img);
+          if (img) onImagesGenerated([img]); // Emit each image immediately
         } catch (err: any) {
           if (err.message === "rate_limit") {
             await new Promise(r => setTimeout(r, 5000));
@@ -121,12 +125,12 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
         }
         if (i < 3) await new Promise(r => setTimeout(r, 2000));
       }
-      if (newImages.length > 0) onImagesGenerated(newImages);
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
     } finally {
       setIsGenerating(false);
       setGeneratingIndex(-1);
+      onGenerationEnd?.();
     }
   };
 

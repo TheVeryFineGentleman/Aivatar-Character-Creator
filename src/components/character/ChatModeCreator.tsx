@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 interface ChatModeCreatorProps {
   apiKey: string;
   onImagesGenerated: (images: string[]) => void;
+  onGenerationStart?: (total: number) => void;
+  onGenerationProgress?: (index: number) => void;
+  onGenerationEnd?: () => void;
 }
 
 type ChatMessage = {
@@ -14,7 +17,7 @@ type ChatMessage = {
   content: string;
 };
 
-export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImagesGenerated }) => {
+export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -148,15 +151,15 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
     setIsGenerating(true);
     setHasGenerated(true);
     setError(null);
-
-    const newImages: string[] = [];
+    onGenerationStart?.(4);
 
     try {
       for (let i = 0; i < 4; i++) {
         setGeneratingIndex(i);
+        onGenerationProgress?.(i);
         try {
           const img = await generateSingleImage(prompts[i]);
-          if (img) newImages.push(img);
+          if (img) onImagesGenerated([img]);
         } catch (err: any) {
           if (err.message === "rate_limit") {
             await new Promise(r => setTimeout(r, 5000));
@@ -166,12 +169,12 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
         }
         if (i < 3) await new Promise(r => setTimeout(r, 2000));
       }
-      if (newImages.length > 0) onImagesGenerated(newImages);
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
     } finally {
       setIsGenerating(false);
       setGeneratingIndex(-1);
+      onGenerationEnd?.();
     }
   };
 
