@@ -8,6 +8,8 @@ import { ChatModeCreator } from "@/components/character/ChatModeCreator";
 
 interface CharacterCreatorProps {
   apiKey: string;
+  allImages: string[];
+  setAllImages: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const MODES = [
@@ -17,14 +19,13 @@ const MODES = [
 
 type Mode = typeof MODES[number]["id"];
 
-export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey }) => {
+export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allImages, setAllImages }) => {
   const [mode, setMode] = useState<Mode>("quick");
-  const [allImages, setAllImages] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImagesGenerated = useCallback((newImages: string[]) => {
     setAllImages(prev => [...prev, ...newImages]);
-  }, []);
+  }, [setAllImages]);
 
   const handleDeleteImage = (index: number) => {
     setAllImages(prev => prev.filter((_, i) => i !== index));
