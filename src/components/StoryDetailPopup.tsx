@@ -637,6 +637,31 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             className="text-xs min-h-[100px] resize-y bg-muted/30 border-border/30"
             placeholder="Video Prompt wird hier angezeigt..."
           />
+          {/* Video Regenerate Button */}
+          {onRegenerateVideo && point.generatedImage && (
+            <Button
+              variant="default"
+              className="w-full gap-2 h-10 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25"
+              onClick={() => onRegenerateVideo(expandedIndex)}
+              disabled={isGeneratingVideo || regeneratingIndex !== null}
+            >
+              {isGeneratingVideo && generatingVideoIndex === expandedIndex ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Video className="w-4 h-4" />
+              )}
+              {isGeneratingVideo && generatingVideoIndex === expandedIndex 
+                ? 'Video wird generiert...' 
+                : 'Video neu generieren'}
+            </Button>
+          )}
+          {/* Video Error Display */}
+          {videoErrors?.has(expandedIndex) && (
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-2.5 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+              <p className="text-xs text-destructive">{videoErrors.get(expandedIndex)}</p>
+            </div>
+          )}
         </div>
       )}
       
