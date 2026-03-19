@@ -413,6 +413,7 @@ const Index = () => {
   // Story Idea AI Assistant state
   const [storyAiAssistantInput, setStoryAiAssistantInput] = useState("");
   const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
+  const [isExpandingSuggestion, setIsExpandingSuggestion] = useState(false);
   
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
@@ -2876,8 +2877,9 @@ ${sceneContext}`;
       setIsAnimatingSuggestion(false);
       setSelectedSuggestionIndex(null);
       
-      // Show loading in the textarea
-      setStoryIdea("⏳ Wird generiert...");
+      // Show overlay instead of placeholder text
+      setStoryIdea("");
+      setIsExpandingSuggestion(true);
       
       try {
         const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
@@ -2918,19 +2920,27 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
           }
         );
 
+        let finalText = suggestion;
         if (response.ok) {
           const data = await response.json();
           const expandedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (expandedText) {
-            setStoryIdea(expandedText);
-          } else {
-            setStoryIdea(suggestion);
+          if (expandedText) finalText = expandedText;
+        }
+        
+        // Word-by-word animation
+        setIsExpandingSuggestion(false);
+        const words = finalText.split(/(\s+)/);
+        let accumulated = "";
+        for (let w = 0; w < words.length; w++) {
+          accumulated += words[w];
+          setStoryIdea(accumulated);
+          if (words[w].trim()) {
+            await new Promise(r => setTimeout(r, 30));
           }
-        } else {
-          setStoryIdea(suggestion);
         }
       } catch (error) {
         console.error("Failed to expand suggestion:", error);
+        setIsExpandingSuggestion(false);
         setStoryIdea(suggestion);
       }
     }, 400);
@@ -6095,6 +6105,14 @@ Beispiel einer korrekten Antwort:
                       onChange={(e) => setStoryIdea(e.target.value)}
                       className="min-h-[160px] resize-y"
                     />
+                    
+                    {/* Generating overlay */}
+                    {isExpandingSuggestion && (
+                      <div className="absolute inset-0 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center gap-2 z-10 border border-primary/20">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        <span className="text-sm font-medium text-primary">Text wird generiert...</span>
+                      </div>
+                    )}
                     
                     {/* Suggestions overlay - only when empty and not animating */}
                     {(!storyIdea || isAnimatingSuggestion) && (
