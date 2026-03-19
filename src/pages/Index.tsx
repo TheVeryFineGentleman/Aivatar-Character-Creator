@@ -2283,15 +2283,165 @@ Respond ONLY with JSON:
     setGeneratingVideoIndex(null);
   };
 
+  // Check if image-affecting fields changed since last generation
+  const hasImageFieldsChanged = (point: StoryPoint): boolean => {
+    if (!point.generationSnapshot) return false;
+    const imageFields = ['summary', 'detailedDescription', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'cameraAngle', 'shotType', 'composition', 'movement', 'participants', 'negativePrompts', 'styleNotes', 'continuityNotes'];
+    for (const field of imageFields) {
+      if (point[field as keyof StoryPoint] !== point.generationSnapshot[field as keyof StoryPoint]) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   // Regenerate a single video for a specific scene (uses shared helper with retry)
+  // If image-affecting fields changed, regenerates image first, then video
+  // If only dialogText/videoPrompt changed, goes straight to video
   const regenerateSingleVideo = async (sceneIndex: number) => {
-    const point = storyPoints[sceneIndex];
-    if (!point.generatedImage || !point.videoPrompt || isGeneratingVideos || !apiKey) return;
+    let point = storyPoints[sceneIndex];
+    if (!point.videoPrompt || isGeneratingVideos || !apiKey) return;
+    if (!point.generatedImage && !hasImageFieldsChanged(point)) return;
     
     setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
     setVideoResults(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
     setStoryPoints(prev => prev.map((p, i) => i === sceneIndex ? { ...p, generatedVideo: undefined } : p));
     
+    // If image-affecting fields changed, regenerate image first
+    if (hasImageFieldsChanged(point)) {
+      setRegeneratingPointIndex(sceneIndex);
+      setRegeneratingImageOnlyIndex(sceneIndex);
+      
+      setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: undefined } : p));
+      
+      // Get character reference images
+      const characterBase64Images: string[] = [];
+      for (const imageUrl of storyReferenceImages) {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              const base64Data = result.split(',')[1];
+              if (base64Data) resolve(base64Data);
+              else reject(new Error('No base64 data'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          characterBase64Images.push(base64);
+        } catch (error) {
+          console.error('Error converting story reference image to base64:', error);
+        }
+      }
+      
+      const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 40000);
+      
+      try {
+        const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
+        const allReferenceImages: string[] = [...characterBase64Images];
+        
+        if (previousSceneImage) {
+          try {
+            const response = await fetch(previousSceneImage);
+            const blob = await response.blob();
+            const prevBase64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+              reader.readAsDataURL(blob);
+            });
+            allReferenceImages.push(prevBase64);
+          } catch (error) {
+            console.error('Error converting previous scene image:', error);
+          }
+        }
+        
+        const imageResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+          {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              prompt: imagePromptText,
+              referenceImages: allReferenceImages,
+              aspectRatio: storyboardFormat,
+              mode: "image",
+              apiKey: apiKey
+            }),
+          }
+        );
+        
+        clearTimeout(timeoutId);
+        
+        if (!imageResponse.ok) {
+          const errorData = await imageResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `API Error: ${imageResponse.status}`);
+        }
+        
+        const imageResult = await imageResponse.json();
+        if (!imageResult.success) throw new Error(imageResult.error || "Kein Bild generiert");
+        
+        let generatedImageUrl = "";
+        if (imageResult.imageBase64) {
+          const binary = atob(imageResult.imageBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+          const blob = new Blob([bytes], { type: imageResult.mimeType || "image/png" });
+          generatedImageUrl = URL.createObjectURL(blob);
+        }
+        
+        if (!generatedImageUrl) throw new Error("Kein Bild generiert");
+        
+        const generationSnapshot = {
+          summary: point.summary, detailedDescription: point.detailedDescription,
+          keyAction: point.keyAction, specificArea: point.specificArea,
+          emotion: point.emotion, audienceEffect: point.audienceEffect,
+          cameraAngle: point.cameraAngle, shotType: point.shotType,
+          composition: point.composition, movement: point.movement,
+          participants: point.participants, negativePrompts: point.negativePrompts,
+          styleNotes: point.styleNotes, continuityNotes: point.continuityNotes,
+        };
+        
+        setStoryPoints(prev => prev.map((p, idx) => {
+          if (idx === sceneIndex) {
+            return { ...p, ...point, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationError: undefined, generationSnapshot };
+          }
+          return p;
+        }));
+        
+        setRegeneratingImageOnlyIndex(null);
+        setJustFinishedImageOnlyIndex(sceneIndex);
+        setTimeout(() => setJustFinishedImageOnlyIndex(null), 700);
+        
+        // Update point reference for video generation with new image
+        point = { ...point, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationSnapshot };
+        
+      } catch (error) {
+        clearTimeout(timeoutId);
+        let errorMessage = "Unbekannter Fehler";
+        if (error instanceof Error) {
+          errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung – keine Antwort nach 40s" : error.message;
+        }
+        console.error(`Bild-Regeneration Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
+        setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: errorMessage } : p));
+        setRegeneratingImageOnlyIndex(null);
+        setRegeneratingPointIndex(null);
+        return; // Don't continue to video if image failed
+      } finally {
+        setRegeneratingImageOnlyIndex(null);
+        setRegeneratingPointIndex(null);
+      }
+    }
+    
+    // Now generate video
     setIsGeneratingVideos(true);
     
     const nextImage = storyPoints[sceneIndex + 1]?.generatedImage;
