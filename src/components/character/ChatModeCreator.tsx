@@ -149,14 +149,12 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
     setHasGenerated(true);
     setError(null);
 
-    const newImages: string[] = [];
-
     try {
       for (let i = 0; i < 4; i++) {
         setGeneratingIndex(i);
         try {
           const img = await generateSingleImage(prompts[i]);
-          if (img) newImages.push(img);
+          if (img) onImagesGenerated([img]); // Emit each image immediately
         } catch (err: any) {
           if (err.message === "rate_limit") {
             await new Promise(r => setTimeout(r, 5000));
@@ -166,7 +164,6 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
         }
         if (i < 3) await new Promise(r => setTimeout(r, 2000));
       }
-      if (newImages.length > 0) onImagesGenerated(newImages);
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
     } finally {
