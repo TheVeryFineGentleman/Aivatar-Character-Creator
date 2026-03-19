@@ -399,25 +399,25 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey }) => {
       {/* Image Grid */}
       {(hasAnyImage || isGenerating) && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2 max-w-xl">
             {COLLAGE_LABELS.map((label, i) => (
-              <div key={i} className="relative rounded-xl overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
+              <div key={i} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
                 {collageImages[i] ? (
                   <>
                     <img src={collageImages[i]!} alt={label} className="w-full h-full object-cover" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                      <p className="text-xs text-white font-medium text-center">{label}</p>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+                      <p className="text-[10px] text-white font-medium text-center">{label}</p>
                     </div>
-                    <button onClick={() => handleDownloadSingle(i)} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Download className="w-3.5 h-3.5" />
+                    <button onClick={() => handleDownloadSingle(i)} className="absolute top-1 right-1 p-1 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Download className="w-3 h-3" />
                     </button>
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                     {isGenerating && generatingIndex === i
-                      ? <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                      : <LucideImage className="w-8 h-8 text-muted-foreground/30" />}
-                    <p className="text-xs mt-2">{label}</p>
+                      ? <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      : <LucideImage className="w-5 h-5 text-muted-foreground/30" />}
+                    <p className="text-[10px] mt-1">{label}</p>
                   </div>
                 )}
               </div>
