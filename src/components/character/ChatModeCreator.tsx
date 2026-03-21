@@ -255,7 +255,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
         {chatOpen && (
           <div className="p-4 space-y-3">
-            <div className="overflow-y-auto space-y-3 pr-1 max-h-[350px]">
+            <div className="overflow-y-auto space-y-3 pr-1 max-h-[300px]">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
                   <div className={cn(
