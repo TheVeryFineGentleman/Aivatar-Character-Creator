@@ -6431,18 +6431,7 @@ Beispiel einer korrekten Antwort:
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-4">
                   {/* Row 1: Dropdowns */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-sm">Videomodell</Label>
-                      <Select value={storyVideoModel} onValueChange={setStoryVideoModel}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {STORY_VIDEO_MODELS.map(m => (
-                            <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-sm">Artstyle</Label>
                       <Select value={storyArtStyle} onValueChange={setStoryArtStyle}>
