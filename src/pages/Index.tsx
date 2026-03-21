@@ -5573,6 +5573,17 @@ Beispiel einer korrekten Antwort:
                   }
                   return null;
                 })()}
+                <button
+                  onClick={() => {
+                    setRefImageSource("poses");
+                    setActiveMainTab("character");
+                  }}
+                  className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
+                  title="Character Creator öffnen"
+                >
+                  <User className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
+                </button>
               </div>
             </div>
 
