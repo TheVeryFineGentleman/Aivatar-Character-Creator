@@ -7700,7 +7700,40 @@ Beispiel einer korrekten Antwort:
 
           {/* Character Creator Tab Content */}
           {activeMainTab === "character" && (
-            <CharacterCreator apiKey={apiKey} allImages={characterImages} setAllImages={setCharacterImages} />
+            <CharacterCreator 
+              apiKey={apiKey} 
+              allImages={characterImages} 
+              setAllImages={setCharacterImages}
+              onUseAsReference={refImageSource ? async (imageUrl: string) => {
+                if (refImageSource === "poses") {
+                  // Convert URL to File for poses reference images
+                  try {
+                    const response = await fetch(imageUrl);
+                    const blob = await response.blob();
+                    const file = new File([blob], `character-ref-${Date.now()}.png`, { type: 'image/png' });
+                    const maxImages = isPro ? 3 : 1;
+                    setReferenceImages(prev => {
+                      if (prev.length >= maxImages) return prev;
+                      const updated = [...prev, file];
+                      referenceImagesRef.current = updated;
+                      return updated;
+                    });
+                  } catch (err) {
+                    console.error("Failed to convert character image to File:", err);
+                  }
+                } else if (refImageSource === "story") {
+                  setStoryReferenceImages(prev => {
+                    if (prev.length >= 2) return prev;
+                    const updated = [...prev, imageUrl];
+                    saveToLocalStorage('storyReferenceImages', updated);
+                    return updated;
+                  });
+                }
+                setActiveMainTab(refImageSource);
+                setRefImageSource(null);
+              } : undefined}
+              refImageSourceLabel={refImageSource === "poses" ? "Posen Generator" : refImageSource === "story" ? "Story Generator" : undefined}
+            />
           )}
 
           </>
