@@ -1,37 +1,24 @@
 
+## Plan: Character Creator Layout kompakter machen
 
-# Fix: Fehlende Referenzbilder bei Video-Prompt-Generierung
+### Ziel
+Das Layout des Character Creators soll schmaler und kompakter werden, ohne Funktionalität zu verlieren.
 
-## Problem
-Bei der Video-Prompt-Generierung werden aktuell nur die globalen Referenzbilder und das Bild der vorherigen Szene mitgeschickt. Es fehlen:
-1. Das Bild der **aktuellen Szene** (Start-Frame) - die KI kann nicht "sehen" wovon sie ausgeht
-2. Das Bild der **naechsten Szene** (End-Frame) - die KI kann den Zielzustand des Hard Cuts nicht sehen
+### Änderungen
 
-## Loesung
+**1. CharacterCreator.tsx - Container einschränken**
+- Wrapper mit `max-w-2xl mx-auto` um den gesamten Inhalt, damit alles nicht die volle Breite einnimmt
+- Bildergalerie-Grid von `grid-cols-4 sm:grid-cols-6 md:grid-cols-8` auf `grid-cols-3 sm:grid-cols-4 md:grid-cols-6` reduzieren für größere, übersichtlichere Thumbnails
 
-### Datei: `src/pages/Index.tsx` (Zeilen ~1750-1785)
+**2. QuickModeCreator.tsx - Kompakteres Formular**
+- Stil-Auswahl von `grid-cols-2` auf eine einzelne Zeile (`grid-cols-4`) oder kompaktere Darstellung
+- Weniger vertikalen Abstand (`space-y-4` statt `space-y-5`)
 
-Die Referenzbild-Sammlung wird erweitert um drei zusaetzliche Bilder:
+**3. ChatModeCreator.tsx - Chat kompakter**
+- Chat-Bereich max-height leicht reduzieren (`max-h-[300px]` statt `max-h-[350px]`)
+- Kompaktere Abstände
 
-```text
-Reihenfolge der Referenzbilder:
-1. Globale Story-Referenzbilder (Charakter-Konsistenz)
-2. Bild der VORHERIGEN Szene (i-1) - fuer Kontext/Uebergang
-3. Bild der AKTUELLEN Szene (i) - START-FRAME
-4. Bild der NAECHSTEN Szene (i+1) - END-FRAME fuer den Hard Cut
-```
-
-### Konkrete Aenderung
-
-Im Block nach den globalen Referenzbildern (Zeile ~1769) werden zwei weitere Bild-Ladebloecke ergaenzt:
-
-1. **Aktuelles Szenen-Bild** (`storyPoints[i].generatedImage`): Wird immer hinzugefuegt (ist garantiert vorhanden, da wir mit `if (!point.generatedImage) continue;` pruefen)
-
-2. **Naechstes Szenen-Bild** (`storyPoints[i + 1]?.generatedImage`): Wird hinzugefuegt wenn vorhanden (nicht bei der letzten Szene)
-
-### Betroffene Datei
-
-| Datei | Aenderung |
-|---|---|
-| `src/pages/Index.tsx` | Zeilen ~1769-1785: Zwei neue fetch+base64 Bloecke fuer aktuelles und naechstes Szenen-Bild, Log-Meldung aktualisieren |
-
+### Dateien
+- `src/components/CharacterCreator.tsx` - max-width Container + Grid anpassen
+- `src/components/character/QuickModeCreator.tsx` - kompakteres Layout
+- `src/components/character/ChatModeCreator.tsx` - kompaktere Abstände
