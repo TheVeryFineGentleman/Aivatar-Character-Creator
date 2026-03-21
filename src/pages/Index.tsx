@@ -383,6 +383,8 @@ const Index = () => {
     // Generation tracking
     generationSnapshot?: Record<string, any>;
   }>>([]);
+  const storyPointsRef = useRef(storyPoints);
+  useEffect(() => { storyPointsRef.current = storyPoints; }, [storyPoints]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
@@ -2403,19 +2405,20 @@ Respond ONLY with JSON:
         
         if (!generatedImageUrl) throw new Error("Kein Bild generiert");
         
+        const currentPointForSnapshot = storyPointsRef.current[sceneIndex];
         const generationSnapshot = {
-          summary: point.summary, detailedDescription: point.detailedDescription,
-          keyAction: point.keyAction, specificArea: point.specificArea,
-          emotion: point.emotion, audienceEffect: point.audienceEffect,
-          cameraAngle: point.cameraAngle, shotType: point.shotType,
-          composition: point.composition, movement: point.movement,
-          participants: point.participants, negativePrompts: point.negativePrompts,
-          styleNotes: point.styleNotes, continuityNotes: point.continuityNotes,
+          summary: currentPointForSnapshot.summary, detailedDescription: currentPointForSnapshot.detailedDescription,
+          keyAction: currentPointForSnapshot.keyAction, specificArea: currentPointForSnapshot.specificArea,
+          emotion: currentPointForSnapshot.emotion, audienceEffect: currentPointForSnapshot.audienceEffect,
+          cameraAngle: currentPointForSnapshot.cameraAngle, shotType: currentPointForSnapshot.shotType,
+          composition: currentPointForSnapshot.composition, movement: currentPointForSnapshot.movement,
+          participants: currentPointForSnapshot.participants, negativePrompts: currentPointForSnapshot.negativePrompts,
+          styleNotes: currentPointForSnapshot.styleNotes, continuityNotes: currentPointForSnapshot.continuityNotes,
         };
         
         setStoryPoints(prev => prev.map((p, idx) => {
           if (idx === sceneIndex) {
-            return { ...p, ...point, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationError: undefined, generationSnapshot };
+            return { ...p, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationError: undefined, generationSnapshot };
           }
           return p;
         }));
@@ -2423,9 +2426,6 @@ Respond ONLY with JSON:
         setRegeneratingImageOnlyIndex(null);
         setJustFinishedImageOnlyIndex(sceneIndex);
         setTimeout(() => setJustFinishedImageOnlyIndex(null), 700);
-        
-        // Update point reference for video generation with new image
-        point = { ...point, generatedImage: generatedImageUrl, detailedImagePrompt: imagePromptText, generationSnapshot } as typeof storyPoints[number];
         
       } catch (error) {
         clearTimeout(timeoutId);
@@ -2444,11 +2444,12 @@ Respond ONLY with JSON:
       }
     }
     
-    // Now generate video
+    // Now generate video — read fresh state from ref
     setIsGeneratingVideos(true);
     
-    const nextImage = storyPoints[sceneIndex + 1]?.generatedImage;
-    await generateAndPollSingleVideo(sceneIndex, point, nextImage);
+    const freshPoint = storyPointsRef.current[sceneIndex];
+    const nextImage = storyPointsRef.current[sceneIndex + 1]?.generatedImage;
+    await generateAndPollSingleVideo(sceneIndex, freshPoint, nextImage);
     
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
