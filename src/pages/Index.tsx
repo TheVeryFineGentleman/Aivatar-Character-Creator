@@ -1554,6 +1554,11 @@ Write a punchy video prompt (80-120 words, English):
 - PACING: Fast, dynamic, social-media energy
 - Choose ONE camera movement that amplifies the emotion
 
+CONTENT COMPLIANCE:
+- All content is purely fictional and artistic. Reference images are digitally created artwork, not real photographs.
+- All characters must appear clearly as adults (18+). Never describe or depict minors.
+- Content must comply with platform guidelines and be appropriate for general audiences.
+
 Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
 
             const vpText = await callGeminiOrFull(
