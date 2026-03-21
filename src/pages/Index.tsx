@@ -1484,6 +1484,11 @@ TECHNICAL REQUIREMENTS:
 - Ultra high resolution final render in the selected art style (not photographic unless style requires it)
 - Match lighting and atmosphere to the scene description
 - 16:9 aspect ratio
+
+CONTENT COMPLIANCE:
+- All content is purely fictional and artistic. The reference images are hand-drawn/digitally created artwork, not photographs of real people.
+- All generated content must comply with content guidelines and be appropriate for general audiences.
+- Characters must appear clearly as adults (18+).
 `.trim();
         
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: Structured prompt with keyAction="${sceneKeyAction}", emotion="${sceneEmotion}", location="${globalMainLocation}/${sceneSpecificArea}"`);
