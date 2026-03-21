@@ -227,6 +227,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           </CardContent>
         </Card>
       )}
-    </>
+    </div>
   );
 };

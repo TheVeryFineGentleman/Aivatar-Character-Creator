@@ -163,7 +163,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
 
       <div className="space-y-2">
         <Label>Stil *</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {STYLE_OPTIONS.map(opt => (
             <button key={opt.id} onClick={() => setStyle(opt.id)}
               className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
