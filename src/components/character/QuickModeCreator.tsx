@@ -139,7 +139,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Geschlecht *</Label>
