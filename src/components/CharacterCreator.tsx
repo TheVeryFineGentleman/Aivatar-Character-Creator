@@ -111,7 +111,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
   const isRefMode = !!onUseAsReference;
 
   return (
-    <>
+    <div className="max-w-2xl mx-auto">
       {isRefMode && refImageSourceLabel && (
         <div className="mb-4 p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-center gap-3 animate-fade-in">
           <ArrowLeft className="w-4 h-4 text-primary shrink-0" />
