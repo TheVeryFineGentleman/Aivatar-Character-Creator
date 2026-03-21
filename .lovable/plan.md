@@ -1,24 +1,23 @@
 
-## Plan: Character Creator Layout kompakter machen
 
-### Ziel
-Das Layout des Character Creators soll schmaler und kompakter werden, ohne Funktionalität zu verlieren.
+## Problem
+Änderungen im Detail-Popup (z.B. Dialogtext) werden nicht gespeichert, weil `regenerateSingleVideo` beim Start eine Kopie der Szene macht (`let point = storyPoints[sceneIndex]`) und diese veraltete Kopie dann beim Speichern und bei der Video-Generierung verwendet — wodurch alle zwischenzeitlichen Benutzeränderungen überschrieben werden.
 
-### Änderungen
+## Lösung
 
-**1. CharacterCreator.tsx - Container einschränken**
-- Wrapper mit `max-w-2xl mx-auto` um den gesamten Inhalt, damit alles nicht die volle Breite einnimmt
-- Bildergalerie-Grid von `grid-cols-4 sm:grid-cols-6 md:grid-cols-8` auf `grid-cols-3 sm:grid-cols-4 md:grid-cols-6` reduzieren für größere, übersichtlichere Thumbnails
+**Datei: `src/pages/Index.tsx`**
 
-**2. QuickModeCreator.tsx - Kompakteres Formular**
-- Stil-Auswahl von `grid-cols-2` auf eine einzelne Zeile (`grid-cols-4`) oder kompaktere Darstellung
-- Weniger vertikalen Abstand (`space-y-4` statt `space-y-5`)
+1. **Zeile 2418 — Bild-Update**: `...point` aus dem Spread entfernen, damit die aktuelle State-Version `p` nicht mit der veralteten Kopie überschrieben wird:
+   - Alt: `{ ...p, ...point, generatedImage: ..., generationSnapshot }`
+   - Neu: `{ ...p, generatedImage: ..., detailedImagePrompt: ..., generationError: undefined, generationSnapshot }`
 
-**3. ChatModeCreator.tsx - Chat kompakter**
-- Chat-Bereich max-height leicht reduzieren (`max-h-[300px]` statt `max-h-[350px]`)
-- Kompaktere Abstände
+2. **Zeile 2428 — Point-Referenz für Video**: Statt den alten `point` weiterzuverwenden, die frische Version aus dem State lesen:
+   - Nach dem `setStoryPoints`-Update eine Hilfsvariable setzen und für die Video-Generierung den aktuellen State-Wert verwenden
 
-### Dateien
-- `src/components/CharacterCreator.tsx` - max-width Container + Grid anpassen
-- `src/components/character/QuickModeCreator.tsx` - kompakteres Layout
-- `src/components/character/ChatModeCreator.tsx` - kompaktere Abstände
+3. **Zeile 2305/2450 — Frischen State für Video**: Vor `generateAndPollSingleVideo` den aktuellen `storyPoints[sceneIndex]` frisch lesen (via einem Ref oder durch Weitergabe des aktuellen State aus dem `setStoryPoints`-Updater)
+
+### Technischer Ansatz
+- Einen `storyPointsRef` (useRef) einführen, der immer den aktuellen `storyPoints`-State widerspiegelt
+- In `regenerateSingleVideo` den frischen Wert über den Ref lesen, statt die Closure-Variable zu verwenden
+- Das `...point`-Spread auf Zeile 2418 entfernen
+
