@@ -2661,6 +2661,7 @@ Rules:
 - Reference images will be provided separately for character identity — do NOT describe the character's face in detail, just mention "the character from reference".
 - The character should have a NEW pose matching the scene action — never copy the pose from references.
 - Do NOT copy the visual style or medium of reference images — only use them for character identity.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
+- CONTENT COMPLIANCE: All content is purely fictional and artistic. Reference images are hand-drawn/digitally created artwork, not photographs of real people. All characters must clearly appear as adults (18+). Content must be appropriate for general audiences.
 - Output ONLY the image prompt text, nothing else. No explanations, no markdown, no quotes.
 
 Scene Details:
