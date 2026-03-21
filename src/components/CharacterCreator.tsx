@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
@@ -10,6 +10,8 @@ interface CharacterCreatorProps {
   apiKey: string;
   allImages: string[];
   setAllImages: React.Dispatch<React.SetStateAction<string[]>>;
+  onUseAsReference?: (imageUrl: string) => void;
+  refImageSourceLabel?: string;
 }
 
 const MODES = [
@@ -19,7 +21,7 @@ const MODES = [
 
 type Mode = typeof MODES[number]["id"];
 
-export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allImages, setAllImages }) => {
+export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allImages, setAllImages, onUseAsReference, refImageSourceLabel }) => {
   const [mode, setMode] = useState<Mode>("quick");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
@@ -104,18 +106,26 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
     link.click();
   }, [allImages]);
 
-  // Calculate how many placeholder slots to show
   const pendingCount = isGenerating ? Math.max(0, totalGenerating - (generatingIndex + 1)) : 0;
   const currentlyGenerating = isGenerating ? 1 : 0;
+  const isRefMode = !!onUseAsReference;
 
   return (
     <>
+      {isRefMode && refImageSourceLabel && (
+        <div className="mb-4 p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-center gap-3 animate-fade-in">
+          <ArrowLeft className="w-4 h-4 text-primary shrink-0" />
+          <p className="text-sm text-primary">
+            Erstelle ein Bild und klicke <strong>"Als Referenzbild"</strong>, um es im <strong>{refImageSourceLabel}</strong> zu verwenden.
+          </p>
+        </div>
+      )}
+
       <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
         style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}>
         <CardContent className="pt-6">
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Mode Switcher */}
           <div className="flex gap-2 mb-6">
             {MODES.map(m => (
               <button
@@ -157,7 +167,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
         </CardContent>
       </Card>
 
-      {/* Separate Image Gallery Card - always visible when images exist or generating */}
       {(allImages.length > 0 || isGenerating) && (
         <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="pt-6">
@@ -181,24 +190,34 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
               {allImages.map((img, i) => (
                 <div key={`img-${i}`} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
                   <img src={img} alt={`Charakter ${i + 1}`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
-                    <button onClick={() => handleDownloadSingle(i)} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80">
-                      <Download className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => handleDeleteImage(i)} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-destructive/80">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                    {isRefMode && (
+                      <button 
+                        onClick={() => onUseAsReference(img)} 
+                        className="px-2 py-1 rounded-md bg-primary/90 text-primary-foreground hover:bg-primary text-[10px] font-medium flex items-center gap-1"
+                        title="Als Referenzbild verwenden"
+                      >
+                        <Check className="w-3 h-3" />
+                        Als Referenzbild
+                      </button>
+                    )}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleDownloadSingle(i)} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80">
+                        <Download className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => handleDeleteImage(i)} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-destructive/80">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
-              {/* Currently generating slot */}
               {currentlyGenerating > 0 && (
                 <div className="relative rounded-lg overflow-hidden border border-primary/30 bg-primary/5 aspect-square flex flex-col items-center justify-center gap-1">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
                   <span className="text-[10px] text-primary font-medium">Generiere...</span>
                 </div>
               )}
-              {/* Pending slots */}
               {Array.from({ length: pendingCount }).map((_, i) => (
                 <div key={`pending-${i}`} className="relative rounded-lg overflow-hidden border border-border/30 bg-muted/10 aspect-square flex items-center justify-center">
                   <span className="text-[10px] text-muted-foreground">Wartend</span>

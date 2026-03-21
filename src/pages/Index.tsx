@@ -321,6 +321,7 @@ const Index = () => {
   
   // Main Tab state
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story" | "character">("poses");
+  const [refImageSource, setRefImageSource] = useState<"poses" | "story" | null>(null);
 
   const [characterImages, setCharacterImages] = useState<string[]>([]);
   // Story Builder state
@@ -5572,6 +5573,17 @@ Beispiel einer korrekten Antwort:
                   }
                   return null;
                 })()}
+                <button
+                  onClick={() => {
+                    setRefImageSource("poses");
+                    setActiveMainTab("character");
+                  }}
+                  className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
+                  title="Character Creator öffnen"
+                >
+                  <User className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
+                </button>
               </div>
             </div>
 
@@ -6412,6 +6424,19 @@ Beispiel einer korrekten Antwort:
                     >
                       <Upload className="w-6 h-6 text-muted-foreground" />
                     </ImageDropZone>
+                  )}
+                  {storyReferenceImages.length < 2 && (
+                    <button
+                      onClick={() => {
+                        setRefImageSource("story");
+                        setActiveMainTab("character");
+                      }}
+                      className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
+                      title="Character Creator öffnen"
+                    >
+                      <User className="w-5 h-5 text-muted-foreground" />
+                      <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -7675,7 +7700,40 @@ Beispiel einer korrekten Antwort:
 
           {/* Character Creator Tab Content */}
           {activeMainTab === "character" && (
-            <CharacterCreator apiKey={apiKey} allImages={characterImages} setAllImages={setCharacterImages} />
+            <CharacterCreator 
+              apiKey={apiKey} 
+              allImages={characterImages} 
+              setAllImages={setCharacterImages}
+              onUseAsReference={refImageSource ? async (imageUrl: string) => {
+                if (refImageSource === "poses") {
+                  // Convert URL to File for poses reference images
+                  try {
+                    const response = await fetch(imageUrl);
+                    const blob = await response.blob();
+                    const file = new File([blob], `character-ref-${Date.now()}.png`, { type: 'image/png' });
+                    const maxImages = isPro ? 3 : 1;
+                    setReferenceImages(prev => {
+                      if (prev.length >= maxImages) return prev;
+                      const updated = [...prev, file];
+                      referenceImagesRef.current = updated;
+                      return updated;
+                    });
+                  } catch (err) {
+                    console.error("Failed to convert character image to File:", err);
+                  }
+                } else if (refImageSource === "story") {
+                  setStoryReferenceImages(prev => {
+                    if (prev.length >= 2) return prev;
+                    const updated = [...prev, imageUrl];
+                    saveToLocalStorage('storyReferenceImages', updated);
+                    return updated;
+                  });
+                }
+                setActiveMainTab(refImageSource);
+                setRefImageSource(null);
+              } : undefined}
+              refImageSourceLabel={refImageSource === "poses" ? "Posen Generator" : refImageSource === "story" ? "Story Generator" : undefined}
+            />
           )}
 
           </>
