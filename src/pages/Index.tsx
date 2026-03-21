@@ -2151,12 +2151,30 @@ Respond ONLY with JSON:
         return { status: "completed", videoUrl };
       }
 
+      // Check for raiMediaFilteredReasons (content policy)
+      const filteredReasons = resp.generateVideoResponse?.raiMediaFilteredReasons;
+      if (filteredReasons && Array.isArray(filteredReasons) && filteredReasons.length > 0) {
+        console.error("❌ Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
+        // Translate common Veo content policy messages to German
+        const translatedReasons = filteredReasons.map((reason: string) => {
+          if (reason.includes("photorealistic children")) return "Das Bild enthält Personen, die als minderjährig eingestuft wurden. Bitte ändere das Referenzbild oder den Prompt, sodass die Figur eindeutig erwachsen wirkt.";
+          if (reason.includes("violence")) return "Der Inhalt wurde wegen Gewaltdarstellung blockiert.";
+          if (reason.includes("sexual")) return "Der Inhalt wurde wegen sexueller Darstellung blockiert.";
+          if (reason.includes("dangerous")) return "Der Inhalt wurde als gefährlich eingestuft.";
+          if (reason.includes("hate")) return "Der Inhalt wurde wegen Hassrede blockiert.";
+          if (reason.includes("harassment")) return "Der Inhalt wurde wegen Belästigung blockiert.";
+          if (reason.includes("deceptive")) return "Der Inhalt wurde als irreführend eingestuft.";
+          return `Inhaltsrichtlinie: ${reason}`;
+        });
+        return { status: "failed", error: translatedReasons.join(" | ") };
+      }
+
       // Structured diagnostics on failure
       const diagKeys = JSON.stringify(Object.keys(resp));
       const deepKeys = resp.generateVideoResponse ? JSON.stringify(Object.keys(resp.generateVideoResponse)) : "n/a";
       console.error(`❌ Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
       console.error("📋 Response preview:", JSON.stringify(resp).substring(0, 800));
-      return { status: "failed", error: `Kein Video in der Antwort (keys: ${diagKeys}). Bitte erneut versuchen.` };
+      return { status: "failed", error: "Video-Generierung fehlgeschlagen. Bitte den Prompt oder das Bild anpassen und erneut versuchen." };
     }
     
     // Log progress metadata if available
