@@ -321,6 +321,7 @@ const Index = () => {
   
   // Main Tab state
   const [activeMainTab, setActiveMainTab] = useState<"poses" | "story" | "character">("poses");
+  const [refImageSource, setRefImageSource] = useState<"poses" | "story" | null>(null);
 
   const [characterImages, setCharacterImages] = useState<string[]>([]);
   // Story Builder state
