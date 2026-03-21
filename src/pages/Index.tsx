@@ -383,6 +383,8 @@ const Index = () => {
     // Generation tracking
     generationSnapshot?: Record<string, any>;
   }>>([]);
+  const storyPointsRef = useRef(storyPoints);
+  useEffect(() => { storyPointsRef.current = storyPoints; }, [storyPoints]);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
