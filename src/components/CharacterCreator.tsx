@@ -186,7 +186,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {allImages.map((img, i) => (
                 <div key={`img-${i}`} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
                   <img src={img} alt={`Charakter ${i + 1}`} className="w-full h-full object-cover" />
