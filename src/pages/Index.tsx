@@ -2444,11 +2444,12 @@ Respond ONLY with JSON:
       }
     }
     
-    // Now generate video
+    // Now generate video — read fresh state from ref
     setIsGeneratingVideos(true);
     
-    const nextImage = storyPoints[sceneIndex + 1]?.generatedImage;
-    await generateAndPollSingleVideo(sceneIndex, point, nextImage);
+    const freshPoint = storyPointsRef.current[sceneIndex];
+    const nextImage = storyPointsRef.current[sceneIndex + 1]?.generatedImage;
+    await generateAndPollSingleVideo(sceneIndex, freshPoint, nextImage);
     
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
