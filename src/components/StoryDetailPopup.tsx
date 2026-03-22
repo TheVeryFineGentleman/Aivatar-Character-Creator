@@ -968,6 +968,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       </div>
                     </CollapsibleContent>
                   </div>
+                </Collapsible>
 
                 {/* Sticky Save Bar */}
                 {hasAnyChanges && (
