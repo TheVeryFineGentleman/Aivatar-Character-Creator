@@ -294,6 +294,29 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const point = storyPoints[expandedIndex];
   const uniqueId = useId();
   
+  // Track initial values to detect text-only changes (dialogText, videoPrompt)
+  const savedSnapshotRef = useRef<{ dialogText: string; videoPrompt: string } | null>(null);
+  
+  // Initialize snapshot when scene changes or on first render
+  useEffect(() => {
+    const currentPoint = storyPoints[expandedIndex];
+    if (currentPoint) {
+      savedSnapshotRef.current = {
+        dialogText: currentPoint.dialogText || "",
+        videoPrompt: currentPoint.videoPrompt || "",
+      };
+    }
+  }, [expandedIndex]);
+  
+  // Compute whether text-only fields have changed
+  const hasTextChanges = useMemo(() => {
+    if (!point || !savedSnapshotRef.current) return false;
+    return (
+      (point.dialogText || "") !== savedSnapshotRef.current.dialogText ||
+      (point.videoPrompt || "") !== savedSnapshotRef.current.videoPrompt
+    );
+  }, [point?.dialogText, point?.videoPrompt]);
+  
   // Block background scrolling when popup is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -323,6 +346,21 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const status = getSceneStatus(point);
   const isDirty = isSceneDirty(point);
   const hasFinalized = !!point.finalSnapshot;
+  
+  // Combined: any unsaved change exists
+  const hasAnyChanges = isDirty || hasTextChanges;
+  
+  const handleSave = () => {
+    if (isDirty) {
+      // Image-affecting fields changed → regenerate image
+      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    }
+    // Update snapshot to mark text as "saved"
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+  };
   const handleFieldUpdate = (field: keyof StoryPoint, value: string) => {
     onUpdateStoryPoint(expandedIndex, {
       [field]: value
