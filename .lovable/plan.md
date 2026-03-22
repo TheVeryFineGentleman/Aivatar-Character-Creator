@@ -1,50 +1,42 @@
 
 
-## Plan: FFmpeg-Fix + Speichern-Button im Detail-Popup
+## Plan: Dockerfile vereinfachen
 
-### Problem 1: FFmpeg-Timeout
-Die Logs zeigen, dass der ~30MB WASM-Download von unpkg.com wiederholt das 90-Sekunden-Timeout überschreitet. Der CDN ist zu langsam.
+**Problem:** `Dockerfile.nginx` existiert als einziges Dockerfile, aber der Name verursacht Verwirrung. Außerdem nutzt es `npm ci` obwohl das Projekt `bun.lock` hat — das verursacht den Lock-File-Konflikt.
 
-**Lösung:**
-- Multi-CDN-Strategie: Zuerst jsdelivr versuchen (schneller), dann unpkg als Fallback
-- Timeout auf 120s erhöhen
-- COOP/COEP Headers in `vite.config.ts` setzen, damit SharedArrayBuffer funktioniert (verbessert Performance)
-- Bessere Fehlermeldung mit konkretem Hinweis auf langsame Verbindung
+**Änderungen:**
 
-**Datei: `src/components/VideoMerger.tsx`**
-- CDN-Fallback-Logik: erst jsdelivr, bei Fehler unpkg
-- Timeout erhöhen
+1. **`Dockerfile.nginx` → `Dockerfile` umbenennen** (löschen + neu erstellen)
+   - Inhalt bleibt gleich, aber `npm ci` wird durch `bun install --frozen-lockfile` ersetzt
+   - `package-lock.json` wird nicht mehr benötigt
 
-**Datei: `vite.config.ts`**
-- `server.headers` mit `Cross-Origin-Opener-Policy: same-origin` und `Cross-Origin-Embedder-Policy: require-corp` hinzufügen
+2. **`.do/app.yaml`** — `dockerfile_path` von `Dockerfile.nginx` auf `Dockerfile` ändern
 
----
+3. **`package-lock.json` löschen** — nur `bun.lock` bleibt, kein Konflikt mehr
 
-### Problem 2: Speichern-Button
-Aktuell werden Änderungen im Popup direkt in den State geschrieben, aber es gibt keinen expliziten "Speichern"-Button. Der User will visuelles Feedback, wann Änderungen vorhanden sind und ob ein Bild-Regenerieren nötig ist.
+4. **`.doignore` anpassen** — `package-lock.json` Eintrag entfernen (nicht mehr nötig)
 
-**Logik:**
-- Felder werden in zwei Kategorien unterteilt:
-  - **Bild-relevant** (summary, detailedDescription, keyAction, emotion, cameraAngle, etc.) → Button: "Speichern + Bild neu generieren"
-  - **Nur-Text** (dialogText, videoPrompt) → Button: "Änderungen speichern"
-- Ein lokaler State trackt ob sich Textfelder (dialogText, videoPrompt) seit dem Öffnen/letzten Speichern geändert haben
-- `isDirty` (existiert bereits) deckt die Bild-relevanten Felder ab
-- Neuer `hasTextChanges`-State für reine Textänderungen
+### Dockerfile (neu):
+```dockerfile
+FROM oven/bun:1 AS builder
+WORKDIR /app
+COPY bun.lock package.json ./
+RUN bun install --frozen-lockfile
+COPY . .
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ARG VITE_SUPABASE_PROJECT_ID
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
+RUN bun run build
 
-**Datei: `src/components/StoryDetailPopup.tsx`**
-- Neuen Speichern-Button im Footer-Bereich (neben KI-Assistent oder darüber)
-- Button-Text abhängig von Änderungstyp:
-  - Bild-Felder geändert → "Speichern + Bild neu generieren" (löst `onRegenerateImage` aus)
-  - Nur Text geändert → "Änderungen gespeichert ✓" (da State bereits live aktualisiert wird, visuelles Feedback)
-- Während Bild-Regenerierung: Video-Button disabled (ist teilweise schon so, wird konsolidiert)
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
+```
 
-**Datei: `src/components/StoryDetailPopup.tsx` – Änderungen:**
-1. `hasUnsavedTextChanges`-State hinzufügen, der bei dialogText/videoPrompt-Änderungen gesetzt wird
-2. Sticky Footer-Bar mit kontextabhängigem Speichern-Button
-3. Video-Regenerieren-Button: `disabled` wenn `regeneratingIndex !== null` (schon vorhanden, wird sichergestellt)
-
-### Dateien
-- `src/components/VideoMerger.tsx` – Multi-CDN + Timeout
-- `vite.config.ts` – COOP/COEP Headers
-- `src/components/StoryDetailPopup.tsx` – Speichern-Button
+**Ergebnis:** Ein einziges `Dockerfile`, konsistent mit `bun.lock`, kein Lock-File-Konflikt mehr.
 
