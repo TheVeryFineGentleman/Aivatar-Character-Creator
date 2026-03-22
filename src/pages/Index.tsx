@@ -5231,7 +5231,7 @@ Beispiel einer korrekten Antwort:
         {/* Version Indicator */}
         <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-1 z-20">
           <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
-            v1.4.5
+            v1.4.6
           </div>
         </div>
         <PromoBanner planCode={authData.planCode} />
