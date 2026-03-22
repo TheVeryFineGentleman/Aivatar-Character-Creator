@@ -37,28 +37,41 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
 
     setProgressMessage("FFmpeg wird geladen (~30 MB)...");
 
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-    const timeoutMs = 90000;
+    const cdnSources = [
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
+      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+    ];
+    const timeoutMs = 120000;
 
-    try {
-      console.log("[ffmpeg] Loading via toBlobURL...");
-      const loadPromise = (async () => {
-        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
-        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
-        await ffmpeg.load({ coreURL, wasmURL });
-      })();
+    for (let cdnIndex = 0; cdnIndex < cdnSources.length; cdnIndex++) {
+      const baseURL = cdnSources[cdnIndex];
+      try {
+        console.log(`[ffmpeg] Trying CDN ${cdnIndex + 1}/${cdnSources.length}: ${baseURL}`);
+        if (cdnIndex > 0) {
+          setProgressMessage(`FFmpeg wird geladen (Alternativ-Server ${cdnIndex + 1})...`);
+        }
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), timeoutMs)
-      );
-      await Promise.race([loadPromise, timeoutPromise]);
-      ffmpegRef.current = ffmpeg;
-      console.log("[ffmpeg] Successfully loaded");
-      return ffmpeg;
-    } catch (err) {
-      console.error("[ffmpeg] Load failed:", err);
-      throw new Error("FFmpeg konnte nicht geladen werden.");
+        const loadPromise = (async () => {
+          const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+          const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+          await ffmpeg.load({ coreURL, wasmURL });
+        })();
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), timeoutMs)
+        );
+        await Promise.race([loadPromise, timeoutPromise]);
+        ffmpegRef.current = ffmpeg;
+        console.log("[ffmpeg] Successfully loaded from", baseURL);
+        return ffmpeg;
+      } catch (err) {
+        console.warn(`[ffmpeg] CDN ${cdnIndex + 1} failed:`, err);
+        if (cdnIndex === cdnSources.length - 1) {
+          throw new Error("FFmpeg konnte nicht geladen werden. Deine Internetverbindung ist möglicherweise zu langsam für den 30 MB Download. Nutze stattdessen den ZIP-Download.");
+        }
+      }
     }
+    throw new Error("FFmpeg konnte nicht geladen werden.");
   }, []);
 
   const mergeVideos = useCallback(async () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect, useId, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy, Play } from "lucide-react";
+import { BookOpen, X, Video, Image as ImageIcon, Sparkles, RefreshCw, Check, Undo2, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, Download, MessageSquare, AlertTriangle, Users, Heart, Camera, Wand2, Eye, ZoomIn, Maximize2, Minimize2, Copy, Play, Save } from "lucide-react";
 import { FullscreenLightbox } from "@/components/FullscreenLightbox";
 
 // Types
@@ -294,6 +294,29 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const point = storyPoints[expandedIndex];
   const uniqueId = useId();
   
+  // Track initial values to detect text-only changes (dialogText, videoPrompt)
+  const savedSnapshotRef = useRef<{ dialogText: string; videoPrompt: string } | null>(null);
+  
+  // Initialize snapshot when scene changes or on first render
+  useEffect(() => {
+    const currentPoint = storyPoints[expandedIndex];
+    if (currentPoint) {
+      savedSnapshotRef.current = {
+        dialogText: currentPoint.dialogText || "",
+        videoPrompt: currentPoint.videoPrompt || "",
+      };
+    }
+  }, [expandedIndex]);
+  
+  // Compute whether text-only fields have changed
+  const hasTextChanges = useMemo(() => {
+    if (!point || !savedSnapshotRef.current) return false;
+    return (
+      (point.dialogText || "") !== savedSnapshotRef.current.dialogText ||
+      (point.videoPrompt || "") !== savedSnapshotRef.current.videoPrompt
+    );
+  }, [point?.dialogText, point?.videoPrompt]);
+  
   // Block background scrolling when popup is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -323,6 +346,21 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const status = getSceneStatus(point);
   const isDirty = isSceneDirty(point);
   const hasFinalized = !!point.finalSnapshot;
+  
+  // Combined: any unsaved change exists
+  const hasAnyChanges = isDirty || hasTextChanges;
+  
+  const handleSave = () => {
+    if (isDirty) {
+      // Image-affecting fields changed → regenerate image
+      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    }
+    // Update snapshot to mark text as "saved"
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+  };
   const handleFieldUpdate = (field: keyof StoryPoint, value: string) => {
     onUpdateStoryPoint(expandedIndex, {
       [field]: value
@@ -931,6 +969,28 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                     </CollapsibleContent>
                   </div>
                 </Collapsible>
+
+                {/* Sticky Save Bar */}
+                {hasAnyChanges && (
+                  <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border/30 -mx-0 mt-4 pt-3 pb-1 z-10">
+                    <Button
+                      className={`w-full gap-2 h-11 text-sm font-medium transition-all ${
+                        isDirty
+                          ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
+                          : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                      }`}
+                      onClick={handleSave}
+                      disabled={regeneratingIndex !== null}
+                    >
+                      {regeneratingIndex === expandedIndex ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      {isDirty ? 'Speichern + Bild neu generieren' : 'Änderungen speichern'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Right Column - Preview (Desktop only) */}
