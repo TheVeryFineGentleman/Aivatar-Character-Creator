@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import JSZip from "jszip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Download, Film, Loader2, AlertCircle, Play, RotateCcw } from "lucide-react";
+import { Download, Film, Loader2, AlertCircle, Play, RotateCcw, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VideoMergerProps {
@@ -18,12 +19,14 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
   const [progressMessage, setProgressMessage] = useState("");
   const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showZipFallback, setShowZipFallback] = useState(false);
+  const [isZipping, setIsZipping] = useState(false);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadFFmpeg = useCallback(async () => {
     if (ffmpegRef.current) return ffmpegRef.current;
-    
+
     const ffmpeg = new FFmpeg();
     ffmpeg.on("progress", ({ progress: p }) => {
       setProgress(Math.round(p * 100));
@@ -34,39 +37,28 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
 
     setProgressMessage("FFmpeg wird geladen (~30 MB)...");
 
-    const cdnOptions = [
-      {
-        coreURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-        wasmURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
-      },
-      {
-        coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-        wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
-      },
-    ];
+    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+    const timeoutMs = 90000;
 
-    const timeoutMs = 60000;
+    try {
+      console.log("[ffmpeg] Loading via toBlobURL...");
+      const loadPromise = (async () => {
+        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+        await ffmpeg.load({ coreURL, wasmURL });
+      })();
 
-    for (let i = 0; i < cdnOptions.length; i++) {
-      try {
-        console.log(`[ffmpeg] Trying CDN ${i + 1}/${cdnOptions.length}...`);
-        const loadPromise = ffmpeg.load(cdnOptions[i]);
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout")), timeoutMs)
-        );
-        await Promise.race([loadPromise, timeoutPromise]);
-        ffmpegRef.current = ffmpeg;
-        console.log("[ffmpeg] Successfully loaded from CDN", i + 1);
-        return ffmpeg;
-      } catch (err) {
-        console.warn(`[ffmpeg] CDN ${i + 1} failed:`, err);
-        if (i === cdnOptions.length - 1) {
-          throw new Error("FFmpeg konnte nicht geladen werden. Bitte lade die Seite neu und versuche es erneut.");
-        }
-      }
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), timeoutMs)
+      );
+      await Promise.race([loadPromise, timeoutPromise]);
+      ffmpegRef.current = ffmpeg;
+      console.log("[ffmpeg] Successfully loaded");
+      return ffmpeg;
+    } catch (err) {
+      console.error("[ffmpeg] Load failed:", err);
+      throw new Error("FFmpeg konnte nicht geladen werden.");
     }
-
-    throw new Error("FFmpeg konnte nicht geladen werden.");
   }, []);
 
   const mergeVideos = useCallback(async () => {
@@ -76,11 +68,11 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     setError(null);
     setProgress(0);
     setMergedVideoUrl(null);
+    setShowZipFallback(false);
 
     try {
       const ffmpeg = await loadFFmpeg();
 
-      // Download and write each video to ffmpeg's virtual filesystem
       const fileNames: string[] = [];
       for (let i = 0; i < videos.length; i++) {
         const { url, index } = videos[i];
@@ -99,14 +91,12 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
         }
       }
 
-      // Create concat list file
       setProgressMessage("Videos werden zusammengefügt...");
       setProgress(50);
 
       const concatList = fileNames.map(f => `file '${f}'`).join("\n");
       await ffmpeg.writeFile("concat_list.txt", concatList);
 
-      // Run concat command
       await ffmpeg.exec([
         "-f", "concat",
         "-safe", "0",
@@ -119,7 +109,6 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
       setProgressMessage("Fertig! Video wird vorbereitet...");
       setProgress(90);
 
-      // Read the output file
       const outputData = await ffmpeg.readFile("output.mp4");
       const blob = new Blob([new Uint8Array(outputData as Uint8Array)], { type: "video/mp4" });
       const url = URL.createObjectURL(blob);
@@ -127,7 +116,6 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
       setProgress(100);
       setProgressMessage("Zusammenfügung abgeschlossen!");
 
-      // Cleanup ffmpeg filesystem
       for (const fileName of fileNames) {
         try { await ffmpeg.deleteFile(fileName); } catch {}
       }
@@ -137,10 +125,41 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     } catch (err) {
       console.error("Video merge failed:", err);
       setError(err instanceof Error ? err.message : "Zusammenfügung fehlgeschlagen");
+      setShowZipFallback(true);
     } finally {
       setIsMerging(false);
     }
   }, [videos, loadFFmpeg]);
+
+  const downloadAsZip = useCallback(async () => {
+    if (videos.length === 0) return;
+    setIsZipping(true);
+    setError(null);
+
+    try {
+      const zip = new JSZip();
+      for (let i = 0; i < videos.length; i++) {
+        setProgressMessage(`Video ${i + 1}/${videos.length} wird heruntergeladen...`);
+        const response = await fetch(videos[i].url);
+        if (!response.ok) throw new Error(`Video ${i + 1} konnte nicht geladen werden.`);
+        const blob = await response.blob();
+        zip.file(`szene_${videos[i].index + 1}.mp4`, blob);
+      }
+      setProgressMessage("ZIP wird erstellt...");
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = `storyboard_videos_${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setProgressMessage("");
+    } catch (err) {
+      console.error("ZIP download failed:", err);
+      setError(err instanceof Error ? err.message : "ZIP-Download fehlgeschlagen");
+    } finally {
+      setIsZipping(false);
+    }
+  }, [videos]);
 
   const handleDownload = useCallback(() => {
     if (!mergedVideoUrl) return;
@@ -174,33 +193,49 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
               </>
             )}
             {!mergedVideoUrl && !isMerging && (
-              <Button size="sm" onClick={mergeVideos}>
-                <Play className="w-4 h-4 mr-1.5" />
-                Videos zusammenfügen ({videos.length} Szenen)
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={mergeVideos}>
+                  <Play className="w-4 h-4 mr-1.5" />
+                  Videos zusammenfügen ({videos.length} Szenen)
+                </Button>
+                <Button size="sm" variant="outline" onClick={downloadAsZip} disabled={isZipping}>
+                  <Archive className="w-4 h-4 mr-1.5" />
+                  {isZipping ? "..." : "ZIP"}
+                </Button>
+              </div>
             )}
           </div>
         </div>
 
         {/* Progress */}
-        {isMerging && (
+        {(isMerging || isZipping) && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-xs text-muted-foreground">{progressMessage}</span>
             </div>
-            <Progress value={progress} className="h-2" />
+            {isMerging && <Progress value={progress} className="h-2" />}
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-2 text-destructive text-xs bg-destructive/10 rounded-lg p-3">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
-            <Button size="sm" variant="ghost" className="ml-auto h-7 text-xs" onClick={mergeVideos}>
-              Erneut versuchen
-            </Button>
+          <div className="flex flex-col gap-2 text-destructive text-xs bg-destructive/10 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+            {showZipFallback && (
+              <div className="flex items-center gap-2 mt-1">
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={downloadAsZip} disabled={isZipping}>
+                  <Archive className="w-3.5 h-3.5 mr-1" />
+                  Stattdessen als ZIP herunterladen
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={mergeVideos}>
+                  Erneut versuchen
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -219,14 +254,14 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
         )}
 
         {/* Info when not yet merged */}
-        {!mergedVideoUrl && !isMerging && !error && (
+        {!mergedVideoUrl && !isMerging && !isZipping && !error && (
           <div className="text-center py-6 text-muted-foreground">
             <Film className="w-10 h-10 mx-auto mb-2 opacity-30" />
             <p className="text-xs">
               Klicke auf "Videos zusammenfügen" um alle {videos.length} Szenen-Videos zu einem Gesamtvideo zu kombinieren.
             </p>
             <p className="text-xs mt-1 text-muted-foreground/70">
-              Die Verarbeitung erfolgt lokal in deinem Browser.
+              Die Verarbeitung erfolgt lokal in deinem Browser. Alternativ als ZIP herunterladen.
             </p>
           </div>
         )}
