@@ -142,7 +142,10 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
     } catch {}
   };
 
-  const handleSend = () => sendMessage(input);
+  const handleSend = () => {
+    sendMessage(input);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
