@@ -1,42 +1,29 @@
 
 
-## Plan: Dockerfile vereinfachen
+## Plan: Ideen-Navigation und Text-Speicherung fixen
 
-**Problem:** `Dockerfile.nginx` existiert als einziges Dockerfile, aber der Name verursacht Verwirrung. Außerdem nutzt es `npm ci` obwohl das Projekt `bun.lock` hat — das verursacht den Lock-File-Konflikt.
+### Problem
+Wenn der User rechts eine Änderung eingibt und generiert, wird die vorherige Idee in `generatedIdeas` gespeichert — aber das Seeding (Zeile 669-672) nutzt `setGeneratedIdeas` async. Wenn `generatedIdeas` beim Start leer ist, wird die Seed-State erst nach dem Render wirksam. Die `isModifyMode`-Logik und `splice` auf Zeile 733-737 arbeiten dann mit dem alten leeren Array via `prev`, was aber funktionieren sollte dank des `prev =>` Callbacks.
 
-**Änderungen:**
+**Tatsächliches Problem:** Das Seeding auf Zeile 669-672 setzt `setGeneratedIdeas([storyIdea.trim()])`, aber der `splice` im Modify-Modus auf Zeile 733 nutzt `prev` — das ist zu dem Zeitpunkt noch das alte leere Array `[]`, nicht die geseedete Version. Die zwei `setGeneratedIdeas` Aufrufe batchen, und der zweite überschreibt den ersten.
 
-1. **`Dockerfile.nginx` → `Dockerfile` umbenennen** (löschen + neu erstellen)
-   - Inhalt bleibt gleich, aber `npm ci` wird durch `bun install --frozen-lockfile` ersetzt
-   - `package-lock.json` wird nicht mehr benötigt
+### Lösung
 
-2. **`.do/app.yaml`** — `dockerfile_path` von `Dockerfile.nginx` auf `Dockerfile` ändern
+**Datei: `src/pages/Index.tsx`**
 
-3. **`package-lock.json` löschen** — nur `bun.lock` bleibt, kein Konflikt mehr
+1. **Seeding und Modify-Logik konsolidieren** (Zeilen 668-741):
+   - Statt erst async zu seeden und dann separat zu splicen, die Logik in einem einzigen `setGeneratedIdeas`-Callback zusammenführen
+   - Im Modify-Mode: Wenn `prev` leer ist, den aktuellen `storyIdea` als erstes Element + den neuen Text einfügen → `[storyIdea, generatedText]`
+   - Wenn `prev` nicht leer: wie bisher `splice` nach `currentIdeaIndex`
+   - `currentIdeaIndex` korrekt auf das neue Element setzen
 
-4. **`.doignore` anpassen** — `package-lock.json` Eintrag entfernen (nicht mehr nötig)
+2. **Das separate Seeding (Zeilen 669-672) entfernen** — wird nicht mehr benötigt
 
-### Dockerfile (neu):
-```dockerfile
-FROM oven/bun:1 AS builder
-WORKDIR /app
-COPY bun.lock package.json ./
-RUN bun install --frozen-lockfile
-COPY . .
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_PUBLISHABLE_KEY
-ARG VITE_SUPABASE_PROJECT_ID
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
-ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
-RUN bun run build
+3. **Navigation sicherstellen**: `navigateIdea` Funktion ist korrekt, keine Änderung nötig
 
-FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
-EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-**Ergebnis:** Ein einziges `Dockerfile`, konsistent mit `bun.lock`, kein Lock-File-Konflikt mehr.
+### Ergebnis
+- Erste Generierung: `generatedIdeas = ["generierter text"]`, Index = 0, Anzeige: 1/1
+- Modify bei 1/1: `generatedIdeas = ["alter text", "neuer text"]`, Index = 1, Anzeige: 2/2
+- Navigation zurück: Index = 0, zeigt alten Text → 1/2
+- Weiterer Modify: Insert nach aktuellem Index, korrekte Navigation
 
