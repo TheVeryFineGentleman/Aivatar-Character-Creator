@@ -355,19 +355,28 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   // Only dialog/text changed, no image-relevant fields
   const onlyDialogChanged = hasTextChanges && !isDirty;
   
-  const handleSave = () => {
-    if (isDirty && hasVideo) {
-      // Image-affecting fields changed + video exists → regenerate image, then video
-      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
-      // Video will be regenerated after image completes (handled via effect or callback)
-    } else if (isDirty) {
-      // Image-affecting fields changed, no video → just regenerate image
-      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
-    } else if (onlyDialogChanged && hasVideo && onRegenerateVideo) {
-      // Only text changed + video exists → regenerate video only
+  const handleSaveTextOnly = () => {
+    // Only text changes, no video — just save the snapshot
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+  };
+
+  const handleSaveAndRegenerateImage = () => {
+    // Image-affecting fields changed, no video → regenerate image
+    onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+  };
+
+  const handleRegenerateVideo = () => {
+    // Any change + video exists → regenerate video (handles image regen internally if needed)
+    if (onRegenerateVideo) {
       onRegenerateVideo(expandedIndex);
     }
-    // Update snapshot to mark text as "saved"
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
       videoPrompt: point.videoPrompt || "",
