@@ -355,19 +355,28 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   // Only dialog/text changed, no image-relevant fields
   const onlyDialogChanged = hasTextChanges && !isDirty;
   
-  const handleSave = () => {
-    if (isDirty && hasVideo) {
-      // Image-affecting fields changed + video exists → regenerate image, then video
-      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
-      // Video will be regenerated after image completes (handled via effect or callback)
-    } else if (isDirty) {
-      // Image-affecting fields changed, no video → just regenerate image
-      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
-    } else if (onlyDialogChanged && hasVideo && onRegenerateVideo) {
-      // Only text changed + video exists → regenerate video only
+  const handleSaveTextOnly = () => {
+    // Only text changes, no video — just save the snapshot
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+  };
+
+  const handleSaveAndRegenerateImage = () => {
+    // Image-affecting fields changed, no video → regenerate image
+    onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+  };
+
+  const handleRegenerateVideo = () => {
+    // Any change + video exists → regenerate video (handles image regen internally if needed)
+    if (onRegenerateVideo) {
       onRegenerateVideo(expandedIndex);
     }
-    // Update snapshot to mark text as "saved"
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
       videoPrompt: point.videoPrompt || "",
@@ -652,7 +661,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <p className="text-xs">Vorschau ist aktuell</p>
         </div>}
       
-      {/* Contextual Action Button */}
+      {/* Contextual Action Button — always exactly 1 */}
       <div className="space-y-3">
         {(() => {
           const isRegenerating = regeneratingIndex === expandedIndex;
@@ -660,24 +669,22 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           const isBusy = isRegenerating || isVideoGenerating;
           
           if (!hasVideo) {
-            // No video exists
             if (isDirty) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
                   {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  Speichern + Bild neu generieren
+                  {isRegenerating ? 'Bild wird generiert...' : 'Speichern + Bild neu generieren'}
                 </Button>
               );
             }
             if (onlyDialogChanged) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy}>
                   <Save className="w-4 h-4" />
                   Änderungen speichern
                 </Button>
               );
             }
-            // No changes, no video — show outline regenerate only if image exists
             if (point.generatedImage) {
               return (
                 <Button variant="outline" className="w-full gap-2 h-11 text-sm font-medium hover:bg-muted/50" onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={isBusy}>
@@ -688,10 +695,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             }
             return null;
           } else {
-            // Video exists
             if (isDirty) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleRegenerateVideo} disabled={isBusy}>
                   {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                   {isRegenerating ? 'Bild wird generiert...' : isVideoGenerating ? 'Video wird generiert...' : 'Bild + Video neu generieren'}
                 </Button>
@@ -699,13 +705,12 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             }
             if (onlyDialogChanged) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy}>
                   {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
                   {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
                 </Button>
               );
             }
-            // No changes — no button
             return null;
           }
         })()}
@@ -1019,7 +1024,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                           ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
                           : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                       }`}
-                      onClick={handleSave}
+                      onClick={isDirty ? handleSaveAndRegenerateImage : handleSaveTextOnly}
                       disabled={regeneratingIndex !== null}
                     >
                       {regeneratingIndex === expandedIndex ? (
