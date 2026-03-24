@@ -1024,7 +1024,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                           ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
                           : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                       }`}
-                      onClick={handleSave}
+                      onClick={isDirty ? handleSaveAndRegenerateImage : handleSaveTextOnly}
                       disabled={regeneratingIndex !== null}
                     >
                       {regeneratingIndex === expandedIndex ? (
@@ -1033,6 +1033,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         <Save className="w-4 h-4" />
                       )}
                       {isDirty ? 'Speichern + Bild neu generieren' : 'Änderungen speichern'}
+                    </Button>
                     </Button>
                   </div>
                 )}
