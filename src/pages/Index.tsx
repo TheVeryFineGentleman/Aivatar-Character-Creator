@@ -423,7 +423,7 @@ const Index = () => {
   // Multi-idea generation state
   const [generatedIdeas, setGeneratedIdeas] = useState<string[]>([]);
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
-  const [ideaCount, setIdeaCount] = useState("3");
+  const [ideaCount, setIdeaCount] = useState("1");
   
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
