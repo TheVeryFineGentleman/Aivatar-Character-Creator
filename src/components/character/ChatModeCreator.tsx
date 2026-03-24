@@ -37,6 +37,10 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
     }
   }, [generatedPrompts]);
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const startChat = async () => {
     setChatStarted(true);
     setMessages([{

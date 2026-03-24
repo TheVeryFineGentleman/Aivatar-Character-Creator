@@ -20,7 +20,7 @@ const features = [
   },
   {
     id: "story" as const,
-    title: "Story Generator",
+    title: "Reel/Story Videocreator",
     description: "Erstelle Szenen-basierte Storyboards mit KI-generierten Bildern und Videos.",
     icon: BookOpen,
     gradient: "from-amber-500/20 to-amber-500/5",
