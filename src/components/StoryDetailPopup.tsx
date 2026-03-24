@@ -1034,7 +1034,6 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       )}
                       {isDirty ? 'Speichern + Bild neu generieren' : 'Änderungen speichern'}
                     </Button>
-                    </Button>
                   </div>
                 )}
               </div>
