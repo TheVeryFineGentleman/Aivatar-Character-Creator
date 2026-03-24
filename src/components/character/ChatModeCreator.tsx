@@ -155,7 +155,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
     onGenerationStart?.(total);
 
     try {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < total; i++) {
         setGeneratingIndex(i);
         onGenerationProgress?.(i);
         try {
@@ -168,7 +168,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
             continue;
           }
         }
-        if (i < 3) await new Promise(r => setTimeout(r, 2000));
+        if (i < total - 1) await new Promise(r => setTimeout(r, 2000));
       }
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
