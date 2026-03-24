@@ -6352,43 +6352,40 @@ Beispiel einer korrekten Antwort:
               {/* Story Idea and AI Assistant side by side */}
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Left: Generated Story Idea Display */}
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
                     <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
-                    {generatedIdeas.length > 1 && (
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={currentIdeaIndex === 0}
-                          onClick={() => navigateIdea("prev")}
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[3.5rem] text-center">
-                          {currentIdeaIndex + 1} von {generatedIdeas.length}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={currentIdeaIndex === generatedIdeas.length - 1}
-                          onClick={() => navigateIdea("next")}
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={generatedIdeas.length === 0 || currentIdeaIndex === 0}
+                        onClick={() => navigateIdea("prev")}
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[3.5rem] text-center">
+                        {generatedIdeas.length > 0 ? `${currentIdeaIndex + 1} von ${generatedIdeas.length}` : "–"}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={generatedIdeas.length === 0 || currentIdeaIndex === generatedIdeas.length - 1}
+                        onClick={() => navigateIdea("next")}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="relative">
+                  <div className="relative flex-1">
                     <Textarea
                       id="story-idea"
                       placeholder=""
                       value={storyIdea}
                       onChange={(e) => {
                         setStoryIdea(e.target.value);
-                        // Also update in generatedIdeas if navigating
                         if (generatedIdeas.length > 0) {
                           setGeneratedIdeas(prev => {
                             const updated = [...prev];
