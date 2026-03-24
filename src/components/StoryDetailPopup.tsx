@@ -661,14 +661,16 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <p className="text-xs">Vorschau ist aktuell</p>
         </div>}
       
-      {/* Contextual Action Button — always exactly 1 */}
+      {/* Contextual Action Button — always exactly 1, disabled when no changes */}
       <div className="space-y-3">
         {(() => {
           const isRegenerating = regeneratingIndex === expandedIndex;
           const isVideoGenerating = isGeneratingVideo && generatingVideoIndex === expandedIndex;
           const isBusy = isRegenerating || isVideoGenerating;
+          const hasChanges = isDirty || onlyDialogChanged || hasTextChanges;
           
           if (!hasVideo) {
+            // No video: show save/regenerate button, disabled when no changes
             if (isDirty) {
               return (
                 <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
@@ -677,24 +679,15 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 </Button>
               );
             }
-            if (onlyDialogChanged) {
-              return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy}>
-                  <Save className="w-4 h-4" />
-                  Änderungen speichern
-                </Button>
-              );
-            }
-            if (point.generatedImage) {
-              return (
-                <Button variant="outline" className="w-full gap-2 h-11 text-sm font-medium hover:bg-muted/50" onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={isBusy}>
-                  {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  Vorschau neu generieren
-                </Button>
-              );
-            }
-            return null;
+            // Text-only change or no change — always show button, disabled when nothing changed
+            return (
+              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy || !hasChanges}>
+                <Save className="w-4 h-4" />
+                Änderungen speichern
+              </Button>
+            );
           } else {
+            // Video exists
             if (isDirty) {
               return (
                 <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleRegenerateVideo} disabled={isBusy}>
@@ -703,15 +696,13 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 </Button>
               );
             }
-            if (onlyDialogChanged) {
-              return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy}>
-                  {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-                  {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
-                </Button>
-              );
-            }
-            return null;
+            // Only dialog changed or no change — show video regenerate, disabled when nothing changed
+            return (
+              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy || !hasChanges}>
+                {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+                {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
+              </Button>
+            );
           }
         })()}
       </div>
@@ -1015,27 +1006,6 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                   </div>
                 </Collapsible>
 
-                {/* Sticky Save Bar */}
-                {hasAnyChanges && (
-                  <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border/30 -mx-0 mt-4 pt-3 pb-1 z-10">
-                    <Button
-                      className={`w-full gap-2 h-11 text-sm font-medium transition-all ${
-                        isDirty
-                          ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
-                          : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                      }`}
-                      onClick={isDirty ? handleSaveAndRegenerateImage : handleSaveTextOnly}
-                      disabled={regeneratingIndex !== null}
-                    >
-                      {regeneratingIndex === expandedIndex ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4" />
-                      )}
-                      {isDirty ? 'Speichern + Bild neu generieren' : 'Änderungen speichern'}
-                    </Button>
-                  </div>
-                )}
               </div>
 
               {/* Right Column - Preview (Desktop only) */}
