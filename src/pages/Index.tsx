@@ -2202,11 +2202,21 @@ Respond ONLY with JSON:
         null;
 
       if (videoUri) {
-        const videoUrl = videoUri.startsWith("http") 
+        const remoteUrl = videoUri.startsWith("http") 
           ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
           : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
-        console.log("✅ Video URL extrahiert");
-        return { status: "completed", videoUrl };
+        console.log("✅ Video URL extrahiert, konvertiere zu Blob...");
+        try {
+          const videoResp = await fetch(remoteUrl);
+          if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
+          const videoBlob = await videoResp.blob();
+          const blobUrl = URL.createObjectURL(videoBlob);
+          console.log("✅ Video als Blob-URL gespeichert");
+          return { status: "completed", videoUrl: blobUrl };
+        } catch (dlErr) {
+          console.warn("⚠️ Blob-Konvertierung fehlgeschlagen, nutze direkte URL:", dlErr);
+          return { status: "completed", videoUrl: remoteUrl };
+        }
       }
       
       // Fallback: direct base64 video in predictions
