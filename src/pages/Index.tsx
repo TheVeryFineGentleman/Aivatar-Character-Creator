@@ -711,7 +711,8 @@ WICHTIGE REGELN:
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.9,
-              maxOutputTokens: count * 300
+              maxOutputTokens: count * 300,
+              thinkingConfig: { thinkingBudget: 1024 }
             }
           })
         }
