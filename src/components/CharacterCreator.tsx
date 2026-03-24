@@ -25,13 +25,17 @@ const MODES = [
 
 type Mode = typeof MODES[number]["id"];
 
-export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allImages, setAllImages, onUseAsReference, refImageSourceLabel }) => {
+export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allImages, setAllImages, onUseAsReference, refImageSourceLabel, planCode }) => {
   const [mode, setMode] = useState<Mode>("quick");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [totalGenerating, setTotalGenerating] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [characterImageCount, setCharacterImageCount] = useState([2]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const isBasic = planCode !== "PREMIUM" && planCode !== "FULL";
+  const maxImages = isBasic ? 2 : 10;
 
   const handleImagesGenerated = useCallback((newImages: string[]) => {
     setAllImages(prev => [...prev, ...newImages]);
