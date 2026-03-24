@@ -6457,11 +6457,11 @@ Beispiel einer korrekten Antwort:
                 </div>
 
                 {/* Generate Button + Count Dropdown */}
-                <div className="flex flex-col items-center md:items-end gap-1 pb-[2px]">
+                <div className="flex flex-col items-center md:items-end gap-3 pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="w-full md:w-10 h-10 md:h-[130px] rounded-lg"
+                    className="w-full md:w-10 h-10 md:h-[155px] rounded-lg"
                     title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
                   >
                     {isGeneratingStoryAiIdea ? (
