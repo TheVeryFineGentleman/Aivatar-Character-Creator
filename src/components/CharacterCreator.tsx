@@ -156,9 +156,32 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
             ))}
           </div>
 
+          {/* Image Count Slider */}
+          <div className="space-y-2 mb-6">
+            <div className="flex justify-between">
+              <Label className="flex items-center gap-2">
+                Anzahl Bilder
+                {isBasic && (
+                  <span className="text-xs text-muted-foreground">(max 2 für Basic)</span>
+                )}
+              </Label>
+              <span className="text-sm text-muted-foreground">{Math.floor(characterImageCount[0])} / {maxImages}</span>
+            </div>
+            <Slider
+              value={characterImageCount}
+              onValueChange={(value) => setCharacterImageCount([Math.min(value[0], maxImages)])}
+              min={1}
+              max={10}
+              step={1}
+              className="w-full"
+              lockedStart={isBasic ? 2 : undefined}
+            />
+          </div>
+
           {mode === "quick" ? (
             <QuickModeCreator
               apiKey={apiKey}
+              imageCount={Math.floor(characterImageCount[0])}
               onImagesGenerated={handleImagesGenerated}
               onGenerationStart={handleGenerationStart}
               onGenerationProgress={handleGenerationProgress}
@@ -167,6 +190,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           ) : (
             <ChatModeCreator
               apiKey={apiKey}
+              imageCount={Math.floor(characterImageCount[0])}
               onImagesGenerated={handleImagesGenerated}
               onGenerationStart={handleGenerationStart}
               onGenerationProgress={handleGenerationProgress}

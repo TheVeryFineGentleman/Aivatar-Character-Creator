@@ -176,7 +176,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
 
       <div className="flex gap-3">
         <Button onClick={handleGenerate} disabled={!canGenerate || isGenerating} className="flex-1">
-          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Bild {generatingIndex + 1} von 4...</>) : (<><Sparkles className="w-4 h-4" />4 Charaktere generieren</>)}
+          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Bild {generatingIndex + 1} von {imageCount}...</>) : (<><Sparkles className="w-4 h-4" />{imageCount} Charaktere generieren</>)}
         </Button>
         <Button variant="outline" onClick={handleReset} size="icon"><RotateCcw className="w-4 h-4" /></Button>
       </div>
