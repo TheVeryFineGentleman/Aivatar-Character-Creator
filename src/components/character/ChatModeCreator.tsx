@@ -175,7 +175,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageC
         setGeneratingIndex(i);
         onGenerationProgress?.(i);
         try {
-          const img = await generateSingleImage(prompts[i]);
+          const img = await generateSingleImage(limitedPrompts[i]);
           if (img) onImagesGenerated([img]);
         } catch (err: any) {
           if (err.message === "rate_limit") {
