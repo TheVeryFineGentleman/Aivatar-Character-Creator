@@ -6473,7 +6473,7 @@ Beispiel einer korrekten Antwort:
                   <select
                     value={ideaCount}
                     onChange={(e) => setIdeaCount(e.target.value)}
-                    className="w-10 h-7 text-xs text-center rounded border border-border/50 bg-muted/30 text-foreground cursor-pointer focus:outline-none"
+                    className="w-10 h-7 text-xs text-center rounded border border-border bg-background text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
                     title="Anzahl Ideen"
                   >
                     {[1,2,3,4,5].map(n => (
