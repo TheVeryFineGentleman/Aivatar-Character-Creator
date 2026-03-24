@@ -90,8 +90,8 @@ serve(async (req) => {
           },
           contents,
           generationConfig: {
-            maxOutputTokens: 900,
-            temperature: 0.5,
+            maxOutputTokens: 4000,
+            temperature: 0.6,
             thinkingConfig: { thinkingBudget: 0 },
           },
         }),
