@@ -39,7 +39,9 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   }, [generatedPrompts]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const startChat = async () => {
