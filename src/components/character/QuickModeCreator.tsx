@@ -108,15 +108,15 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
     if (!canGenerate) return;
     setIsGenerating(true);
     setError(null);
-    onGenerationStart?.(4);
+    onGenerationStart?.(imageCount);
 
     try {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < imageCount; i++) {
         setGeneratingIndex(i);
         onGenerationProgress?.(i);
         try {
           const img = await generateSingleImage(i);
-          if (img) onImagesGenerated([img]); // Emit each image immediately
+          if (img) onImagesGenerated([img]);
         } catch (err: any) {
           if (err.message === "rate_limit") {
             await new Promise(r => setTimeout(r, 5000));
@@ -124,7 +124,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
             continue;
           }
         }
-        if (i < 3) await new Promise(r => setTimeout(r, 2000));
+        if (i < imageCount - 1) await new Promise(r => setTimeout(r, 2000));
       }
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
