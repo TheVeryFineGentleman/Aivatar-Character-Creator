@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface QuickModeCreatorProps {
   apiKey: string;
+  imageCount: number;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
   onGenerationProgress?: (index: number) => void;
