@@ -27,6 +27,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [chatStarted, setChatStarted] = useState(false);
   const [chatOpen, setChatOpen] = useState(true);
   const [hasGenerated, setHasGenerated] = useState(false);
