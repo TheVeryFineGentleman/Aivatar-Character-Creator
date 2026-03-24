@@ -710,7 +710,7 @@ WICHTIGE REGELN:
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.9,
-              maxOutputTokens: Math.max(count * 500, 1000)
+              maxOutputTokens: 2000
             }
           })
         }
@@ -723,9 +723,8 @@ WICHTIGE REGELN:
       
       if (generatedText) {
         if (isModifyMode) {
-          // Add as new idea and navigate to it
+          // Add as new version and navigate to it
           setGeneratedIdeas(prev => {
-            // If no previous ideas, seed with current text first
             const base = prev.length === 0 && storyIdea.trim() ? [storyIdea.trim()] : [...prev];
             const insertIndex = prev.length === 0 ? 1 : currentIdeaIndex + 1;
             base.splice(insertIndex, 0, generatedText);
@@ -738,18 +737,12 @@ WICHTIGE REGELN:
           setStoryIdea(generatedText);
           setStoryAiAssistantInput("");
         } else {
-          // Parse multiple ideas separated by ---
-          const ideas = generatedText.split(/\n---\n|\n-{3,}\n/)
-            .map((s: string) => s.trim())
-            .filter((s: string) => s.length > 15);
-          
-          if (ideas.length > 0) {
-            setGeneratedIdeas(ideas);
-            setCurrentIdeaIndex(0);
-            setStoryIdea(ideas[0]);
-            setStoryAiAssistantInput("");
-            setStorySuggestions([]);
-          }
+          // New idea from scratch
+          setGeneratedIdeas([generatedText]);
+          setCurrentIdeaIndex(0);
+          setStoryIdea(generatedText);
+          setStoryAiAssistantInput("");
+          setStorySuggestions([]);
         }
       }
     } catch (error) {
