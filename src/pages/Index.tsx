@@ -7842,6 +7842,7 @@ Beispiel einer korrekten Antwort:
               apiKey={apiKey} 
               allImages={characterImages} 
               setAllImages={setCharacterImages}
+              planCode={authData.planCode}
               onUseAsReference={refImageSource ? async (imageUrl: string) => {
                 if (refImageSource === "poses") {
                   // Convert URL to File for poses reference images

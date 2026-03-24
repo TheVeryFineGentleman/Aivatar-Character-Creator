@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface QuickModeCreatorProps {
   apiKey: string;
+  imageCount: number;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
   onGenerationProgress?: (index: number) => void;
@@ -41,7 +42,7 @@ const STYLE_PROMPT_MAP: Record<string, string> = {
   pixar: "3D rendered, Pixar-quality, stylized, volumetric lighting",
 };
 
-export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
+export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imageCount, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
@@ -107,15 +108,15 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
     if (!canGenerate) return;
     setIsGenerating(true);
     setError(null);
-    onGenerationStart?.(4);
+    onGenerationStart?.(imageCount);
 
     try {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < imageCount; i++) {
         setGeneratingIndex(i);
         onGenerationProgress?.(i);
         try {
           const img = await generateSingleImage(i);
-          if (img) onImagesGenerated([img]); // Emit each image immediately
+          if (img) onImagesGenerated([img]);
         } catch (err: any) {
           if (err.message === "rate_limit") {
             await new Promise(r => setTimeout(r, 5000));
@@ -123,7 +124,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
             continue;
           }
         }
-        if (i < 3) await new Promise(r => setTimeout(r, 2000));
+        if (i < imageCount - 1) await new Promise(r => setTimeout(r, 2000));
       }
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
@@ -175,7 +176,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, onIm
 
       <div className="flex gap-3">
         <Button onClick={handleGenerate} disabled={!canGenerate || isGenerating} className="flex-1">
-          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Bild {generatingIndex + 1} von 4...</>) : (<><Sparkles className="w-4 h-4" />4 Charaktere generieren</>)}
+          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Bild {generatingIndex + 1} von {imageCount}...</>) : (<><Sparkles className="w-4 h-4" />{imageCount} Charaktere generieren</>)}
         </Button>
         <Button variant="outline" onClick={handleReset} size="icon"><RotateCcw className="w-4 h-4" /></Button>
       </div>

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface ChatModeCreatorProps {
   apiKey: string;
+  imageCount: number;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
   onGenerationProgress?: (index: number) => void;
@@ -17,7 +18,7 @@ type ChatMessage = {
   content: string;
 };
 
-export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
+export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageCount, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -156,13 +157,14 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const requestGenerateNow = async () => {
     if (isStreaming || !apiKey) return;
-    const triggerMsg = "Erstelle jetzt die Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus. Erstelle 4 Varianten.";
+    const triggerMsg = `Erstelle jetzt die Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus. Erstelle ${imageCount} Varianten.`;
     await sendMessage(triggerMsg);
   };
 
   const generateImages = async (prompts: string[]) => {
     if (!prompts || !apiKey) return;
-    const total = prompts.length;
+    const limitedPrompts = prompts.slice(0, imageCount);
+    const total = limitedPrompts.length;
     setIsGenerating(true);
     setHasGenerated(true);
     setError(null);
@@ -173,7 +175,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
         setGeneratingIndex(i);
         onGenerationProgress?.(i);
         try {
-          const img = await generateSingleImage(prompts[i]);
+          const img = await generateSingleImage(limitedPrompts[i]);
           if (img) onImagesGenerated([img]);
         } catch (err: any) {
           if (err.message === "rate_limit") {
