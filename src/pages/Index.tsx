@@ -665,7 +665,8 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     if (!canGenerate || isGeneratingStoryAiIdea) return;
     
     const count = parseInt(ideaCount);
-    const isModifyMode = (generatedIdeas.length > 0 || storyIdea.trim()) && storyAiAssistantInput.trim();
+    const hasExistingIdea = storyIdea.trim().length > 0;
+    const isModifyMode = hasExistingIdea;
     
     setIsGeneratingStoryAiIdea(true);
     try {
@@ -677,30 +678,28 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
 AKTUELLE STORY-IDEE:
 "${currentIdea}"
 
-ÄNDERUNGSWUNSCH:
-"${storyAiAssistantInput.trim()}"
+${storyAiAssistantInput.trim() ? `ÄNDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
 
 Passe die Story-Idee basierend auf dem Änderungswunsch an. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Änderungen.
 
 WICHTIGE REGELN:
-- Erstelle eine klare, prägnante Story-Idee (2-4 Sätze)
+- Erstelle eine ausführliche, detaillierte Story-Idee (4-8 Sätze)
 - NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Schreibe auf Deutsch
 - Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
-        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Ideen.
+        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle eine ausführliche, fesselnde Story-Idee.
 
 NUTZERANFRAGE:
-"${storyAiAssistantInput.trim() || 'Erstelle realistische Story-Ideen'}"
+"${storyAiAssistantInput.trim() || 'Erstelle eine realistische, detaillierte Story-Idee'}"
 
 WICHTIGE REGELN:
-- Erstelle genau ${count} verschiedene Story-Ideen (jeweils 2-4 Sätze)
+- Erstelle eine ausführliche, detaillierte Story-Idee (6-10 Sätze)
 - NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
-- Jede Idee sollte visuell umsetzbar sein für ein Storyboard
+- Die Idee sollte visuell umsetzbar sein für ein Storyboard
 - Schreibe auf Deutsch
-- Trenne die Ideen mit "---" auf einer eigenen Zeile
-- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
+- Antworte NUR mit der Story-Idee, keine Einleitungen oder Erklärungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
