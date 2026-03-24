@@ -5,6 +5,7 @@ import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, Arro
 import { cn } from "@/lib/utils";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
+import { CharacterLightbox } from "@/components/character/CharacterLightbox";
 
 interface CharacterCreatorProps {
   apiKey: string;
@@ -26,6 +27,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [totalGenerating, setTotalGenerating] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImagesGenerated = useCallback((newImages: string[]) => {
@@ -188,12 +190,12 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {allImages.map((img, i) => (
-                <div key={`img-${i}`} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group">
+                <div key={`img-${i}`} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group cursor-pointer" onClick={() => setLightboxIndex(i)}>
                   <img src={img} alt={`Charakter ${i + 1}`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
                     {isRefMode && (
                       <button 
-                        onClick={() => onUseAsReference(img)} 
+                        onClick={(e) => { e.stopPropagation(); onUseAsReference?.(img); }} 
                         className="px-2 py-1 rounded-md bg-primary/90 text-primary-foreground hover:bg-primary text-[10px] font-medium flex items-center gap-1"
                         title="Als Referenzbild verwenden"
                       >
@@ -202,10 +204,10 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                       </button>
                     )}
                     <div className="flex gap-1">
-                      <button onClick={() => handleDownloadSingle(i)} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80">
+                      <button onClick={(e) => { e.stopPropagation(); handleDownloadSingle(i); }} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80">
                         <Download className="w-3 h-3" />
                       </button>
-                      <button onClick={() => handleDeleteImage(i)} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-destructive/80">
+                      <button onClick={(e) => { e.stopPropagation(); handleDeleteImage(i); }} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-destructive/80">
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
@@ -226,6 +228,14 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {lightboxIndex !== null && allImages[lightboxIndex] && (
+        <CharacterLightbox
+          images={allImages}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       )}
     </div>
   );
