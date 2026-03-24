@@ -1,39 +1,44 @@
 
 
-## Problem: FFmpeg funktioniert nicht
+## Speichern/Regenerieren-Button Logik überarbeiten
 
-**Ursache:** FFmpeg im Browser benötigt `SharedArrayBuffer`, welches nur funktioniert wenn spezielle HTTP-Security-Headers gesetzt sind:
-- `Cross-Origin-Opener-Policy: same-origin`
-- `Cross-Origin-Embedder-Policy: require-corp`
+### Aktuelles Problem
+Aktuell gibt es immer einen "Vorschau neu generieren" Button und einen separaten "Video neu generieren" Button — unabhängig davon, ob bereits ein Video existiert oder was sich geändert hat.
 
-Diese Headers fehlen aktuell komplett — sowohl in der Vite-Entwicklungsumgebung als auch in der Nginx-Produktionskonfiguration.
+### Neue Logik
 
----
+Die Buttons in der Preview-Spalte sollen kontextabhängig sein. Es gibt immer **nur 1 Hauptbutton**, der sich je nach Zustand ändert:
 
-## Plan
+#### Zustand 1: Kein Video generiert (`!point.generatedVideo`)
+- **Keine Änderung** → Kein Button (oder nur "Vorschau neu generieren" als outline)
+- **Nur Text-Änderung** (dialogText/videoPrompt) → **"Änderungen speichern"** (Save-Icon, speichert nur Text-Snapshot)
+- **Bild-relevante Änderung** (isDirty: Kamera, Emotion, etc.) → **"Speichern + Bild neu generieren"** (RefreshCw-Icon, orange hervorgehoben)
 
-### 1. Vite-Config: COOP/COEP Headers für Entwicklung hinzufügen
-**Datei:** `vite.config.ts`
+#### Zustand 2: Video existiert (`point.generatedVideo`)
+- **Keine Änderung** → Kein Button
+- **Nur Sprechertext-Änderung** (nur dialogText geändert) → **"Video neu generieren"** (Video-Icon) — kein neues Bild nötig, nur Video mit neuem Dialog-Prompt
+- **Andere Änderung** (Kamera, Emotion, etc. — isDirty) → **"Bild + Video neu generieren"** (RefreshCw + Video-Icon, orange) — erst Bild regenerieren, dann automatisch Video
 
-Server-Headers konfigurieren, damit SharedArrayBuffer in der Lovable-Preview und lokal verfügbar ist.
+### Technische Umsetzung
 
-### 2. Nginx-Config: COOP/COEP Headers für Produktion hinzufügen
-**Datei:** `nginx.conf`
+**Datei:** `src/components/StoryDetailPopup.tsx`
 
-Die gleichen Headers für das DigitalOcean-Deployment setzen.
+1. **Neue Hilfsvariablen** im Component berechnen:
+   - `hasVideo = !!point.generatedVideo`
+   - `onlyDialogChanged` — prüft ob nur `dialogText` sich geändert hat (nicht videoPrompt oder bild-relevante Felder)
+   - Bestehende `isDirty` (bild-relevante Felder) und `hasTextChanges` (dialogText + videoPrompt) weiter nutzen
 
-### 3. Mögliches Risiko
-Diese Headers können dazu führen, dass externe Ressourcen (Bilder, Fonts von anderen Domains) blockiert werden, wenn sie nicht `crossorigin`-kompatibel sind. Falls danach andere Features Probleme haben, müssen wir ggf. `crossorigin="anonymous"` Attribute ergänzen.
+2. **Bisherigen "Regenerate Button" Block (Zeilen 643-650) und "Video Regenerate Button" (Zeilen 678-698) entfernen** und durch einen einzigen kontextabhängigen Button ersetzen
 
----
+3. **Neuer Button-Block:**
+   - Wenn `!hasVideo`:
+     - `isDirty` → "Speichern + Bild neu generieren" → `onRegenerateImage()`
+     - `hasTextChanges && !isDirty` → "Änderungen speichern" → nur Snapshot updaten
+     - Sonst → normaler outline "Vorschau neu generieren" Button
+   - Wenn `hasVideo`:
+     - `isDirty` → "Bild + Video neu generieren" → `onRegenerateImage()` dann `onRegenerateVideo()`
+     - `onlyDialogChanged` → "Video neu generieren" → nur `onRegenerateVideo()`
+     - Sonst → kein Button oder dezenter "Video neu generieren"
 
-### Technische Details
-
-```
-# Headers die gesetzt werden:
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
-```
-
-Diese aktivieren den "cross-origin isolated" Modus des Browsers, der `SharedArrayBuffer` freischaltet — eine Voraussetzung für FFmpeg WASM.
+4. **`handleSave` anpassen** um bei Video-Existenz nach Bild-Regenerierung automatisch Video-Regenerierung anzustoßen (ggf. über Callback/Effect)
 
