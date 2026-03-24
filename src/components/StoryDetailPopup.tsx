@@ -652,13 +652,63 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <p className="text-xs">Vorschau ist aktuell</p>
         </div>}
       
-      {/* Action Buttons - Simplified */}
+      {/* Contextual Action Button */}
       <div className="space-y-3">
-        {/* Regenerate Button - Highlighted when dirty */}
-        <Button variant={isDirty ? "default" : "outline"} className={`w-full gap-2 h-11 text-sm font-medium transition-all ${isDirty ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse' : 'hover:bg-muted/50'}`} onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={regeneratingIndex !== null}>
-          {regeneratingIndex === expandedIndex ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className={`w-4 h-4`} />}
-          {isDirty ? '↻ Vorschau jetzt aktualisieren' : 'Vorschau neu generieren'}
-        </Button>
+        {(() => {
+          const isRegenerating = regeneratingIndex === expandedIndex;
+          const isVideoGenerating = isGeneratingVideo && generatingVideoIndex === expandedIndex;
+          const isBusy = isRegenerating || isVideoGenerating;
+          
+          if (!hasVideo) {
+            // No video exists
+            if (isDirty) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                  {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Speichern + Bild neu generieren
+                </Button>
+              );
+            }
+            if (onlyDialogChanged) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSave} disabled={isBusy}>
+                  <Save className="w-4 h-4" />
+                  Änderungen speichern
+                </Button>
+              );
+            }
+            // No changes, no video — show outline regenerate only if image exists
+            if (point.generatedImage) {
+              return (
+                <Button variant="outline" className="w-full gap-2 h-11 text-sm font-medium hover:bg-muted/50" onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={isBusy}>
+                  {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Vorschau neu generieren
+                </Button>
+              );
+            }
+            return null;
+          } else {
+            // Video exists
+            if (isDirty) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                  {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {isRegenerating ? 'Bild wird generiert...' : isVideoGenerating ? 'Video wird generiert...' : 'Bild + Video neu generieren'}
+                </Button>
+              );
+            }
+            if (onlyDialogChanged) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25" onClick={handleSave} disabled={isBusy}>
+                  {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+                  {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
+                </Button>
+              );
+            }
+            // No changes — no button
+            return null;
+          }
+        })()}
       </div>
       
       {/* Video Prompt Display */}
