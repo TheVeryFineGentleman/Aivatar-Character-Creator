@@ -212,7 +212,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   const handleRegenerateWithChanges = async () => {
     setGeneratedPrompts(null);
     setHasGenerated(false);
-    const triggerMsg = "Erstelle jetzt neue 4 Prompts basierend auf allen bisherigen Angaben und Änderungen. Denke dir fehlende Details selbst aus.";
+    const triggerMsg = "Erstelle jetzt neue Prompts basierend auf allen bisherigen Angaben und Änderungen. Denke dir fehlende Details selbst aus.";
     await sendMessage(triggerMsg);
   };
 
