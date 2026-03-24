@@ -6476,20 +6476,6 @@ Beispiel einer korrekten Antwort:
                       <Sparkles className="w-4 h-4 text-muted-foreground" />
                       <Label className="text-muted-foreground">KI-Assistent</Label>
                     </div>
-                    {/* Idea count dropdown */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground">Anzahl:</Label>
-                      <Select value={ideaCount} onValueChange={setIdeaCount}>
-                        <SelectTrigger className="h-7 w-16 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4, 5, 7, 10].map(n => (
-                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                   <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                     <Textarea
