@@ -5,6 +5,7 @@ import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, Arro
 import { cn } from "@/lib/utils";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
+import { CharacterLightbox } from "@/components/character/CharacterLightbox";
 
 interface CharacterCreatorProps {
   apiKey: string;
