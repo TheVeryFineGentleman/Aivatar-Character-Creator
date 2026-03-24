@@ -26,6 +26,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const [chatStarted, setChatStarted] = useState(false);
   const [chatOpen, setChatOpen] = useState(true);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -38,7 +39,9 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   }, [generatedPrompts]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const startChat = async () => {
@@ -263,7 +266,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
         {chatOpen && (
           <div className="p-4 space-y-3">
-            <div className="overflow-y-auto space-y-3 pr-1 max-h-[300px]">
+            <div ref={chatContainerRef} className="overflow-y-auto space-y-3 pr-1 max-h-[300px]">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
                   <div className={cn(
