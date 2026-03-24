@@ -1015,27 +1015,6 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                   </div>
                 </Collapsible>
 
-                {/* Sticky Save Bar */}
-                {hasAnyChanges && (
-                  <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border/30 -mx-0 mt-4 pt-3 pb-1 z-10">
-                    <Button
-                      className={`w-full gap-2 h-11 text-sm font-medium transition-all ${
-                        isDirty
-                          ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
-                          : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                      }`}
-                      onClick={isDirty ? handleSaveAndRegenerateImage : handleSaveTextOnly}
-                      disabled={regeneratingIndex !== null}
-                    >
-                      {regeneratingIndex === expandedIndex ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4" />
-                      )}
-                      {isDirty ? 'Speichern + Bild neu generieren' : 'Änderungen speichern'}
-                    </Button>
-                  </div>
-                )}
               </div>
 
               {/* Right Column - Preview (Desktop only) */}
