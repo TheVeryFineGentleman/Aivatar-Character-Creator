@@ -7870,7 +7870,7 @@ Beispiel einer korrekten Antwort:
                 setActiveMainTab(refImageSource);
                 setRefImageSource(null);
               } : undefined}
-              refImageSourceLabel={refImageSource === "poses" ? "Posen Generator" : refImageSource === "story" ? "Story Generator" : undefined}
+              refImageSourceLabel={refImageSource === "poses" ? "Avatar Shooting Studio" : refImageSource === "story" ? "Story Generator" : undefined}
             />
           )}
 
