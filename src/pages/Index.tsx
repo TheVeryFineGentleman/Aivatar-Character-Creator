@@ -680,26 +680,26 @@ AKTUELLE STORY-IDEE:
 
 ${storyAiAssistantInput.trim() ? `ÄNDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
 
-Passe die Story-Idee basierend auf dem Änderungswunsch an. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Änderungen.
+Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Änderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
-- Erstelle eine ausführliche, detaillierte Story-Idee (4-8 Sätze)
+- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausführliche, detaillierte Story-Idee (4-8 Sätze)
 - NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Schreibe auf Deutsch
-- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
-        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle eine ausführliche, fesselnde Story-Idee.
+${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
+        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
-"${storyAiAssistantInput.trim() || 'Erstelle eine realistische, detaillierte Story-Idee'}"
+"${storyAiAssistantInput.trim() || 'Erstelle realistische, detaillierte Story-Ideen'}"
 
 WICHTIGE REGELN:
-- Erstelle eine ausführliche, detaillierte Story-Idee (6-10 Sätze)
+- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausführliche Story-Idee ('} 6-10 Sätze)
 - NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
-- Die Idee sollte visuell umsetzbar sein für ein Storyboard
+- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
 - Schreibe auf Deutsch
-- Antworte NUR mit der Story-Idee, keine Einleitungen oder Erklärungen`;
+${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -710,7 +710,7 @@ WICHTIGE REGELN:
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.9,
-              maxOutputTokens: 2000
+              maxOutputTokens: Math.max(count * 800, 2000)
             }
           })
         }
@@ -722,25 +722,30 @@ WICHTIGE REGELN:
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       
       if (generatedText) {
+        // Parse ideas (split by --- if multiple)
+        const ideas = count > 1
+          ? generatedText.split(/\n---\n|\n-{3,}\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15)
+          : [generatedText];
+
         if (isModifyMode) {
-          // Add as new version and navigate to it
+          // Add new versions after current index
           setGeneratedIdeas(prev => {
             const base = prev.length === 0 && storyIdea.trim() ? [storyIdea.trim()] : [...prev];
             const insertIndex = prev.length === 0 ? 1 : currentIdeaIndex + 1;
-            base.splice(insertIndex, 0, generatedText);
+            base.splice(insertIndex, 0, ...ideas);
             return base;
           });
           setCurrentIdeaIndex(prev => {
             const wasEmpty = generatedIdeas.length === 0;
             return wasEmpty ? 1 : prev + 1;
           });
-          setStoryIdea(generatedText);
+          setStoryIdea(ideas[0]);
           setStoryAiAssistantInput("");
         } else {
-          // New idea from scratch
-          setGeneratedIdeas([generatedText]);
+          // New ideas from scratch
+          setGeneratedIdeas(ideas);
           setCurrentIdeaIndex(0);
-          setStoryIdea(generatedText);
+          setStoryIdea(ideas[0]);
           setStoryAiAssistantInput("");
           setStorySuggestions([]);
         }
@@ -6451,13 +6456,13 @@ Beispiel einer korrekten Antwort:
                   </div>
                 </div>
 
-                {/* Generate Button - aligned with textareas */}
-                <div className="flex items-center md:items-end pb-[2px]">
+                {/* Generate Button + Count Dropdown */}
+                <div className="flex flex-col items-center md:items-end gap-1 pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="w-full md:w-10 h-10 md:h-[160px] rounded-lg"
-                    title={generatedIdeas.length > 0 ? "Idee anpassen" : "Ideen generieren"}
+                    className="w-full md:w-10 h-10 md:h-[130px] rounded-lg"
+                    title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
                   >
                     {isGeneratingStoryAiIdea ? (
                       <Sparkles className="w-5 h-5 animate-spin" />
@@ -6465,6 +6470,16 @@ Beispiel einer korrekten Antwort:
                       <ChevronLeft className="w-6 h-6" />
                     )}
                   </Button>
+                  <select
+                    value={ideaCount}
+                    onChange={(e) => setIdeaCount(e.target.value)}
+                    className="w-10 h-7 text-xs text-center rounded border border-border/50 bg-muted/30 text-foreground cursor-pointer focus:outline-none"
+                    title="Anzahl Ideen"
+                  >
+                    {[1,2,3,4,5].map(n => (
+                      <option key={n} value={String(n)}>{n}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Right: AI Assistant - Idea Input + Count Dropdown */}
