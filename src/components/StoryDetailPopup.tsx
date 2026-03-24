@@ -661,7 +661,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <p className="text-xs">Vorschau ist aktuell</p>
         </div>}
       
-      {/* Contextual Action Button */}
+      {/* Contextual Action Button — always exactly 1 */}
       <div className="space-y-3">
         {(() => {
           const isRegenerating = regeneratingIndex === expandedIndex;
@@ -669,24 +669,22 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           const isBusy = isRegenerating || isVideoGenerating;
           
           if (!hasVideo) {
-            // No video exists
             if (isDirty) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
                   {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  Speichern + Bild neu generieren
+                  {isRegenerating ? 'Bild wird generiert...' : 'Speichern + Bild neu generieren'}
                 </Button>
               );
             }
             if (onlyDialogChanged) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy}>
                   <Save className="w-4 h-4" />
                   Änderungen speichern
                 </Button>
               );
             }
-            // No changes, no video — show outline regenerate only if image exists
             if (point.generatedImage) {
               return (
                 <Button variant="outline" className="w-full gap-2 h-11 text-sm font-medium hover:bg-muted/50" onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={isBusy}>
@@ -697,10 +695,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             }
             return null;
           } else {
-            // Video exists
             if (isDirty) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleRegenerateVideo} disabled={isBusy}>
                   {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                   {isRegenerating ? 'Bild wird generiert...' : isVideoGenerating ? 'Video wird generiert...' : 'Bild + Video neu generieren'}
                 </Button>
@@ -708,13 +705,12 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             }
             if (onlyDialogChanged) {
               return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25" onClick={handleSave} disabled={isBusy}>
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy}>
                   {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
                   {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
                 </Button>
               );
             }
-            // No changes — no button
             return null;
           }
         })()}
