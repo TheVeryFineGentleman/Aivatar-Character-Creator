@@ -665,11 +665,6 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     if (!canGenerate || isGeneratingStoryAiIdea) return;
     
     const count = parseInt(ideaCount);
-    // If text exists but no generatedIdeas yet, seed with current text
-    if (generatedIdeas.length === 0 && storyIdea.trim()) {
-      setGeneratedIdeas([storyIdea.trim()]);
-      setCurrentIdeaIndex(0);
-    }
     const isModifyMode = (generatedIdeas.length > 0 || storyIdea.trim()) && storyAiAssistantInput.trim();
     
     setIsGeneratingStoryAiIdea(true);
@@ -731,12 +726,16 @@ WICHTIGE REGELN:
         if (isModifyMode) {
           // Add as new idea and navigate to it
           setGeneratedIdeas(prev => {
-            const updated = [...prev];
-            // Insert after current index
-            updated.splice(currentIdeaIndex + 1, 0, generatedText);
-            return updated;
+            // If no previous ideas, seed with current text first
+            const base = prev.length === 0 && storyIdea.trim() ? [storyIdea.trim()] : [...prev];
+            const insertIndex = prev.length === 0 ? 1 : currentIdeaIndex + 1;
+            base.splice(insertIndex, 0, generatedText);
+            return base;
           });
-          setCurrentIdeaIndex(prev => prev + 1);
+          setCurrentIdeaIndex(prev => {
+            const wasEmpty = generatedIdeas.length === 0;
+            return wasEmpty ? 1 : prev + 1;
+          });
           setStoryIdea(generatedText);
           setStoryAiAssistantInput("");
         } else {
