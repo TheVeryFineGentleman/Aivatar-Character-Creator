@@ -39,7 +39,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const startChat = async () => {
     setChatStarted(true);
-    await sendMessage("Hallo, ich möchte einen Charakter erstellen.");
+    await sendMessage("Hallo, ich möchte einen KI-Avatar erstellen.");
   };
 
   const sendMessage = async (text: string) => {
