@@ -724,28 +724,29 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
       if (generatedText) {
         // Parse ideas (split by --- if multiple)
         const ideas = count > 1
-          ? generatedText.split(/\n---\n|\n-{3,}\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15)
+          ? generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15)
           : [generatedText];
+        
+        // Fallback: if splitting didn't produce enough ideas, keep as single
+        const finalIdeas = ideas.length > 0 ? ideas : [generatedText];
 
         if (isModifyMode) {
-          // Add new versions after current index
           setGeneratedIdeas(prev => {
             const base = prev.length === 0 && storyIdea.trim() ? [storyIdea.trim()] : [...prev];
             const insertIndex = prev.length === 0 ? 1 : currentIdeaIndex + 1;
-            base.splice(insertIndex, 0, ...ideas);
+            base.splice(insertIndex, 0, ...finalIdeas);
             return base;
           });
           setCurrentIdeaIndex(prev => {
             const wasEmpty = generatedIdeas.length === 0;
             return wasEmpty ? 1 : prev + 1;
           });
-          setStoryIdea(ideas[0]);
+          setStoryIdea(finalIdeas[0]);
           setStoryAiAssistantInput("");
         } else {
-          // New ideas from scratch
-          setGeneratedIdeas(ideas);
+          setGeneratedIdeas(finalIdeas);
           setCurrentIdeaIndex(0);
-          setStoryIdea(ideas[0]);
+          setStoryIdea(finalIdeas[0]);
           setStoryAiAssistantInput("");
           setStorySuggestions([]);
         }
