@@ -164,8 +164,26 @@ export const CharacterLightbox: React.FC<CharacterLightboxProps> = ({
       onClick={handleBackdropClick}
     >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 z-10">
-        <span className="text-white/60 text-sm">{currentIndex + 1} / {images.length}</span>
+      <div className="flex items-center justify-between px-4 py-3 z-10" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1">
+          {images.length > 1 && (
+            <button
+              onClick={() => selectImage((currentIndex - 1 + images.length) % images.length)}
+              className="p-1 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+          <span className="text-white/60 text-sm min-w-[3ch] text-center">{currentIndex + 1} / {images.length}</span>
+          {images.length > 1 && (
+            <button
+              onClick={() => selectImage((currentIndex + 1) % images.length)}
+              className="p-1 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
         
         {zoom > 1 && (
           <div className="bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs font-medium flex items-center gap-1.5">
