@@ -6451,13 +6451,13 @@ Beispiel einer korrekten Antwort:
                   </div>
                 </div>
 
-                {/* Generate Button - aligned with textareas */}
-                <div className="flex items-center md:items-end pb-[2px]">
+                {/* Generate Button + Count Dropdown */}
+                <div className="flex flex-col items-center md:items-end gap-1 pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
-                    className="w-full md:w-10 h-10 md:h-[160px] rounded-lg"
-                    title={generatedIdeas.length > 0 ? "Idee anpassen" : "Ideen generieren"}
+                    className="w-full md:w-10 h-10 md:h-[130px] rounded-lg"
+                    title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
                   >
                     {isGeneratingStoryAiIdea ? (
                       <Sparkles className="w-5 h-5 animate-spin" />
@@ -6465,6 +6465,16 @@ Beispiel einer korrekten Antwort:
                       <ChevronLeft className="w-6 h-6" />
                     )}
                   </Button>
+                  <select
+                    value={ideaCount}
+                    onChange={(e) => setIdeaCount(e.target.value)}
+                    className="w-10 h-7 text-xs text-center rounded border border-border/50 bg-muted/30 text-foreground cursor-pointer focus:outline-none"
+                    title="Anzahl Ideen"
+                  >
+                    {[1,2,3,4,5].map(n => (
+                      <option key={n} value={String(n)}>{n}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Right: AI Assistant - Idea Input + Count Dropdown */}
