@@ -420,6 +420,11 @@ const Index = () => {
   const [isGeneratingStoryAiIdea, setIsGeneratingStoryAiIdea] = useState(false);
   const [isExpandingSuggestion, setIsExpandingSuggestion] = useState(false);
   
+  // Multi-idea generation state
+  const [generatedIdeas, setGeneratedIdeas] = useState<string[]>([]);
+  const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
+  const [ideaCount, setIdeaCount] = useState("3");
+  
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
