@@ -6351,28 +6351,67 @@ Beispiel einer korrekten Antwort:
 
               {/* Story Idea and AI Assistant side by side */}
               <div className="flex flex-col md:flex-row gap-4">
-                {/* Left: Story Idea Field */}
+                {/* Left: Generated Story Idea Display */}
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
+                    {generatedIdeas.length > 1 && (
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={currentIdeaIndex === 0}
+                          onClick={() => navigateIdea("prev")}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[3.5rem] text-center">
+                          {currentIdeaIndex + 1} von {generatedIdeas.length}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={currentIdeaIndex === generatedIdeas.length - 1}
+                          onClick={() => navigateIdea("next")}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <div className="relative">
                     <Textarea
                       id="story-idea"
                       placeholder=""
                       value={storyIdea}
-                      onChange={(e) => setStoryIdea(e.target.value)}
+                      onChange={(e) => {
+                        setStoryIdea(e.target.value);
+                        // Also update in generatedIdeas if navigating
+                        if (generatedIdeas.length > 0) {
+                          setGeneratedIdeas(prev => {
+                            const updated = [...prev];
+                            updated[currentIdeaIndex] = e.target.value;
+                            return updated;
+                          });
+                        }
+                      }}
                       className="min-h-[160px] resize-y"
                     />
                     
                     {/* Generating overlay */}
-                    {isExpandingSuggestion && (
+                    {(isExpandingSuggestion || isGeneratingStoryAiIdea) && (
                       <div className="absolute inset-0 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center gap-2 z-10 border border-primary/20">
                         <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                        <span className="text-sm font-medium text-primary">Text wird generiert...</span>
+                        <span className="text-sm font-medium text-primary">
+                          {isGeneratingStoryAiIdea ? "Ideen werden generiert..." : "Text wird generiert..."}
+                        </span>
                       </div>
                     )}
                     
                     {/* Suggestions overlay - only when empty and not animating */}
-                    {(!storyIdea || isAnimatingSuggestion) && (
+                    {(!storyIdea || isAnimatingSuggestion) && !isGeneratingStoryAiIdea && (
                       <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
                         <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
                           {storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
@@ -6417,13 +6456,13 @@ Beispiel einer korrekten Antwort:
                   </div>
                 </div>
 
-                {/* Generate Button (like poses generator) - aligned with textareas */}
+                {/* Generate Button - aligned with textareas */}
                 <div className="flex items-center md:items-end pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
                     className="w-full md:w-10 h-10 md:h-[160px] rounded-lg"
-                    title="Story-Idee generieren"
+                    title={generatedIdeas.length > 0 ? "Idee anpassen" : "Ideen generieren"}
                   >
                     {isGeneratingStoryAiIdea ? (
                       <Sparkles className="w-5 h-5 animate-spin" />
@@ -6433,15 +6472,34 @@ Beispiel einer korrekten Antwort:
                   </Button>
                 </div>
 
-                {/* Right: AI Assistant for Story Ideas */}
+                {/* Right: AI Assistant - Idea Input + Count Dropdown */}
                 <div className="flex-1 flex flex-col">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Sparkles className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-muted-foreground">KI-Assistent</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-muted-foreground" />
+                      <Label className="text-muted-foreground">KI-Assistent</Label>
+                    </div>
+                    {/* Idea count dropdown */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Anzahl:</Label>
+                      <Select value={ideaCount} onValueChange={setIdeaCount}>
+                        <SelectTrigger className="h-7 w-16 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5, 7, 10].map(n => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                     <Textarea
-                      placeholder="Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
+                      placeholder={generatedIdeas.length > 0 
+                        ? "Beschreibe die gewünschte Änderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
+                        : "Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
+                      }
                       value={storyAiAssistantInput}
                       onChange={(e) => setStoryAiAssistantInput(e.target.value)}
                       className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
