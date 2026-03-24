@@ -712,8 +712,7 @@ WICHTIGE REGELN:
             generationConfig: {
               temperature: 0.9,
               maxOutputTokens: Math.max(count * 500, 1000)
-            },
-            thinkingConfig: { thinkingBudget: 1024 }
+            }
           })
         }
       );
