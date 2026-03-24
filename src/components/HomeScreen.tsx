@@ -11,7 +11,7 @@ interface HomeScreenProps {
 const features = [
   {
     id: "poses" as const,
-    title: "Posen Generator",
+    title: "Avatar Shooting Studio",
     description: "Generiere vielfältige Character-Posen mit KI – von Casual bis Profi.",
     icon: Sparkles,
     gradient: "from-primary/20 to-primary/5",
