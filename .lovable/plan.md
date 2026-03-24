@@ -1,29 +1,39 @@
 
 
-## Plan: Ideen-Navigation und Text-Speicherung fixen
+## Problem: FFmpeg funktioniert nicht
 
-### Problem
-Wenn der User rechts eine Änderung eingibt und generiert, wird die vorherige Idee in `generatedIdeas` gespeichert — aber das Seeding (Zeile 669-672) nutzt `setGeneratedIdeas` async. Wenn `generatedIdeas` beim Start leer ist, wird die Seed-State erst nach dem Render wirksam. Die `isModifyMode`-Logik und `splice` auf Zeile 733-737 arbeiten dann mit dem alten leeren Array via `prev`, was aber funktionieren sollte dank des `prev =>` Callbacks.
+**Ursache:** FFmpeg im Browser benötigt `SharedArrayBuffer`, welches nur funktioniert wenn spezielle HTTP-Security-Headers gesetzt sind:
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: require-corp`
 
-**Tatsächliches Problem:** Das Seeding auf Zeile 669-672 setzt `setGeneratedIdeas([storyIdea.trim()])`, aber der `splice` im Modify-Modus auf Zeile 733 nutzt `prev` — das ist zu dem Zeitpunkt noch das alte leere Array `[]`, nicht die geseedete Version. Die zwei `setGeneratedIdeas` Aufrufe batchen, und der zweite überschreibt den ersten.
+Diese Headers fehlen aktuell komplett — sowohl in der Vite-Entwicklungsumgebung als auch in der Nginx-Produktionskonfiguration.
 
-### Lösung
+---
 
-**Datei: `src/pages/Index.tsx`**
+## Plan
 
-1. **Seeding und Modify-Logik konsolidieren** (Zeilen 668-741):
-   - Statt erst async zu seeden und dann separat zu splicen, die Logik in einem einzigen `setGeneratedIdeas`-Callback zusammenführen
-   - Im Modify-Mode: Wenn `prev` leer ist, den aktuellen `storyIdea` als erstes Element + den neuen Text einfügen → `[storyIdea, generatedText]`
-   - Wenn `prev` nicht leer: wie bisher `splice` nach `currentIdeaIndex`
-   - `currentIdeaIndex` korrekt auf das neue Element setzen
+### 1. Vite-Config: COOP/COEP Headers für Entwicklung hinzufügen
+**Datei:** `vite.config.ts`
 
-2. **Das separate Seeding (Zeilen 669-672) entfernen** — wird nicht mehr benötigt
+Server-Headers konfigurieren, damit SharedArrayBuffer in der Lovable-Preview und lokal verfügbar ist.
 
-3. **Navigation sicherstellen**: `navigateIdea` Funktion ist korrekt, keine Änderung nötig
+### 2. Nginx-Config: COOP/COEP Headers für Produktion hinzufügen
+**Datei:** `nginx.conf`
 
-### Ergebnis
-- Erste Generierung: `generatedIdeas = ["generierter text"]`, Index = 0, Anzeige: 1/1
-- Modify bei 1/1: `generatedIdeas = ["alter text", "neuer text"]`, Index = 1, Anzeige: 2/2
-- Navigation zurück: Index = 0, zeigt alten Text → 1/2
-- Weiterer Modify: Insert nach aktuellem Index, korrekte Navigation
+Die gleichen Headers für das DigitalOcean-Deployment setzen.
+
+### 3. Mögliches Risiko
+Diese Headers können dazu führen, dass externe Ressourcen (Bilder, Fonts von anderen Domains) blockiert werden, wenn sie nicht `crossorigin`-kompatibel sind. Falls danach andere Features Probleme haben, müssen wir ggf. `crossorigin="anonymous"` Attribute ergänzen.
+
+---
+
+### Technische Details
+
+```
+# Headers die gesetzt werden:
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+Diese aktivieren den "cross-origin isolated" Modus des Browsers, der `SharedArrayBuffer` freischaltet — eine Voraussetzung für FFmpeg WASM.
 
