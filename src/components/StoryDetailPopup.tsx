@@ -347,13 +347,25 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const isDirty = isSceneDirty(point);
   const hasFinalized = !!point.finalSnapshot;
   
+  const hasVideo = !!point.generatedVideo;
+  
   // Combined: any unsaved change exists
   const hasAnyChanges = isDirty || hasTextChanges;
   
+  // Only dialog/text changed, no image-relevant fields
+  const onlyDialogChanged = hasTextChanges && !isDirty;
+  
   const handleSave = () => {
-    if (isDirty) {
-      // Image-affecting fields changed → regenerate image
+    if (isDirty && hasVideo) {
+      // Image-affecting fields changed + video exists → regenerate image, then video
       onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+      // Video will be regenerated after image completes (handled via effect or callback)
+    } else if (isDirty) {
+      // Image-affecting fields changed, no video → just regenerate image
+      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    } else if (onlyDialogChanged && hasVideo && onRegenerateVideo) {
+      // Only text changed + video exists → regenerate video only
+      onRegenerateVideo(expandedIndex);
     }
     // Update snapshot to mark text as "saved"
     savedSnapshotRef.current = {
@@ -640,13 +652,63 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           <p className="text-xs">Vorschau ist aktuell</p>
         </div>}
       
-      {/* Action Buttons - Simplified */}
+      {/* Contextual Action Button */}
       <div className="space-y-3">
-        {/* Regenerate Button - Highlighted when dirty */}
-        <Button variant={isDirty ? "default" : "outline"} className={`w-full gap-2 h-11 text-sm font-medium transition-all ${isDirty ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse' : 'hover:bg-muted/50'}`} onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={regeneratingIndex !== null}>
-          {regeneratingIndex === expandedIndex ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className={`w-4 h-4`} />}
-          {isDirty ? '↻ Vorschau jetzt aktualisieren' : 'Vorschau neu generieren'}
-        </Button>
+        {(() => {
+          const isRegenerating = regeneratingIndex === expandedIndex;
+          const isVideoGenerating = isGeneratingVideo && generatingVideoIndex === expandedIndex;
+          const isBusy = isRegenerating || isVideoGenerating;
+          
+          if (!hasVideo) {
+            // No video exists
+            if (isDirty) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                  {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Speichern + Bild neu generieren
+                </Button>
+              );
+            }
+            if (onlyDialogChanged) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSave} disabled={isBusy}>
+                  <Save className="w-4 h-4" />
+                  Änderungen speichern
+                </Button>
+              );
+            }
+            // No changes, no video — show outline regenerate only if image exists
+            if (point.generatedImage) {
+              return (
+                <Button variant="outline" className="w-full gap-2 h-11 text-sm font-medium hover:bg-muted/50" onClick={() => onRegenerateImage(expandedIndex, storyPoints[expandedIndex])} disabled={isBusy}>
+                  {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Vorschau neu generieren
+                </Button>
+              );
+            }
+            return null;
+          } else {
+            // Video exists
+            if (isDirty) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSave} disabled={isBusy}>
+                  {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {isRegenerating ? 'Bild wird generiert...' : isVideoGenerating ? 'Video wird generiert...' : 'Bild + Video neu generieren'}
+                </Button>
+              );
+            }
+            if (onlyDialogChanged) {
+              return (
+                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25" onClick={handleSave} disabled={isBusy}>
+                  {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+                  {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
+                </Button>
+              );
+            }
+            // No changes — no button
+            return null;
+          }
+        })()}
       </div>
       
       {/* Video Prompt Display */}
@@ -675,28 +737,6 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             className="text-xs min-h-[100px] resize-y bg-muted/30 border-border/30"
             placeholder="Video Prompt wird hier angezeigt..."
           />
-          {/* Video Regenerate Button */}
-          {onRegenerateVideo && (point.generatedImage || isDirty) && (
-            <Button
-              variant="default"
-              className="w-full gap-2 h-10 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25"
-              onClick={() => onRegenerateVideo(expandedIndex)}
-              disabled={isGeneratingVideo || regeneratingIndex !== null}
-            >
-              {(isGeneratingVideo && generatingVideoIndex === expandedIndex) || regeneratingIndex === expandedIndex ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Video className="w-4 h-4" />
-              )}
-              {regeneratingIndex === expandedIndex 
-                ? 'Bild wird neu generiert...' 
-                : isGeneratingVideo && generatingVideoIndex === expandedIndex 
-                  ? 'Video wird generiert...' 
-                  : isDirty 
-                    ? 'Bild + Video neu generieren'
-                    : 'Video neu generieren'}
-            </Button>
-          )}
           {/* Video Error Display */}
           {videoErrors?.has(expandedIndex) && (
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-2.5 flex items-start gap-2">
