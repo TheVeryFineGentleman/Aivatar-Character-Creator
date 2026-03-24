@@ -39,7 +39,10 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const startChat = async () => {
     setChatStarted(true);
-    await sendMessage("Hallo, ich möchte einen KI-Avatar erstellen.");
+    setMessages([{
+      role: "assistant",
+      content: "Hallo, hier ist dein KI-Avatar Character Creator Assistent. Beantworte jetzt ein paar Fragen und ich erstelle dir deinen persönlichen KI-Avatar nach deinen Wünschen. Los geht's!\n\nWelches Geschlecht soll dein Avatar haben? (Männlich, Weiblich, Androgyn)"
+    }]);
   };
 
   const sendMessage = async (text: string) => {
