@@ -124,8 +124,8 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
       if (jsonMatch) {
         const jsonStr = jsonMatch[1] || jsonMatch[0];
         const parsed = JSON.parse(jsonStr);
-        if (parsed.ready && Array.isArray(parsed.prompts) && parsed.prompts.length >= 4) {
-          setGeneratedPrompts(parsed.prompts.slice(0, 4));
+        if (parsed.ready && Array.isArray(parsed.prompts) && parsed.prompts.length >= 1) {
+          setGeneratedPrompts(parsed.prompts);
         }
       }
     } catch {}
@@ -142,19 +142,20 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const requestGenerateNow = async () => {
     if (isStreaming || !apiKey) return;
-    const triggerMsg = "Erstelle jetzt die 4 Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus.";
+    const triggerMsg = "Erstelle jetzt die Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus. Erstelle 4 Varianten.";
     await sendMessage(triggerMsg);
   };
 
   const generateImages = async (prompts: string[]) => {
     if (!prompts || !apiKey) return;
+    const total = prompts.length;
     setIsGenerating(true);
     setHasGenerated(true);
     setError(null);
-    onGenerationStart?.(4);
+    onGenerationStart?.(total);
 
     try {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < total; i++) {
         setGeneratingIndex(i);
         onGenerationProgress?.(i);
         try {
@@ -167,7 +168,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
             continue;
           }
         }
-        if (i < 3) await new Promise(r => setTimeout(r, 2000));
+        if (i < total - 1) await new Promise(r => setTimeout(r, 2000));
       }
     } catch (err: any) {
       setError(err.message || "Ein Fehler ist aufgetreten");
@@ -211,7 +212,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   const handleRegenerateWithChanges = async () => {
     setGeneratedPrompts(null);
     setHasGenerated(false);
-    const triggerMsg = "Erstelle jetzt neue 4 Prompts basierend auf allen bisherigen Angaben und Änderungen. Denke dir fehlende Details selbst aus.";
+    const triggerMsg = "Erstelle jetzt neue Prompts basierend auf allen bisherigen Angaben und Änderungen. Denke dir fehlende Details selbst aus.";
     await sendMessage(triggerMsg);
   };
 
@@ -324,7 +325,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
       {isGenerating && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin text-primary" />
-          Generiere Bild {generatingIndex + 1} von 4...
+          Generiere Bild {generatingIndex + 1} von {generatedPrompts?.length ?? 4}...
         </div>
       )}
     </div>
