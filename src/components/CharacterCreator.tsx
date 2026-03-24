@@ -27,6 +27,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [totalGenerating, setTotalGenerating] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImagesGenerated = useCallback((newImages: string[]) => {
