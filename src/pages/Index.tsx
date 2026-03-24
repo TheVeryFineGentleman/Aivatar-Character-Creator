@@ -724,12 +724,14 @@ WICHTIGE REGELN:
       
       if (generatedText) {
         if (isModifyMode) {
-          // Update current idea in place
+          // Add as new idea and navigate to it
           setGeneratedIdeas(prev => {
             const updated = [...prev];
-            updated[currentIdeaIndex] = generatedText;
+            // Insert after current index
+            updated.splice(currentIdeaIndex + 1, 0, generatedText);
             return updated;
           });
+          setCurrentIdeaIndex(prev => prev + 1);
           setStoryIdea(generatedText);
           setStoryAiAssistantInput("");
         } else {
