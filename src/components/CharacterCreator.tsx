@@ -229,6 +229,14 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           </CardContent>
         </Card>
       )}
+
+      {lightboxIndex !== null && allImages[lightboxIndex] && (
+        <CharacterLightbox
+          images={allImages}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   );
 };
