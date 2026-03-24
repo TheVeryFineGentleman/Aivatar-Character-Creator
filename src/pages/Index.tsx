@@ -5556,7 +5556,7 @@ Beispiel einer korrekten Antwort:
             <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
               <TabsTrigger value="poses" className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                Posen
+                Avatar Shooting Studio
               </TabsTrigger>
               <TabsTrigger value="story" className="flex items-center gap-2">
                 {authData.planCode !== "FULL" && <Lock className="w-3 h-3" />}
