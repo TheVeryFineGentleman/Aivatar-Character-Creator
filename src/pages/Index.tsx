@@ -6355,27 +6355,27 @@ Beispiel einer korrekten Antwort:
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0 rounded-md border border-border/50 bg-muted/20 px-0.5">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-6 w-6"
                         disabled={generatedIdeas.length === 0 || currentIdeaIndex === 0}
                         onClick={() => navigateIdea("prev")}
                       >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-3.5 h-3.5" />
                       </Button>
-                      <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[3.5rem] text-center">
-                        {generatedIdeas.length > 0 ? `${currentIdeaIndex + 1} von ${generatedIdeas.length}` : "–"}
+                      <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[2.5rem] text-center">
+                        {generatedIdeas.length > 0 ? `${currentIdeaIndex + 1}/${generatedIdeas.length}` : "–"}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-6 w-6"
                         disabled={generatedIdeas.length === 0 || currentIdeaIndex === generatedIdeas.length - 1}
                         onClick={() => navigateIdea("next")}
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
