@@ -378,8 +378,53 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   // Only dialog/text changed, no image-relevant fields
   const onlyDialogChanged = hasTextChanges && !needsImageRegeneration;
   
+  // Version navigation
+  const versions = point.sceneVersions || [];
+  const currentVersionIdx = point.currentSceneVersion ?? (versions.length > 0 ? versions.length - 1 : 0);
+  const totalVersions = versions.length;
+  
+  const handleSwitchVersion = (newIdx: number) => {
+    if (newIdx < 0 || newIdx >= totalVersions || !onSwitchVersion) return;
+    onSwitchVersion(expandedIndex, newIdx);
+  };
+  
+  // Close handler with unsaved changes check
+  const handleCloseAttempt = () => {
+    if (needsImageRegeneration || hasTextChanges) {
+      setShowUnsavedWarning(true);
+    } else {
+      onClose();
+    }
+  };
+  
+  const handleSaveAndClose = () => {
+    setShowUnsavedWarning(false);
+    if (needsImageRegeneration) {
+      // Save version + regenerate
+      if (onSaveVersion) onSaveVersion(expandedIndex);
+      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    } else if (hasTextChanges) {
+      // Only text changes — save version
+      if (onSaveVersion) onSaveVersion(expandedIndex);
+    }
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+    onClose();
+  };
+  
+  const handleDiscardAndClose = () => {
+    setShowUnsavedWarning(false);
+    // Revert to last saved version
+    if (totalVersions > 0) {
+      onSwitchVersion?.(expandedIndex, currentVersionIdx);
+    }
+    onClose();
+  };
+
   const handleSaveTextOnly = () => {
-    // Only text changes, no video — just save the snapshot
+    if (onSaveVersion) onSaveVersion(expandedIndex);
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
       videoPrompt: point.videoPrompt || "",
@@ -387,7 +432,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   };
 
   const handleSaveAndRegenerateImage = () => {
-    // Image-affecting fields changed, no video → regenerate image
+    if (onSaveVersion) onSaveVersion(expandedIndex);
     onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
@@ -396,7 +441,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   };
 
   const handleRegenerateVideo = () => {
-    // Any change + video exists → regenerate video (handles image regen internally if needed)
+    if (onSaveVersion) onSaveVersion(expandedIndex);
     if (onRegenerateVideo) {
       onRegenerateVideo(expandedIndex);
     }
