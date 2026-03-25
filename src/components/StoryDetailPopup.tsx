@@ -712,11 +712,11 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 </Button>
               );
             }
-            // Only text/dialog changed or nothing → save button, disabled until something changes
+            // Only text/dialog changed → save + regenerate video; nothing changed → disabled
             return (
-              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy || !hasChanges}>
-                <Save className="w-4 h-4" />
-                Änderungen speichern
+              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy || !hasChanges}>
+                {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isVideoGenerating ? 'Video wird generiert...' : 'Speichern + Video neu generieren'}
               </Button>
             );
           }
