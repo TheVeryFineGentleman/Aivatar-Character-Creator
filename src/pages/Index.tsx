@@ -2881,7 +2881,7 @@ ${sceneContext}`;
     }
     
     // Get previous scene's image for continuity (NOT the current scene's old image)
-    const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
+    const previousSceneImage = sceneIndex > 0 ? storyPointsRef.current[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
