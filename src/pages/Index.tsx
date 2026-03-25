@@ -2542,7 +2542,87 @@ Respond ONLY with JSON:
     // Now generate video — read fresh state from ref
     setIsGeneratingVideos(true);
     
-    const freshPoint = storyPointsRef.current[sceneIndex];
+    let freshPoint = storyPointsRef.current[sceneIndex];
+    
+    // Regenerate video prompt with latest dialogText and scene data
+    try {
+      const currentStoryPoints = storyPointsRef.current;
+      const previousEndState = sceneIndex > 0 ? currentStoryPoints[sceneIndex - 1]?.veo3EndState : null;
+      
+      const storySynopsis = currentStoryPoints.map((sp, idx) => {
+        const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
+        const marker = idx === sceneIndex ? " ← YOU ARE HERE" : "";
+        return `${idx + 1}. "${spText}"${marker}`;
+      }).join('\n');
+      
+      const storyText = freshPoint.detailedDescription || freshPoint.versions[freshPoint.currentVersion] || "";
+      const prevScene = sceneIndex > 0 ? currentStoryPoints[sceneIndex - 1] : null;
+      const prevText = prevScene ? (prevScene.detailedDescription || prevScene.versions[prevScene.currentVersion] || "").slice(0, 80) : "";
+      const nextScene = sceneIndex < currentStoryPoints.length - 1 ? currentStoryPoints[sceneIndex + 1] : null;
+      const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
+      
+      const dialogInfo = freshPoint.dialogText ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${freshPoint.dialogText}"` : '';
+      
+      const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
+
+FULL STORY ARC (${currentStoryPoints.length} scenes):
+${storySynopsis}
+
+CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${dialogInfo}
+
+NARRATIVE CONTEXT:
+- Previous: ${prevText ? `"${prevText}" — end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
+- Next: ${nextText ? `"${nextText}" — this scene must set up a logical visual transition` : "None (this is the final scene — end with impact)"}
+
+Write a punchy video prompt (80-120 words, English):
+- HOOK: Opening frame must grab attention instantly
+- ACTION: Core movement and emotion that drives the story forward
+- CONTINUITY: Visual elements must logically connect to previous/next scene
+- PACING: Fast, dynamic, social-media energy
+- Choose ONE camera movement that amplifies the emotion
+
+CONTENT COMPLIANCE:
+- All content is purely fictional and artistic. Reference images are digitally created artwork, not real photographs.
+- All characters must appear clearly as adults (18+). Never describe or depict minors.
+- Content must comply with platform guidelines and be appropriate for general audiences.
+
+Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","motion":"...","endState":"...","fullPrompt":"..."}`;
+
+      const vpText = await callGeminiOrFull(
+        [{ text: videoPromptText }],
+        { model: "gemini-2.0-flash", temperature: 0.7, maxOutputTokens: 500 }
+      );
+      
+      if (vpText) {
+        try {
+          const parsed = extractJsonFromAiResponse(vpText);
+          const vpUpdates = {
+            videoPrompt: parsed.fullPrompt || freshPoint.videoPrompt,
+            veo3CameraMovement: parsed.cameraMovement || "",
+            veo3StartState: parsed.startState || "",
+            veo3Motion: parsed.motion || "",
+            veo3EndState: parsed.endState || "",
+          };
+          
+          setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, ...vpUpdates } : p));
+          // Update ref immediately so generateAndPollSingleVideo uses fresh prompt
+          storyPointsRef.current = storyPointsRef.current.map((p, idx) => idx === sceneIndex ? { ...p, ...vpUpdates } : p);
+          freshPoint = storyPointsRef.current[sceneIndex];
+          
+          console.log(`Video prompt regenerated for scene ${sceneIndex + 1}:`, vpUpdates.videoPrompt?.slice(0, 80));
+        } catch (e) {
+          console.warn("Failed to parse regenerated video prompt, using raw text:", e);
+          const vpUpdates = { videoPrompt: vpText };
+          setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, ...vpUpdates } : p));
+          storyPointsRef.current = storyPointsRef.current.map((p, idx) => idx === sceneIndex ? { ...p, ...vpUpdates } : p);
+          freshPoint = storyPointsRef.current[sceneIndex];
+        }
+      }
+    } catch (e) {
+      console.warn("Video prompt regeneration failed, using existing prompt:", e);
+    }
+    
     const nextImage = storyPointsRef.current[sceneIndex + 1]?.generatedImage;
     await generateAndPollSingleVideo(sceneIndex, freshPoint, nextImage);
     
