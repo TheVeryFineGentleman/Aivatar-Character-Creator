@@ -194,6 +194,19 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
           </Select>
         </div>
 
+        {/* Style selection */}
+        <div className="space-y-1.5 mb-4">
+          <Label className="text-xs">Stil</Label>
+          <div className="grid grid-cols-4 gap-2">
+            {STYLE_OPTIONS.map(opt => (
+              <button key={opt.id} onClick={() => setStyle(opt.id)}
+                className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                  style === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
+                )}>{opt.label}</button>
+            ))}
+          </div>
+        </div>
+
         {/* Generate button */}
         <Button onClick={handleGenerate} disabled={selectedImage === null || isGenerating || !apiKey} className="w-full mb-4">
           {isGenerating ? (

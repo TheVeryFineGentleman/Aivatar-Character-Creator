@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { referenceImage, angle, aspectRatio = "1:1", apiKey } = await req.json();
+    const { referenceImage, angle, aspectRatio = "1:1", style = "realistic", apiKey } = await req.json();
 
     if (!apiKey) {
       return new Response(
