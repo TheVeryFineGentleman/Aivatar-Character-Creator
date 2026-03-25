@@ -284,6 +284,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   });
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
