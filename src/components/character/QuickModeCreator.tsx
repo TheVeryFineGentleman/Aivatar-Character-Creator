@@ -73,8 +73,9 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
 
     let prompt = `Create a single portrait of exactly one ${genderLabel.toLowerCase()} character, ${ageLabel.toLowerCase()}.`;
     prompt += ` MANDATORY UNIQUE TRAITS: ${eth} ethnicity, ${skin} skin tone, ${hair} in ${hColor}, ${body} body type, ${face}.`;
-    prompt += ` Style: ${stylePrompt}. Professional character design, white seamless background, soft even lighting.`;
-    prompt += ` CRITICAL: This character must look COMPLETELY DIFFERENT from any other generated character. Show only ONE person. No collage, no grid.`;
+    prompt += ` Style: ${stylePrompt}. Professional character design, soft even studio lighting.`;
+    prompt += ` MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no patterns, no environment, no props — ONLY a clean solid white background behind the character.`;
+    prompt += ` CRITICAL: This character must look COMPLETELY DIFFERENT from any other generated character. Only vary the character's appearance (face, body, hair, skin) — the background must ALWAYS remain pure white. Show only ONE person. No collage, no grid.`;
     return prompt;
   };
 

@@ -63,10 +63,15 @@ TECHNISCHE BILD-ANFORDERUNGEN (in jeden Prompt einbauen):
 - Highly detailed professional photography, front-facing close-up portrait
 - Shot on 85mm f/1.4 lens with shallow depth of field
 - Soft, even studio lighting, no harsh shadows or color casts
-- Pure white seamless background, no gradients or textures
+- MANDATORY: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no patterns, no environment, no props, no colored backgrounds — ONLY solid white behind the character
 - Visible skin texture: pores, freckles, light wrinkles, slight asymmetry
 - No digital retouching or beautifying filters
 - 64k ultra-high-definition photorealism
+
+WICHTIG ZUR VARIATION:
+- Variationen betreffen NUR das Aussehen des Charakters (Gesicht, Körper, Haare, Hautton, Gesichtszüge)
+- Der Hintergrund bleibt bei JEDER Variante IMMER rein weiß — KEINE Ausnahmen
+- Ändere NIEMALS den Hintergrund zwischen Varianten
 
 NEGATIVPROMPT (an jeden Prompt anhängen):
 Negative prompt: crimson hue, chaotic scene, skin texture overlay, damaged scene, unsettling atmosphere, abnormal growth, scar motif, powdered material, sheer outfit, lace nightdress, alluring pose, smoldering look, rope art, leather choker, AI-altered face, pixelated area, anime style, cartoon, illustration, painting, watercolor, sketch, 3d render, CGI, overexposed, underexposed, blurry, deformed, distorted, extra limbs, bad anatomy
