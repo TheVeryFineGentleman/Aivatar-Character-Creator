@@ -53,6 +53,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
