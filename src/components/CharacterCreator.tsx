@@ -282,14 +282,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
         />
       )}
 
-      {viewsDialogImage && (
-        <CharacterViewsDialog
-          open={!!viewsDialogImage}
-          onClose={() => setViewsDialogImage(null)}
-          referenceImage={viewsDialogImage}
-          apiKey={apiKey}
-        />
-      )}
     </div>
   );
 };
