@@ -66,6 +66,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
               referenceImage,
               angle: ANGLES[i].id,
               aspectRatio,
+              style,
               apiKey,
             }),
           }
