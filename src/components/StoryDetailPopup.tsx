@@ -347,7 +347,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     // Default to video tab if video exists for this scene
     const currentPoint = storyPoints[expandedIndex];
     setPreviewTab(currentPoint?.generatedVideo ? "video" : "image");
-  }, [expandedIndex, storyPoints]);
+  }, [expandedIndex]);
   
   // Auto-switch to video tab when video becomes available
   useEffect(() => {

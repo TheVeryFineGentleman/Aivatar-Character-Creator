@@ -2977,6 +2977,9 @@ ${sceneContext}`;
         continuityNotes: point.continuityNotes,
       };
       
+      // Clear stale video when image is regenerated (video no longer matches)
+      const hadVideo = !!storyPointsRef.current[sceneIndex]?.generatedVideo;
+      
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
           return {
@@ -2986,6 +2989,8 @@ ${sceneContext}`;
             detailedImagePrompt: imagePromptText,
             generationError: undefined,
             generationSnapshot,
+            // Clear video if it existed — it's now stale since the image changed
+            ...(hadVideo ? { generatedVideo: undefined } : {}),
           };
         }
         return p;
