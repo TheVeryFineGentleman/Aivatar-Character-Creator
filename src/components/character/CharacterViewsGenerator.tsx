@@ -28,9 +28,17 @@ const ASPECT_RATIOS = [
   { id: "16:9", label: "16:9 (Querformat)" },
 ];
 
+const STYLE_OPTIONS = [
+  { id: "realistic", label: "Realistisch" },
+  { id: "anime", label: "Anime" },
+  { id: "comic", label: "Comic" },
+  { id: "pixar", label: "Pixar / 3D" },
+];
+
 export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = ({ allImages, apiKey }) => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [style, setStyle] = useState("realistic");
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentAngle, setCurrentAngle] = useState(0);
   const [results, setResults] = useState<(string | null)[]>([]);
@@ -58,6 +66,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
               referenceImage,
               angle: ANGLES[i].id,
               aspectRatio,
+              style,
               apiKey,
             }),
           }
@@ -81,7 +90,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
     }
 
     setIsGenerating(false);
-  }, [selectedImage, allImages, aspectRatio, apiKey]);
+  }, [selectedImage, allImages, aspectRatio, style, apiKey]);
 
   const handleDownloadSingle = (index: number) => {
     const img = results[index];
@@ -183,6 +192,19 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Style selection */}
+        <div className="space-y-1.5 mb-4">
+          <Label className="text-xs">Stil</Label>
+          <div className="grid grid-cols-4 gap-2">
+            {STYLE_OPTIONS.map(opt => (
+              <button key={opt.id} onClick={() => setStyle(opt.id)}
+                className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                  style === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
+                )}>{opt.label}</button>
+            ))}
+          </div>
         </div>
 
         {/* Generate button */}

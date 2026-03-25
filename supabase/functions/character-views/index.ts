@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { referenceImage, angle, aspectRatio = "1:1", apiKey } = await req.json();
+    const { referenceImage, angle, aspectRatio = "1:1", style = "realistic", apiKey } = await req.json();
 
     if (!apiKey) {
       return new Response(
@@ -36,9 +36,17 @@ serve(async (req) => {
       "back-above": "Three-quarter view from slightly above and behind, camera angled 30 degrees downward from behind, showing back of head and partial profile. Same character from reference image.",
     };
 
-    const anglePrompt = anglePrompts[angle] || anglePrompts.front;
+    const stylePrompts: Record<string, string> = {
+      realistic: "photorealistic, natural lighting, detailed skin texture, 85mm f/1.4 lens, professional photography",
+      anime: "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic",
+      comic: "comic book style, bold outlines, dynamic composition",
+      pixar: "3D rendered, Pixar-quality, stylized, volumetric lighting",
+    };
 
-    const prompt = `${anglePrompt}\n\nCRITICAL RULES:\n- Reproduce the EXACT same character from the reference image: same face, hair color, hairstyle, skin tone, facial features, eye color.\n- MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no environment.\n- Professional studio lighting, soft and even.\n- Show only the character, no props, no other people.\n- This is a fictional digital character illustration for an art project.`;
+    const anglePrompt = anglePrompts[angle] || anglePrompts.front;
+    const stylePrompt = stylePrompts[style] || stylePrompts.realistic;
+
+    const prompt = `${anglePrompt}\n\nART STYLE: ${stylePrompt}\n\nCRITICAL RULES:\n- Reproduce the EXACT same character from the reference image: same face, hair color, hairstyle, skin tone, facial features, eye color.\n- MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no environment.\n- Professional studio lighting, soft and even.\n- Show only the character, no props, no other people.\n- This is a fictional digital character illustration for an art project.`;
 
     const cleanBase64 = referenceImage.replace(/^data:image\/[a-z]+;base64,/, '');
 
