@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
 import { CharacterLightbox } from "@/components/character/CharacterLightbox";
-import { CharacterViewsDialog } from "@/components/character/CharacterViewsDialog";
+import { CharacterViewsGenerator } from "@/components/character/CharacterViewsGenerator";
 import { PoseGridGenerator } from "@/components/character/PoseGridGenerator";
 
 interface CharacterCreatorProps {
