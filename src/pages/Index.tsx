@@ -622,7 +622,7 @@ Keine zusätzlichen Erklärungen, nur das JSON.`
       setStoryPoints(prev => prev.map((p, i) => {
         if (i !== idx) return p;
         
-        const updates: Partial<StoryPoint> = {};
+        const updates: Record<string, any> = {};
         
         // Text fields — create new version if description changed
         if (parsed.summary !== null && parsed.summary !== undefined) {
