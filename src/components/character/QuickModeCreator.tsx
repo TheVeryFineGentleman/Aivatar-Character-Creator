@@ -179,15 +179,26 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Stil *</Label>
-        <div className="grid grid-cols-4 gap-2">
-          {STYLE_OPTIONS.map(opt => (
-            <button key={opt.id} onClick={() => setStyle(opt.id)}
-              className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
-                style === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
-              )}>{opt.label}</button>
-          ))}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Stil *</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {STYLE_OPTIONS.map(opt => (
+              <button key={opt.id} onClick={() => setStyle(opt.id)}
+                className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                  style === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
+                )}>{opt.label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Format *</Label>
+          <Select value={aspectRatio} onValueChange={setAspectRatio}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ASPECT_RATIOS.map(ar => <SelectItem key={ar.id} value={ar.id}>{ar.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

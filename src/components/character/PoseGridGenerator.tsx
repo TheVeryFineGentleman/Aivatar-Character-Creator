@@ -182,6 +182,15 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
         {/* Settings */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="space-y-1.5">
+            <Label className="text-xs">Format</Label>
+            <Select value={aspectRatio} onValueChange={setAspectRatio}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ASPECT_RATIOS.map(ar => <SelectItem key={ar.id} value={ar.id}>{ar.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs">Grid-Größe</Label>
             <Select value={gridSize} onValueChange={setGridSize}>
               <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
