@@ -157,7 +157,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageC
 
   const requestGenerateNow = async () => {
     if (isStreaming || !apiKey) return;
-    const triggerMsg = `Erstelle jetzt die Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus. Erstelle ${imageCount} Varianten.`;
+    const triggerMsg = `Erstelle jetzt die Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus. Erstelle ${imageCount} Charactervarianten mit unterschiedlichen Gesichtern.`;
     await sendMessage(triggerMsg);
   };
 
