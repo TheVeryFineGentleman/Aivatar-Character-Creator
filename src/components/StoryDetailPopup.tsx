@@ -363,11 +363,11 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   
   const hasVideo = !!point.generatedVideo;
   
-  // Combined: any unsaved change exists
-  const hasAnyChanges = isDirty || hasTextChanges;
+  // isDirty covers snapshot fields (camera, emotion etc), videoPromptChanged covers description
+  const needsImageRegeneration = isDirty || videoPromptChanged;
   
   // Only dialog/text changed, no image-relevant fields
-  const onlyDialogChanged = hasTextChanges && !isDirty;
+  const onlyDialogChanged = hasTextChanges && !needsImageRegeneration;
   
   const handleSaveTextOnly = () => {
     // Only text changes, no video — just save the snapshot
