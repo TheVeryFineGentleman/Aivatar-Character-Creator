@@ -317,6 +317,20 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     );
   }, [point?.dialogText, point?.videoPrompt]);
   
+  // Check if only dialogText changed (not videoPrompt or image-relevant fields)
+  const onlyDialogTextChanged = useMemo(() => {
+    if (!point || !savedSnapshotRef.current) return false;
+    const dialogChanged = (point.dialogText || "") !== savedSnapshotRef.current.dialogText;
+    const promptChanged = (point.videoPrompt || "") !== savedSnapshotRef.current.videoPrompt;
+    return dialogChanged && !promptChanged;
+  }, [point?.dialogText, point?.videoPrompt]);
+  
+  // Check if videoPrompt (description) changed — this is image-relevant
+  const videoPromptChanged = useMemo(() => {
+    if (!point || !savedSnapshotRef.current) return false;
+    return (point.videoPrompt || "") !== savedSnapshotRef.current.videoPrompt;
+  }, [point?.videoPrompt]);
+  
   // Block background scrolling when popup is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
