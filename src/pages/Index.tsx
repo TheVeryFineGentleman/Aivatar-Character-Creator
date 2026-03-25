@@ -6750,6 +6750,7 @@ Beispiel einer korrekten Antwort:
                     })}
                   </span>
                 </Label>
+                <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt.</p>
                 <div className="flex flex-wrap gap-4">
                   {storyReferenceImages.map((imageUrl, index) => (
                     <div key={`story-ref-${index}`} className="relative w-24 h-24">
