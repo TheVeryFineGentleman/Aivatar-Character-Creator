@@ -681,11 +681,12 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           const isRegenerating = regeneratingIndex === expandedIndex;
           const isVideoGenerating = isGeneratingVideo && generatingVideoIndex === expandedIndex;
           const isBusy = isRegenerating || isVideoGenerating;
-          const hasChanges = needsImageRegeneration || onlyDialogChanged || hasTextChanges;
+          const hasChanges = needsImageRegeneration || hasTextChanges;
           
           if (!hasVideo) {
-            // No video: if any image-relevant change, show orange regenerate
+            // No video exists
             if (needsImageRegeneration) {
+              // Image-relevant change → orange regenerate button
               return (
                 <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
                   {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -693,7 +694,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 </Button>
               );
             }
-            // Text-only (dialog) change or no change
+            // No image-relevant change → save button, disabled until something changes
             return (
               <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy || !hasChanges}>
                 <Save className="w-4 h-4" />
@@ -701,8 +702,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
               </Button>
             );
           } else {
-            // Video exists — image-relevant change: regenerate image then video
+            // Video exists
             if (needsImageRegeneration) {
+              // Image-relevant change → regenerate image + video
               return (
                 <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleRegenerateVideo} disabled={isBusy}>
                   {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -710,11 +712,11 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 </Button>
               );
             }
-            // Only dialog changed — just regenerate video
+            // Only text/dialog changed or nothing → save button, disabled until something changes
             return (
-              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy || !hasChanges}>
-                {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-                {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
+              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy || !hasChanges}>
+                <Save className="w-4 h-4" />
+                Änderungen speichern
               </Button>
             );
           }
