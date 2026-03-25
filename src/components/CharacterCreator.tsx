@@ -227,14 +227,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                 <div key={`img-${i}`} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group cursor-pointer" onClick={() => setLightboxIndex(i)}>
                   <img src={img} alt={`Charakter ${i + 1}`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setViewsDialogImage(img); }}
-                      className="px-2 py-1 rounded-md bg-white/90 text-black hover:bg-white text-[10px] font-medium flex items-center gap-1"
-                      title="6 Ansichten generieren"
-                    >
-                      <ScanLine className="w-3 h-3" />
-                      6 Ansichten
-                    </button>
                     {isRefMode && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); onUseAsReference?.(img); }} 
