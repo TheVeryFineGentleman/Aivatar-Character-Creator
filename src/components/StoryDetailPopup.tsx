@@ -431,7 +431,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   };
 
   const handleSaveAndRegenerateImage = () => {
-    if (onSaveVersion) onSaveVersion(expandedIndex);
+    // Version is auto-saved after successful generation
     onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
