@@ -67,14 +67,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
 
   const handleClearAll = () => setAllImages([]);
 
-  const handleDownloadSingle = (index: number) => {
-    const img = allImages[index];
-    if (!img) return;
-    const link = document.createElement("a");
-    link.href = img;
-    link.download = `character-${index + 1}-${Date.now()}.png`;
-    link.click();
-  };
 
   const handleDownloadAll = useCallback(async () => {
     const canvas = canvasRef.current;
