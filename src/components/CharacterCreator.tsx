@@ -272,11 +272,25 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
         </Card>
       )}
 
+      {/* Pose Grid Generator */}
+      {allImages.length > 0 && (
+        <PoseGridGenerator allImages={allImages} apiKey={apiKey} />
+      )}
+
       {lightboxIndex !== null && allImages[lightboxIndex] && (
         <CharacterLightbox
           images={allImages}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
+        />
+      )}
+
+      {viewsDialogImage && (
+        <CharacterViewsDialog
+          open={!!viewsDialogImage}
+          onClose={() => setViewsDialogImage(null)}
+          referenceImage={viewsDialogImage}
+          apiKey={apiKey}
         />
       )}
     </div>
