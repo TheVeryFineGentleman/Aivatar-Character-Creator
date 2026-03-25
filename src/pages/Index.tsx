@@ -1915,7 +1915,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
             styleNotes: p.styleNotes,
             continuityNotes: p.continuityNotes,
           };
-          return {
+          const updatedPoint = {
             ...p,
             generatedImage: finalImageUrl,
             detailedImagePrompt: result.detailedImagePrompt,
@@ -1929,6 +1929,14 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
             generationError: undefined,
             generationSnapshot,
           };
+          // Auto-save as version 1 on initial generation
+          const SNAPSHOT_FIELDS = ['summary', 'detailedDescription', 'dialogText', 'videoPrompt', 'cameraAngle', 'shotType', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'composition', 'movement', 'negativePrompts', 'styleNotes', 'continuityNotes', 'generatedImage', 'generatedVideo', 'detailedImagePrompt'] as const;
+          const versionSnapshot: Record<string, any> = {};
+          for (const f of SNAPSHOT_FIELDS) {
+            versionSnapshot[f] = updatedPoint[f];
+          }
+          const versions = [...(updatedPoint.sceneVersions || []), versionSnapshot];
+          return { ...updatedPoint, sceneVersions: versions, currentSceneVersion: versions.length - 1 };
         }
         return p;
       }));
@@ -3085,7 +3093,7 @@ ${sceneContext}`;
       
       setStoryPoints(prev => prev.map((p, idx) => {
         if (idx === sceneIndex) {
-          return {
+          const updatedPoint = {
             ...p,
             ...point, // Merge current point values to ensure state is in sync
             generatedImage: generatedImageUrl,
@@ -3095,6 +3103,14 @@ ${sceneContext}`;
             // Clear video if it existed — it's now stale since the image changed
             ...(hadVideo ? { generatedVideo: undefined } : {}),
           };
+          // Auto-save as new version on regeneration
+          const SNAPSHOT_FIELDS = ['summary', 'detailedDescription', 'dialogText', 'videoPrompt', 'cameraAngle', 'shotType', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'composition', 'movement', 'negativePrompts', 'styleNotes', 'continuityNotes', 'generatedImage', 'generatedVideo', 'detailedImagePrompt'] as const;
+          const versionSnapshot: Record<string, any> = {};
+          for (const f of SNAPSHOT_FIELDS) {
+            versionSnapshot[f] = updatedPoint[f];
+          }
+          const versions = [...(updatedPoint.sceneVersions || []), versionSnapshot];
+          return { ...updatedPoint, sceneVersions: versions, currentSceneVersion: versions.length - 1 };
         }
         return p;
       }));
