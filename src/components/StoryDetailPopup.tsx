@@ -277,7 +277,6 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   });
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
-  const [aiMode, setAiMode] = useState<"text" | "image" | "video">("text");
   
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
