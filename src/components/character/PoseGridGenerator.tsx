@@ -20,6 +20,13 @@ const GRID_SIZES = [
   { id: "5x5", label: "5×5 (25 Posen)", count: 25 },
 ];
 
+const ASPECT_RATIOS = [
+  { id: "1:1", label: "1:1 (Quadrat)" },
+  { id: "3:4", label: "3:4 (Portrait)" },
+  { id: "9:16", label: "9:16 (Hochformat)" },
+  { id: "16:9", label: "16:9 (Querformat)" },
+];
+
 const BG_OPTIONS = [
   { id: "white", label: "Weiß" },
   { id: "location", label: "Ort-basiert" },
@@ -28,6 +35,7 @@ const BG_OPTIONS = [
 export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages, apiKey }) => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [gridSize, setGridSize] = useState("3x3");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
   const [outfit, setOutfit] = useState("");
   const [location, setLocation] = useState("");
   const [background, setBackground] = useState("white");
@@ -173,6 +181,15 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
 
         {/* Settings */}
         <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Format</Label>
+            <Select value={aspectRatio} onValueChange={setAspectRatio}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ASPECT_RATIOS.map(ar => <SelectItem key={ar.id} value={ar.id}>{ar.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Grid-Größe</Label>
             <Select value={gridSize} onValueChange={setGridSize}>

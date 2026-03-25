@@ -35,6 +35,13 @@ const STYLE_OPTIONS = [
   { id: "pixar", label: "Pixar / 3D" },
 ];
 
+const ASPECT_RATIOS = [
+  { id: "1:1", label: "1:1 (Quadrat)" },
+  { id: "3:4", label: "3:4 (Portrait)" },
+  { id: "9:16", label: "9:16 (Hochformat)" },
+  { id: "16:9", label: "16:9 (Querformat)" },
+];
+
 const STYLE_PROMPT_MAP: Record<string, string> = {
   realistic: "photorealistic, natural lighting, detailed skin texture, 85mm f/1.4 lens, professional photography",
   anime: "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic",
@@ -46,6 +53,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [style, setStyle] = useState("realistic");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
@@ -171,15 +179,26 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Stil *</Label>
-        <div className="grid grid-cols-4 gap-2">
-          {STYLE_OPTIONS.map(opt => (
-            <button key={opt.id} onClick={() => setStyle(opt.id)}
-              className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
-                style === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
-              )}>{opt.label}</button>
-          ))}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Stil *</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {STYLE_OPTIONS.map(opt => (
+              <button key={opt.id} onClick={() => setStyle(opt.id)}
+                className={cn("px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                  style === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
+                )}>{opt.label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Format *</Label>
+          <Select value={aspectRatio} onValueChange={setAspectRatio}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ASPECT_RATIOS.map(ar => <SelectItem key={ar.id} value={ar.id}>{ar.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
