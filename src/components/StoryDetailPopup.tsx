@@ -1168,6 +1168,29 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Unsaved Changes Warning Dialog */}
+      <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ungespeicherte Änderungen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <Button variant="outline" onClick={handleDiscardAndClose}>
+              <Undo2 className="w-4 h-4 mr-1.5" />
+              Zurücksetzen & Schließen
+            </Button>
+            <Button onClick={handleSaveAndClose} className="gap-1.5">
+              {needsImageRegeneration ? <RefreshCw className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+              {needsImageRegeneration ? 'Speichern & Neu generieren' : 'Speichern & Schließen'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Fullscreen Image Lightbox with Zoom */}
       {showFullscreenImage && point.generatedImage && (
         <FullscreenLightbox
