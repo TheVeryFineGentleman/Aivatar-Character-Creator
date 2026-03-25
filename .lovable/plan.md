@@ -1,36 +1,37 @@
 
 
-## Problem: Neu generiertes Bild wird nicht angezeigt
+## Problem: Bild-Regenerierung übernimmt keine Änderungen
 
-### Ursache
+### Analyse
 
-Zwei Probleme:
+Nach Code-Review gibt es zwei mögliche Ursachen:
 
-1. **Timeout zu kurz**: Der 40s-Timeout deckt sowohl die AI-Prompt-Generierung als auch die Bildgenerierung ab. Die Edge Function braucht aber oft 40s+ allein fürs Bild. Der Client bricht ab, bevor das Bild ankommt → Fehler wird gesetzt, altes Bild bleibt.
+1. **`videoPrompt`-Änderungen werden nicht im Bild-Prompt berücksichtigt**: Wenn der Nutzer den `videoPrompt` (Beschreibungstext) ändert, wird `needsImageRegeneration = true` gesetzt, aber `buildSceneContext` verwendet nur `detailedDescription`, NICHT `videoPrompt`. Das Bild sieht also gleich aus, obwohl die UI anzeigt, dass Änderungen erkannt wurden.
 
-2. **Altes Bild wird nicht gelöscht bei Start**: Wenn die Regenerierung startet, bleibt `generatedImage` auf dem alten Wert. Bei Timeout/Fehler wird nur `generationError` gesetzt — das alte Bild bleibt sichtbar.
+2. **Fehlende Debug-Logs**: Es gibt keinen Log der zeigt, welche Feld-Werte tatsächlich an die KI geschickt werden — deshalb schwer nachvollziehbar, ob Änderungen ankommen.
 
-### Lösungsplan
+### Lösung
 
-**Datei:** `src/pages/Index.tsx`
+**Datei: `src/pages/Index.tsx`**
 
-#### 1. Timeout erhöhen
-In `regenerateSingleStoryScene` den Timeout von 40s auf 120s erhöhen (gleich wie bei der Erstgenerierung), damit die Bildgenerierung nicht vorzeitig abgebrochen wird.
+#### 1. `buildSceneContext` erweitern — `videoPrompt` einbeziehen
+Falls `videoPrompt` gesetzt ist, diesen als zusätzlichen Kontext für die Bild-Prompt-Generierung hinzufügen (z.B. `Video Context: ${point.videoPrompt}`). So fließen auch Änderungen am Video-Prompt in die Bildbeschreibung ein.
 
-#### 2. Altes Bild beim Start der Regenerierung löschen
-Beim Start von `regenerateSingleStoryScene` das alte `generatedImage` clearen (auf `undefined` setzen), sodass während der Generierung kein altes Bild angezeigt wird. Die StoryDetailPopup zeigt dann den Ladezustand statt des alten Bildes.
-
-#### 3. previousSceneImage auf Ref umstellen
-Zeile 2884: `storyPoints[sceneIndex - 1]` durch `storyPointsRef.current[sceneIndex - 1]` ersetzen für Konsistenz.
+#### 2. Debug-Log vor Prompt-Generierung
+In `regenerateSingleStoryScene` direkt nach Zeile 2858 einen `console.log` mit den wichtigsten Feldern des `point`-Objekts einfügen (detailedDescription, emotion, keyAction, cameraAngle, shotType, videoPrompt), um nachvollziehen zu können, welche Werte tatsächlich verwendet werden.
 
 ### Technische Details
 
 ```text
-regenerateSingleStoryScene(sceneIndex):
-  1. generatedImage = undefined    ← NEU: altes Bild sofort löschen
-  2. timeout = 120000              ← FIX: von 40s auf 120s
-  3. generateImagePromptViaAI()
-  4. fetch generate-image
-  5. generatedImage = newUrl       ← neues Bild setzen
+buildSceneContext(point, sceneIndex):
+  ...bestehende Felder...
+  + if (point.videoPrompt) → "Video/Scene Context: ${point.videoPrompt}"
+
+regenerateSingleStoryScene:
+  const point = updatedPoint || storyPointsRef.current[sceneIndex];
+  + console.log("🔍 Regenerating with point data:", {
+      detailedDescription, emotion, keyAction, cameraAngle, shotType, videoPrompt
+    });
+  → generateImagePromptViaAI(point, sceneIndex)
 ```
 
