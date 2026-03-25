@@ -108,6 +108,7 @@ export const safeLocalStorageSet = (key: string, value: any): { success: boolean
 
 // Original localStorage utilities for larger data (images)
 export const saveToLocalStorage = (key: string, value: any) => {
+  if (!isCookiesAccepted()) return false;
   const result = safeLocalStorageSet(key, value);
   if (!result.success) {
     console.error("Error saving to localStorage:", result.error);
