@@ -7512,15 +7512,8 @@ Beispiel einer korrekten Antwort:
                       sceneAssistantInput={sceneAssistantInput}
                       setSceneAssistantInput={setSceneAssistantInput}
                       isGeneratingAssistant={isGeneratingSceneAssistant}
-                      onAssistantSubmit={(mode) => {
-                        if (mode === "text") {
-                          handleSceneAssistant();
-                        } else if (mode === "video") {
-                          // Video prompt mode - handled in StoryDetailPopup via onUpdateVideoPrompt
-                          handleVideoPromptAssistant();
-                        } else {
-                          regenerateSingleStoryScene(expandedStoryPointIndex);
-                        }
+                      onAssistantSubmit={() => {
+                        handleSceneAssistant();
                       }}
                       onCopyVideoPrompt={() => {
                         const point = storyPoints[expandedStoryPointIndex];
