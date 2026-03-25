@@ -264,6 +264,11 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
         </Card>
       )}
 
+      {/* 6 Views Generator */}
+      {allImages.length > 0 && (
+        <CharacterViewsGenerator allImages={allImages} apiKey={apiKey} />
+      )}
+
       {/* Pose Grid Generator */}
       {allImages.length > 0 && (
         <PoseGridGenerator allImages={allImages} apiKey={apiKey} />
