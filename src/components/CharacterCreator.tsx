@@ -34,6 +34,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
   const [totalGenerating, setTotalGenerating] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [characterImageCount, setCharacterImageCount] = useState([2]);
+  const [viewsDialogImage, setViewsDialogImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const isBasic = planCode !== "PREMIUM" && planCode !== "FULL";
