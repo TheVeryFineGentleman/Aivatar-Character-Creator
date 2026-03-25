@@ -45,6 +45,9 @@ interface StoryPoint {
   finalizedAt?: number;
   // Generation Snapshot - tracks settings when image was last generated
   generationSnapshot?: Partial<StoryPoint>;
+  // Version history
+  sceneVersions?: Array<Record<string, any>>;
+  currentSceneVersion?: number;
 }
 interface Veo3CameraMovement {
   id: string;
@@ -76,6 +79,8 @@ interface StoryDetailPopupProps {
   totalScenes: number;
   finalizedCount: number;
   aspectRatio?: string;
+  onSaveVersion?: (index: number) => void;
+  onSwitchVersion?: (index: number, versionIndex: number) => void;
 }
 
 // Auto option for all dropdowns
@@ -267,7 +272,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   onUpdateVideoPrompt,
   totalScenes,
   finalizedCount,
-  aspectRatio = "16:9"
+  aspectRatio = "16:9",
+  onSaveVersion,
+  onSwitchVersion
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     handlung: true,
@@ -277,6 +284,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   });
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
@@ -370,8 +378,53 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   // Only dialog/text changed, no image-relevant fields
   const onlyDialogChanged = hasTextChanges && !needsImageRegeneration;
   
+  // Version navigation
+  const versions = point.sceneVersions || [];
+  const currentVersionIdx = point.currentSceneVersion ?? (versions.length > 0 ? versions.length - 1 : 0);
+  const totalVersions = versions.length;
+  
+  const handleSwitchVersion = (newIdx: number) => {
+    if (newIdx < 0 || newIdx >= totalVersions || !onSwitchVersion) return;
+    onSwitchVersion(expandedIndex, newIdx);
+  };
+  
+  // Close handler with unsaved changes check
+  const handleCloseAttempt = () => {
+    if (needsImageRegeneration || hasTextChanges) {
+      setShowUnsavedWarning(true);
+    } else {
+      onClose();
+    }
+  };
+  
+  const handleSaveAndClose = () => {
+    setShowUnsavedWarning(false);
+    if (needsImageRegeneration) {
+      // Save version + regenerate
+      if (onSaveVersion) onSaveVersion(expandedIndex);
+      onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
+    } else if (hasTextChanges) {
+      // Only text changes — save version
+      if (onSaveVersion) onSaveVersion(expandedIndex);
+    }
+    savedSnapshotRef.current = {
+      dialogText: point.dialogText || "",
+      videoPrompt: point.videoPrompt || "",
+    };
+    onClose();
+  };
+  
+  const handleDiscardAndClose = () => {
+    setShowUnsavedWarning(false);
+    // Revert to last saved version
+    if (totalVersions > 0) {
+      onSwitchVersion?.(expandedIndex, currentVersionIdx);
+    }
+    onClose();
+  };
+
   const handleSaveTextOnly = () => {
-    // Only text changes, no video — just save the snapshot
+    if (onSaveVersion) onSaveVersion(expandedIndex);
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
       videoPrompt: point.videoPrompt || "",
@@ -379,7 +432,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   };
 
   const handleSaveAndRegenerateImage = () => {
-    // Image-affecting fields changed, no video → regenerate image
+    if (onSaveVersion) onSaveVersion(expandedIndex);
     onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
     savedSnapshotRef.current = {
       dialogText: point.dialogText || "",
@@ -388,7 +441,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   };
 
   const handleRegenerateVideo = () => {
-    // Any change + video exists → regenerate video (handles image regen internally if needed)
+    if (onSaveVersion) onSaveVersion(expandedIndex);
     if (onRegenerateVideo) {
       onRegenerateVideo(expandedIndex);
     }
@@ -767,7 +820,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     </div>;
   return createPortal(<>
       {/* Backdrop */}
-      <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={onClose} />
+      <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={handleCloseAttempt} />
       
       {/* Main Container - NOT fullscreen, centered with solid background */}
       <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-2 px-2 sm:py-8 sm:px-4`}>
@@ -789,6 +842,33 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             </div>
             
             <div className="flex items-center gap-3">
+              {/* Version Navigation */}
+              {totalVersions > 0 && (
+                <div className="flex items-center gap-1 bg-muted/30 rounded-lg px-1 py-0.5">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground" 
+                    onClick={() => handleSwitchVersion(currentVersionIdx - 1)} 
+                    disabled={currentVersionIdx <= 0}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </Button>
+                  <span className="text-xs font-medium min-w-[32px] text-center tabular-nums">
+                    {currentVersionIdx + 1}/{totalVersions}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground" 
+                    onClick={() => handleSwitchVersion(currentVersionIdx + 1)} 
+                    disabled={currentVersionIdx >= totalVersions - 1}
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
+              
               {/* Status Badge in Header */}
               <Badge className={status.variant === 'final' ? 'bg-green-600/20 text-green-500 border-green-600/30' : status.variant === 'dirty' ? 'bg-destructive/10 text-destructive border-destructive/30' : 'bg-orange-500/10 text-orange-500 border-orange-500/30'} variant="outline">
                 {status.label}
@@ -800,7 +880,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 Vorschau
               </Button>
               
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={onClose}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={handleCloseAttempt}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -1084,6 +1164,29 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             <AlertDialogAction onClick={confirmFinalize} className="bg-green-600 hover:bg-green-700">
               Ja, überschreiben
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unsaved Changes Warning Dialog */}
+      <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ungespeicherte Änderungen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <Button variant="outline" onClick={handleDiscardAndClose}>
+              <Undo2 className="w-4 h-4 mr-1.5" />
+              Zurücksetzen & Schließen
+            </Button>
+            <Button onClick={handleSaveAndClose} className="gap-1.5">
+              {needsImageRegeneration ? <RefreshCw className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+              {needsImageRegeneration ? 'Speichern & Neu generieren' : 'Speichern & Schließen'}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
