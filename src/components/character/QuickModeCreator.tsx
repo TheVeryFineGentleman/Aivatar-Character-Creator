@@ -57,16 +57,24 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
     const ageLabel = AGE_OPTIONS.find(a => a.id === age)?.label || age;
     const stylePrompt = STYLE_PROMPT_MAP[style] || "detailed illustration";
 
-    const uniqueVariations = [
-      "unique character design, distinctive features, memorable look",
-      "completely different unique character, distinct facial features and body type",
-      "another entirely unique character, different ethnicity and build",
-      "yet another completely unique character, contrasting appearance from all others",
-    ];
+    const ethnicities = ["European/Caucasian", "East Asian", "South Asian", "African/Black", "Latin American/Hispanic", "Middle Eastern", "Southeast Asian", "Mixed/Biracial", "Nordic/Scandinavian", "Mediterranean"];
+    const hairStyles = ["short straight hair", "long wavy hair", "curly afro hair", "buzz cut", "shoulder-length layered hair", "braided hair", "slicked back hair", "messy textured hair", "pixie cut", "long dreadlocks"];
+    const hairColors = ["jet black", "platinum blonde", "auburn red", "dark brown", "honey blonde", "silver gray", "chestnut", "strawberry blonde", "copper", "deep burgundy"];
+    const bodyTypes = ["slim and lean", "athletic and muscular", "average build", "stocky and broad", "tall and slender", "petite and compact", "curvy", "strong and sturdy"];
+    const facialFeatures = ["sharp angular jawline with high cheekbones", "round soft face with full cheeks", "oval face with prominent nose", "square jaw with deep-set eyes", "heart-shaped face with wide forehead", "diamond-shaped face with narrow chin", "long face with strong brow ridge", "delicate features with small nose"];
+    const skinTones = ["very fair/pale", "light olive", "warm tan", "medium brown", "deep dark brown", "golden bronze", "cool beige", "rich mahogany"];
 
-    let prompt = `Create a single image of exactly one ${genderLabel.toLowerCase()} character, ${ageLabel.toLowerCase()}. ${uniqueVariations[index]}.`;
-    prompt += ` Style: ${stylePrompt}. High quality, detailed, professional character design, white seamless background, soft even lighting.`;
-    prompt += ` IMPORTANT: Show only ONE single character. Do NOT show multiple people. Do NOT create a collage or grid. This character must be COMPLETELY UNIQUE.`;
+    const eth = ethnicities[index % ethnicities.length];
+    const hair = hairStyles[(index * 3 + 1) % hairStyles.length];
+    const hColor = hairColors[(index * 2 + 3) % hairColors.length];
+    const body = bodyTypes[(index * 5 + 2) % bodyTypes.length];
+    const face = facialFeatures[(index * 4 + 1) % facialFeatures.length];
+    const skin = skinTones[(index * 3 + 2) % skinTones.length];
+
+    let prompt = `Create a single portrait of exactly one ${genderLabel.toLowerCase()} character, ${ageLabel.toLowerCase()}.`;
+    prompt += ` MANDATORY UNIQUE TRAITS: ${eth} ethnicity, ${skin} skin tone, ${hair} in ${hColor}, ${body} body type, ${face}.`;
+    prompt += ` Style: ${stylePrompt}. Professional character design, white seamless background, soft even lighting.`;
+    prompt += ` CRITICAL: This character must look COMPLETELY DIFFERENT from any other generated character. Show only ONE person. No collage, no grid.`;
     return prompt;
   };
 
