@@ -349,12 +349,14 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     setPreviewTab(currentPoint?.generatedVideo ? "video" : "image");
   }, [expandedIndex]);
   
-  // Auto-switch to video tab when video becomes available
+  // Auto-switch tab based on video availability
   useEffect(() => {
     if (point?.generatedVideo) {
       setPreviewTab("video");
+    } else if (point?.generatedImage) {
+      setPreviewTab("image");
     }
-  }, [point?.generatedVideo]);
+  }, [point?.generatedVideo, point?.generatedImage]);
   
   if (!point) return null;
   const status = getSceneStatus(point);
