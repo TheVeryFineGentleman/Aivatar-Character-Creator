@@ -239,9 +239,15 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                       </button>
                     )}
                     <div className="flex gap-1">
-                      <button onClick={(e) => { e.stopPropagation(); handleDownloadSingle(i); }} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80">
-                        <Download className="w-3 h-3" />
-                      </button>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <DownloadButton
+                          imageUrl={img}
+                          fileName={`character-${i + 1}-${Date.now()}.png`}
+                          variant="gallery"
+                          isBasicPlan={isBasic}
+                          className="p-1.5 h-auto w-auto rounded-md bg-black/60 text-white hover:bg-black/80"
+                        />
+                      </div>
                       <button onClick={(e) => { e.stopPropagation(); handleDeleteImage(i); }} className="p-1.5 rounded-md bg-black/60 text-white hover:bg-destructive/80">
                         <Trash2 className="w-3 h-3" />
                       </button>
