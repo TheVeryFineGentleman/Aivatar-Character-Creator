@@ -2857,6 +2857,14 @@ ${sceneContext}`;
     
     // Use updatedPoint if provided (contains latest edits from popup), otherwise use latest ref state
     const point = updatedPoint || storyPointsRef.current[sceneIndex];
+    console.log("🔍 Regenerating with point data:", {
+      detailedDescription: point.detailedDescription,
+      emotion: point.emotion,
+      keyAction: point.keyAction,
+      cameraAngle: point.cameraAngle,
+      shotType: point.shotType,
+      videoPrompt: (point as any).videoPrompt,
+    });
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
