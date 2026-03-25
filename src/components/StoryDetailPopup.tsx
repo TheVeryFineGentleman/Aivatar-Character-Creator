@@ -45,6 +45,9 @@ interface StoryPoint {
   finalizedAt?: number;
   // Generation Snapshot - tracks settings when image was last generated
   generationSnapshot?: Partial<StoryPoint>;
+  // Version history
+  sceneVersions?: Array<Record<string, any>>;
+  currentSceneVersion?: number;
 }
 interface Veo3CameraMovement {
   id: string;

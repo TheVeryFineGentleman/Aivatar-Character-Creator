@@ -382,6 +382,9 @@ const Index = () => {
     finalizedAt?: number;       // Timestamp when finalized
     // Generation tracking
     generationSnapshot?: Record<string, any>;
+    // Version history
+    sceneVersions?: Array<Record<string, any>>;
+    currentSceneVersion?: number;
   }>>([]);
   const storyPointsRef = useRef(storyPoints);
   useEffect(() => { storyPointsRef.current = storyPoints; }, [storyPoints]);
