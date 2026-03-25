@@ -2846,10 +2846,10 @@ ${sceneContext}`;
       setRegeneratingCardIndex(sceneIndex); // Start flip-away animation (skip if already flipped from regenerateStoryPoint)
     }
     
-    // Clear previous error
+    // Clear previous error AND old image so UI shows loading state
     setStoryPoints(prev => prev.map((p, idx) => {
       if (idx === sceneIndex) {
-        return { ...p, generationError: undefined };
+        return { ...p, generationError: undefined, generatedImage: undefined };
       }
       return p;
     }));
@@ -2881,10 +2881,10 @@ ${sceneContext}`;
     }
     
     // Get previous scene's image for continuity (NOT the current scene's old image)
-    const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
+    const previousSceneImage = sceneIndex > 0 ? storyPointsRef.current[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
