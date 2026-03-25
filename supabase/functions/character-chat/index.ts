@@ -63,7 +63,7 @@ Die Anzahl der Prompts entspricht der genannten Zahl. Jeder Prompt beschreibt ei
 
 REGELN FÜR DIE PROMPTS:
 - Alle Prompts auf Englisch
-- Die Anzahl der Prompts richtet sich nach der Nutzerwahl (Standard: 4)
+- Die Anzahl der Prompts entspricht EXAKT der vom Nutzer gewählten Zahl
 - KRITISCH: Jeder Prompt MUSS eine DEUTLICH UNTERSCHIEDLICHE Person beschreiben!
 - Die vom Nutzer definierten Merkmale (z.B. Geschlecht, Alter, Haarfarbe) werden beibehalten
 - ABER: Für NICHT explizit definierte Merkmale MUSST du bei jedem Prompt KOMPLETT ANDERE Werte verwenden:
