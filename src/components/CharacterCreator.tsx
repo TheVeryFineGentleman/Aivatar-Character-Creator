@@ -3,12 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check, ScanLine } from "lucide-react";
+import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
 import { CharacterLightbox } from "@/components/character/CharacterLightbox";
-import { CharacterViewsDialog } from "@/components/character/CharacterViewsDialog";
+import { CharacterViewsGenerator } from "@/components/character/CharacterViewsGenerator";
 import { PoseGridGenerator } from "@/components/character/PoseGridGenerator";
 
 interface CharacterCreatorProps {
@@ -34,7 +34,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
   const [totalGenerating, setTotalGenerating] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [characterImageCount, setCharacterImageCount] = useState([2]);
-  const [viewsDialogImage, setViewsDialogImage] = useState<string | null>(null);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const isBasic = planCode !== "PREMIUM" && planCode !== "FULL";
@@ -227,14 +227,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                 <div key={`img-${i}`} className="relative rounded-lg overflow-hidden border border-border/50 bg-muted/20 aspect-square group cursor-pointer" onClick={() => setLightboxIndex(i)}>
                   <img src={img} alt={`Charakter ${i + 1}`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setViewsDialogImage(img); }}
-                      className="px-2 py-1 rounded-md bg-white/90 text-black hover:bg-white text-[10px] font-medium flex items-center gap-1"
-                      title="6 Ansichten generieren"
-                    >
-                      <ScanLine className="w-3 h-3" />
-                      6 Ansichten
-                    </button>
                     {isRefMode && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); onUseAsReference?.(img); }} 
@@ -272,6 +264,11 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
         </Card>
       )}
 
+      {/* 6 Views Generator */}
+      {allImages.length > 0 && (
+        <CharacterViewsGenerator allImages={allImages} apiKey={apiKey} />
+      )}
+
       {/* Pose Grid Generator */}
       {allImages.length > 0 && (
         <PoseGridGenerator allImages={allImages} apiKey={apiKey} />
@@ -285,14 +282,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
         />
       )}
 
-      {viewsDialogImage && (
-        <CharacterViewsDialog
-          open={!!viewsDialogImage}
-          onClose={() => setViewsDialogImage(null)}
-          referenceImage={viewsDialogImage}
-          apiKey={apiKey}
-        />
-      )}
     </div>
   );
 };
