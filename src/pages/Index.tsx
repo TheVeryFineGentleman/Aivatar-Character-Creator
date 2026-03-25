@@ -7535,6 +7535,27 @@ Beispiel einer korrekten Antwort:
                       totalScenes={storyPoints.length}
                       finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}
                       aspectRatio={storyboardFormat}
+                      onSaveVersion={(index) => {
+                        const SNAPSHOT_FIELDS = ['summary', 'detailedDescription', 'dialogText', 'videoPrompt', 'cameraAngle', 'shotType', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'composition', 'movement', 'negativePrompts', 'styleNotes', 'continuityNotes', 'generatedImage', 'generatedVideo', 'detailedImagePrompt'] as const;
+                        setStoryPoints(prev => prev.map((p, i) => {
+                          if (i !== index) return p;
+                          const snapshot: Record<string, any> = {};
+                          for (const f of SNAPSHOT_FIELDS) {
+                            snapshot[f] = p[f];
+                          }
+                          const versions = [...(p.sceneVersions || []), snapshot];
+                          return { ...p, sceneVersions: versions, currentSceneVersion: versions.length - 1 };
+                        }));
+                      }}
+                      onSwitchVersion={(index, versionIndex) => {
+                        setStoryPoints(prev => prev.map((p, i) => {
+                          if (i !== index) return p;
+                          const versions = p.sceneVersions || [];
+                          if (versionIndex < 0 || versionIndex >= versions.length) return p;
+                          const snapshot = versions[versionIndex];
+                          return { ...p, ...snapshot, currentSceneVersion: versionIndex };
+                        }));
+                      }}
                     />
                   )}
                 </div>
