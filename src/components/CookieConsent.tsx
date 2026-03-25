@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Cookie } from "lucide-react";
 
@@ -51,7 +52,7 @@ export const CookieConsent: React.FC = () => {
 
   if (!visible) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-card border border-border/50 rounded-2xl shadow-2xl max-w-md w-[90vw] p-6 space-y-4">
         <div className="flex items-center gap-3">
@@ -78,6 +79,7 @@ export const CookieConsent: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
