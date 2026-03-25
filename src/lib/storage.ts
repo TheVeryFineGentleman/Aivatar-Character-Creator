@@ -1,5 +1,8 @@
+import { isCookiesAccepted } from "@/components/CookieConsent";
+
 // Cookie utilities
 export const setCookie = (name: string, value: string, days: number = 30) => {
+  if (!isCookiesAccepted()) return;
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = `expires=${date.toUTCString()}`;
@@ -105,6 +108,7 @@ export const safeLocalStorageSet = (key: string, value: any): { success: boolean
 
 // Original localStorage utilities for larger data (images)
 export const saveToLocalStorage = (key: string, value: any) => {
+  if (!isCookiesAccepted()) return false;
   const result = safeLocalStorageSet(key, value);
   if (!result.success) {
     console.error("Error saving to localStorage:", result.error);

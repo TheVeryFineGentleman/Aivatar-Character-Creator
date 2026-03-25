@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { CookieConsent } from "@/components/CookieConsent";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -17,6 +18,7 @@ const App = () => (
       <ThemeProvider>
         <TooltipProvider>
           <div className="bg-animated-orbs min-h-screen relative">
+            <CookieConsent />
             <Toaster />
             <Sonner />
             <BrowserRouter>
