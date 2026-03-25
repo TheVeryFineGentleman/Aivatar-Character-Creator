@@ -20,6 +20,13 @@ const GRID_SIZES = [
   { id: "5x5", label: "5×5 (25 Posen)", count: 25 },
 ];
 
+const ASPECT_RATIOS = [
+  { id: "1:1", label: "1:1 (Quadrat)" },
+  { id: "3:4", label: "3:4 (Portrait)" },
+  { id: "9:16", label: "9:16 (Hochformat)" },
+  { id: "16:9", label: "16:9 (Querformat)" },
+];
+
 const BG_OPTIONS = [
   { id: "white", label: "Weiß" },
   { id: "location", label: "Ort-basiert" },
