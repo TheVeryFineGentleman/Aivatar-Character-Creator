@@ -1,61 +1,71 @@
 
 
-## Versions-System für den Story Generator (StoryDetailPopup)
+## Zwei neue Features für den Character Creator
 
-### Konzept
+### Feature 1: 6 Portrait-Ansichten
 
-Jede Szene bekommt ein Array von "Szenen-Versionen". Beim Speichern/Regenerieren wird der aktuelle Zustand als neue Version gespeichert. Der Nutzer kann zwischen Versionen navigieren. Beim Schließen mit ungespeicherten Änderungen erscheint ein Warn-Popup.
+Wenn der Nutzer auf ein generiertes Charakterbild klickt, erscheint ein neuer Button "6 Ansichten generieren". Nach Klick werden 6 Bilder mit dem gleichen Charakter aus verschiedenen Winkeln generiert, jeweils mit weißem Hintergrund.
 
-### Änderungen
+**Ansichten:** Front, Rücken, Rechts, Links, Schräg oben von vorne, Schräg oben von hinten
 
-**1. StoryPoint-Typ erweitern** (`src/pages/Index.tsx` + `src/components/StoryDetailPopup.tsx`)
+**UI-Flow:**
+1. Hover über ein generiertes Bild zeigt neuen Button "📐 6 Ansichten"
+2. Klick öffnet ein Popup/Sheet mit Format-Auswahl (1:1, 3:4, 9:16, 16:9)
+3. Nach "Generieren" werden die 6 Bilder sequentiell erstellt und angezeigt
+4. Ergebnis: 2x3 Grid mit Label pro Bild (Front, Rücken, etc.)
+5. Einzeln oder alle zusammen downloadbar
 
-Neues Feld im StoryPoint-Interface:
-- `sceneVersions: Array<Partial<StoryPoint>>` — Array aller gespeicherten Szenen-Snapshots
-- `currentSceneVersion: number` — Index der aktuell angezeigten Version
+**Technisch:**
+- Neues Edge Function `character-views/index.ts` — nimmt das Referenzbild + Winkel-Prompt, generiert via Gemini 3.1 Flash Image Preview mit `edit-image`-Ansatz (Referenzbild wird mitgeschickt)
+- Neue Komponente `src/components/character/CharacterViewsDialog.tsx` — Dialog mit Format-Auswahl, Generierungs-Fortschritt, 2x3 Ergebnis-Grid
+- Integration in `CharacterCreator.tsx` — neuer Button auf Bild-Hover
 
-**2. Versions-Navigation im Header** (`src/components/StoryDetailPopup.tsx`)
+### Feature 2: Posen-Grid Generator
 
-Im Sticky Header zwischen Szenen-Navigation und Close-Button:
-- Links-Pfeil / "1/3" / Rechts-Pfeil Anzeige
-- Pfeile navigieren durch gespeicherte Versionen
-- Bei Version-Wechsel werden alle Felder der Szene auf die gewählte Version zurückgesetzt
+Separater Modus im Character Creator: Nutzer wählt ein bestehendes Charakterbild und generiert ein Grid mit verschiedenen Posen.
 
-**3. Version erstellen beim Speichern**
+**UI-Flow:**
+1. Neuer Tab/Button "Posen-Grid" unter den generierten Bildern
+2. Nutzer wählt ein Referenzbild aus den generierten Charakteren
+3. Einstellungen:
+   - Grid-Größe: 2x2, 3x3, 4x4, 5x5 (Dropdown)
+   - Outfit: Textfeld (z.B. "Business Anzug", "Sportkleidung")
+   - Ort: Textfeld (z.B. "Büro", "Park", "Studio")
+   - Hintergrund: Dropdown (Weiß, Custom Farbe, Ort-basiert)
+4. "Grid generieren" startet sequentielle Generierung
+5. Ergebnis als Grid angezeigt, jedes Bild einzeln downloadbar
+6. "Alle herunterladen" erstellt ein zusammengesetztes Canvas-Bild
 
-Bei jedem Klick auf "Speichern + Bild neu generieren" oder "Speichern + Video neu generieren":
-- Aktueller Zustand wird als neuer Snapshot in `sceneVersions` gepusht
-- `currentSceneVersion` wird auf den neuesten Index gesetzt
-- Neue Version erscheint erst NACH dem Speichern
+**Technisch:**
+- Neues Edge Function `character-poses/index.ts` — generiert einzelne Posen-Bilder mit variierenden Pose-Prompts + Referenzbild
+- Neue Komponente `src/components/character/PoseGridGenerator.tsx` — UI für Einstellungen, Grid-Anzeige, Download
+- Integration in `CharacterCreator.tsx` — erscheint unterhalb der generierten Bilder, wenn mindestens 1 Bild vorhanden
 
-**4. Warn-Dialog beim Schließen mit ungespeicherten Änderungen** (`src/components/StoryDetailPopup.tsx`)
+### Dateien
 
-Neuer AlertDialog der erscheint, wenn `onClose` aufgerufen wird und es ungespeicherte Änderungen gibt (`needsImageRegeneration || hasTextChanges`):
-- Titel: "Ungespeicherte Änderungen"
-- Text: "Du hast Änderungen vorgenommen die noch nicht gespeichert wurden."
-- Button 1: "Speichern & Schließen" — speichert als neue Version, dann schließt
-- Button 2: "Zurücksetzen & Schließen" — verwirft Änderungen, setzt auf letzte Version zurück
-- Button 3: "Abbrechen" — bleibt im Popup
+| Datei | Aktion |
+|---|---|
+| `supabase/functions/character-views/index.ts` | Neu — Edge Function für 6 Ansichten |
+| `supabase/functions/character-poses/index.ts` | Neu — Edge Function für Posen-Grid |
+| `src/components/character/CharacterViewsDialog.tsx` | Neu — Dialog für 6 Ansichten |
+| `src/components/character/PoseGridGenerator.tsx` | Neu — Posen-Grid UI |
+| `src/components/CharacterCreator.tsx` | Erweitern — Integration beider Features |
 
-### Technische Details
+### Edge Function Logik (beide)
+
+Beide Functions nutzen den gleichen Ansatz: Referenzbild + spezifischer Prompt an Gemini 3.1 Flash Image Preview senden. Der Prompt enthält das Referenzbild als `inlineData` und instruiert die KI, denselben Charakter in einer neuen Pose/Ansicht darzustellen.
 
 ```text
-StoryPoint {
-  ...existing fields...
-  sceneVersions: Array<Partial<StoryPoint>>  // Snapshots aller Versionen
-  currentSceneVersion: number                 // Aktuelle Version (0-basiert)
-}
+Ansichten-Prompts (6x):
+- "Front-facing portrait, looking directly at camera..."
+- "Back view portrait, showing back of head and shoulders..."
+- "Right side profile portrait..."
+- "Left side profile portrait..."
+- "Three-quarter view from slightly above, front..."
+- "Three-quarter view from slightly above, behind..."
 
-Header Layout:
-[← Zurück] [Szene 2/5] [Weiter →]   [◀ 1/3 ▶]   [Status] [X]
-
-Version-Snapshot enthält: summary, detailedDescription, dialogText,
-videoPrompt, cameraAngle, shotType, emotion, keyAction, specificArea,
-composition, movement, negativePrompts, styleNotes, generatedImage,
-generatedVideo, detailedImagePrompt
+Posen-Prompts (NxN):
+- Variiert automatisch: stehend, sitzend, gehend, lehnend, etc.
+- Outfit/Ort/Hintergrund aus Nutzereingabe
 ```
-
-**Dateien:**
-- `src/components/StoryDetailPopup.tsx` — Versions-Navigation UI, Close-Warning Dialog, Version-Wechsel Logik
-- `src/pages/Index.tsx` — StoryPoint-State um `sceneVersions`/`currentSceneVersion` erweitern, Speicher-Callbacks anpassen um Versionen zu erstellen
 
