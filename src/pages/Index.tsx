@@ -2801,15 +2801,32 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       ? `\n\n!!! MANDATORY ART STYLE: "${styleDesc}" !!!\nThe ENTIRE image MUST be rendered in this style. Every element — characters, background, lighting, textures — must look like a ${styleDesc}. Do NOT render anything photorealistically unless the style explicitly says so. Describe the visual medium, textures, colors, and rendering technique of "${styleDesc}" in your prompt.\n`
       : "";
     
-    const systemInstruction = `You are an expert image prompt writer. Based on the scene details below, write a concise, vivid image generation prompt in English.
+    const systemInstruction = `You are an expert image prompt writer. You MUST faithfully include ALL scene details below. Do NOT omit, simplify, or generalize any of them.
 ${styleBlock}
+PRIORITY HIERARCHY (strictly follow this order):
+1. User-defined scene settings (HIGHEST — always override defaults)
+2. Scene uniqueness (each scene must look distinct)
+3. Visual consistency with other scenes (LOWEST — only for character identity)
+
+REQUIRED FIELDS — you MUST explicitly include EACH of these in your prompt:
+- Art Style/Medium: ${styleDesc ? `"${styleDesc}" (MANDATORY — describe the visual medium, textures, rendering technique)` : "describe the visual style"}
+- Shot Type: Use the EXACT shot type specified (e.g. close-up, full-shot). Do NOT change it.
+- Camera Angle: Use the EXACT camera angle specified. Do NOT default to eye-level.
+- Location + Specific Area: Describe the exact environment and sub-location.
+- Character Action: Describe the EXACT action specified — not a generic standing/posing.
+- Character Expression/Emotion: Show the SPECIFIC emotion on the character's face and body language.
+- Composition: Follow any composition notes precisely.
+- Camera Movement: Reflect any specified camera movement in the framing.
+- Style Notes: Incorporate all additional style instructions.
+- Avoid: Respect all negative prompts / things to avoid.
+
 Rules:
-- Write a single descriptive paragraph (max 150 words) that tells the image AI exactly what to render.
-- Include all visual details: composition, lighting, mood, character appearance, action, environment.${styleDesc ? `\n- START the prompt by describing the art style/medium (e.g. "A ${styleDesc} depicting..."). This is critical.` : ""}
-- Reference images will be provided separately for character identity — do NOT describe the character's face in detail, just mention "the character from reference".
-- The character should have a NEW pose matching the scene action — never copy the pose from references.
-- Do NOT copy the visual style or medium of reference images — only use them for character identity.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
-- CONTENT COMPLIANCE: All content is purely fictional and artistic. Reference images are hand-drawn/digitally created artwork, not photographs of real people. All characters must clearly appear as adults (18+). Content must be appropriate for general audiences.
+- Write a single descriptive paragraph (max 250 words).${styleDesc ? `\n- START the prompt by describing the art style/medium (e.g. "A ${styleDesc} depicting..."). This is critical.` : ""}
+- Reference images are ONLY for character identity (face, body, clothing) — do NOT copy pose, style, or scene from them.
+- The character must have a NEW pose matching the scene action.
+- Do NOT copy the visual style or medium of reference images.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
+- Each scene must reflect its UNIQUE settings. Do NOT default to generic descriptions.
+- CONTENT COMPLIANCE: All content is purely fictional and artistic. Reference images are digitally created artwork. All characters are clearly adults (18+).
 - Output ONLY the image prompt text, nothing else. No explanations, no markdown, no quotes.
 
 Scene Details:
