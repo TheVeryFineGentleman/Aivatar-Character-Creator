@@ -1,44 +1,61 @@
 
 
-## Problem: KI-Prompt ignoriert Szenen-Einstellungen
+## Versions-System für den Story Generator (StoryDetailPopup)
 
-Die aktuelle System-Instruction an die Prompt-KI behandelt die Szenen-Details als optionale Hinweise. Bei 150 Wörtern max werden Details weggelassen. Außerdem fehlt eine klare Priorisierung der Nutzer-Einstellungen.
+### Konzept
 
-## Lösung
+Jede Szene bekommt ein Array von "Szenen-Versionen". Beim Speichern/Regenerieren wird der aktuelle Zustand als neue Version gespeichert. Der Nutzer kann zwischen Versionen navigieren. Beim Schließen mit ungespeicherten Änderungen erscheint ein Warn-Popup.
 
-**Datei:** `src/pages/Index.tsx` — `generateImagePromptViaAI` (Zeile ~2804)
+### Änderungen
 
-### 1. System-Instruction umschreiben mit strikter Feldpflicht
+**1. StoryPoint-Typ erweitern** (`src/pages/Index.tsx` + `src/components/StoryDetailPopup.tsx`)
 
-Die Instruction wird so geändert, dass jedes Szenen-Detail als **PFLICHTFELD** behandelt wird:
+Neues Feld im StoryPoint-Interface:
+- `sceneVersions: Array<Partial<StoryPoint>>` — Array aller gespeicherten Szenen-Snapshots
+- `currentSceneVersion: number` — Index der aktuell angezeigten Version
 
-- Wortlimit von 150 auf **250 Wörter** erhöhen
-- Explizite Anweisung: "You MUST include ALL of the following scene details. Do NOT omit or simplify any of them."
-- Jedes Feld (Shot Type, Camera Angle, Emotion, Action, Location, Composition, Movement, Style Notes) wird als "REQUIRED" markiert
-- Klare Hierarchie: **Nutzer-Einstellungen > Konsistenz zur Vorgängerszene > eigene kreative Freiheit**
+**2. Versions-Navigation im Header** (`src/components/StoryDetailPopup.tsx`)
 
-### 2. Konsistenz-Hinweis abschwächen
+Im Sticky Header zwischen Szenen-Navigation und Close-Button:
+- Links-Pfeil / "1/3" / Rechts-Pfeil Anzeige
+- Pfeile navigieren durch gespeicherte Versionen
+- Bei Version-Wechsel werden alle Felder der Szene auf die gewählte Version zurückgesetzt
 
-Aktuell gibt es keinen expliziten Konsistenz-Zwang im Prompt-Text selbst — das läuft über die Referenzbilder. Aber die KI tendiert dazu, "sichere" generische Prompts zu schreiben. Die neue Instruction betont: "Each scene must reflect its UNIQUE settings. Do NOT default to generic descriptions."
+**3. Version erstellen beim Speichern**
+
+Bei jedem Klick auf "Speichern + Bild neu generieren" oder "Speichern + Video neu generieren":
+- Aktueller Zustand wird als neuer Snapshot in `sceneVersions` gepusht
+- `currentSceneVersion` wird auf den neuesten Index gesetzt
+- Neue Version erscheint erst NACH dem Speichern
+
+**4. Warn-Dialog beim Schließen mit ungespeicherten Änderungen** (`src/components/StoryDetailPopup.tsx`)
+
+Neuer AlertDialog der erscheint, wenn `onClose` aufgerufen wird und es ungespeicherte Änderungen gibt (`needsImageRegeneration || hasTextChanges`):
+- Titel: "Ungespeicherte Änderungen"
+- Text: "Du hast Änderungen vorgenommen die noch nicht gespeichert wurden."
+- Button 1: "Speichern & Schließen" — speichert als neue Version, dann schließt
+- Button 2: "Zurücksetzen & Schließen" — verwirft Änderungen, setzt auf letzte Version zurück
+- Button 3: "Abbrechen" — bleibt im Popup
 
 ### Technische Details
 
 ```text
-Neue System-Instruction Struktur:
-1. "You MUST faithfully include ALL scene details below."
-2. "REQUIRED fields — include each one explicitly:"
-   - Art Style (MANDATORY OVERRIDE)
-   - Shot Type
-   - Camera Angle  
-   - Location + Specific Area
-   - Character Action (exact action, not generic)
-   - Character Expression/Emotion
-   - Composition
-   - Camera Movement
-   - Style Notes
-   - Avoid (negative prompts)
-3. "Priority: User settings > scene uniqueness > visual consistency"
-4. "Max 250 words. Include EVERY required field."
-5. Referenzbilder nur für Charakter-Identität, NICHT für Pose/Stil/Szene
+StoryPoint {
+  ...existing fields...
+  sceneVersions: Array<Partial<StoryPoint>>  // Snapshots aller Versionen
+  currentSceneVersion: number                 // Aktuelle Version (0-basiert)
+}
+
+Header Layout:
+[← Zurück] [Szene 2/5] [Weiter →]   [◀ 1/3 ▶]   [Status] [X]
+
+Version-Snapshot enthält: summary, detailedDescription, dialogText,
+videoPrompt, cameraAngle, shotType, emotion, keyAction, specificArea,
+composition, movement, negativePrompts, styleNotes, generatedImage,
+generatedVideo, detailedImagePrompt
 ```
+
+**Dateien:**
+- `src/components/StoryDetailPopup.tsx` — Versions-Navigation UI, Close-Warning Dialog, Version-Wechsel Logik
+- `src/pages/Index.tsx` — StoryPoint-State um `sceneVersions`/`currentSceneVersion` erweitern, Speicher-Callbacks anpassen um Versionen zu erstellen
 
