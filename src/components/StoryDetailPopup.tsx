@@ -400,8 +400,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const handleSaveAndClose = () => {
     setShowUnsavedWarning(false);
     if (needsImageRegeneration) {
-      // Save version + regenerate
-      if (onSaveVersion) onSaveVersion(expandedIndex);
+      // Regenerate — version is auto-saved after successful generation
       onRegenerateImage(expandedIndex, storyPoints[expandedIndex]);
     } else if (hasTextChanges) {
       // Only text changes — save version
