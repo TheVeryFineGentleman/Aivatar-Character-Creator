@@ -90,7 +90,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
     }
 
     setIsGenerating(false);
-  }, [selectedImage, allImages, aspectRatio, apiKey]);
+  }, [selectedImage, allImages, aspectRatio, style, apiKey]);
 
   const handleDownloadSingle = (index: number) => {
     const img = results[index];
