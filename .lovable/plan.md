@@ -1,44 +1,42 @@
 
 
-## Speichern/Regenerieren-Button Logik überarbeiten
+## Problem: Veränderungen werden bei Video-Regenerierung nicht übernommen
 
-### Aktuelles Problem
-Aktuell gibt es immer einen "Vorschau neu generieren" Button und einen separaten "Video neu generieren" Button — unabhängig davon, ob bereits ein Video existiert oder was sich geändert hat.
+### Ursache
 
-### Neue Logik
+Zwei zusammenhängende Probleme:
 
-Die Buttons in der Preview-Spalte sollen kontextabhängig sein. Es gibt immer **nur 1 Hauptbutton**, der sich je nach Zustand ändert:
+1. **Veralteter State (Stale Closure)**: `regenerateSingleVideo` liest `storyPoints[sceneIndex]` aus dem Closure-Kontext — das ist der Zustand zum Zeitpunkt des letzten Renderings, nicht der aktuelle mit den Änderungen. Die Änderungen wurden zwar via `onUpdateStoryPoint` gesetzt, aber die Funktion "sieht" sie nicht.
 
-#### Zustand 1: Kein Video generiert (`!point.generatedVideo`)
-- **Keine Änderung** → Kein Button (oder nur "Vorschau neu generieren" als outline)
-- **Nur Text-Änderung** (dialogText/videoPrompt) → **"Änderungen speichern"** (Save-Icon, speichert nur Text-Snapshot)
-- **Bild-relevante Änderung** (isDirty: Kamera, Emotion, etc.) → **"Speichern + Bild neu generieren"** (RefreshCw-Icon, orange hervorgehoben)
+2. **Video-Prompt wird nicht neu generiert**: Wenn der Sprechertext (`dialogText`) geändert wird, wird der `videoPrompt` nicht aktualisiert. Das Video wird mit dem alten Prompt generiert, der den alten Dialog enthält.
 
-#### Zustand 2: Video existiert (`point.generatedVideo`)
-- **Keine Änderung** → Kein Button
-- **Nur Sprechertext-Änderung** (nur dialogText geändert) → **"Video neu generieren"** (Video-Icon) — kein neues Bild nötig, nur Video mit neuem Dialog-Prompt
-- **Andere Änderung** (Kamera, Emotion, etc. — isDirty) → **"Bild + Video neu generieren"** (RefreshCw + Video-Icon, orange) — erst Bild regenerieren, dann automatisch Video
+### Lösungsplan
 
-### Technische Umsetzung
+#### 1. storyPointsRef statt storyPoints verwenden
+**Datei:** `src/pages/Index.tsx`
 
-**Datei:** `src/components/StoryDetailPopup.tsx`
+In `regenerateSingleVideo` (Zeile 2402) den `point` aus `storyPointsRef.current[sceneIndex]` lesen statt aus `storyPoints[sceneIndex]`. Der Ref wird bereits an anderer Stelle verwendet (Zeile 2545) und enthält immer den aktuellsten State.
 
-1. **Neue Hilfsvariablen** im Component berechnen:
-   - `hasVideo = !!point.generatedVideo`
-   - `onlyDialogChanged` — prüft ob nur `dialogText` sich geändert hat (nicht videoPrompt oder bild-relevante Felder)
-   - Bestehende `isDirty` (bild-relevante Felder) und `hasTextChanges` (dialogText + videoPrompt) weiter nutzen
+#### 2. Video-Prompt bei Dialog-Änderung neu generieren
+**Datei:** `src/pages/Index.tsx`
 
-2. **Bisherigen "Regenerate Button" Block (Zeilen 643-650) und "Video Regenerate Button" (Zeilen 678-698) entfernen** und durch einen einzigen kontextabhängigen Button ersetzen
+In `regenerateSingleVideo` vor der Video-Generierung (vor Zeile 2542) prüfen, ob sich `dialogText` oder `videoPrompt`-relevante Felder geändert haben. Falls ja, den `videoPrompt` mit dem gleichen AI-Aufruf wie bei der Erstgenerierung (Zeile 1574-1637) neu erzeugen und in den State schreiben, bevor das Video gestartet wird.
 
-3. **Neuer Button-Block:**
-   - Wenn `!hasVideo`:
-     - `isDirty` → "Speichern + Bild neu generieren" → `onRegenerateImage()`
-     - `hasTextChanges && !isDirty` → "Änderungen speichern" → nur Snapshot updaten
-     - Sonst → normaler outline "Vorschau neu generieren" Button
-   - Wenn `hasVideo`:
-     - `isDirty` → "Bild + Video neu generieren" → `onRegenerateImage()` dann `onRegenerateVideo()`
-     - `onlyDialogChanged` → "Video neu generieren" → nur `onRegenerateVideo()`
-     - Sonst → kein Button oder dezenter "Video neu generieren"
+Konkret:
+- Neuen Helper `regenerateVideoPrompt(sceneIndex, point)` erstellen, der den bestehenden Video-Prompt-Generierungscode wiederverwendet
+- In `regenerateSingleVideo` nach dem Bild-Schritt und vor `generateAndPollSingleVideo` den Video-Prompt neu generieren
+- Den frischen Prompt in `storyPointsRef` speichern, damit `generateAndPollSingleVideo` ihn nutzt
 
-4. **`handleSave` anpassen** um bei Video-Existenz nach Bild-Regenerierung automatisch Video-Regenerierung anzustoßen (ggf. über Callback/Effect)
+#### 3. hasImageFieldsChanged ebenfalls auf Ref umstellen
+Damit auch die Bild-Vergleichslogik den aktuellsten State sieht.
+
+### Technische Details
+
+```text
+regenerateSingleVideo(sceneIndex)
+  1. point = storyPointsRef.current[sceneIndex]   ← FIX: Ref statt Closure
+  2. if hasImageFieldsChanged(point) → Bild neu generieren
+  3. Video-Prompt neu generieren mit aktuellem dialogText  ← NEU
+  4. generateAndPollSingleVideo(sceneIndex, freshPoint, nextImage)
+```
 
