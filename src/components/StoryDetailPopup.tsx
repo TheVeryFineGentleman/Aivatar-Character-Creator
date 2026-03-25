@@ -820,7 +820,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
     </div>;
   return createPortal(<>
       {/* Backdrop */}
-      <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={onClose} />
+      <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={handleCloseAttempt} />
       
       {/* Main Container - NOT fullscreen, centered with solid background */}
       <div className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto py-2 px-2 sm:py-8 sm:px-4`}>
@@ -842,6 +842,33 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             </div>
             
             <div className="flex items-center gap-3">
+              {/* Version Navigation */}
+              {totalVersions > 0 && (
+                <div className="flex items-center gap-1 bg-muted/30 rounded-lg px-1 py-0.5">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground" 
+                    onClick={() => handleSwitchVersion(currentVersionIdx - 1)} 
+                    disabled={currentVersionIdx <= 0}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </Button>
+                  <span className="text-xs font-medium min-w-[32px] text-center tabular-nums">
+                    {currentVersionIdx + 1}/{totalVersions}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground" 
+                    onClick={() => handleSwitchVersion(currentVersionIdx + 1)} 
+                    disabled={currentVersionIdx >= totalVersions - 1}
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
+              
               {/* Status Badge in Header */}
               <Badge className={status.variant === 'final' ? 'bg-green-600/20 text-green-500 border-green-600/30' : status.variant === 'dirty' ? 'bg-destructive/10 text-destructive border-destructive/30' : 'bg-orange-500/10 text-orange-500 border-orange-500/30'} variant="outline">
                 {status.label}
@@ -853,7 +880,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 Vorschau
               </Button>
               
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={onClose}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={handleCloseAttempt}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
