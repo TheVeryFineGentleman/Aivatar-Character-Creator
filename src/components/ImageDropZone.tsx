@@ -93,6 +93,7 @@ export const ImageDropZone = ({ onFiles, accept = "image/*", multiple = false, c
         className="hidden"
       />
       {children || <Upload className={cn("w-8 h-8 transition-colors", isDragging ? "text-primary" : "text-muted-foreground")} />}
+      <p className="text-[9px] text-muted-foreground/60 text-center leading-tight mt-1 px-1">Mit Upload bestätigst du, dass du die Rechte besitzt.</p>
     </div>
   );
 };
