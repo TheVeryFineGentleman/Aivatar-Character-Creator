@@ -70,32 +70,29 @@ export const ImageDropZone = ({ onFiles, accept = "image/*", multiple = false, c
   };
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <p className="text-[9px] text-muted-foreground/60 text-center leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt.</p>
-      <div
-        onClick={handleClick}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        className={cn(
-          "w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200",
-          isDragging
-            ? "border-primary bg-primary/10 scale-105"
-            : "border-border hover:border-primary",
-          className
-        )}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={handleInputChange}
-          className="hidden"
-        />
-        {children || <Upload className={cn("w-8 h-8 transition-colors", isDragging ? "text-primary" : "text-muted-foreground")} />}
-      </div>
+    <div
+      onClick={handleClick}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      className={cn(
+        "w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200",
+        isDragging
+          ? "border-primary bg-primary/10 scale-105"
+          : "border-border hover:border-primary",
+        className
+      )}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        onChange={handleInputChange}
+        className="hidden"
+      />
+      {children || <Upload className={cn("w-8 h-8 transition-colors", isDragging ? "text-primary" : "text-muted-foreground")} />}
     </div>
   );
 };
