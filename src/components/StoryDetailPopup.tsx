@@ -70,7 +70,7 @@ interface StoryDetailPopupProps {
   sceneAssistantInput: string;
   setSceneAssistantInput: (value: string) => void;
   isGeneratingAssistant: boolean;
-  onAssistantSubmit: (mode: "text" | "image" | "video") => void;
+  onAssistantSubmit: () => void;
   onCopyVideoPrompt: () => void;
   onUpdateVideoPrompt: (index: number, videoPrompt: string) => void;
   totalScenes: number;
