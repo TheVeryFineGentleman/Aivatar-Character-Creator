@@ -1,37 +1,44 @@
 
 
-## Problem: Bild-Regenerierung übernimmt keine Änderungen
+## Problem: KI-Prompt ignoriert Szenen-Einstellungen
 
-### Analyse
+Die aktuelle System-Instruction an die Prompt-KI behandelt die Szenen-Details als optionale Hinweise. Bei 150 Wörtern max werden Details weggelassen. Außerdem fehlt eine klare Priorisierung der Nutzer-Einstellungen.
 
-Nach Code-Review gibt es zwei mögliche Ursachen:
+## Lösung
 
-1. **`videoPrompt`-Änderungen werden nicht im Bild-Prompt berücksichtigt**: Wenn der Nutzer den `videoPrompt` (Beschreibungstext) ändert, wird `needsImageRegeneration = true` gesetzt, aber `buildSceneContext` verwendet nur `detailedDescription`, NICHT `videoPrompt`. Das Bild sieht also gleich aus, obwohl die UI anzeigt, dass Änderungen erkannt wurden.
+**Datei:** `src/pages/Index.tsx` — `generateImagePromptViaAI` (Zeile ~2804)
 
-2. **Fehlende Debug-Logs**: Es gibt keinen Log der zeigt, welche Feld-Werte tatsächlich an die KI geschickt werden — deshalb schwer nachvollziehbar, ob Änderungen ankommen.
+### 1. System-Instruction umschreiben mit strikter Feldpflicht
 
-### Lösung
+Die Instruction wird so geändert, dass jedes Szenen-Detail als **PFLICHTFELD** behandelt wird:
 
-**Datei: `src/pages/Index.tsx`**
+- Wortlimit von 150 auf **250 Wörter** erhöhen
+- Explizite Anweisung: "You MUST include ALL of the following scene details. Do NOT omit or simplify any of them."
+- Jedes Feld (Shot Type, Camera Angle, Emotion, Action, Location, Composition, Movement, Style Notes) wird als "REQUIRED" markiert
+- Klare Hierarchie: **Nutzer-Einstellungen > Konsistenz zur Vorgängerszene > eigene kreative Freiheit**
 
-#### 1. `buildSceneContext` erweitern — `videoPrompt` einbeziehen
-Falls `videoPrompt` gesetzt ist, diesen als zusätzlichen Kontext für die Bild-Prompt-Generierung hinzufügen (z.B. `Video Context: ${point.videoPrompt}`). So fließen auch Änderungen am Video-Prompt in die Bildbeschreibung ein.
+### 2. Konsistenz-Hinweis abschwächen
 
-#### 2. Debug-Log vor Prompt-Generierung
-In `regenerateSingleStoryScene` direkt nach Zeile 2858 einen `console.log` mit den wichtigsten Feldern des `point`-Objekts einfügen (detailedDescription, emotion, keyAction, cameraAngle, shotType, videoPrompt), um nachvollziehen zu können, welche Werte tatsächlich verwendet werden.
+Aktuell gibt es keinen expliziten Konsistenz-Zwang im Prompt-Text selbst — das läuft über die Referenzbilder. Aber die KI tendiert dazu, "sichere" generische Prompts zu schreiben. Die neue Instruction betont: "Each scene must reflect its UNIQUE settings. Do NOT default to generic descriptions."
 
 ### Technische Details
 
 ```text
-buildSceneContext(point, sceneIndex):
-  ...bestehende Felder...
-  + if (point.videoPrompt) → "Video/Scene Context: ${point.videoPrompt}"
-
-regenerateSingleStoryScene:
-  const point = updatedPoint || storyPointsRef.current[sceneIndex];
-  + console.log("🔍 Regenerating with point data:", {
-      detailedDescription, emotion, keyAction, cameraAngle, shotType, videoPrompt
-    });
-  → generateImagePromptViaAI(point, sceneIndex)
+Neue System-Instruction Struktur:
+1. "You MUST faithfully include ALL scene details below."
+2. "REQUIRED fields — include each one explicitly:"
+   - Art Style (MANDATORY OVERRIDE)
+   - Shot Type
+   - Camera Angle  
+   - Location + Specific Area
+   - Character Action (exact action, not generic)
+   - Character Expression/Emotion
+   - Composition
+   - Camera Movement
+   - Style Notes
+   - Avoid (negative prompts)
+3. "Priority: User settings > scene uniqueness > visual consistency"
+4. "Max 250 words. Include EVERY required field."
+5. Referenzbilder nur für Charakter-Identität, NICHT für Pose/Stil/Szene
 ```
 
