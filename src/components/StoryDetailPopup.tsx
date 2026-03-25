@@ -79,6 +79,8 @@ interface StoryDetailPopupProps {
   totalScenes: number;
   finalizedCount: number;
   aspectRatio?: string;
+  onSaveVersion?: (index: number) => void;
+  onSwitchVersion?: (index: number, versionIndex: number) => void;
 }
 
 // Auto option for all dropdowns
