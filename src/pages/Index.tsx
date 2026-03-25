@@ -2399,7 +2399,7 @@ Respond ONLY with JSON:
   // If image-affecting fields changed, regenerates image first, then video
   // If only dialogText/videoPrompt changed, goes straight to video
   const regenerateSingleVideo = async (sceneIndex: number) => {
-    let point = storyPoints[sceneIndex];
+    let point = storyPointsRef.current[sceneIndex];
     if (!point.videoPrompt || isGeneratingVideos || !apiKey) return;
     if (!point.generatedImage && !hasImageFieldsChanged(point)) return;
     
