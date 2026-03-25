@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DownloadButton } from "@/components/DownloadButton";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
 import { CharacterLightbox } from "@/components/character/CharacterLightbox";
