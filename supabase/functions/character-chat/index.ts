@@ -46,9 +46,18 @@ WENN DER NUTZER "fertig", "los", "generieren", "passt so", "erstelle" oder eine 
 
 REGELN FÜR DIE PROMPTS:
 - Alle Prompts auf Englisch
-- Jeder Prompt beschreibt eine KOMPLETT EINZIGARTIGE Person, aber alle teilen die vom Nutzer definierten Merkmale
-- Fehlende Details kreativ und sinnvoll ergänzen
 - Die Anzahl der Prompts richtet sich nach der Nutzerwahl (Standard: 4)
+- KRITISCH: Jeder Prompt MUSS eine DEUTLICH UNTERSCHIEDLICHE Person beschreiben!
+- Die vom Nutzer definierten Merkmale (z.B. Geschlecht, Alter, Haarfarbe) werden beibehalten
+- ABER: Für NICHT explizit definierte Merkmale MUSST du bei jedem Prompt KOMPLETT ANDERE Werte verwenden:
+  * Verschiedene Ethnien (z.B. Europäisch, Asiatisch, Afrikanisch, Lateinamerikanisch)
+  * Verschiedene Hauttöne
+  * Verschiedene Gesichtsformen (rund, oval, eckig, herzförmig)
+  * Verschiedene Körperbau-Typen (schlank, athletisch, kräftig)
+  * Verschiedene Gesichtszüge (Nasenform, Augenabstand, Wangenstruktur)
+  * Verschiedene Haarstrukturen (glatt, wellig, lockig)
+- Jeder Charakter soll auf den ERSTEN BLICK als komplett andere Person erkennbar sein
+- Vermeide subtile Unterschiede — die Unterschiede müssen OFFENSICHTLICH und DRASTISCH sein
 
 TECHNISCHE BILD-ANFORDERUNGEN (in jeden Prompt einbauen):
 - Highly detailed professional photography, front-facing close-up portrait
