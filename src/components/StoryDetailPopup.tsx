@@ -272,7 +272,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   onUpdateVideoPrompt,
   totalScenes,
   finalizedCount,
-  aspectRatio = "16:9"
+  aspectRatio = "16:9",
+  onSaveVersion,
+  onSwitchVersion
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     handlung: true,
