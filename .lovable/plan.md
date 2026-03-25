@@ -1,42 +1,36 @@
 
 
-## Problem: Veränderungen werden bei Video-Regenerierung nicht übernommen
+## Problem: Neu generiertes Bild wird nicht angezeigt
 
 ### Ursache
 
-Zwei zusammenhängende Probleme:
+Zwei Probleme:
 
-1. **Veralteter State (Stale Closure)**: `regenerateSingleVideo` liest `storyPoints[sceneIndex]` aus dem Closure-Kontext — das ist der Zustand zum Zeitpunkt des letzten Renderings, nicht der aktuelle mit den Änderungen. Die Änderungen wurden zwar via `onUpdateStoryPoint` gesetzt, aber die Funktion "sieht" sie nicht.
+1. **Timeout zu kurz**: Der 40s-Timeout deckt sowohl die AI-Prompt-Generierung als auch die Bildgenerierung ab. Die Edge Function braucht aber oft 40s+ allein fürs Bild. Der Client bricht ab, bevor das Bild ankommt → Fehler wird gesetzt, altes Bild bleibt.
 
-2. **Video-Prompt wird nicht neu generiert**: Wenn der Sprechertext (`dialogText`) geändert wird, wird der `videoPrompt` nicht aktualisiert. Das Video wird mit dem alten Prompt generiert, der den alten Dialog enthält.
+2. **Altes Bild wird nicht gelöscht bei Start**: Wenn die Regenerierung startet, bleibt `generatedImage` auf dem alten Wert. Bei Timeout/Fehler wird nur `generationError` gesetzt — das alte Bild bleibt sichtbar.
 
 ### Lösungsplan
 
-#### 1. storyPointsRef statt storyPoints verwenden
 **Datei:** `src/pages/Index.tsx`
 
-In `regenerateSingleVideo` (Zeile 2402) den `point` aus `storyPointsRef.current[sceneIndex]` lesen statt aus `storyPoints[sceneIndex]`. Der Ref wird bereits an anderer Stelle verwendet (Zeile 2545) und enthält immer den aktuellsten State.
+#### 1. Timeout erhöhen
+In `regenerateSingleStoryScene` den Timeout von 40s auf 120s erhöhen (gleich wie bei der Erstgenerierung), damit die Bildgenerierung nicht vorzeitig abgebrochen wird.
 
-#### 2. Video-Prompt bei Dialog-Änderung neu generieren
-**Datei:** `src/pages/Index.tsx`
+#### 2. Altes Bild beim Start der Regenerierung löschen
+Beim Start von `regenerateSingleStoryScene` das alte `generatedImage` clearen (auf `undefined` setzen), sodass während der Generierung kein altes Bild angezeigt wird. Die StoryDetailPopup zeigt dann den Ladezustand statt des alten Bildes.
 
-In `regenerateSingleVideo` vor der Video-Generierung (vor Zeile 2542) prüfen, ob sich `dialogText` oder `videoPrompt`-relevante Felder geändert haben. Falls ja, den `videoPrompt` mit dem gleichen AI-Aufruf wie bei der Erstgenerierung (Zeile 1574-1637) neu erzeugen und in den State schreiben, bevor das Video gestartet wird.
-
-Konkret:
-- Neuen Helper `regenerateVideoPrompt(sceneIndex, point)` erstellen, der den bestehenden Video-Prompt-Generierungscode wiederverwendet
-- In `regenerateSingleVideo` nach dem Bild-Schritt und vor `generateAndPollSingleVideo` den Video-Prompt neu generieren
-- Den frischen Prompt in `storyPointsRef` speichern, damit `generateAndPollSingleVideo` ihn nutzt
-
-#### 3. hasImageFieldsChanged ebenfalls auf Ref umstellen
-Damit auch die Bild-Vergleichslogik den aktuellsten State sieht.
+#### 3. previousSceneImage auf Ref umstellen
+Zeile 2884: `storyPoints[sceneIndex - 1]` durch `storyPointsRef.current[sceneIndex - 1]` ersetzen für Konsistenz.
 
 ### Technische Details
 
 ```text
-regenerateSingleVideo(sceneIndex)
-  1. point = storyPointsRef.current[sceneIndex]   ← FIX: Ref statt Closure
-  2. if hasImageFieldsChanged(point) → Bild neu generieren
-  3. Video-Prompt neu generieren mit aktuellem dialogText  ← NEU
-  4. generateAndPollSingleVideo(sceneIndex, freshPoint, nextImage)
+regenerateSingleStoryScene(sceneIndex):
+  1. generatedImage = undefined    ← NEU: altes Bild sofort löschen
+  2. timeout = 120000              ← FIX: von 40s auf 120s
+  3. generateImagePromptViaAI()
+  4. fetch generate-image
+  5. generatedImage = newUrl       ← neues Bild setzen
 ```
 
