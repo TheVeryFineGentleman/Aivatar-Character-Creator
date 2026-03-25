@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check } from "lucide-react";
+import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check, ScanLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
 import { ChatModeCreator } from "@/components/character/ChatModeCreator";
