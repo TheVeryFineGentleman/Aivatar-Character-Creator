@@ -687,39 +687,21 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           const hasVideoPrompt = !!point.videoPrompt;
           
           if (!hasVideo) {
-            // No video exists
-            if (needsImageRegeneration) {
-              // Image-relevant change → orange regenerate button
+            // No video exists — always offer image regeneration
+            if (hasChanges) {
+              // Changes detected → save + regenerate image with current settings
               return (
-                <>
-                  <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse" onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
-                    {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                    {isRegenerating ? 'Bild wird generiert...' : 'Speichern + Bild neu generieren'}
-                  </Button>
-                  {/* Video regen button - gray/disabled when no videoPrompt */}
-                  {hasVideoPrompt && (
-                    <Button variant="outline" className="w-full gap-2 h-9 text-sm text-muted-foreground" disabled>
-                      <Video className="w-4 h-4" />
-                      Video neu generieren
-                    </Button>
-                  )}
-                </>
-              );
-            }
-            // No image-relevant change
-            if (hasVideoPrompt && !hasChanges) {
-              // Video prompt exists, image is fresh → offer to regenerate video
-              return (
-                <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleRegenerateVideo} disabled={isBusy}>
-                  {isVideoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-                  {isVideoGenerating ? 'Video wird generiert...' : 'Video neu generieren'}
+                <Button variant="default" className={`w-full gap-2 h-11 text-sm font-medium ${needsImageRegeneration ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 animate-pulse' : ''}`} onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
+                  {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {isRegenerating ? 'Bild wird generiert...' : 'Speichern + Bild neu generieren'}
                 </Button>
               );
             }
+            // No changes → plain image regenerate button using current settings
             return (
-              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveTextOnly} disabled={isBusy || !hasChanges}>
-                <Save className="w-4 h-4" />
-                Änderungen speichern
+              <Button variant="default" className="w-full gap-2 h-11 text-sm font-medium" onClick={handleSaveAndRegenerateImage} disabled={isBusy}>
+                {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                {isRegenerating ? 'Bild wird generiert...' : 'Bild neu generieren'}
               </Button>
             );
           } else {
