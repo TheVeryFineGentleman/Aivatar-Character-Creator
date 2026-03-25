@@ -28,6 +28,13 @@ const ASPECT_RATIOS = [
   { id: "16:9", label: "16:9 (Querformat)" },
 ];
 
+const STYLE_OPTIONS = [
+  { id: "realistic", label: "Realistisch" },
+  { id: "anime", label: "Anime" },
+  { id: "comic", label: "Comic" },
+  { id: "pixar", label: "Pixar / 3D" },
+];
+
 export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = ({ allImages, apiKey }) => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [aspectRatio, setAspectRatio] = useState("1:1");
