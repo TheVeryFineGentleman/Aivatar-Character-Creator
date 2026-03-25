@@ -35,6 +35,13 @@ const STYLE_OPTIONS = [
   { id: "pixar", label: "Pixar / 3D" },
 ];
 
+const ASPECT_RATIOS = [
+  { id: "1:1", label: "1:1 (Quadrat)" },
+  { id: "3:4", label: "3:4 (Portrait)" },
+  { id: "9:16", label: "9:16 (Hochformat)" },
+  { id: "16:9", label: "16:9 (Querformat)" },
+];
+
 const STYLE_PROMPT_MAP: Record<string, string> = {
   realistic: "photorealistic, natural lighting, detailed skin texture, 85mm f/1.4 lens, professional photography",
   anime: "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic",
