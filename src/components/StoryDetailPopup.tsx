@@ -70,7 +70,7 @@ interface StoryDetailPopupProps {
   sceneAssistantInput: string;
   setSceneAssistantInput: (value: string) => void;
   isGeneratingAssistant: boolean;
-  onAssistantSubmit: (mode: "text" | "image" | "video") => void;
+  onAssistantSubmit: () => void;
   onCopyVideoPrompt: () => void;
   onUpdateVideoPrompt: (index: number, videoPrompt: string) => void;
   totalScenes: number;
@@ -277,7 +277,6 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   });
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
-  const [aiMode, setAiMode] = useState<"text" | "image" | "video">("text");
   
   // Fullscreen image lightbox state
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
@@ -1036,39 +1035,24 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           
           {/* AI Assistant Section - Inside the card */}
           <div className="border-t border-border/30 p-4 mt-4">
-            {/* Header with label and mode selector */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">KI-Assistent</span>
-              </div>
-              <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
-                <Button variant={aiMode === "text" ? "default" : "ghost"} size="sm" className={`h-7 px-3 text-xs gap-1.5 ${aiMode === "text" ? "" : "text-muted-foreground hover:text-foreground"}`} onClick={() => setAiMode("text")}>
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  Text optimieren
-                </Button>
-                <Button variant={aiMode === "image" ? "default" : "ghost"} size="sm" className={`h-7 px-3 text-xs gap-1.5 ${aiMode === "image" ? "" : "text-muted-foreground hover:text-foreground"}`} onClick={() => setAiMode("image")}>
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  Bild regenerieren
-                </Button>
-                <Button variant={aiMode === "video" ? "default" : "ghost"} size="sm" className={`h-7 px-3 text-xs gap-1.5 ${aiMode === "video" ? "" : "text-muted-foreground hover:text-foreground"}`} onClick={() => setAiMode("video")}>
-                  <Video className="w-3.5 h-3.5" />
-                  Video Prompt
-                </Button>
-              </div>
+            {/* Header */}
+            <div className="flex items-center gap-1.5 mb-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">KI-Assistent</span>
+              <span className="text-xs text-muted-foreground ml-1">— beschreibe was du ändern möchtest</span>
             </div>
             
             {/* Input area */}
             <div className="flex gap-3 items-stretch">
               <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[80px]">
-                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder={aiMode === "text" ? 'Beschreibe was du ändern möchtest, z.B. "Mache es dramatischer" oder "Ändere zu Nahaufnahme"...' : aiMode === "video" ? 'Beschreibe wie der Video-Prompt angepasst werden soll, z.B. "Mehr Kamerabewegung" oder "Langsamer und dramatischer"...' : 'Beschreibe spezielle Bild-Anweisungen oder lasse leer für Standard-Regenerierung...'} className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
+                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder='z.B. "Mach es dramatischer", "Ändere den Dialog zu ...", "Nahaufnahme von unten", "Setze die Emotion auf wütend"...' className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  onAssistantSubmit(aiMode);
+                  onAssistantSubmit();
                 }
               }} />
               </div>
-              <Button className="h-[80px] w-12 rounded-lg" onClick={() => onAssistantSubmit(aiMode)} disabled={isGeneratingAssistant || regeneratingIndex !== null || (aiMode === "text" && !sceneAssistantInput.trim()) || (aiMode === "video" && !sceneAssistantInput.trim() && !point.videoPrompt)}>
+              <Button className="h-[80px] w-12 rounded-lg" onClick={() => onAssistantSubmit()} disabled={isGeneratingAssistant || regeneratingIndex !== null || !sceneAssistantInput.trim()}>
                 {isGeneratingAssistant ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
               </Button>
             </div>

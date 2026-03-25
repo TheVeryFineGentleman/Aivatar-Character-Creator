@@ -518,7 +518,7 @@ const Index = () => {
     if (!canGenerate || expandedStoryPointIndex === null || isGeneratingSceneAssistant) return;
     
     const currentPoint = storyPoints[expandedStoryPointIndex];
-    const currentStory = currentPoint.versions[currentPoint.currentVersion];
+    const currentStory = currentPoint.detailedDescription || currentPoint.versions[currentPoint.currentVersion];
     
     setIsGeneratingSceneAssistant(true);
     try {
@@ -533,30 +533,77 @@ const Index = () => {
                 text: `Du bist ein Experte für Film und Storyboard-Erstellung. Basierend auf der Nutzeranweisung, optimiere die folgende Szene.
 
 AKTUELLE SZENE:
-"${currentStory}"
+Zusammenfassung: "${currentPoint.summary || ''}"
+Detaillierte Beschreibung: "${currentStory}"
+Dialog: "${currentPoint.dialogText || ''}"
+Video/Szenen-Kontext: "${currentPoint.videoPrompt || ''}"
+
+AKTUELLE EINSTELLUNGEN:
+- Kamerawinkel: ${currentPoint.cameraAngle || 'nicht gesetzt'}
+- Shot-Typ: ${currentPoint.shotType || 'nicht gesetzt'}
+- Pose/Aktion: ${currentPoint.keyAction || 'nicht gesetzt'}
+- Bereich: ${currentPoint.specificArea || 'nicht gesetzt'}
+- Emotion: ${currentPoint.emotion || 'nicht gesetzt'}
+- Publikumswirkung: ${currentPoint.audienceEffect || 'nicht gesetzt'}
+- Bildaufbau: ${currentPoint.composition || 'nicht gesetzt'}
+- Bewegung: ${currentPoint.movement || 'nicht gesetzt'}
+- Negative Prompts: ${currentPoint.negativePrompts || 'nicht gesetzt'}
+- Stil-Hinweise: ${currentPoint.styleNotes || 'nicht gesetzt'}
 
 NUTZERANWEISUNG:
 "${sceneAssistantInput.trim() || 'Optimiere die Szene für maximale visuelle Wirkung'}"
 
-VERFÜGBARE KAMERAWINKEL (wähle genau einen value, Beschreibung hilft dir bei der Wahl):
-${CAMERA_ANGLE_OPTIONS.map(o => `- "${o.value}": ${o.label} - ${o.description}`).join('\n')}
+VERFÜGBARE KAMERAWINKEL (values):
+${CAMERA_ANGLE_OPTIONS.map(o => `- "${o.value}": ${o.label}`).join('\n')}
 
-VERFÜGBARE SHOT-TYPEN (wähle genau einen value, Beschreibung hilft dir bei der Wahl):
-${SHOT_TYPE_OPTIONS.map(o => `- "${o.value}": ${o.label} - ${o.description}`).join('\n')}
+VERFÜGBARE SHOT-TYPEN (values):
+${SHOT_TYPE_OPTIONS.map(o => `- "${o.value}": ${o.label}`).join('\n')}
 
-Antworte NUR mit einem validen JSON-Objekt in diesem Format:
+VERFÜGBARE POSEN (values): steht, geht, sitzt, lehnt, schaut, spricht, rennt, wartet, greift, haelt, zeigt, wendet-sich
+
+VERFÜGBARE BEREICHE (values): innenraum, aussenbereich, strasse, natur, arbeitsplatz, zuhause, fahrzeug, oeffentlicher-ort
+
+VERFÜGBARE EMOTIONEN (values): gluecklich, traurig, nachdenklich, aufgeregt, aengstlich, wuetend, ueberrascht, verliebt, verzweifelt, hoffnungsvoll, melancholisch, entspannt, neutral
+
+VERFÜGBARE PUBLIKUMSWIRKUNG (values): spannung, empathie, freude, unbehagen, neugier, erleichterung, trauer, hoffnung
+
+VERFÜGBARE BILDAUFBAU (values): zentriert, drittel-regel, symmetrisch, diagonal, rahmen-im-rahmen
+
+VERFÜGBARE BEWEGUNG (values): keine, dolly-in, dolly-out, truck, tilt, pan, crane, arc
+
+WICHTIGE REGELN:
+1. Analysiere die Nutzeranweisung und ändere NUR die Felder, die sich aus der Anweisung ergeben
+2. Wenn der Nutzer z.B. "mach es dramatischer" sagt, ändere Emotion, Kamerawinkel, Beschreibung etc. passend
+3. Wenn der Nutzer nur den Dialog ändern will, ändere NUR den Dialog
+4. Wenn der Nutzer die Kamera ändern will, ändere NUR Kamera-relevante Felder
+5. Felder die NICHT geändert werden sollen, setze auf null im JSON
+6. Summary und detailedDescription sind auf Deutsch, dialogText ist der gesprochene Text
+7. videoPrompt ist auf Englisch (beschreibt die Szene für Videogenerierung)
+
+Antworte NUR mit einem validen JSON-Objekt:
 {
-  "story": "Die optimierte Szenen-Beschreibung (1-2 Sätze, auf Deutsch)",
-  "cameraAngle": "einer der verfügbaren Kamerawinkel-values",
-  "shotType": "einer der verfügbaren Shot-Typ-values"
+  "summary": "Neue Zusammenfassung oder null wenn unverändert",
+  "detailedDescription": "Neue Beschreibung oder null wenn unverändert",
+  "dialogText": "Neuer Dialog oder null wenn unverändert",
+  "videoPrompt": "New video prompt in English or null if unchanged",
+  "cameraAngle": "value oder null",
+  "shotType": "value oder null",
+  "keyAction": "value oder null",
+  "specificArea": "value oder null",
+  "emotion": "value oder null",
+  "audienceEffect": "value oder null",
+  "composition": "value oder null",
+  "movement": "value oder null",
+  "negativePrompts": "text oder null",
+  "styleNotes": "text oder null"
 }
 
-Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine zusätzlichen Erklärungen, nur das JSON.`
+Keine zusätzlichen Erklärungen, nur das JSON.`
               }]
             }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 500,
+              maxOutputTokens: 1000,
               responseMimeType: "application/json"
             }
           })
@@ -570,20 +617,47 @@ Wähle Kamerawinkel und Shot-Typ passend zur Stimmung und Nutzeranweisung. Keine
       
       const parsed = extractJsonFromAiResponse(text);
       
-      // Update the story point with all fields
+      // Update the story point — only apply non-null fields
       const idx = expandedStoryPointIndex;
       setStoryPoints(prev => prev.map((p, i) => {
         if (i !== idx) return p;
         
-        // Add new version for story
-        const newVersions = [...p.versions, parsed.story];
-        return {
-          ...p,
-          versions: newVersions,
-          currentVersion: newVersions.length - 1,
-          cameraAngle: parsed.cameraAngle,
-          shotType: parsed.shotType
-        };
+        const updates: Record<string, any> = {};
+        
+        // Text fields — create new version if description changed
+        if (parsed.summary !== null && parsed.summary !== undefined) {
+          updates.summary = parsed.summary;
+        }
+        if (parsed.detailedDescription !== null && parsed.detailedDescription !== undefined) {
+          const newVersions = [...p.versions, parsed.detailedDescription];
+          updates.versions = newVersions;
+          updates.currentVersion = newVersions.length - 1;
+          updates.detailedDescription = parsed.detailedDescription;
+        }
+        if (parsed.dialogText !== null && parsed.dialogText !== undefined) {
+          updates.dialogText = parsed.dialogText;
+        }
+        if (parsed.videoPrompt !== null && parsed.videoPrompt !== undefined) {
+          updates.videoPrompt = parsed.videoPrompt;
+        }
+        
+        // Dropdown fields — only apply non-null
+        const dropdownFields = ['cameraAngle', 'shotType', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'composition', 'movement'] as const;
+        for (const field of dropdownFields) {
+          if (parsed[field] !== null && parsed[field] !== undefined) {
+            (updates as any)[field] = parsed[field];
+          }
+        }
+        
+        // Freetext fields
+        if (parsed.negativePrompts !== null && parsed.negativePrompts !== undefined) {
+          updates.negativePrompts = parsed.negativePrompts;
+        }
+        if (parsed.styleNotes !== null && parsed.styleNotes !== undefined) {
+          updates.styleNotes = parsed.styleNotes;
+        }
+        
+        return { ...p, ...updates };
       }));
       
       setSceneAssistantInput("");
@@ -7438,15 +7512,8 @@ Beispiel einer korrekten Antwort:
                       sceneAssistantInput={sceneAssistantInput}
                       setSceneAssistantInput={setSceneAssistantInput}
                       isGeneratingAssistant={isGeneratingSceneAssistant}
-                      onAssistantSubmit={(mode) => {
-                        if (mode === "text") {
-                          handleSceneAssistant();
-                        } else if (mode === "video") {
-                          // Video prompt mode - handled in StoryDetailPopup via onUpdateVideoPrompt
-                          handleVideoPromptAssistant();
-                        } else {
-                          regenerateSingleStoryScene(expandedStoryPointIndex);
-                        }
+                      onAssistantSubmit={() => {
+                        handleSceneAssistant();
                       }}
                       onCopyVideoPrompt={() => {
                         const point = storyPoints[expandedStoryPointIndex];
