@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.license-remind]
 verify_jwt = false
+
+[functions.character-views]
+verify_jwt = false
+
+[functions.character-poses]
+verify_jwt = false
