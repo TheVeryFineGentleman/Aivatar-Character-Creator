@@ -38,6 +38,7 @@ const STYLE_OPTIONS = [
 export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = ({ allImages, apiKey }) => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [style, setStyle] = useState("realistic");
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentAngle, setCurrentAngle] = useState(0);
   const [results, setResults] = useState<(string | null)[]>([]);
