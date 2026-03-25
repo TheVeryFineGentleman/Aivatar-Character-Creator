@@ -2783,6 +2783,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     if (point.styleNotes && point.styleNotes.trim()) lines.push(`Style Notes: ${point.styleNotes}`);
     if (point.continuityNotes && point.continuityNotes.trim()) lines.push(`Continuity Notes: ${point.continuityNotes}`);
     if (point.negativePrompts && point.negativePrompts.trim()) lines.push(`Avoid: ${point.negativePrompts}`);
+    if ((point as any).videoPrompt && (point as any).videoPrompt.trim()) lines.push(`Video/Scene Context: ${(point as any).videoPrompt}`);
     if (storyCustomDetails && storyCustomDetails.trim()) lines.push(`Global Details: ${storyCustomDetails.trim()}`);
     
     return lines.join("\n");
@@ -2856,6 +2857,14 @@ ${sceneContext}`;
     
     // Use updatedPoint if provided (contains latest edits from popup), otherwise use latest ref state
     const point = updatedPoint || storyPointsRef.current[sceneIndex];
+    console.log("🔍 Regenerating with point data:", {
+      detailedDescription: point.detailedDescription,
+      emotion: point.emotion,
+      keyAction: point.keyAction,
+      cameraAngle: point.cameraAngle,
+      shotType: point.shotType,
+      videoPrompt: (point as any).videoPrompt,
+    });
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
