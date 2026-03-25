@@ -2854,8 +2854,8 @@ ${sceneContext}`;
       return p;
     }));
     
-    // Use updatedPoint if provided (contains latest edits from popup), otherwise use current state
-    const point = updatedPoint || storyPoints[sceneIndex];
+    // Use updatedPoint if provided (contains latest edits from popup), otherwise use latest ref state
+    const point = updatedPoint || storyPointsRef.current[sceneIndex];
     
     // Get character reference images from STORY reference images (URLs) as base64
     const characterBase64Images: string[] = [];
