@@ -35,6 +35,7 @@ const BG_OPTIONS = [
 export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages, apiKey }) => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [gridSize, setGridSize] = useState("3x3");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
   const [outfit, setOutfit] = useState("");
   const [location, setLocation] = useState("");
   const [background, setBackground] = useState("white");
