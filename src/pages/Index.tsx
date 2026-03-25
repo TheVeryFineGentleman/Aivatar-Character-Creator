@@ -2846,10 +2846,10 @@ ${sceneContext}`;
       setRegeneratingCardIndex(sceneIndex); // Start flip-away animation (skip if already flipped from regenerateStoryPoint)
     }
     
-    // Clear previous error
+    // Clear previous error AND old image so UI shows loading state
     setStoryPoints(prev => prev.map((p, idx) => {
       if (idx === sceneIndex) {
-        return { ...p, generationError: undefined };
+        return { ...p, generationError: undefined, generatedImage: undefined };
       }
       return p;
     }));
