@@ -341,7 +341,7 @@ const Index = () => {
   });
   
   // Storyboard state
-  const [storyPointCount, setStoryPointCount] = useState(4);
+  const [storyPointCount, setStoryPointCount] = useState(2);
   // Global main location for unified storyboard setting
   const [storyboardMainLocation, setStoryboardMainLocation] = useState<string>("");
   
