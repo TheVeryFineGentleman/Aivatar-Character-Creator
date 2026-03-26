@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check } from "lucide-react";
+import { Zap, MessageSquare, Download, Trash2, Image as ImageIcon, Loader2, ArrowLeft, Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DownloadButton } from "@/components/DownloadButton";
 import { QuickModeCreator } from "@/components/character/QuickModeCreator";
@@ -264,13 +264,35 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
       )}
 
       {/* 6 Views Generator */}
-      {allImages.length > 0 && (
+      {allImages.length > 0 && planCode === "FULL" && (
         <CharacterViewsGenerator allImages={allImages} apiKey={apiKey} />
+      )}
+      {allImages.length > 0 && planCode !== "FULL" && (
+        <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm opacity-60">
+          <CardContent className="pt-6 flex items-center gap-3 text-muted-foreground">
+            <Lock className="w-5 h-5 text-primary" />
+            <div>
+              <p className="font-semibold text-sm text-foreground">6 Portrait-Ansichten</p>
+              <p className="text-xs">Premium Version erforderlich <span className="text-muted-foreground">(In Kürze verfügbar)</span></p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Pose Grid Generator */}
-      {allImages.length > 0 && (
+      {allImages.length > 0 && planCode === "FULL" && (
         <PoseGridGenerator allImages={allImages} apiKey={apiKey} />
+      )}
+      {allImages.length > 0 && planCode !== "FULL" && (
+        <Card className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm opacity-60">
+          <CardContent className="pt-6 flex items-center gap-3 text-muted-foreground">
+            <Lock className="w-5 h-5 text-primary" />
+            <div>
+              <p className="font-semibold text-sm text-foreground">Posen-Grid Generator</p>
+              <p className="text-xs">Premium Version erforderlich <span className="text-muted-foreground">(In Kürze verfügbar)</span></p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {lightboxIndex !== null && allImages[lightboxIndex] && (
