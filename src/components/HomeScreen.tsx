@@ -102,13 +102,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ planCode, onSelectFeatur
                 {feature.description}
               </p>
 
-              <div className={cn(
-                "flex items-center gap-1.5 text-sm font-medium transition-all duration-300",
-                locked ? "text-muted-foreground" : "text-primary group-hover:gap-3"
-              )}>
-                {locked ? "Upgrade nötig" : "Starten"}
-                <ArrowRight className="w-4 h-4" />
-              </div>
+              {locked ? (
+                <div className="flex flex-col items-center gap-0.5 text-sm font-medium text-muted-foreground">
+                  <span>Premium Version erforderlich</span>
+                  <span className="text-[10px] text-muted-foreground/60">(In Kürze verfügbar)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-sm font-medium text-primary transition-all duration-300 group-hover:gap-3">
+                  Starten
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              )}
             </button>
           );
         })}
