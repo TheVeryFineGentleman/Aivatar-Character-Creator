@@ -50,69 +50,17 @@ export default function Legal() {
                   <h2 className="text-2xl font-bold text-primary">IMPRESSUM</h2>
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">Angaben gemäß § 5 TMG:</h3>
                       <p className="text-muted-foreground">
-                        Digital Rocket Ltd<br />
-                        Torsten Jaeger<br />
-                        Keryneias Mansion, App. 102, Keryneias Street 16<br />
-                        7040 Oroclini<br />
-                        Zypern
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Kontakt:</h3>
-                      <p className="text-muted-foreground">
-                        Email: info(at)torstenjaeger.com<br />
-                        Tel: +4953084864497
+                        Trevionis LLC<br />
+                        2201 MENAUL BLVD NE STE A<br />
+                        87107 Albuquerque<br />
+                        NM USA
                       </p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-2">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:</h3>
                       <p className="text-muted-foreground">
-                        Digital Rocket Ltd<br />
-                        Torsten Jaeger<br />
-                        Keryneias Mansion, App. 102, Keryneias Street 16<br />
-                        7040 Oroclini<br />
-                        Zypern
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Streitschlichtung</h3>
-                      <p className="text-muted-foreground">
-                        Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-                        <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          https://ec.europa.eu/consumers/odr
-                        </a>
-                      </p>
-                      <p className="text-muted-foreground mt-2">
-                        Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Haftung für Inhalte</h3>
-                      <p className="text-muted-foreground">
-                        Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
-                      </p>
-                      <p className="text-muted-foreground mt-2">
-                        Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Haftung für Links</h3>
-                      <p className="text-muted-foreground">
-                        Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
-                      </p>
-                      <p className="text-muted-foreground mt-2">
-                        Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links umgehend entfernen.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Urheberrecht</h3>
-                      <p className="text-muted-foreground">
-                        Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
-                      </p>
-                      <p className="text-muted-foreground mt-2">
-                        Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte Dritter beachtet. Sollten Sie trotzdem auf eine Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.
+                        Torsten Jaeger
                       </p>
                     </div>
                   </div>
