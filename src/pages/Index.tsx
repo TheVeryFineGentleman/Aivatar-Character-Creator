@@ -6614,8 +6614,26 @@ Beispiel einer korrekten Antwort:
 
         {/* Story Tab Content */}
         {activeMainTab === "story" && (
+          <div className="relative">
+            {authData.planCode !== "FULL" && (
+              <div 
+                className="absolute inset-0 z-10 cursor-not-allowed rounded-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  toast.error("Premium Version erforderlich", {
+                    description: "Der Reel/Story Videocreator ist Teil der Premium Version. (In Kürze verfügbar)",
+                  });
+                  setShowUpgradePopup(true);
+                }}
+                onPointerDownCapture={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              />
+            )}
           <Card 
-            className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+            className={cn("mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in", authData.planCode !== "FULL" && "opacity-60 pointer-events-none")}
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
