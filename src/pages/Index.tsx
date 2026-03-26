@@ -5609,6 +5609,54 @@ Beispiel einer korrekten Antwort:
                       <Scale className="w-4 h-4 mr-2" />
                       Impressum, Datenschutz & AGB
                     </Button>
+
+                    {/* Paket verwalten */}
+                    <div className="rounded-lg border border-border p-4 space-y-2">
+                      <h4 className="font-semibold text-sm uppercase tracking-wide">Paket verwalten</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Verwalte dein Abonnement, ändere deine Zahlungsmethode oder kündige dein Abo.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={() => setShowUpgradePopup(true)}
+                      >
+                        Paket verwalten
+                      </Button>
+                    </div>
+
+                    {/* Daten verwalten */}
+                    <div className="rounded-lg border border-border p-4 space-y-2">
+                      <h4 className="font-semibold text-sm uppercase tracking-wide">Daten verwalten</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Exportiere deine Daten gemäß DSGVO Art. 20 (Datenübertragbarkeit).
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={() => {
+                          const userData = {
+                            email: authData.email,
+                            plan: authData.planName || authData.planCode,
+                            exportDate: new Date().toISOString(),
+                            storedSettings: {
+                              theme,
+                              apiKeySet: !!apiKey,
+                            },
+                          };
+                          const blob = new Blob([JSON.stringify(userData, null, 2)], { type: "application/json" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `meine-daten-${new Date().toISOString().slice(0, 10)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Daten exportieren
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -5625,17 +5673,25 @@ Beispiel einer korrekten Antwort:
                         </p>
                       )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      onClick={() => {
-                        logout();
-                        setSettingsOpen(false);
-                      }}
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Abmelden
-                    </Button>
+                    
+                    {/* Abmelden */}
+                    <div className="rounded-lg border border-border p-4 space-y-2">
+                      <h4 className="font-semibold text-sm uppercase tracking-wide">Abmelden</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Melde dich von deinem Account ab.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={() => {
+                          logout();
+                          setSettingsOpen(false);
+                        }}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Abmelden
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
