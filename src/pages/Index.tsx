@@ -5815,7 +5815,7 @@ Beispiel einer korrekten Antwort:
                   animation: "badge-appear 0.5s ease-out 0.8s both"
                 }}
               >
-                {authData.planCode === "PREMIUM" ? "Pro" : "Basic"}
+                {authData.planCode === "PREMIUM" ? "Pro" : "Starter"}
               </span>
             )}
           </div>
