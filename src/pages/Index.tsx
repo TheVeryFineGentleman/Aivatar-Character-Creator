@@ -26,7 +26,7 @@ import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { ImageDropZone } from "@/components/ImageDropZone";
-import { LegalDialog } from "@/components/LegalDialog";
+import { LegalDialog } from "@/components/LegalDialog"; // kept for backward compat if needed
 import { HomeScreen } from "@/components/HomeScreen";
 import { CharacterCreator } from "@/components/CharacterCreator";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
