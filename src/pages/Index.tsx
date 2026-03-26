@@ -243,6 +243,7 @@ const VEO3_FORMAT_OPTIONS = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const { authData, isLoading: authLoading, login, logout } = useAuth();
   
   // Helper: Check if user has Pro-level access (PREMIUM or FULL)
