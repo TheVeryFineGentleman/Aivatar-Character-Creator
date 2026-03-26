@@ -5607,7 +5607,7 @@ Beispiel einer korrekten Antwort:
                       className="w-full justify-start" 
                       onClick={() => {
                         setSettingsOpen(false);
-                        window.open("/rechtliches", "_blank");
+                        navigate("/rechtliches");
                       }}
                     >
                       <Scale className="w-4 h-4 mr-2" />
