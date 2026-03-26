@@ -5855,10 +5855,6 @@ Beispiel einer korrekten Antwort:
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
           <Tabs value={activeMainTab} onValueChange={(v) => {
             const tab = v as "poses" | "story" | "character";
-            if (tab === "story" && authData.planCode !== "FULL") {
-              setShowUpgradePopup(true);
-              return;
-            }
             setActiveMainTab(tab);
           }} className="w-full">
             <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
