@@ -5700,10 +5700,6 @@ Beispiel einer korrekten Antwort:
                 </div>
               </div>
 
-              <LegalDialog 
-                open={legalDialogOpen} 
-                onOpenChange={setLegalDialogOpen} 
-              />
             </SheetContent>
           </Sheet>
           
