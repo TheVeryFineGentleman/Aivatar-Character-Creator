@@ -273,7 +273,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
             <Lock className="w-5 h-5 text-primary" />
             <div>
               <p className="font-semibold text-sm text-foreground">6 Portrait-Ansichten</p>
-              <p className="text-xs">Premium Version erforderlich <span className="text-muted-foreground">(In Kürze verfügbar)</span></p>
+              <p className="text-xs text-muted-foreground">Premium Version erforderlich</p>
             </div>
           </CardContent>
         </Card>
@@ -289,7 +289,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
             <Lock className="w-5 h-5 text-primary" />
             <div>
               <p className="font-semibold text-sm text-foreground">Posen-Grid Generator</p>
-              <p className="text-xs">Premium Version erforderlich <span className="text-muted-foreground">(In Kürze verfügbar)</span></p>
+              <p className="text-xs text-muted-foreground">Premium Version erforderlich</p>
             </div>
           </CardContent>
         </Card>
