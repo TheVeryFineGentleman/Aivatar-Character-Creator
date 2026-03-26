@@ -5855,10 +5855,6 @@ Beispiel einer korrekten Antwort:
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
           <Tabs value={activeMainTab} onValueChange={(v) => {
             const tab = v as "poses" | "story" | "character";
-            if (tab === "story" && authData.planCode !== "FULL") {
-              setShowUpgradePopup(true);
-              return;
-            }
             setActiveMainTab(tab);
           }} className="w-full">
             <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
@@ -5867,7 +5863,6 @@ Beispiel einer korrekten Antwort:
                 Avatar Shooting Studio
               </TabsTrigger>
               <TabsTrigger value="story" className="flex items-center gap-2">
-                {authData.planCode !== "FULL" && <Lock className="w-3 h-3" />}
                 <BookOpen className="w-4 h-4" />
                 Reel/Story Videocreator
               </TabsTrigger>
@@ -6619,8 +6614,23 @@ Beispiel einer korrekten Antwort:
 
         {/* Story Tab Content */}
         {activeMainTab === "story" && (
+          <div className="relative">
+            {authData.planCode !== "FULL" && (
+              <div 
+                className="absolute inset-0 z-10 cursor-not-allowed rounded-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setShowUpgradePopup(true);
+                }}
+                onPointerDownCapture={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              />
+            )}
           <Card 
-            className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+            className={cn("mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in", authData.planCode !== "FULL" && "opacity-60 pointer-events-none")}
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
@@ -7674,6 +7684,7 @@ Beispiel einer korrekten Antwort:
               </div>
             </CardContent>
           </Card>
+          </div>
         )}
 
         {/* Merged Video Result */}
