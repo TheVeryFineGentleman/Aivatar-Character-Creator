@@ -250,148 +250,181 @@ export function LegalDialog({ open, onOpenChange }: LegalDialogProps) {
               <ScrollArea className="h-[60vh] pr-4">
                 <div className="space-y-6 text-sm">
                   <h2 className="text-2xl font-bold text-primary">ALLGEMEINE GESCHÄFTSBEDINGUNGEN (AGB)</h2>
-                  <p className="text-muted-foreground">für die Nutzung von Avatar Creator Studio</p>
                   
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">1. Anbieter</h3>
+                      <h3 className="font-semibold text-foreground mb-2">1. Geltungsbereich</h3>
                       <p className="text-muted-foreground">
-                        Anbieter der Software Avatar Creator Studio ist:<br /><br />
-                        Torsten Jaeger<br /><br />
-                        Weitere Angaben gemäß § 5 TMG findest du im Impressum unter<br />
-                        👉{" "}
-                        <a href="https://torstenjaeger.com/impressum" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          https://torstenjaeger.com/impressum
-                        </a>
+                        Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge zwischen:
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        Trevionis LLC<br />
+                        2201 MENAUL BLVD NE STE A<br />
+                        87107 Albuquerque<br />
+                        NM USA
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        – nachfolgend „Anbieter" –
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        und den Nutzern der angebotenen digitalen Inhalte, Produkte und Dienstleistungen.
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        Abweichende Bedingungen des Nutzers werden nicht anerkannt.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">2. Geltungsbereich</h3>
+                      <h3 className="font-semibold text-foreground mb-2">2. Vertragsgegenstand</h3>
                       <p className="text-muted-foreground">
-                        Diese Allgemeinen Geschäftsbedingungen regeln die Nutzung der web-basierten Software Avatar Creator Studio.<br /><br />
-                        Abweichende oder entgegenstehende Bedingungen des Nutzers finden keine Anwendung, es sei denn, ihrer Geltung wurde ausdrücklich schriftlich zugestimmt.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">3. Leistungsbeschreibung</h3>
-                      <p className="text-muted-foreground">
-                        Avatar Creator Studio ist eine Software zur KI-gestützten Generierung von Avatar-Bildern und Charakter-Posen auf Basis von vom Nutzer bereitgestellten Inhalten (z. B. Referenzbilder).<br /><br />
-                        Der Anbieter schuldet keinen bestimmten Erfolg, keine bestimmte Bildqualität und keine bestimmte wirtschaftliche Verwertbarkeit der generierten Inhalte.<br /><br />
-                        Die Software stellt ein technisches Werkzeug dar, kein fertiges Produkt oder Beratungsergebnis.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">4. Registrierung und Zugang</h3>
-                      <p className="text-muted-foreground">
-                        Für die Nutzung der Software ist eine Registrierung erforderlich.<br /><br />
-                        Die Zugangsdaten sind vertraulich zu behandeln und dürfen nicht an Dritte weitergegeben werden.<br /><br />
-                        Der Nutzer ist für alle Aktivitäten verantwortlich, die über seinen Account erfolgen.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">5. Nutzungsrechte an generierten Inhalten</h3>
-                      <p className="text-muted-foreground">
-                        Der Nutzer erhält ein einfaches, nicht exklusives Nutzungsrecht an den durch die Software generierten Inhalten.<br /><br />
-                        Dieses Nutzungsrecht berechtigt zur privaten und geschäftlichen Nutzung, soweit keine Rechte Dritter verletzt werden.<br /><br />
-                        Eine Weitergabe, Unterlizenzierung oder der Weiterverkauf der Software selbst ist nicht gestattet.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">6. Verantwortung des Nutzers</h3>
-                      <p className="text-muted-foreground">
-                        Der Nutzer versichert, dass er über alle erforderlichen Rechte an den hochgeladenen Bildern, Daten und Inhalten verfügt.<br /><br />
-                        Insbesondere stellt der Nutzer sicher, dass:
+                        Der Anbieter bietet digitale Produkte und Dienstleistungen an, insbesondere:
                       </p>
                       <ul className="list-disc list-inside text-muted-foreground ml-2 mt-2 space-y-1">
-                        <li>keine Persönlichkeitsrechte Dritter verletzt werden</li>
-                        <li>keine Urheber- oder Markenrechte verletzt werden</li>
-                        <li>keine rechtswidrigen, diskriminierenden oder sittenwidrigen Inhalte hochgeladen werden</li>
+                        <li>Onlinekurse und Schulungen</li>
+                        <li>Softwarelösungen und Tools (inkl. KI-basierter Anwendungen)</li>
+                        <li>digitale Inhalte (z. B. Videos, Texte, Vorlagen)</li>
+                        <li>Affiliate-Angebote und Empfehlungen</li>
                       </ul>
                       <p className="text-muted-foreground mt-2">
-                        Der Anbieter übernimmt keine Haftung für Inhalte, die vom Nutzer bereitgestellt oder erzeugt werden.
+                        Die konkreten Inhalte ergeben sich aus der jeweiligen Produktbeschreibung.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">7. KI-Spezifischer Haftungsausschluss</h3>
+                      <h3 className="font-semibold text-foreground mb-2">3. Vertragsschluss</h3>
                       <p className="text-muted-foreground">
-                        Die durch Avatar Creator Studio generierten Inhalte entstehen durch automatisierte KI-Prozesse.<br /><br />
-                        Der Anbieter übernimmt keine Gewähr für:
+                        Der Vertrag kommt zustande, sobald der Nutzer:
                       </p>
                       <ul className="list-disc list-inside text-muted-foreground ml-2 mt-2 space-y-1">
-                        <li>rechtliche Zulässigkeit der generierten Inhalte</li>
-                        <li>Originalität oder Einzigartigkeit</li>
-                        <li>Übereinstimmung mit Plattform- oder Werberichtlinien</li>
-                        <li>Freiheit von Rechten Dritter</li>
+                        <li>ein Produkt auswählt</li>
+                        <li>den Bestellprozess durchläuft</li>
+                        <li>und die Zahlung erfolgreich abschließt</li>
                       </ul>
                       <p className="text-muted-foreground mt-2">
-                        Die rechtliche Prüfung und Verwendung der Inhalte obliegt ausschließlich dem Nutzer.
+                        Die Abwicklung erfolgt in der Regel über externe Zahlungsanbieter (z. B. Digistore24 oder vergleichbare Plattformen).
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">8. Verfügbarkeit der Software</h3>
+                      <h3 className="font-semibold text-foreground mb-2">4. Preise und Zahlung</h3>
+                      <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+                        <li>Alle Preise sind Endpreise, sofern nicht anders angegeben.</li>
+                        <li>Die Zahlung erfolgt über die im Bestellprozess angebotenen Zahlungsmethoden.</li>
+                        <li>Der Zugriff auf digitale Produkte erfolgt erst nach vollständigem Zahlungseingang.</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">5. Zugang zu digitalen Produkten</h3>
+                      <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+                        <li>Nach dem Kauf erhält der Nutzer Zugriff auf die gebuchten Inhalte.</li>
+                        <li>Der Zugriff kann zeitlich begrenzt oder unbegrenzt sein, abhängig vom jeweiligen Angebot.</li>
+                        <li>Der Anbieter behält sich vor, Inhalte zu aktualisieren, anzupassen oder weiterzuentwickeln.</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">6. Nutzungsrechte</h3>
                       <p className="text-muted-foreground">
-                        Ein Anspruch auf eine jederzeitige, ununterbrochene Verfügbarkeit der Software besteht nicht.<br /><br />
-                        Der Anbieter ist berechtigt, die Software aus technischen Gründen, zur Wartung, Weiterentwicklung oder Sicherheit vorübergehend einzuschränken.
+                        Alle Inhalte sind urheberrechtlich geschützt. Der Nutzer erhält ein einfaches, nicht übertragbares Nutzungsrecht.
+                      </p>
+                      <p className="text-muted-foreground mt-2">Nicht erlaubt sind insbesondere:</p>
+                      <ul className="list-disc list-inside text-muted-foreground ml-2 mt-2 space-y-1">
+                        <li>Weitergabe an Dritte</li>
+                        <li>Vervielfältigung oder Verkauf</li>
+                        <li>öffentliche Zugänglichmachung</li>
+                        <li>Nutzung für eigene kommerzielle Weiterverkäufe</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">
+                        Verstöße können rechtlich verfolgt werden.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">9. Änderungen und Weiterentwicklung</h3>
+                      <h3 className="font-semibold text-foreground mb-2">7. Nutzung von KI-Tools und API</h3>
                       <p className="text-muted-foreground">
-                        Der Anbieter behält sich vor, Funktionen der Software zu ändern, zu erweitern oder einzustellen, sofern dies für den Nutzer zumutbar ist.<br /><br />
-                        Ein Anspruch auf den Fortbestand bestimmter Funktionen besteht nicht.
+                        Im Rahmen der angebotenen Leistungen können KI-Tools und externe Schnittstellen (APIs) genutzt werden.
+                      </p>
+                      <p className="text-muted-foreground mt-2 font-medium">Wichtig:</p>
+                      <ul className="list-disc list-inside text-muted-foreground ml-2 mt-2 space-y-1">
+                        <li>Der Nutzer ist selbst dafür verantwortlich, eigene API-Zugänge einzurichten und zu bezahlen</li>
+                        <li>Der Anbieter stellt keine Garantie für Verfügbarkeit oder Funktionsfähigkeit externer Dienste</li>
+                        <li>Ergebnisse von KI-Systemen können variieren und sind nicht garantiert</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">
+                        Der Anbieter haftet nicht für Inhalte, die durch KI generiert werden.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">10. Haftung</h3>
+                      <h3 className="font-semibold text-foreground mb-2">8. Haftung</h3>
                       <p className="text-muted-foreground">
-                        Der Anbieter haftet ausschließlich für Schäden, die auf Vorsatz oder grober Fahrlässigkeit beruhen.<br /><br />
-                        Eine Haftung für:
+                        Der Anbieter haftet nur für Vorsatz und grobe Fahrlässigkeit. Für einfache Fahrlässigkeit haftet der Anbieter nur bei Verletzung wesentlicher Vertragspflichten.
+                      </p>
+                      <p className="text-muted-foreground mt-2">Keine Haftung besteht für:</p>
+                      <ul className="list-disc list-inside text-muted-foreground ml-2 mt-2 space-y-1">
+                        <li>entgangene Gewinne</li>
+                        <li>indirekte Schäden</li>
+                        <li>Ergebnisse aus der Nutzung der Produkte</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">
+                        Die Nutzung erfolgt auf eigene Verantwortung.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">9. Keine Erfolgsgarantie</h3>
+                      <p className="text-muted-foreground">
+                        Die angebotenen Inhalte stellen keine Garantie für bestimmte Ergebnisse dar. Insbesondere wird kein Einkommen oder wirtschaftlicher Erfolg zugesichert. Ergebnisse hängen immer von der individuellen Umsetzung des Nutzers ab.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">10. Widerrufsrecht</h3>
+                      <p className="text-muted-foreground">
+                        Bei digitalen Produkten kann das Widerrufsrecht erlöschen, sobald:
                       </p>
                       <ul className="list-disc list-inside text-muted-foreground ml-2 mt-2 space-y-1">
-                        <li>entgangenen Gewinn</li>
-                        <li>ausgebliebene Umsätze</li>
-                        <li>Datenverlust</li>
-                        <li>mittelbare oder Folgeschäden</li>
+                        <li>der Nutzer ausdrücklich zustimmt, dass der Zugriff sofort beginnt</li>
+                        <li>und bestätigt, dass er auf sein Widerrufsrecht verzichtet</li>
                       </ul>
                       <p className="text-muted-foreground mt-2">
-                        ist ausgeschlossen, soweit gesetzlich zulässig.
+                        Details werden im Bestellprozess geregelt.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">11. Vertragslaufzeit und Beendigung</h3>
+                      <h3 className="font-semibold text-foreground mb-2">11. Affiliate-Links und Empfehlungen</h3>
                       <p className="text-muted-foreground">
-                        Die Nutzung der Software kann vom Nutzer jederzeit beendet werden.<br /><br />
-                        Ein Anspruch auf Rückerstattung besteht nur, sofern gesetzlich zwingend vorgesehen oder ausdrücklich vereinbart.
+                        Der Anbieter kann Produkte und Dienstleistungen Dritter empfehlen. Dabei kann eine Provision entstehen. Für Inhalte, Leistungen und Ergebnisse dieser Drittanbieter übernimmt der Anbieter keine Haftung.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">12. Datenschutz</h3>
+                      <h3 className="font-semibold text-foreground mb-2">12. Verfügbarkeit der Plattform</h3>
                       <p className="text-muted-foreground">
-                        Die Verarbeitung personenbezogener Daten erfolgt gemäß der Datenschutzerklärung unter<br />
-                        👉{" "}
-                        <a href="https://torstenjaeger.com/datenschutz" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          https://torstenjaeger.com/datenschutz
-                        </a>
+                        Der Anbieter bemüht sich um eine möglichst unterbrechungsfreie Verfügbarkeit. Es kann jedoch zu Ausfällen oder Wartungen kommen. Ein Anspruch auf permanente Verfügbarkeit besteht nicht.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">13. Schlussbestimmungen</h3>
+                      <h3 className="font-semibold text-foreground mb-2">13. Änderungen der AGB</h3>
                       <p className="text-muted-foreground">
-                        Es gilt das Recht der Bundesrepublik Deutschland.<br /><br />
-                        Sollten einzelne Bestimmungen dieser AGB unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.<br /><br />
-                        Gerichtsstand ist – soweit gesetzlich zulässig – der Sitz des Anbieters.
+                        Der Anbieter kann diese AGB jederzeit anpassen. Es gelten jeweils die zum Zeitpunkt des Kaufs gültigen Bedingungen.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">14. Anwendbares Recht</h3>
+                      <p className="text-muted-foreground">
+                        Es gilt das Recht des Landes, in dem der Anbieter seinen Sitz hat. Für Verbraucher können zusätzlich zwingende gesetzliche Regelungen ihres Wohnsitzlandes gelten.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">15. Schlussbestimmungen</h3>
+                      <p className="text-muted-foreground">
+                        Sollte eine Bestimmung dieser AGB unwirksam sein, bleibt der Rest unberührt.
                       </p>
                     </div>
                   </div>
