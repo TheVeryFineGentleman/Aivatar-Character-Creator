@@ -7687,6 +7687,7 @@ Beispiel einer korrekten Antwort:
               </div>
             </CardContent>
           </Card>
+          </div>
         )}
 
         {/* Merged Video Result */}
