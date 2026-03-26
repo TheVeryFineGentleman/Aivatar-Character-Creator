@@ -5640,16 +5640,54 @@ Beispiel einer korrekten Antwort:
                         variant="outline" 
                         className="w-full justify-start"
                         onClick={() => {
-                          const userData = {
-                            email: authData.email,
-                            plan: authData.planName || authData.planCode,
-                            exportDate: new Date().toISOString(),
-                            storedSettings: {
-                              theme,
-                              apiKeySet: !!apiKey,
+                          const allData: Record<string, any> = {
+                            exportDatum: new Date().toISOString(),
+                            account: {
+                              email: authData.email,
+                              plan: authData.planName || authData.planCode,
+                              istAuthentifiziert: authData.isAuthenticated,
                             },
+                            einstellungen: {
+                              theme,
+                              apiKeyGespeichert: !!apiKey,
+                            },
+                            cookieEinwilligung: getCookie("cookie_consent") || getFromLocalStorage("cookie_consent") || sessionStorage.getItem("cookie_consent") || null,
+                            disclaimerAkzeptiert: getCookie("disclaimer_accepted") || null,
+                            gespeicherteDaten: {} as Record<string, any>,
                           };
-                          const blob = new Blob([JSON.stringify(userData, null, 2)], { type: "application/json" });
+                          // Collect all localStorage entries
+                          try {
+                            for (let i = 0; i < localStorage.length; i++) {
+                              const key = localStorage.key(i);
+                              if (key) {
+                                try {
+                                  const val = localStorage.getItem(key);
+                                  allData.gespeicherteDaten[key] = val ? JSON.parse(val) : val;
+                                } catch {
+                                  allData.gespeicherteDaten[key] = localStorage.getItem(key);
+                                }
+                              }
+                            }
+                          } catch {}
+                          // Collect all cookies
+                          try {
+                            const cookies: Record<string, string> = {};
+                            document.cookie.split(";").forEach(c => {
+                              const [name, ...rest] = c.split("=");
+                              if (name?.trim()) cookies[name.trim()] = rest.join("=");
+                            });
+                            allData.cookies = cookies;
+                          } catch {}
+                          // Collect sessionStorage
+                          try {
+                            const session: Record<string, any> = {};
+                            for (let i = 0; i < sessionStorage.length; i++) {
+                              const key = sessionStorage.key(i);
+                              if (key) session[key] = sessionStorage.getItem(key);
+                            }
+                            if (Object.keys(session).length > 0) allData.sessionDaten = session;
+                          } catch {}
+                          const blob = new Blob([JSON.stringify(allData, null, 2)], { type: "application/json" });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement("a");
                           a.href = url;
