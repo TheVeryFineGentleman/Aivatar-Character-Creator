@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { ImageDropZone } from "@/components/ImageDropZone";
-import { LegalDialog } from "@/components/LegalDialog";
+import { LegalDialog } from "@/components/LegalDialog"; // kept for backward compat if needed
 import { HomeScreen } from "@/components/HomeScreen";
 import { CharacterCreator } from "@/components/CharacterCreator";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
@@ -5604,7 +5605,10 @@ Beispiel einer korrekten Antwort:
                     <Button 
                       variant="outline" 
                       className="w-full justify-start" 
-                      onClick={() => setLegalDialogOpen(true)}
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        window.open("/rechtliches", "_blank");
+                      }}
                     >
                       <Scale className="w-4 h-4 mr-2" />
                       Impressum, Datenschutz & AGB
@@ -5696,10 +5700,6 @@ Beispiel einer korrekten Antwort:
                 </div>
               </div>
 
-              <LegalDialog 
-                open={legalDialogOpen} 
-                onOpenChange={setLegalDialogOpen} 
-              />
             </SheetContent>
           </Sheet>
           
