@@ -5802,22 +5802,22 @@ Beispiel einer korrekten Antwort:
             <h1 className="text-4xl sm:text-5xl font-bold">
               <AnimatedTitle text="AvatarCreatorStudio" />
             </h1>
-            {authData.planCode !== "FULL" && (
-              <span 
-                className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 transition-all duration-500 ${
-                  authData.planCode === "PREMIUM" 
+            <span 
+              className={`px-3 py-1 text-sm font-semibold rounded-full shrink-0 transition-all duration-500 ${
+                authData.planCode === "FULL"
+                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white"
+                  : authData.planCode === "PREMIUM" 
                     ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black" 
                     : "bg-muted text-muted-foreground"
-                }`}
-                style={{
-                  opacity: 1,
-                  transform: "translateY(0) scale(1)",
-                  animation: "badge-appear 0.5s ease-out 0.8s both"
-                }}
-              >
-                {authData.planCode === "PREMIUM" ? "Pro" : "Starter"}
-              </span>
-            )}
+              }`}
+              style={{
+                opacity: 1,
+                transform: "translateY(0) scale(1)",
+                animation: "badge-appear 0.5s ease-out 0.8s both"
+              }}
+            >
+              {authData.planCode === "FULL" ? "Premium" : authData.planCode === "PREMIUM" ? "Pro" : "Starter"}
+            </span>
           </div>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
             Erstelle mit KI konsistente Bilder in 4K, individuelle Szenen und Videos – alles aus einer Quelle, flexibel steuerbar nach Stil, Umgebung und Perspektive.
