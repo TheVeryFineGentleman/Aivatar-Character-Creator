@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CookieConsent } from "@/components/CookieConsent";
 import Index from "./pages/Index";
+import Legal from "./pages/Legal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
