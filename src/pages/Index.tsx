@@ -6621,9 +6621,6 @@ Beispiel einer korrekten Antwort:
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  toast.error("Premium Version erforderlich", {
-                    description: "Der Reel/Story Videocreator ist Teil der Premium Version. (In Kürze verfügbar)",
-                  });
                   setShowUpgradePopup(true);
                 }}
                 onPointerDownCapture={(e) => {
