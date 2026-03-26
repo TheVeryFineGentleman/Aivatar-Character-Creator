@@ -5605,7 +5605,10 @@ Beispiel einer korrekten Antwort:
                     <Button 
                       variant="outline" 
                       className="w-full justify-start" 
-                      onClick={() => setLegalDialogOpen(true)}
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        window.open("/rechtliches", "_blank");
+                      }}
                     >
                       <Scale className="w-4 h-4 mr-2" />
                       Impressum, Datenschutz & AGB
