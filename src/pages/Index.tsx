@@ -5863,7 +5863,6 @@ Beispiel einer korrekten Antwort:
                 Avatar Shooting Studio
               </TabsTrigger>
               <TabsTrigger value="story" className="flex items-center gap-2">
-                {authData.planCode !== "FULL" && <Lock className="w-3 h-3" />}
                 <BookOpen className="w-4 h-4" />
                 Reel/Story Videocreator
               </TabsTrigger>
