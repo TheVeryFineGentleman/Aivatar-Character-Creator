@@ -79,10 +79,10 @@ export const CookieConsent: React.FC = () => {
             <div className="rounded-lg border border-border p-3 space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-green-500" />
+                  <Shield className="w-4 h-4 text-primary" />
                   <span className="font-medium text-foreground">Notwendige Cookies</span>
                 </div>
-                <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-medium">immer aktiv</span>
+                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">immer aktiv</span>
               </div>
               <p className="text-xs text-muted-foreground">
                 Diese Cookies sind für die Grundfunktionen der Website erforderlich (Authentifizierung, Sicherheit, Session-Management).
