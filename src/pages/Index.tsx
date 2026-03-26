@@ -5795,11 +5795,10 @@ Beispiel einer korrekten Antwort:
           className="text-center mb-12 animate-fade-in"
           style={{ animationDelay: '0ms', animationDuration: '600ms', animationFillMode: 'both' }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-primary">KI Character Generator</span>
-          </div>
-          <div className="flex items-center justify-center gap-3 mb-4 flex-wrap overflow-visible">
+          <p className="text-sm text-muted-foreground mb-2 tracking-wide">
+            Zentrale Steuerung für deinen KI-Avatar.
+          </p>
+          <div className="flex items-center justify-center gap-3 mb-2 flex-wrap overflow-visible">
             <h1 className="text-4xl sm:text-5xl font-bold">
               <AnimatedTitle text="AvatarCreatorStudio" />
             </h1>
