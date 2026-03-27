@@ -44,6 +44,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
   const [currentAngle, setCurrentAngle] = useState(0);
   const [results, setResults] = useState<(string | null)[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleGenerate = useCallback(async () => {

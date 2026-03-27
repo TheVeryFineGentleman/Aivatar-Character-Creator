@@ -44,6 +44,7 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
   const [currentPose, setCurrentPose] = useState(0);
   const [poseResults, setPoseResults] = useState<(string | null)[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const gridConfig = GRID_SIZES.find(g => g.id === gridSize) || GRID_SIZES[1];
