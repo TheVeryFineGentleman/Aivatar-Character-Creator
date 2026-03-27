@@ -150,12 +150,7 @@ export const CharacterLightbox: React.FC<CharacterLightboxProps> = ({
     else onClose();
   };
 
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = images[currentIndex];
-    link.download = `character-${currentIndex + 1}-${Date.now()}.png`;
-    link.click();
-  };
+  const currentFileName = `character-${currentIndex + 1}-${Date.now()}.png`;
 
   const src = images[currentIndex];
 
