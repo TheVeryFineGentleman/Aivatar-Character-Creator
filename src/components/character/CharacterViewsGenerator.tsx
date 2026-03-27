@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
+import { CharacterLightbox } from "@/components/character/CharacterLightbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
