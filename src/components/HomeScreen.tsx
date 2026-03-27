@@ -25,7 +25,7 @@ const features = [
     icon: BookOpen,
     gradient: "from-amber-500/20 to-amber-500/5",
     iconColor: "text-amber-500",
-    minPlan: "BASIC",
+    minPlan: "PRO",
   },
   {
     id: "character" as const,
@@ -41,6 +41,7 @@ const features = [
 export const HomeScreen: React.FC<HomeScreenProps> = ({ planCode, onSelectFeature, onShowUpgrade }) => {
   const isLocked = (minPlan: string) => {
     if (minPlan === "BASIC") return false;
+    if (minPlan === "PRO") return planCode !== "PREMIUM" && planCode !== "FULL";
     if (minPlan === "FULL") return planCode !== "FULL";
     return false;
   };
