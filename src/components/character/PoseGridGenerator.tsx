@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Download, Trash2, Grid3X3, Sparkles } from "lucide-react";
+import { DownloadButton } from "@/components/DownloadButton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
