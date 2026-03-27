@@ -189,14 +189,15 @@ export const CharacterLightbox: React.FC<CharacterLightboxProps> = ({
         )}
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
-            onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-          >
-            <Download className="w-4 h-4" />
-          </Button>
+          <div onClick={(e) => e.stopPropagation()}>
+            <DownloadButton
+              imageUrl={images[currentIndex]}
+              fileName={currentFileName}
+              variant="lightbox"
+              isBasicPlan={false}
+              className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            />
+          </div>
           <Button
             variant="ghost"
             size="icon"
