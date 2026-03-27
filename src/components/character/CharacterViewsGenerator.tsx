@@ -238,7 +238,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
                         {angle.label}
                       </div>
                       <button
-                        onClick={() => handleDownloadSingle(i)}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadSingle(i); }}
                         className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
                       >
                         <Download className="w-3 h-3" />
