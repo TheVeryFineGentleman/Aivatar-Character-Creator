@@ -236,7 +236,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                           imageUrl={img}
                           fileName={`character-${i + 1}-${Date.now()}.png`}
                           variant="gallery"
-                          isBasicPlan={isBasic}
+                          isBasicPlan={false}
                           className="p-1.5 h-auto w-auto rounded-md bg-black/60 text-white hover:bg-black/80"
                         />
                       </div>
