@@ -239,12 +239,15 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
                   {poseResults[i] ? (
                     <>
                       <img src={poseResults[i]!} alt={`Pose ${i + 1}`} className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxIndex(i)} />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDownloadSingle(i); }}
-                        className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
-                      >
-                        <Download className="w-3 h-3" />
-                      </button>
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <DownloadButton
+                          imageUrl={poseResults[i]!}
+                          fileName={`pose-${i + 1}-${Date.now()}.png`}
+                          variant="gallery"
+                          isBasicPlan={false}
+                          className="p-1 h-auto w-auto rounded bg-black/60 text-white hover:bg-black/80"
+                        />
+                      </div>
                     </>
                   ) : i < poseResults.length ? (
                     <div className="flex items-center justify-center h-full text-[10px] text-muted-foreground">Fehler</div>
