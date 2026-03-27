@@ -99,14 +99,7 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
     setIsGenerating(false);
   }, [selectedImage, allImages, gridConfig, outfit, location, background, apiKey]);
 
-  const handleDownloadSingle = (index: number) => {
-    const img = poseResults[index];
-    if (!img) return;
-    const link = document.createElement("a");
-    link.href = img;
-    link.download = `pose-${index + 1}-${Date.now()}.png`;
-    link.click();
-  };
+  // handleDownloadSingle removed — using DownloadButton component instead
 
   const handleDownloadAll = useCallback(async () => {
     const canvas = canvasRef.current;
