@@ -879,7 +879,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 Vorschau
               </Button>
               
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={handleCloseAttempt}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={handleCloseAttempt} onDoubleClick={(e) => { e.stopPropagation(); onClose(); }} title="Doppelklick zum Schließen ohne Speichern">
                 <X className="w-4 h-4" />
               </Button>
             </div>
