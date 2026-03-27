@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, ZoomIn, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DownloadButton } from "@/components/DownloadButton";
 
 interface CharacterLightboxProps {
   images: string[];
