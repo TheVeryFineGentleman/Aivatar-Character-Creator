@@ -284,6 +284,14 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
           <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm mt-3">{error}</div>
         )}
       </CardContent>
+
+      {lightboxIndex !== null && poseResults[lightboxIndex] && (
+        <CharacterLightbox
+          images={poseResults.filter((r): r is string => r !== null)}
+          initialIndex={poseResults.slice(0, lightboxIndex).filter(r => r !== null).length}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </Card>
   );
 };
