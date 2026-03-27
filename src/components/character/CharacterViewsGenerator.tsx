@@ -95,14 +95,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
     setIsGenerating(false);
   }, [selectedImage, allImages, aspectRatio, style, apiKey]);
 
-  const handleDownloadSingle = (index: number) => {
-    const img = results[index];
-    if (!img) return;
-    const link = document.createElement("a");
-    link.href = img;
-    link.download = `character-${ANGLES[index].id}-${Date.now()}.png`;
-    link.click();
-  };
+  // handleDownloadSingle removed — using DownloadButton component instead
 
   const handleDownloadAll = useCallback(async () => {
     const canvas = canvasRef.current;
