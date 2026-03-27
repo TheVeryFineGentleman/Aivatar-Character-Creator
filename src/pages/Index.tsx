@@ -5829,6 +5829,10 @@ Beispiel einer korrekten Antwort:
           <HomeScreen
             planCode={authData.planCode}
             onSelectFeature={(feature) => {
+              if (feature === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+                setShowUpgradePopup(true);
+                return;
+              }
               setActiveMainTab(feature);
               setActiveView("tools");
             }}

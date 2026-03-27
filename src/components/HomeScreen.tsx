@@ -41,6 +41,7 @@ const features = [
 export const HomeScreen: React.FC<HomeScreenProps> = ({ planCode, onSelectFeature, onShowUpgrade }) => {
   const isLocked = (minPlan: string) => {
     if (minPlan === "BASIC") return false;
+    if (minPlan === "PRO") return planCode !== "PREMIUM" && planCode !== "FULL";
     if (minPlan === "FULL") return planCode !== "FULL";
     return false;
   };
