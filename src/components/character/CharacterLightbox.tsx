@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, ZoomIn, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DownloadButton } from "@/components/DownloadButton";
 
 interface CharacterLightboxProps {
   images: string[];
@@ -149,12 +150,7 @@ export const CharacterLightbox: React.FC<CharacterLightboxProps> = ({
     else onClose();
   };
 
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = images[currentIndex];
-    link.download = `character-${currentIndex + 1}-${Date.now()}.png`;
-    link.click();
-  };
+  const currentFileName = `character-${currentIndex + 1}-${Date.now()}.png`;
 
   const src = images[currentIndex];
 
@@ -193,14 +189,15 @@ export const CharacterLightbox: React.FC<CharacterLightboxProps> = ({
         )}
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
-            onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-          >
-            <Download className="w-4 h-4" />
-          </Button>
+          <div onClick={(e) => e.stopPropagation()}>
+            <DownloadButton
+              imageUrl={images[currentIndex]}
+              fileName={currentFileName}
+              variant="lightbox"
+              isBasicPlan={false}
+              className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            />
+          </div>
           <Button
             variant="ghost"
             size="icon"

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Loader2, Download, Trash2, ScanLine, Sparkles } from "lucide-react";
+import { DownloadButton } from "@/components/DownloadButton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -94,14 +95,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
     setIsGenerating(false);
   }, [selectedImage, allImages, aspectRatio, style, apiKey]);
 
-  const handleDownloadSingle = (index: number) => {
-    const img = results[index];
-    if (!img) return;
-    const link = document.createElement("a");
-    link.href = img;
-    link.download = `character-${ANGLES[index].id}-${Date.now()}.png`;
-    link.click();
-  };
+  // handleDownloadSingle removed — using DownloadButton component instead
 
   const handleDownloadAll = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -237,12 +231,15 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
                       <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-xs py-1 text-center font-medium">
                         {angle.label}
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDownloadSingle(i); }}
-                        className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
-                      >
-                        <Download className="w-3 h-3" />
-                      </button>
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <DownloadButton
+                          imageUrl={results[i]!}
+                          fileName={`character-${ANGLES[i].id}-${Date.now()}.png`}
+                          variant="gallery"
+                          isBasicPlan={false}
+                          className="p-1 h-auto w-auto rounded bg-black/60 text-white hover:bg-black/80"
+                        />
+                      </div>
                     </>
                   ) : i < results.length ? (
                     <div className="flex items-center justify-center h-full text-[10px] text-muted-foreground">Fehler</div>
