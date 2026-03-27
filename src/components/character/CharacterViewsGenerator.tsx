@@ -276,6 +276,14 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
           <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm mt-3">{error}</div>
         )}
       </CardContent>
+
+      {lightboxIndex !== null && results[lightboxIndex] && (
+        <CharacterLightbox
+          images={results.filter((r): r is string => r !== null)}
+          initialIndex={results.slice(0, lightboxIndex).filter(r => r !== null).length}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </Card>
   );
 };
