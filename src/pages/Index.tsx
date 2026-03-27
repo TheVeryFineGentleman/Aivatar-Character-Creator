@@ -5819,7 +5819,7 @@ Beispiel einer korrekten Antwort:
               {authData.planCode === "FULL" ? "Premium" : authData.planCode === "PREMIUM" ? "Pro" : "Starter"}
             </span>
           </div>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
             Erstelle mit KI konsistente Bilder in 4K, individuelle Szenen und Videos – alles aus einer Quelle, flexibel steuerbar nach Stil, Umgebung und Perspektive.
           </p>
         </div>
