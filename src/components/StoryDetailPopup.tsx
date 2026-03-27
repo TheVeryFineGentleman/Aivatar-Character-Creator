@@ -196,23 +196,14 @@ const AREA_OPTIONS = [
   { value: "oeffentlicher-ort", label: "Öffentlicher Ort" },
 ];
 
-// Helper to check if scene is dirty (has changes since last finalization OR since image generation)
+// Helper to check if scene is dirty (has changes since last generation OR finalization)
 const isSceneDirty = (point: StoryPoint): boolean => {
-  // If never finalized AND no generated image, it's not dirty yet (user hasn't made changes)
+  // If never finalized AND no generated image, it's not dirty yet
   if (!point.finalSnapshot && !point.generatedImage) return false;
   const fieldsToCompare = ['summary', 'detailedDescription', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'cameraAngle', 'shotType', 'composition', 'movement', 'negativePrompts', 'styleNotes', 'continuityNotes'];
 
-  // If we have a finalized snapshot, compare against it (highest priority)
-  if (point.finalSnapshot) {
-    for (const field of fieldsToCompare) {
-      if (point[field as keyof StoryPoint] !== point.finalSnapshot[field as keyof StoryPoint]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // If we have a generation snapshot (image was generated), compare against it
+  // Prioritize generationSnapshot — it reflects the most recent image generation
+  // This prevents false dirty state after regeneration when finalSnapshot is stale
   if (point.generationSnapshot) {
     for (const field of fieldsToCompare) {
       if (point[field as keyof StoryPoint] !== point.generationSnapshot[field as keyof StoryPoint]) {
@@ -222,7 +213,16 @@ const isSceneDirty = (point: StoryPoint): boolean => {
     return false;
   }
 
-  // No snapshot to compare against - not dirty
+  // Fall back to finalized snapshot if no generation has occurred
+  if (point.finalSnapshot) {
+    for (const field of fieldsToCompare) {
+      if (point[field as keyof StoryPoint] !== point.finalSnapshot[field as keyof StoryPoint]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   return false;
 };
 
@@ -879,7 +879,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                 Vorschau
               </Button>
               
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={handleCloseAttempt}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={handleCloseAttempt} onDoubleClick={(e) => { e.stopPropagation(); onClose(); }} title="Doppelklick zum Schließen ohne Speichern">
                 <X className="w-4 h-4" />
               </Button>
             </div>
