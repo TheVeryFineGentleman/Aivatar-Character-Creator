@@ -230,7 +230,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-1.5">
               {ANGLES.map((angle, i) => (
-                <div key={angle.id} className="relative rounded-md overflow-hidden border border-border/30 bg-muted/10 aspect-square group">
+                <div key={angle.id} className="relative rounded-md overflow-hidden border border-border/30 bg-muted/10 aspect-square group cursor-pointer" onClick={() => results[i] && setLightboxIndex(i)}>
                   {results[i] ? (
                     <>
                       <img src={results[i]!} alt={angle.label} className="w-full h-full object-cover" />
