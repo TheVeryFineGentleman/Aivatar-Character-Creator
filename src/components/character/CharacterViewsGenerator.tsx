@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
+import { CharacterLightbox } from "@/components/character/CharacterLightbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +44,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
   const [currentAngle, setCurrentAngle] = useState(0);
   const [results, setResults] = useState<(string | null)[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleGenerate = useCallback(async () => {
@@ -228,7 +230,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-1.5">
               {ANGLES.map((angle, i) => (
-                <div key={angle.id} className="relative rounded-md overflow-hidden border border-border/30 bg-muted/10 aspect-square group">
+                <div key={angle.id} className="relative rounded-md overflow-hidden border border-border/30 bg-muted/10 aspect-square group cursor-pointer" onClick={() => results[i] && setLightboxIndex(i)}>
                   {results[i] ? (
                     <>
                       <img src={results[i]!} alt={angle.label} className="w-full h-full object-cover" />
@@ -236,7 +238,7 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
                         {angle.label}
                       </div>
                       <button
-                        onClick={() => handleDownloadSingle(i)}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadSingle(i); }}
                         className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
                       >
                         <Download className="w-3 h-3" />
@@ -274,6 +276,14 @@ export const CharacterViewsGenerator: React.FC<CharacterViewsGeneratorProps> = (
           <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm mt-3">{error}</div>
         )}
       </CardContent>
+
+      {lightboxIndex !== null && results[lightboxIndex] && (
+        <CharacterLightbox
+          images={results.filter((r): r is string => r !== null)}
+          initialIndex={results.slice(0, lightboxIndex).filter(r => r !== null).length}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </Card>
   );
 };
