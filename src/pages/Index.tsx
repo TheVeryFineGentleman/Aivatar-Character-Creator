@@ -3382,6 +3382,7 @@ ${sceneContext}`;
         return p;
       }));
     } finally {
+      activeRegenerationController.current = null;
       setRegeneratingImageOnlyIndex(null);
       setRegeneratingPointIndex(null);
     }
