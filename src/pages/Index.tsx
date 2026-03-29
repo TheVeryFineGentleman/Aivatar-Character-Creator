@@ -5645,7 +5645,10 @@ Beispiel einer korrekten Antwort:
                       <Button 
                         variant="outline" 
                         className="w-full justify-start"
-                        onClick={() => setShowUpgradePopup(true)}
+                        onClick={() => {
+                          setSettingsOpen(false);
+                          navigate("/pakete");
+                        }}
                       >
                         Paket verwalten
                       </Button>

@@ -8,10 +8,16 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { CookieConsent } from "@/components/CookieConsent";
 import Index from "./pages/Index";
 import Legal from "./pages/Legal";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+import { useAuth } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
+const PricingWrapper = () => {
+  const { authData } = useAuth();
+  return <Pricing currentPlanCode={authData.planCode || "BASIC"} />;
+};
 
 const App = () => (
   <ErrorBoundary>
@@ -26,6 +32,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/rechtliches" element={<Legal />} />
+                <Route path="/pakete" element={<PricingWrapper />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
