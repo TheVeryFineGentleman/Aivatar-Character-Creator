@@ -81,6 +81,7 @@ interface StoryDetailPopupProps {
   aspectRatio?: string;
   onSaveVersion?: (index: number) => void;
   onSwitchVersion?: (index: number, versionIndex: number) => void;
+  enableSpeaker?: boolean;
 }
 
 // Auto option for all dropdowns
