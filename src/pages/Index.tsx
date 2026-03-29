@@ -6677,19 +6677,16 @@ Beispiel einer korrekten Antwort:
           >
             <CardContent className="pt-6 space-y-6">
                {/* Speaker Toggle + Direction - above story idea */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20 max-w-sm">
-                  <div className="space-y-0.5">
+                <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/20 max-w-xl">
+                  <div className="space-y-0.5 mr-auto">
                     <Label className="text-sm">Sprechertext / Dialog</Label>
                     <p className="text-xs text-muted-foreground">KI generiert Text pro Szene</p>
                   </div>
                   <Switch checked={storyEnableSpeaker} onCheckedChange={setStoryEnableSpeaker} />
-                </div>
-
-                {storyEnableSpeaker && (
-                  <div className="space-y-3 px-1">
-                    {/* Voice mode: Sprecher vs Dialog */}
-                    <div className="flex gap-2">
+                  
+                  {storyEnableSpeaker && (
+                    <div className="flex gap-1 ml-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -6697,14 +6694,13 @@ Beispiel einer korrekten Antwort:
                           setStoryGenerationDirection("speaker-from-description");
                         }}
                         className={cn(
-                          "flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                          "px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-200",
                           storyVoiceMode === "sprecher"
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
-                        🎙️ Sprechertext
-                        <p className="text-[10px] font-normal mt-0.5 opacity-70">Erzähler / Voiceover</p>
+                        🎙️ Sprecher
                       </button>
                       <button
                         type="button"
@@ -6713,18 +6709,20 @@ Beispiel einer korrekten Antwort:
                           setStoryGenerationDirection("speaker-from-description");
                         }}
                         className={cn(
-                          "flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                          "px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-200",
                           storyVoiceMode === "dialog"
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
                         💬 Dialog
-                        <p className="text-[10px] font-normal mt-0.5 opacity-70">Gespräch zwischen Personen</p>
                       </button>
                     </div>
+                  )}
+                </div>
 
-                    {/* Generation direction toggle */}
+                {storyEnableSpeaker && (
+                  <div className="px-1">
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
