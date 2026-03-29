@@ -855,8 +855,33 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
     setStoryIdea(generatedIdeas[newIndex]);
   };
 
+  const cancelActiveRegeneration = () => {
+    if (activeRegenerationController.current) {
+      activeRegenerationController.current.abort();
+      activeRegenerationController.current = null;
+    }
+    setRegeneratingCardIndex(null);
+    setRegeneratingPointIndex(null);
+    setRegeneratingImageOnlyIndex(null);
+  };
+
   const handleCloseExpandedCard = () => {
     if (isClosingPopup) return;
+    // If regeneration is running, show warning first
+    if (regeneratingPointIndex !== null) {
+      setShowRegenerationCloseWarning(true);
+      return;
+    }
+    setIsClosingPopup(true);
+    setTimeout(() => {
+      setExpandedStoryPointIndex(null);
+      setIsClosingPopup(false);
+    }, 250);
+  };
+
+  const handleForceCloseExpandedCard = () => {
+    setShowRegenerationCloseWarning(false);
+    cancelActiveRegeneration();
     setIsClosingPopup(true);
     setTimeout(() => {
       setExpandedStoryPointIndex(null);
