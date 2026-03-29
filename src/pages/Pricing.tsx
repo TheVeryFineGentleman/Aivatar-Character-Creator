@@ -44,7 +44,7 @@ const PLANS = [
     icon: Crown,
     buttonLabel: "Upgrade erforderlich",
     buttonVariant: "upgrade" as const,
-    link: "https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal",
+    link: "https://www.digistore24.com/product/644591",
     features: [
       { text: "Alle Basic Features:", bold: true },
       { text: "Bis zu 40 Bilder auf einmal erstellen", bold: false },
