@@ -401,6 +401,8 @@ const Index = () => {
   const [storyboardAnimationKey, setStoryboardAnimationKey] = useState(0);
   const [regeneratingCardIndex, setRegeneratingCardIndex] = useState<number | null>(null);
   const [regeneratingImageOnlyIndex, setRegeneratingImageOnlyIndex] = useState<number | null>(null); // Only image flips, not card
+  const activeRegenerationController = useRef<AbortController | null>(null);
+  const [showRegenerationCloseWarning, setShowRegenerationCloseWarning] = useState(false);
   const [justFinishedIndex, setJustFinishedIndex] = useState<number | null>(null);
   const [justFinishedImageOnlyIndex, setJustFinishedImageOnlyIndex] = useState<number | null>(null); // For image-only flip back
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
@@ -853,8 +855,33 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
     setStoryIdea(generatedIdeas[newIndex]);
   };
 
+  const cancelActiveRegeneration = () => {
+    if (activeRegenerationController.current) {
+      activeRegenerationController.current.abort();
+      activeRegenerationController.current = null;
+    }
+    setRegeneratingCardIndex(null);
+    setRegeneratingPointIndex(null);
+    setRegeneratingImageOnlyIndex(null);
+  };
+
   const handleCloseExpandedCard = () => {
     if (isClosingPopup) return;
+    // If regeneration is running, show warning first
+    if (regeneratingPointIndex !== null) {
+      setShowRegenerationCloseWarning(true);
+      return;
+    }
+    setIsClosingPopup(true);
+    setTimeout(() => {
+      setExpandedStoryPointIndex(null);
+      setIsClosingPopup(false);
+    }, 250);
+  };
+
+  const handleForceCloseExpandedCard = () => {
+    setShowRegenerationCloseWarning(false);
+    cancelActiveRegeneration();
     setIsClosingPopup(true);
     setTimeout(() => {
       setExpandedStoryPointIndex(null);
@@ -3027,6 +3054,7 @@ ${sceneContext}`;
     const previousSceneImage = sceneIndex > 0 ? storyPointsRef.current[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
+    activeRegenerationController.current = controller;
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
     
     try {
@@ -3171,6 +3199,7 @@ ${sceneContext}`;
       }));
     } finally {
       // Always unconditionally reset animation state
+      activeRegenerationController.current = null;
       setRegeneratingCardIndex(null);
       setRegeneratingPointIndex(null);
     }
@@ -3222,6 +3251,7 @@ ${sceneContext}`;
     const previousSceneImage = sceneIndex > 0 ? storyPoints[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
+    activeRegenerationController.current = controller;
     const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
     
     try {
@@ -3352,6 +3382,7 @@ ${sceneContext}`;
         return p;
       }));
     } finally {
+      activeRegenerationController.current = null;
       setRegeneratingImageOnlyIndex(null);
       setRegeneratingPointIndex(null);
     }
@@ -7803,6 +7834,24 @@ Beispiel einer korrekten Antwort:
                       }}
                     />
                   )}
+                  
+                  {/* Warning dialog when closing popup during active regeneration */}
+                  <AlertDialog open={showRegenerationCloseWarning} onOpenChange={setShowRegenerationCloseWarning}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Generierung läuft noch</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ein Bild wird gerade generiert. Wenn du jetzt schließt, wird die Generierung abgebrochen.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Weiterlaufen lassen</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleForceCloseExpandedCard}>
+                          Abbrechen & Schließen
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>
