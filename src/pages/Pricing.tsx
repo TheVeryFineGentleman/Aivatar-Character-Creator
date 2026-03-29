@@ -67,7 +67,7 @@ const PLANS = [
     icon: Sparkles,
     buttonLabel: "Upgrade erforderlich",
     buttonVariant: "upgrade" as const,
-    link: "https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal",
+    link: "https://www.digistore24.com/product/653613",
     features: [
       { text: "Alle Pro Features, zusätzlich:", bold: true },
       { text: "Storys & Storyboards automatisch erzeugen", bold: false, indent: true },
