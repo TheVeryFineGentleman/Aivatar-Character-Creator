@@ -275,7 +275,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
                   <div className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
+                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap",
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground rounded-br-md"
                       : "bg-muted/50 text-foreground rounded-bl-md"
