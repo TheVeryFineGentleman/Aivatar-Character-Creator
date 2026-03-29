@@ -937,6 +937,8 @@ EINGABEN:
 - enableSceneDescription: ${storyEnableSceneDescription}
 - enableSpeaker: ${storyEnableSpeaker}
 - generationDirection: "${storyGenerationDirection}"
+- numberOfCharacters: ${storyReferenceImages.length}
+${storyReferenceImages.length >= 2 ? `- characterNames: [${storyReferenceLabels.map((l, i) => `"${l || `Person ${i + 1}`}"`).join(', ')}]` : ''}
 
 HARTE AUSGABEREGELN:
 - Antworte ausschließlich mit einem einzigen validen JSON-Objekt.
