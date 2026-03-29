@@ -889,6 +889,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
           saveToLocalStorage('storyReferenceImages', updated);
           return updated;
         });
+        setStoryReferenceLabels(prev => {
+          const updated = [...prev, ...newImages.map(() => "")].slice(0, 2);
+          saveToLocalStorage('storyReferenceLabels', updated);
+          return updated;
+        });
       }
     }
     e.target.value = "";
