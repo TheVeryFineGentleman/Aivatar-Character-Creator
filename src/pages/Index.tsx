@@ -7832,6 +7832,24 @@ Beispiel einer korrekten Antwort:
                       }}
                     />
                   )}
+                  
+                  {/* Warning dialog when closing popup during active regeneration */}
+                  <AlertDialog open={showRegenerationCloseWarning} onOpenChange={setShowRegenerationCloseWarning}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Generierung läuft noch</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ein Bild wird gerade generiert. Wenn du jetzt schließt, wird die Generierung abgebrochen.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Weiterlaufen lassen</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleForceCloseExpandedCard}>
+                          Abbrechen & Schließen
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>
