@@ -437,6 +437,8 @@ const Index = () => {
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
+  // "sprecher" = Erzähler/Voiceover, "dialog" = Gespräch zwischen Charakteren
+  const [storyVoiceMode, setStoryVoiceMode] = useState<"sprecher" | "dialog">("sprecher");
   // "speaker-from-description" = KI generiert Sprechertext aus Szenenbeschreibung
   // "description-from-speaker" = KI generiert Szenenbeschreibung aus Sprechertext
   const [storyGenerationDirection, setStoryGenerationDirection] = useState<"speaker-from-description" | "description-from-speaker">("speaker-from-description");
