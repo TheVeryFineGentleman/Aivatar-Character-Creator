@@ -316,6 +316,21 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
       };
     }
   }, [expandedIndex]);
+
+  // Reset savedSnapshot after regeneration completes so button state is correct
+  const prevRegeneratingRef = useRef<boolean>(false);
+  useEffect(() => {
+    const wasRegenerating = prevRegeneratingRef.current;
+    const isRegenerating = regeneratingIndex === expandedIndex;
+    prevRegeneratingRef.current = isRegenerating;
+    
+    if (wasRegenerating && !isRegenerating && point) {
+      savedSnapshotRef.current = {
+        dialogText: point.dialogText || "",
+        videoPrompt: point.videoPrompt || "",
+      };
+    }
+  }, [regeneratingIndex, expandedIndex, point?.dialogText, point?.videoPrompt]);
   
   // Compute whether text-only fields have changed
   const hasTextChanges = useMemo(() => {
