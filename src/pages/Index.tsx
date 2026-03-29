@@ -3054,6 +3054,7 @@ ${sceneContext}`;
     const previousSceneImage = sceneIndex > 0 ? storyPointsRef.current[sceneIndex - 1]?.generatedImage : null;
     
     const controller = new AbortController();
+    activeRegenerationController.current = controller;
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
     
     try {
