@@ -302,7 +302,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={hasGenerated ? "Beschreibe Änderungen..." : "Beschreibe deinen Charakter..."}
+                placeholder={hasGenerated ? "Beschreibe Änderungen..." : "Deine Eingabe..."}
                 rows={2}
                 className="resize-none flex-1"
                 disabled={isStreaming}
