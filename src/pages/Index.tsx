@@ -7350,7 +7350,15 @@ Beispiel einer korrekten Antwort:
                                           const isCompleted = hasResult && !hasError && isGeneratingVideos;
                                           const showOverlay = isProcessing || isWaiting || isCompleted || hasError;
                                           
+                                          // Check if this is the only scene missing a video (and no generation running)
+                                          const isMissingVideo = !point.generatedVideo && !videoResults.has(index);
+                                          const otherScenesHaveVideos = !isGeneratingVideos && isMissingVideo && point.videoPrompt && storyPoints.length > 1 &&
+                                            storyPoints.every((sp, i) => i === index || sp.generatedVideo || videoResults.has(i));
+                                          const noGenerationQueued = !isGeneratingVideos && !videoTaskIds.has(index);
+                                          const showGenerateButton = otherScenesHaveVideos && noGenerationQueued && !hasError;
+                                          
                                           return (
+                                            <>
                                             <div 
                                               className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-lg overflow-hidden"
                                               style={{
@@ -7419,6 +7427,24 @@ Beispiel einer korrekten Antwort:
                                                 <span className="text-[10px] font-medium text-white/70">Wartend...</span>
                                               </div>
                                             </div>
+                                            
+                                            {/* Generate missing video button */}
+                                            {showGenerateButton && (
+                                              <div className="absolute inset-0 flex items-center justify-center rounded-lg overflow-hidden bg-black/40 backdrop-blur-[1px]">
+                                                <Button
+                                                  size="sm"
+                                                  className="gap-1.5 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 text-xs"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    regenerateSingleVideo(index);
+                                                  }}
+                                                >
+                                                  <Video className="w-3.5 h-3.5" />
+                                                  Video generieren
+                                                </Button>
+                                              </div>
+                                            )}
+                                            </>
                                           );
                                         })()}
                                       </div>
