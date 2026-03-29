@@ -33,9 +33,10 @@ Starte mit dieser Begrüßung bei der ersten Nachricht:
 12. Augenbrauenstärke (z.B. Dünn, Normal, Buschig)
 13. Make-up (z.B. Kein Make-up, Natürlich/Minimal, Dezent, Stärker betont)
 
-WICHTIG: Wenn alle 13 Punkte abgefragt sind, zeige eine VOLLSTÄNDIGE ÜBERSICHT aller Angaben als nummerierte Liste:
+WICHTIG: Wenn alle 13 Punkte abgefragt sind, zeige eine VOLLSTÄNDIGE ÜBERSICHT aller Angaben. JEDER Punkt MUSS auf einer EIGENEN ZEILE stehen (verwende Zeilenumbrüche \\n). Formatiere es EXAKT so:
 
 "📋 **Deine Angaben im Überblick:**
+
 1. Geschlecht: [Antwort]
 2. Alter: [Antwort]
 3. Haarlänge: [Antwort]
