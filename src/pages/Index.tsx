@@ -6892,7 +6892,7 @@ Beispiel einer korrekten Antwort:
                       <Upload className="w-6 h-6 text-muted-foreground" />
                     </ImageDropZone>
                   )}
-                  {storyReferenceImages.length < 2 && (
+                  {storyReferenceImages.length === 0 && (
                     <button
                       onClick={() => {
                         setRefImageSource("story");
