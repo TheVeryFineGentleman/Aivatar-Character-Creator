@@ -157,7 +157,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageC
 
   const requestGenerateNow = async () => {
     if (isStreaming || !apiKey) return;
-    const triggerMsg = `Erstelle jetzt die Prompts basierend auf den bisherigen Angaben. Denke dir fehlende Details selbst aus. Erstelle ${imageCount} Charactervarianten mit unterschiedlichen Gesichtern.`;
+    const triggerMsg = "Fasse meine bisherigen Angaben zusammen und zeige mir die Übersicht. Denke dir fehlende Details selbst aus.";
     await sendMessage(triggerMsg);
   };
 
@@ -228,7 +228,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageC
   const handleRegenerateWithChanges = async () => {
     setGeneratedPrompts(null);
     setHasGenerated(false);
-    const triggerMsg = "Erstelle jetzt neue Prompts basierend auf allen bisherigen Angaben und Änderungen. Denke dir fehlende Details selbst aus.";
+    const triggerMsg = "Fasse meine bisherigen Angaben inklusive der Änderungen zusammen und zeige mir die aktualisierte Übersicht.";
     await sendMessage(triggerMsg);
   };
 
