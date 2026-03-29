@@ -2235,7 +2235,7 @@ Respond ONLY with JSON:
       ? [cached.model, ...models.filter(m => m !== cached.model)]
       : models;
 
-    const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64);
+    const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64, aspectRatio);
     let lastError = "";
 
     for (const model of orderedModels) {
