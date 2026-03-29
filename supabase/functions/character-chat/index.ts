@@ -52,7 +52,7 @@ WICHTIG: Wenn alle 13 Punkte abgefragt sind, zeige eine VOLLSTÄNDIGE ÜBERSICHT
 
 Möchtest du noch etwas anpassen? Wenn nicht, sage 'Passt so' oder 'Generieren'. (Anpassen, Passt so)"
 
-Wenn der User "Passt so" oder "Generieren" sagt, frage: "Wie viele Charactervarianten soll ich für dich erstellen? Jede Variante zeigt ein anderes Gesicht basierend auf deinen Angaben. (2, 3, 5)"
+Wenn der User "Passt so" oder "Generieren" sagt, frage: "Wie viele Charactervarianten soll ich für dich erstellen? (Minimum 1, Maximum 10) Jede Variante zeigt ein anderes Gesicht basierend auf deinen Angaben. (2, 3, 5)"
 
 WENN DER NUTZER eine Zahl nennt (z.B. "3", "5") NACHDEM er die Übersicht bestätigt hat, antworte NUR mit diesem JSON in einem \`\`\`json Block.
 Die Anzahl der Prompts entspricht der genannten Zahl. Jeder Prompt beschreibt ein KOMPLETT ANDERES Gesicht:

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 interface ChatModeCreatorProps {
   apiKey: string;
-  imageCount: number;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
   onGenerationProgress?: (index: number) => void;
@@ -18,7 +17,7 @@ type ChatMessage = {
   content: string;
 };
 
-export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageCount, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
+export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -163,7 +162,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, imageC
 
   const generateImages = async (prompts: string[]) => {
     if (!prompts || !apiKey) return;
-    const limitedPrompts = prompts.slice(0, imageCount);
+    const limitedPrompts = prompts.slice(0, 10);
     const total = limitedPrompts.length;
     setIsGenerating(true);
     setHasGenerated(true);
