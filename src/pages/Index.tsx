@@ -2417,7 +2417,7 @@ Respond ONLY with JSON:
         const startBase64 = await imageToBase64(point.generatedImage!);
         const endBase64 = nextImage ? await imageToBase64(nextImage) : undefined;
 
-        const operationName = await startGeminiVideoGeneration(point.videoPrompt!, startBase64, endBase64);
+        const operationName = await startGeminiVideoGeneration(point.videoPrompt!, startBase64, endBase64, storyboardFormat);
         console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
         setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
 
