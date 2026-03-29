@@ -161,7 +161,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentPlanCode }) => {
                 {/* Features */}
                 <div className="relative flex-1 space-y-3 mb-6">
                   {plan.features.map((f, i) => (
-                    <div key={i} className={cn("flex items-start gap-2.5", f.indent && "ml-3")}>
+                    <div key={i} className="flex items-start gap-2.5">
                       <Check className={cn("w-4 h-4 mt-0.5 shrink-0", plan.badgeClass === "text-muted-foreground" ? "text-blue-400" : plan.badgeClass)} />
                       <span className={cn("text-sm leading-snug", f.bold ? "font-semibold text-foreground" : "text-muted-foreground")}>
                         {f.text}
