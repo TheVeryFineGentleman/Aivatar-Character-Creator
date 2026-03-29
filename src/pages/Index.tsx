@@ -401,6 +401,8 @@ const Index = () => {
   const [storyboardAnimationKey, setStoryboardAnimationKey] = useState(0);
   const [regeneratingCardIndex, setRegeneratingCardIndex] = useState<number | null>(null);
   const [regeneratingImageOnlyIndex, setRegeneratingImageOnlyIndex] = useState<number | null>(null); // Only image flips, not card
+  const activeRegenerationController = useRef<AbortController | null>(null);
+  const [showRegenerationCloseWarning, setShowRegenerationCloseWarning] = useState(false);
   const [justFinishedIndex, setJustFinishedIndex] = useState<number | null>(null);
   const [justFinishedImageOnlyIndex, setJustFinishedImageOnlyIndex] = useState<number | null>(null); // For image-only flip back
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
