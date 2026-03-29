@@ -196,11 +196,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentPlanCode }) => {
                     </Button>
                   )}
 
-                  {/* Price */}
-                  <p className="text-center text-lg font-bold">
-                    {plan.price}
-                    {plan.priceNote && <span className="text-xs font-normal text-muted-foreground ml-1">{plan.priceNote}</span>}
-                  </p>
+
                 </div>
               </div>
             );
