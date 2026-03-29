@@ -162,7 +162,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const generateImages = async (prompts: string[]) => {
     if (!prompts || !apiKey) return;
-    const limitedPrompts = prompts.slice(0, imageCount);
+    const limitedPrompts = prompts.slice(0, 10);
     const total = limitedPrompts.length;
     setIsGenerating(true);
     setHasGenerated(true);
