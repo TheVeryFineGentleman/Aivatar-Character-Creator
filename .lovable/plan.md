@@ -1,30 +1,34 @@
 
 
-## Problem
+## Problem-Analyse
 
-Die Video-Generierung (Veo) ignoriert das vom User gewählte Format (`storyboardFormat`) und nutzt stattdessen immer hardcoded `"16:9"`.
+Der Absturz passiert, wenn das StoryDetailPopup geschlossen wird (X-Klick), während eine Bild-Regeneration läuft. Die Ursachen:
 
-**Ursache:** In der Funktion `buildVeoRequestBody` (Zeile 2220) steht `aspectRatio: "16:9"` fest im Code, anstatt den `storyboardFormat`-State zu verwenden.
+1. **Popup schließt → `expandedStoryPointIndex = null`** — aber die async `regenerateSingleStoryScene` läuft weiter
+2. **Hinter dem Popup** setzt die Regeneration den `regeneratingCardIndex`, was eine Flip-Animation auf der Szenen-Karte startet — das ist das "etwas hat sich geändert"
+3. **Potentieller Crash**: Wenn die Regeneration abschließt und `setStoryPoints` aufruft, aktualisiert sich die gesamte UI. Bei 8000+ Zeilen Index.tsx kann das zu Memory Pressure führen, besonders wenn gleichzeitig Blob-URLs erstellt und Animationen getriggert werden
+4. **Kein Abort-Mechanismus**: Es gibt keinen `AbortController` der beim Popup-Schließen die laufende Fetch-Anfrage abbricht
 
 ## Lösung
 
-### `src/pages/Index.tsx`
+### 1. `handleCloseExpandedCard` absichern (Index.tsx, ~Zeile 856)
+- Wenn `regeneratingPointIndex !== null` beim Schließen: Unsaved-Warning anzeigen ("Generierung läuft noch — wirklich schließen?")
+- Bei Bestätigung: `AbortController` der laufenden Regeneration abbrechen
 
-1. **`buildVeoRequestBody` erweitern** — Neuen Parameter `aspectRatio` hinzufügen und statt `"16:9"` diesen Wert nutzen:
-   ```typescript
-   const buildVeoRequestBody = (prompt: string, startImageBase64: string, endImageBase64?: string, aspectRatio?: string) => {
-     // ...
-     parameters: {
-       aspectRatio: aspectRatio || "16:9",
-       durationSeconds: 8,
-       personGeneration: "allow_adult",
-     }
-   };
-   ```
+### 2. Abbruch-Mechanismus für laufende Regeneration (Index.tsx)
+- Neuen `useRef<AbortController | null>` (`activeRegenerationController`) erstellen
+- In `regenerateSingleStoryScene`: den bestehenden `controller` in die Ref speichern
+- Neue Funktion `cancelActiveRegeneration()`: Controller abbrechen + State zurücksetzen
+- Im `finally`-Block: Ref auf null setzen
 
-2. **Alle Aufrufe von `buildVeoRequestBody` und `startGeminiVideoGeneration` anpassen** — `storyboardFormat` als Parameter durchreichen, damit das gewählte Format (z.B. `9:16`, `1:1`, `16:9`) an die Veo API gesendet wird.
+### 3. Graceful Cleanup bei Popup-Schließen (Index.tsx)
+- Wenn User trotz Warnung schließt: `cancelActiveRegeneration()` aufrufen
+- `regeneratingCardIndex`, `regeneratingPointIndex` sofort zurücksetzen
+- Verhindert "hängende" Animationen und State-Inkonsistenzen
 
-3. **`startGeminiVideoGeneration` erweitern** — Ebenfalls `aspectRatio`-Parameter akzeptieren und an `buildVeoRequestBody` weiterleiten.
+### 4. Guard in Animations-State (Index.tsx)
+- `setJustFinishedIndex` und `setFlippedCards` in `regenerateSingleStoryScene` nur setzen wenn `expandedStoryPointIndex === null` (Popup bereits geschlossen) — sonst leise die Werte setzen ohne Animation-Trigger
 
-Das betrifft nur eine Datei mit wenigen Stellen, an denen diese Funktionen aufgerufen werden.
+### Betroffene Datei
+- **`src/pages/Index.tsx`**: AbortController-Ref, Close-Handler mit Warnung, Regeneration-Abbruch
 
