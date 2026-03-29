@@ -186,7 +186,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           ) : (
             <ChatModeCreator
               apiKey={apiKey}
-              imageCount={Math.floor(characterImageCount[0])}
               onImagesGenerated={handleImagesGenerated}
               onGenerationStart={handleGenerationStart}
               onGenerationProgress={handleGenerationProgress}
