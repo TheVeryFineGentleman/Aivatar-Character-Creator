@@ -1613,7 +1613,10 @@ SCENE SETTING:
 Location: ${globalMainLocation}, specifically ${sceneSpecificArea}.
 ${storyText}
 
-CHARACTER IDENTITY (MUST copy ALL of these from reference image):
+${storyReferenceImages.length >= 2 ? `CHARACTER IDENTIFICATION:
+- Reference image 1 = "${storyReferenceLabels[0] || 'Person 1'}"
+- Reference image 2 = "${storyReferenceLabels[1] || 'Person 2'}"
+Both characters must appear in the scene. Copy each person's appearance EXACTLY from their respective reference image.` : `CHARACTER IDENTITY (MUST copy ALL of these from reference image):`}
 - Face: exact facial features, face shape, skin tone, freckles, scars
 - Hair: exact color, style, length, texture
 - Body: same body type and proportions
@@ -1624,10 +1627,10 @@ CHARACTER IDENTITY (MUST copy ALL of these from reference image):
 CHARACTER POSE (create a NEW pose for this scene - do NOT copy the body position from reference):
 Action: ${sceneKeyAction}
 Expression: ${sceneEmotion}
-The person must wear the SAME clothing/accessories as in the reference, but in a NEW body position fitting this scene.
+${storyReferenceImages.length >= 2 ? 'Both characters must wear the SAME clothing/accessories as in their respective reference images, but in NEW body positions fitting this scene.' : 'The person must wear the SAME clothing/accessories as in the reference, but in a NEW body position fitting this scene.'}
 
 TECHNICAL REQUIREMENTS:
-- Exactly ONE person in the image
+- ${storyReferenceImages.length >= 2 ? `Exactly TWO people in the image ("${storyReferenceLabels[0] || 'Person 1'}" and "${storyReferenceLabels[1] || 'Person 2'}")` : 'Exactly ONE person in the image'}
 - Single cohesive image, NO collage or split screen
 - Ultra high resolution final render in the selected art style (not photographic unless style requires it)
 - Match lighting and atmosphere to the scene description
