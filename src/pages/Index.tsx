@@ -7781,6 +7781,7 @@ Beispiel einer korrekten Antwort:
                       totalScenes={storyPoints.length}
                       finalizedCount={storyPoints.filter(p => p.finalSnapshot).length}
                       aspectRatio={storyboardFormat}
+                      enableSpeaker={storyEnableSpeaker}
                       onSaveVersion={(index) => {
                         const SNAPSHOT_FIELDS = ['summary', 'detailedDescription', 'dialogText', 'videoPrompt', 'cameraAngle', 'shotType', 'keyAction', 'specificArea', 'emotion', 'audienceEffect', 'composition', 'movement', 'negativePrompts', 'styleNotes', 'continuityNotes', 'generatedImage', 'generatedVideo', 'detailedImagePrompt'] as const;
                         setStoryPoints(prev => prev.map((p, i) => {

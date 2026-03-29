@@ -921,7 +921,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                       </div>
                     </div>
                     
-                    {/* Dialog Text */}
+                    {/* Dialog Text - only shown when speaker is enabled */}
+                    {enableSpeaker && (
                     <div className="space-y-1.5">
                       <label className="text-xs text-muted-foreground flex items-center gap-1.5">
                         <MessageSquare className="w-3.5 h-3.5" />
@@ -931,6 +932,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
                         <Textarea value={point.dialogText || ""} onChange={e => handleFieldUpdate('dialogText', e.target.value)} className="leading-relaxed bg-transparent border-none resize-y p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[50px] italic" placeholder={'Was sagt der Charakter? z.B. "Ich hätte nie gedacht, dass es so enden würde."'} />
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
 
