@@ -2676,7 +2676,9 @@ Respond ONLY with JSON:
       const nextScene = sceneIndex < currentStoryPoints.length - 1 ? currentStoryPoints[sceneIndex + 1] : null;
       const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
       
-      const dialogInfo = freshPoint.dialogText ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${freshPoint.dialogText}"` : '';
+      const dialogInfo = storyEnableSpeaker && freshPoint.dialogText 
+        ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${freshPoint.dialogText}"` 
+        : (!storyEnableSpeaker ? '\nIMPORTANT: NO dialogue or speech — the character does NOT speak in this scene. No lip movement, no voiceover. The scene is completely silent with no spoken words.' : '');
       
       const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
 
