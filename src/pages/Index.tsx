@@ -341,6 +341,10 @@ const Index = () => {
     const saved = getFromLocalStorage('storyReferenceImages');
     return saved || [];
   });
+  const [storyReferenceLabels, setStoryReferenceLabels] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('storyReferenceLabels');
+    return saved || [];
+  });
   
   // Storyboard state
   const [storyPointCount, setStoryPointCount] = useState(2);
