@@ -3199,6 +3199,7 @@ ${sceneContext}`;
       }));
     } finally {
       // Always unconditionally reset animation state
+      activeRegenerationController.current = null;
       setRegeneratingCardIndex(null);
       setRegeneratingPointIndex(null);
     }
