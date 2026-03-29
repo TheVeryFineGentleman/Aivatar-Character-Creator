@@ -2217,7 +2217,7 @@ Respond ONLY with JSON:
     return {
       instances: [instance],
       parameters: {
-        aspectRatio: "16:9",
+        aspectRatio: aspectRatio || "16:9",
         durationSeconds: 8,
         personGeneration: "allow_adult",
       },
