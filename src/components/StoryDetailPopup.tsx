@@ -275,7 +275,8 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   finalizedCount,
   aspectRatio = "16:9",
   onSaveVersion,
-  onSwitchVersion
+  onSwitchVersion,
+  enableSpeaker = true
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     handlung: true,
