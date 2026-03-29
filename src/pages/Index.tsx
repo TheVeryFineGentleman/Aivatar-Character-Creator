@@ -341,6 +341,10 @@ const Index = () => {
     const saved = getFromLocalStorage('storyReferenceImages');
     return saved || [];
   });
+  const [storyReferenceLabels, setStoryReferenceLabels] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('storyReferenceLabels');
+    return saved || [];
+  });
   
   // Storyboard state
   const [storyPointCount, setStoryPointCount] = useState(2);
@@ -885,6 +889,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
           saveToLocalStorage('storyReferenceImages', updated);
           return updated;
         });
+        setStoryReferenceLabels(prev => {
+          const updated = [...prev, ...newImages.map(() => "")].slice(0, 2);
+          saveToLocalStorage('storyReferenceLabels', updated);
+          return updated;
+        });
       }
     }
     e.target.value = "";
@@ -894,6 +903,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
     setStoryReferenceImages(prev => {
       const updated = prev.filter((_, i) => i !== index);
       saveToLocalStorage('storyReferenceImages', updated);
+      return updated;
+    });
+    setStoryReferenceLabels(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('storyReferenceLabels', updated);
       return updated;
     });
   };
@@ -928,6 +942,8 @@ EINGABEN:
 - enableSceneDescription: ${storyEnableSceneDescription}
 - enableSpeaker: ${storyEnableSpeaker}
 - generationDirection: "${storyGenerationDirection}"
+- numberOfCharacters: ${storyReferenceImages.length}
+${storyReferenceImages.length >= 2 ? `- characterNames: [${storyReferenceLabels.map((l, i) => `"${l || `Person ${i + 1}`}"`).join(', ')}]` : ''}
 
 HARTE AUSGABEREGELN:
 - Antworte ausschließlich mit einem einzigen validen JSON-Objekt.
@@ -988,6 +1004,8 @@ FELDREGELN:
       "(wird vom Nutzer manuell erstellt)"
 - "dialogText":
   - nur ausgeben, falls enableSpeaker = true
+  - falls numberOfCharacters >= 2: JEDER Satz MUSS mit dem Namen der sprechenden Person beginnen, z.B. "${storyReferenceLabels[0] || 'Person 1'}: Satz..." und "${storyReferenceLabels[1] || 'Person 2'}: Satz..."
+  - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
   - falls generationDirection = "speaker-from-description":
       gesprochener Dialog passend zur Szene, 1-3 Sätze
   - falls generationDirection = "description-from-speaker":
@@ -1600,7 +1618,10 @@ SCENE SETTING:
 Location: ${globalMainLocation}, specifically ${sceneSpecificArea}.
 ${storyText}
 
-CHARACTER IDENTITY (MUST copy ALL of these from reference image):
+${storyReferenceImages.length >= 2 ? `CHARACTER IDENTIFICATION:
+- Reference image 1 = "${storyReferenceLabels[0] || 'Person 1'}"
+- Reference image 2 = "${storyReferenceLabels[1] || 'Person 2'}"
+Both characters must appear in the scene. Copy each person's appearance EXACTLY from their respective reference image.` : `CHARACTER IDENTITY (MUST copy ALL of these from reference image):`}
 - Face: exact facial features, face shape, skin tone, freckles, scars
 - Hair: exact color, style, length, texture
 - Body: same body type and proportions
@@ -1611,10 +1632,10 @@ CHARACTER IDENTITY (MUST copy ALL of these from reference image):
 CHARACTER POSE (create a NEW pose for this scene - do NOT copy the body position from reference):
 Action: ${sceneKeyAction}
 Expression: ${sceneEmotion}
-The person must wear the SAME clothing/accessories as in the reference, but in a NEW body position fitting this scene.
+${storyReferenceImages.length >= 2 ? 'Both characters must wear the SAME clothing/accessories as in their respective reference images, but in NEW body positions fitting this scene.' : 'The person must wear the SAME clothing/accessories as in the reference, but in a NEW body position fitting this scene.'}
 
 TECHNICAL REQUIREMENTS:
-- Exactly ONE person in the image
+- ${storyReferenceImages.length >= 2 ? `Exactly TWO people in the image ("${storyReferenceLabels[0] || 'Person 1'}" and "${storyReferenceLabels[1] || 'Person 2'}")` : 'Exactly ONE person in the image'}
 - Single cohesive image, NO collage or split screen
 - Ultra high resolution final render in the selected art style (not photographic unless style requires it)
 - Match lighting and atmosphere to the scene description
@@ -6867,19 +6888,34 @@ Beispiel einer korrekten Antwort:
                 <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt.</p>
                 <div className="flex flex-wrap gap-4">
                   {storyReferenceImages.map((imageUrl, index) => (
-                    <div key={`story-ref-${index}`} className="relative w-24 h-24">
-                      <img 
-                        src={imageUrl} 
-                        alt={`Referenz ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
+                    <div key={`story-ref-${index}`} className="relative flex flex-col items-center gap-1">
+                      <div className="relative w-24 h-24">
+                        <img 
+                          src={imageUrl} 
+                          alt={`Referenz ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeStoryImage(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Input
+                        value={storyReferenceLabels[index] || ""}
+                        onChange={(e) => {
+                          setStoryReferenceLabels(prev => {
+                            const updated = [...prev];
+                            updated[index] = e.target.value;
+                            saveToLocalStorage('storyReferenceLabels', updated);
+                            return updated;
+                          });
+                        }}
+                        placeholder={`Person ${index + 1}`}
+                        className="w-24 h-6 text-[10px] text-center px-1 py-0 border-border/50"
                       />
-                      <button
-                        type="button"
-                        onClick={() => removeStoryImage(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </div>
                   ))}
                   {storyReferenceImages.length < 2 && (
