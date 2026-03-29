@@ -6669,9 +6669,8 @@ Beispiel einer korrekten Antwort:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
-              {/* Speaker Toggle + Direction - above story idea */}
+               {/* Speaker Toggle + Direction - above story idea */}
               <div className="space-y-3">
-                <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20 max-w-sm">
                   <div className="space-y-0.5">
                     <Label className="text-sm">Sprechertext / Dialog</Label>
