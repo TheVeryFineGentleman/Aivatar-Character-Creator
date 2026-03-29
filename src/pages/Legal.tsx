@@ -23,7 +23,7 @@ export default function Legal() {
 
         <h1 className="text-3xl font-bold text-foreground mb-6">Rechtliches</h1>
 
-        <Tabs defaultValue="impressum" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid grid-cols-3 bg-muted/50 p-1 rounded-lg mb-6">
             <TabsTrigger
               value="impressum"
