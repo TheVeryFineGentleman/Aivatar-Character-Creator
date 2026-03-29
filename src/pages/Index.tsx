@@ -1007,12 +1007,14 @@ FELDREGELN:
       "(wird vom Nutzer manuell erstellt)"
 - "dialogText":
   - nur ausgeben, falls enableSpeaker = true
-  - falls numberOfCharacters >= 2: JEDER Satz MUSS mit dem Namen der sprechenden Person beginnen, z.B. "${storyReferenceLabels[0] || 'Person 1'}: Satz..." und "${storyReferenceLabels[1] || 'Person 2'}: Satz..."
-  - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
+  - falls voiceMode = "sprecher": Schreibe einen Erzähler-/Voiceover-Text in der 3. Person oder als Off-Stimme. KEIN Dialog zwischen Personen. Der Text beschreibt/kommentiert die Szene wie ein Sprecher.
+  - falls voiceMode = "dialog":
+    - falls numberOfCharacters >= 2: JEDER Satz MUSS mit dem Namen der sprechenden Person beginnen, z.B. "${storyReferenceLabels[0] || 'Person 1'}: Satz..." und "${storyReferenceLabels[1] || 'Person 2'}: Satz..."
+    - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
   - falls generationDirection = "speaker-from-description":
-      gesprochener Dialog passend zur Szene, 1-3 Sätze
+      Text passend zur Szenenbeschreibung, 1-3 Sätze
   - falls generationDirection = "description-from-speaker":
-      Dialog zuerst inhaltlich erzeugen, damit die visuelle Beschreibung darauf basiert
+      Text zuerst inhaltlich erzeugen, damit die visuelle Beschreibung darauf basiert
 - "cameraAngle": nur erlaubter Enum-Wert
 - "shotType": nur erlaubter Enum-Wert
 
