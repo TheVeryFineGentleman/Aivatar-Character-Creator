@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 interface ChatModeCreatorProps {
   apiKey: string;
-  imageCount: number;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
   onGenerationProgress?: (index: number) => void;
