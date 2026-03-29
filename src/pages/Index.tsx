@@ -6876,19 +6876,34 @@ Beispiel einer korrekten Antwort:
                 <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt.</p>
                 <div className="flex flex-wrap gap-4">
                   {storyReferenceImages.map((imageUrl, index) => (
-                    <div key={`story-ref-${index}`} className="relative w-24 h-24">
-                      <img 
-                        src={imageUrl} 
-                        alt={`Referenz ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
+                    <div key={`story-ref-${index}`} className="relative flex flex-col items-center gap-1">
+                      <div className="relative w-24 h-24">
+                        <img 
+                          src={imageUrl} 
+                          alt={`Referenz ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeStoryImage(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Input
+                        value={storyReferenceLabels[index] || ""}
+                        onChange={(e) => {
+                          setStoryReferenceLabels(prev => {
+                            const updated = [...prev];
+                            updated[index] = e.target.value;
+                            saveToLocalStorage('storyReferenceLabels', updated);
+                            return updated;
+                          });
+                        }}
+                        placeholder={`Person ${index + 1}`}
+                        className="w-24 h-6 text-[10px] text-center px-1 py-0 border-border/50"
                       />
-                      <button
-                        type="button"
-                        onClick={() => removeStoryImage(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </div>
                   ))}
                   {storyReferenceImages.length < 2 && (
