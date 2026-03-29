@@ -1694,7 +1694,9 @@ CONTENT COMPLIANCE:
             const nextScene = sceneIndex < storyPoints.length - 1 ? storyPoints[sceneIndex + 1] : null;
             const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
             
-            const dialogInfo = storyPoints[sceneIndex]?.dialogText ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${storyPoints[sceneIndex].dialogText}"` : '';
+            const dialogInfo = storyEnableSpeaker && storyPoints[sceneIndex]?.dialogText 
+              ? `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${storyPoints[sceneIndex].dialogText}"` 
+              : (!storyEnableSpeaker ? '\nIMPORTANT: NO dialogue or speech — the character does NOT speak in this scene. No lip movement, no voiceover. The scene is completely silent with no spoken words.' : '');
             
             const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
 
