@@ -437,6 +437,8 @@ const Index = () => {
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
+  // "sprecher" = Erzähler/Voiceover, "dialog" = Gespräch zwischen Charakteren
+  const [storyVoiceMode, setStoryVoiceMode] = useState<"sprecher" | "dialog">("sprecher");
   // "speaker-from-description" = KI generiert Sprechertext aus Szenenbeschreibung
   // "description-from-speaker" = KI generiert Szenenbeschreibung aus Sprechertext
   const [storyGenerationDirection, setStoryGenerationDirection] = useState<"speaker-from-description" | "description-from-speaker">("speaker-from-description");
@@ -941,6 +943,7 @@ EINGABEN:
 - sceneCount: ${storyPointCount}
 - enableSceneDescription: ${storyEnableSceneDescription}
 - enableSpeaker: ${storyEnableSpeaker}
+- voiceMode: "${storyVoiceMode}"
 - generationDirection: "${storyGenerationDirection}"
 - numberOfCharacters: ${storyReferenceImages.length}
 ${storyReferenceImages.length >= 2 ? `- characterNames: [${storyReferenceLabels.map((l, i) => `"${l || `Person ${i + 1}`}"`).join(', ')}]` : ''}
@@ -1004,12 +1007,14 @@ FELDREGELN:
       "(wird vom Nutzer manuell erstellt)"
 - "dialogText":
   - nur ausgeben, falls enableSpeaker = true
-  - falls numberOfCharacters >= 2: JEDER Satz MUSS mit dem Namen der sprechenden Person beginnen, z.B. "${storyReferenceLabels[0] || 'Person 1'}: Satz..." und "${storyReferenceLabels[1] || 'Person 2'}: Satz..."
-  - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
+  - falls voiceMode = "sprecher": Schreibe einen Erzähler-/Voiceover-Text in der 3. Person oder als Off-Stimme. KEIN Dialog zwischen Personen. Der Text beschreibt/kommentiert die Szene wie ein Sprecher.
+  - falls voiceMode = "dialog":
+    - falls numberOfCharacters >= 2: JEDER Satz MUSS mit dem Namen der sprechenden Person beginnen, z.B. "${storyReferenceLabels[0] || 'Person 1'}: Satz..." und "${storyReferenceLabels[1] || 'Person 2'}: Satz..."
+    - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
   - falls generationDirection = "speaker-from-description":
-      gesprochener Dialog passend zur Szene, 1-3 Sätze
+      Text passend zur Szenenbeschreibung, 1-3 Sätze
   - falls generationDirection = "description-from-speaker":
-      Dialog zuerst inhaltlich erzeugen, damit die visuelle Beschreibung darauf basiert
+      Text zuerst inhaltlich erzeugen, damit die visuelle Beschreibung darauf basiert
 - "cameraAngle": nur erlaubter Enum-Wert
 - "shotType": nur erlaubter Enum-Wert
 
@@ -6667,40 +6672,81 @@ Beispiel einer korrekten Antwort:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
-              {/* Speaker Toggle + Direction - above story idea */}
+               {/* Speaker Toggle + Direction - above story idea */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20 max-w-sm">
                   <div className="space-y-0.5">
                     <Label className="text-sm">Sprechertext / Dialog</Label>
-                    <p className="text-xs text-muted-foreground">KI generiert Dialog pro Szene</p>
+                    <p className="text-xs text-muted-foreground">KI generiert Text pro Szene</p>
                   </div>
                   <Switch checked={storyEnableSpeaker} onCheckedChange={setStoryEnableSpeaker} />
                 </div>
 
                 {storyEnableSpeaker && (
-                  <div className="flex items-center gap-3 px-1">
-                    <button
-                      type="button"
-                      onClick={() => setStoryGenerationDirection(prev => prev === "speaker-from-description" ? "description-from-speaker" : "speaker-from-description")}
-                      className="relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/50 bg-muted/30 text-xs font-medium text-foreground hover:border-primary/50 transition-all duration-300 active:scale-95 overflow-hidden group"
-                    >
-                      <span className="absolute inset-0 bg-primary/10 opacity-0 group-active:opacity-100 transition-opacity duration-150 rounded-full" />
-                      <span
-                        key={storyGenerationDirection}
-                        className="relative animate-[slideIn_0.3s_ease-out]"
-                        style={{ display: 'inline-block' }}
+                  <div className="space-y-3 px-1">
+                    {/* Voice mode: Sprecher vs Dialog */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoryVoiceMode("sprecher");
+                          setStoryGenerationDirection("speaker-from-description");
+                        }}
+                        className={cn(
+                          "flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                          storyVoiceMode === "sprecher"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                        )}
                       >
-                        {storyGenerationDirection === "speaker-from-description" ? "Details → Dialog" : "Dialog → Details"}
+                        🎙️ Sprechertext
+                        <p className="text-[10px] font-normal mt-0.5 opacity-70">Erzähler / Voiceover</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoryVoiceMode("dialog");
+                          setStoryGenerationDirection("speaker-from-description");
+                        }}
+                        className={cn(
+                          "flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                          storyVoiceMode === "dialog"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                        )}
+                      >
+                        💬 Dialog
+                        <p className="text-[10px] font-normal mt-0.5 opacity-70">Gespräch zwischen Personen</p>
+                      </button>
+                    </div>
+
+                    {/* Generation direction toggle */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setStoryGenerationDirection(prev => prev === "speaker-from-description" ? "description-from-speaker" : "speaker-from-description")}
+                        className="relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/50 bg-muted/30 text-xs font-medium text-foreground hover:border-primary/50 transition-all duration-300 active:scale-95 overflow-hidden group"
+                      >
+                        <span className="absolute inset-0 bg-primary/10 opacity-0 group-active:opacity-100 transition-opacity duration-150 rounded-full" />
+                        <span
+                          key={storyGenerationDirection}
+                          className="relative animate-[slideIn_0.3s_ease-out]"
+                          style={{ display: 'inline-block' }}
+                        >
+                          {storyGenerationDirection === "speaker-from-description"
+                            ? `Details → ${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"}`
+                            : `${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"} → Details`}
+                        </span>
+                      </button>
+                      <span
+                        key={storyGenerationDirection + "-desc"}
+                        className="text-xs text-muted-foreground animate-[fadeIn_0.3s_ease-out]"
+                      >
+                        {storyGenerationDirection === "speaker-from-description"
+                          ? `KI schreibt ${storyVoiceMode === "sprecher" ? "den Sprechertext" : "den Dialog"} passend zur Szenenbeschreibung`
+                          : `KI schreibt die Szene passend zum ${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"}`}
                       </span>
-                    </button>
-                    <span
-                      key={storyGenerationDirection + "-desc"}
-                      className="text-xs text-muted-foreground animate-[fadeIn_0.3s_ease-out]"
-                    >
-                      {storyGenerationDirection === "speaker-from-description"
-                        ? "KI schreibt den Dialog passend zur Szenenbeschreibung"
-                        : "KI schreibt die Szene passend zum Dialog"}
-                    </span>
+                    </div>
                   </div>
                 )}
               </div>
