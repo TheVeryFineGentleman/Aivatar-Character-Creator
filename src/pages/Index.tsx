@@ -900,6 +900,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
       saveToLocalStorage('storyReferenceImages', updated);
       return updated;
     });
+    setStoryReferenceLabels(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('storyReferenceLabels', updated);
+      return updated;
+    });
   };
 
   const generateStoryboard = async () => {
