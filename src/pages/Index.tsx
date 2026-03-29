@@ -2225,7 +2225,7 @@ Respond ONLY with JSON:
   };
 
   // Helper: Start Gemini Veo video generation (bytesBase64Encoded, model fallback only)
-  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string): Promise<string> => {
+  const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string, aspectRatio?: string): Promise<string> => {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
     const models = ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"];
 
