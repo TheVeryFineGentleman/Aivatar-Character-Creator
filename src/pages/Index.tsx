@@ -486,6 +486,12 @@ const Index = () => {
     } catch {}
   }, [storyCustomDetails]);
 
+  useEffect(() => { try { sessionStorage.setItem('session_storySpeakerGender', storySpeakerGender); } catch {} }, [storySpeakerGender]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyVideoMood', storyVideoMood); } catch {} }, [storyVideoMood]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyColorMood', storyColorMood); } catch {} }, [storyColorMood]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyHook', storyHook); } catch {} }, [storyHook]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyPacing', storyPacing); } catch {} }, [storyPacing]);
+
   useEffect(() => {
     try {
       sessionStorage.setItem('session_storyArtStyle', storyArtStyle);
