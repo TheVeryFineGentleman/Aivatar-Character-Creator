@@ -2384,6 +2384,7 @@ Respond ONLY with JSON:
     
     setGeneratingVideoPromptIndex(null);
     setIsGeneratingVideoPrompts(false);
+    decrementGeneration();
   };
 
   // Session-level cache for working Veo payload format and model
