@@ -2051,6 +2051,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
       console.error("Fehler: Keine Referenzbilder - Die hochgeladenen Referenzbilder konnten nicht geladen werden.");
       setIsGeneratingStoryImages(false);
+      decrementGeneration();
       return;
     }
     
