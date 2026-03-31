@@ -4296,6 +4296,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
 
     console.log("✅ Validierung erfolgreich, starte Generierung...");
+    incrementGeneration();
     setIsGenerating(true);
     isGeneratingRef.current = true;
     
