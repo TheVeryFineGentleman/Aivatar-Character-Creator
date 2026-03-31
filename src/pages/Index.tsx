@@ -2279,7 +2279,11 @@ Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: Fast, dynamic, social-media energy
+- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic — fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed — smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful — high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching — intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark — shadows, intrigue' : 'Cheerful/Light — bright, upbeat'}
+- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
+${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
 Respond ONLY with JSON:
