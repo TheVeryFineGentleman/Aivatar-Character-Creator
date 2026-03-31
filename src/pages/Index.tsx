@@ -1101,7 +1101,7 @@ WICHTIG:
                     contents: [{
                       role: "user",
                       parts: [{
-                        text: `${promptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
+                        text: `${storyPromptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
                       }]
                     }],
                     generationConfig: {
