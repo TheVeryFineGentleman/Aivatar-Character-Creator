@@ -2939,6 +2939,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
     setGeneratingVideoIndex(null);
+    decrementGeneration();
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
