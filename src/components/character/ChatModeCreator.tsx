@@ -34,10 +34,14 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   useEffect(() => {
     if (generatedPrompts && !hasGenerated && apiKey) {
+      console.log("🎨 Prompts erkannt, starte Bildgenerierung...", generatedPrompts.length, "Prompts");
       setChatOpen(false);
       generateImages(generatedPrompts);
+    } else if (generatedPrompts && !apiKey) {
+      console.warn("⚠️ Prompts vorhanden aber kein API-Key");
+      setError("Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.");
     }
-  }, [generatedPrompts]);
+  }, [generatedPrompts, hasGenerated, apiKey]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -131,15 +135,22 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const tryExtractPrompts = (text: string) => {
     try {
-      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"ready"\s*:\s*true[\s\S]*\}/);
+      // Try multiple JSON extraction patterns
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) 
+        || text.match(/```\s*([\s\S]*?\{[\s\S]*?"ready"\s*:\s*true[\s\S]*?\}[\s\S]*?)```/)
+        || text.match(/(\{[\s\S]*?"ready"\s*:\s*true[\s\S]*?"prompts"\s*:\s*\[[\s\S]*?\]\s*\})/);
       if (jsonMatch) {
         const jsonStr = jsonMatch[1] || jsonMatch[0];
-        const parsed = JSON.parse(jsonStr);
+        const parsed = JSON.parse(jsonStr.trim());
         if (parsed.ready && Array.isArray(parsed.prompts) && parsed.prompts.length >= 1) {
+          console.log(`✅ ${parsed.prompts.length} Prompts erfolgreich extrahiert`);
           setGeneratedPrompts(parsed.prompts);
+          return;
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn("JSON-Parsing fehlgeschlagen:", e);
+    }
   };
 
   const handleSend = () => {
@@ -161,7 +172,15 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   };
 
   const generateImages = async (prompts: string[]) => {
-    if (!prompts || !apiKey) return;
+    if (!prompts || prompts.length === 0) {
+      setError("Keine Prompts zum Generieren vorhanden.");
+      return;
+    }
+    if (!apiKey) {
+      setError("Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.");
+      return;
+    }
+    console.log(`🚀 Starte Generierung von ${prompts.length} Bildern...`);
     const limitedPrompts = prompts.slice(0, 10);
     const total = limitedPrompts.length;
     setIsGenerating(true);
