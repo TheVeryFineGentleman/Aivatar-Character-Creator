@@ -4284,7 +4284,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🎯 Hintergrund:", selectedBackground);
     console.log("🔢 Anzahl zu generierende Bilder:", imageCount[0]);
     
-    if (!canGenerate) {
+    if (!canGenerate || generationLimitReached) {
       console.log("❌ Fehler: Keine Generierung möglich");
       return;
     }
