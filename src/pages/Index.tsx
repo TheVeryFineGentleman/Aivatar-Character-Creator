@@ -4333,6 +4333,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       setIsGenerating(false);
       isGeneratingRef.current = false;
       generationQueueRef.current = [];
+      decrementGeneration();
     }
   };
 
