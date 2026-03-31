@@ -950,18 +950,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
     setFlippedCards(new Set());
     
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
+      const storyPromptText = `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
 AUFGABE:
 Erstelle ein einziges valides JSON-Objekt basierend auf diesen Eingaben.
+KRITISCH: Das "scenes" Array MUSS EXAKT ${storyPointCount} Einträge enthalten. Nicht mehr, nicht weniger.
 
 EINGABEN:
 - storyIdea: "${storyIdea}"
@@ -1049,8 +1042,16 @@ WICHTIG:
 - Wenn enableSpeaker = false, darf "dialogText" nicht im JSON vorkommen.
 - Die Anzahl der Szenen muss exakt sceneCount entsprechen.
 - Verwende nur Strings, Arrays und Objekte, die in validem JSON erlaubt sind.
-- Gib jetzt nur das JSON zurück.`
-              }]
+- Gib jetzt nur das JSON zurück.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: storyPromptText }]
             }],
             generationConfig: {
               temperature: 0.8,
@@ -1070,7 +1071,7 @@ WICHTIG:
             const mainLocation = parsed.mainLocation || "";
             const scenes = parsed.scenes || [];
             
-            if (Array.isArray(scenes) && scenes.length > 0) {
+            if (Array.isArray(scenes) && scenes.length >= storyPointCount) {
               setStoryboardMainLocation(mainLocation);
               
               setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
@@ -1086,6 +1087,55 @@ WICHTIG:
                 shotType: ""
               })));
               setStoryboardAnimationKey(prev => prev + 1);
+            } else {
+              // AI returned fewer scenes than requested — retry once
+              console.warn(`⚠️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
+              setStoryPoints([]);
+              // Recursive retry (single attempt)
+              const retryResponse = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{
+                      role: "user",
+                      parts: [{
+                        text: `${storyPromptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
+                      }]
+                    }],
+                    generationConfig: {
+                      temperature: 0.8,
+                      maxOutputTokens: 4000,
+                      responseMimeType: "application/json"
+                    }
+                  }),
+                }
+              );
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                const retryText = retryData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (retryText) {
+                  const retryParsed = extractJsonFromAiResponse(retryText);
+                  const retryScenes = retryParsed.scenes || [];
+                  if (Array.isArray(retryScenes) && retryScenes.length > 0) {
+                    setStoryboardMainLocation(retryParsed.mainLocation || "");
+                    setStoryPoints(retryScenes.slice(0, storyPointCount).map((scene: any) => ({
+                      versions: [scene.detailedDescription || scene.summary || ""],
+                      currentVersion: 0,
+                      summary: scene.summary || "",
+                      detailedDescription: scene.detailedDescription || "",
+                      dialogText: scene.dialogText || "",
+                      specificArea: "",
+                      keyAction: "",
+                      emotion: "",
+                      cameraAngle: "",
+                      shotType: ""
+                    })));
+                    setStoryboardAnimationKey(prev => prev + 1);
+                  }
+                }
+              }
             }
           } catch (parseError) {
             console.error("JSON parse error, falling back to line-based parsing:", parseError);
