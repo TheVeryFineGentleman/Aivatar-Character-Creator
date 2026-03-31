@@ -4339,7 +4339,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   const handleGenerateMore = async () => {
-    if (!canGenerate) {
+    if (!canGenerate || generationLimitReached) {
       return;
     }
     
