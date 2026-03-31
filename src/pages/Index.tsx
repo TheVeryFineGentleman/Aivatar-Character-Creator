@@ -3752,6 +3752,35 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
         setReferenceImages(files);
       });
     }
+
+    // Restore session state
+    try {
+      const s = sessionStorage;
+      const si = s.getItem.bind(s);
+      if (si('session_storyIdea')) setStoryIdea(si('session_storyIdea')!);
+      if (si('session_storyCustomDetails')) setStoryCustomDetails(si('session_storyCustomDetails')!);
+      if (si('session_storyArtStyle')) setStoryArtStyle(si('session_storyArtStyle')!);
+      if (si('session_storyPointCount')) setStoryPointCount(Number(si('session_storyPointCount')));
+      if (si('session_sceneDescription')) setSceneDescription(si('session_sceneDescription')!);
+      if (si('session_customPrompt')) setCustomPrompt(si('session_customPrompt')!);
+      if (si('session_selectedBackground')) setSelectedBackground(si('session_selectedBackground')!);
+      if (si('session_activeView')) setActiveView(si('session_activeView') as any);
+      if (si('session_activeMainTab')) setActiveMainTab(si('session_activeMainTab') as any);
+      if (si('session_storyboardMainLocation')) setStoryboardMainLocation(si('session_storyboardMainLocation')!);
+      if (si('session_storyEnableSpeaker')) setStoryEnableSpeaker(si('session_storyEnableSpeaker') === 'true');
+      if (si('session_storyVoiceMode')) setStoryVoiceMode(si('session_storyVoiceMode') as any);
+      if (si('session_storyGenerationDirection')) setStoryGenerationDirection(si('session_storyGenerationDirection') as any);
+      if (si('session_storyboardFormat')) setStoryboardFormat(si('session_storyboardFormat')!);
+      
+      const savedStoryPoints = si('session_storyPoints');
+      if (savedStoryPoints) {
+        try { setStoryPoints(JSON.parse(savedStoryPoints)); } catch {}
+      }
+      const savedCharacterImages = si('session_characterImages');
+      if (savedCharacterImages) {
+        try { setCharacterImages(JSON.parse(savedCharacterImages)); } catch {}
+      }
+    } catch {}
   }, []);
 
   // Save API key when it changes
