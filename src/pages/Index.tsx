@@ -1048,8 +1048,9 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
   };
 
   const generateStoryboard = async () => {
-    if (!canGenerate || !storyIdea.trim() || isGeneratingStoryboard) return;
+    if (!canGenerate || !storyIdea.trim() || isGeneratingStoryboard || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingStoryboard(true);
     // Clear existing storypoints when regenerating
     setStoryPoints([]);
