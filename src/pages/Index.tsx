@@ -2188,8 +2188,9 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
 
   // Generate detailed ~200-word video prompts for all scenes
   const generateVideoPrompts = async () => {
-    if (!apiKey || storyPoints.length === 0 || isGeneratingVideoPrompts) return;
+    if (!apiKey || storyPoints.length === 0 || isGeneratingVideoPrompts || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingVideoPrompts(true);
     
     for (let i = 0; i < storyPoints.length; i++) {
