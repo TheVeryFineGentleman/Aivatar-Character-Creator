@@ -866,13 +866,65 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     }
   };
 
-  // Story Idea AI Assistant handler - generates multiple ideas
+  // Story Idea AI Assistant handler - generates multiple ideas or suggestions
   const handleGenerateStoryIdea = async () => {
     if (!canGenerate || isGeneratingStoryAiIdea) return;
     
     const count = parseInt(ideaCount);
     const hasExistingIdea = storyIdea.trim().length > 0;
     const isModifyMode = hasExistingIdea;
+    
+    // When story field is empty, generate short suggestion chips instead of full stories
+    if (!isModifyMode && storyAiAssistantInput.trim()) {
+      setIsLoadingStorySuggestions(true);
+      setStorySuggestions([]);
+      try {
+        const refImageInfo = storyReferenceImages.length > 0
+          ? `\n\nDer Nutzer hat ${storyReferenceImages.length} Referenzbild${storyReferenceImages.length > 1 ? 'er' : ''} hochgeladen. Berücksichtige, dass die Story mit einem Charakter aus den Referenzbildern erstellt wird.`
+          : '';
+        
+        const suggestionPrompt = `Generiere genau ${count} sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung) basierend auf dieser Nutzer-Anfrage:
+
+"${storyAiAssistantInput.trim()}"${refImageInfo}
+
+Jede Zusammenfassung beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen.
+
+Antworte NUR mit den ${count} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: suggestionPrompt }] }],
+              generationConfig: { temperature: 0.9, maxOutputTokens: 500 }
+            })
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const ideas = text.split('\n')
+              .map((line: string) => line.replace(/^[-•*\d.)\s]+/, '').trim())
+              .filter((line: string) => line.length > 5)
+              .slice(0, count);
+            
+            if (ideas.length > 0) {
+              setStorySuggestions(ideas);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to generate suggestions:", error);
+      } finally {
+        setIsLoadingStorySuggestions(false);
+      }
+      return;
+    }
     
     setIsGeneratingStoryAiIdea(true);
     try {
