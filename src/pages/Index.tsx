@@ -3820,6 +3820,11 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       if (si('session_storyVoiceMode')) setStoryVoiceMode(si('session_storyVoiceMode') as any);
       if (si('session_storyGenerationDirection')) setStoryGenerationDirection(si('session_storyGenerationDirection') as any);
       if (si('session_storyboardFormat')) setStoryboardFormat(si('session_storyboardFormat')!);
+      if (si('session_storySpeakerGender')) setStorySpeakerGender(si('session_storySpeakerGender') as any);
+      if (si('session_storyVideoMood')) setStoryVideoMood(si('session_storyVideoMood')!);
+      if (si('session_storyColorMood')) setStoryColorMood(si('session_storyColorMood')!);
+      if (si('session_storyHook')) setStoryHook(si('session_storyHook')!);
+      if (si('session_storyPacing')) setStoryPacing(si('session_storyPacing')!);
       
       const savedStoryPoints = si('session_storyPoints');
       if (savedStoryPoints) {
