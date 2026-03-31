@@ -3726,6 +3726,11 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
   const generateStorySuggestions = async (key: string) => {
     if (!key || isLoadingStorySuggestions) return;
     
+    const count = parseInt(ideaCount) || 3;
+    const refImageInfo = storyReferenceImages.length > 0
+      ? `\n\nDer Nutzer hat ${storyReferenceImages.length} Referenzbild${storyReferenceImages.length > 1 ? 'er' : ''} hochgeladen. Berücksichtige, dass die Story mit einem Charakter aus den Referenzbildern erstellt wird.`
+      : '';
+    
     setIsLoadingStorySuggestions(true);
     try {
       const response = await fetch(
@@ -3737,26 +3742,16 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+                  ? `Generiere genau ${count} sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).${refImageInfo}
 
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
-Gute Beispiele:
-- Konfrontation nach dem Betrug
-- Liebesgeständnis im Regen
-- Letzte Nachricht vor dem Abflug
-
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+Antworte NUR mit den ${count} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau ${count} sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).${refImageInfo}
 
 WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
-Gute Beispiele:
-- Fremder rettet Kind im Park
-- Traumjob-Absage verändert alles
-- Zufälliges Wiedersehen nach Jahren
-
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+Antworte NUR mit den ${count} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
             }]
           }),
@@ -3768,11 +3763,11 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
           const ideas = text.split('\n')
-            .map((line: string) => line.trim())
-            .filter((line: string) => line.length > 10)
-            .slice(0, 3);
+            .map((line: string) => line.replace(/^[-•*\d.)\s]+/, '').trim())
+            .filter((line: string) => line.length > 5)
+            .slice(0, count);
           
-          if (ideas.length === 3) {
+          if (ideas.length > 0) {
             setStorySuggestions(ideas);
           }
         }
