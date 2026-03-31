@@ -1265,6 +1265,7 @@ WICHTIG:
       console.error("Failed to generate storyboard:", error);
     } finally {
       setIsGeneratingStoryboard(false);
+      decrementGeneration();
     }
   };
   
