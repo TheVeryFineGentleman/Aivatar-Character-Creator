@@ -2707,7 +2707,7 @@ Respond ONLY with JSON:
   // If only dialogText/videoPrompt changed, goes straight to video
   const regenerateSingleVideo = async (sceneIndex: number) => {
     let point = storyPointsRef.current[sceneIndex];
-    if (!point.videoPrompt || isGeneratingVideos || !apiKey) return;
+    if (!point.videoPrompt || isGeneratingVideos || !apiKey || generationLimitReached) return;
     if (!point.generatedImage && !hasImageFieldsChanged(point)) return;
     
     setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
