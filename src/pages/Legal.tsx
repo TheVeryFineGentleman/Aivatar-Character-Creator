@@ -47,7 +47,7 @@ export default function Legal() {
 
           <div className="bg-card border border-border rounded-xl p-6">
             <TabsContent value="impressum" className="mt-0">
-              <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="max-h-[70vh] overflow-y-auto pr-4">
                 <div className="space-y-6 text-sm">
                   <h2 className="text-2xl font-bold text-primary">Impressum</h2>
                   <div className="space-y-4">
@@ -108,11 +108,11 @@ export default function Legal() {
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
 
             <TabsContent value="datenschutz" className="mt-0">
-              <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="max-h-[70vh] overflow-y-auto pr-4">
                 <div className="space-y-6 text-sm">
                   <h2 className="text-2xl font-bold text-primary">🔒 Datenschutzerklärung</h2>
                   <div className="space-y-4">
@@ -343,11 +343,11 @@ export default function Legal() {
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
 
             <TabsContent value="agb" className="mt-0">
-              <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="max-h-[70vh] overflow-y-auto pr-4">
                 <div className="space-y-6 text-sm">
                   <h2 className="text-2xl font-bold text-primary">Allgemeine Geschäftsbedingungen (AGB)</h2>
                   <div className="space-y-4">
@@ -430,7 +430,7 @@ export default function Legal() {
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
           </div>
         </Tabs>
