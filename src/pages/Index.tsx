@@ -2183,6 +2183,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     
     setGeneratingStoryImageIndex(null);
     setIsGeneratingStoryImages(false);
+    decrementGeneration();
   };
 
   // Generate detailed ~200-word video prompts for all scenes
