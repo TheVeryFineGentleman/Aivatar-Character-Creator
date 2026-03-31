@@ -34,10 +34,14 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   useEffect(() => {
     if (generatedPrompts && !hasGenerated && apiKey) {
+      console.log("🎨 Prompts erkannt, starte Bildgenerierung...", generatedPrompts.length, "Prompts");
       setChatOpen(false);
       generateImages(generatedPrompts);
+    } else if (generatedPrompts && !apiKey) {
+      console.warn("⚠️ Prompts vorhanden aber kein API-Key");
+      setError("Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.");
     }
-  }, [generatedPrompts]);
+  }, [generatedPrompts, hasGenerated, apiKey]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
