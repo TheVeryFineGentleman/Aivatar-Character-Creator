@@ -2004,8 +2004,9 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
 
   // Generate images and video prompts for all story points (2 parallel)
   const generateStoryImagesAndPrompts = async () => {
-    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
+    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingStoryImages(true);
     setStorySetupCollapsed(true); // Auto-collapse setup panel
     
