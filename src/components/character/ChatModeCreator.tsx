@@ -172,7 +172,15 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   };
 
   const generateImages = async (prompts: string[]) => {
-    if (!prompts || !apiKey) return;
+    if (!prompts || prompts.length === 0) {
+      setError("Keine Prompts zum Generieren vorhanden.");
+      return;
+    }
+    if (!apiKey) {
+      setError("Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.");
+      return;
+    }
+    console.log(`🚀 Starte Generierung von ${prompts.length} Bildern...`);
     const limitedPrompts = prompts.slice(0, 10);
     const total = limitedPrompts.length;
     setIsGenerating(true);
