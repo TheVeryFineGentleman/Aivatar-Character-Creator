@@ -2666,8 +2666,9 @@ Respond ONLY with JSON:
 
   // Generate videos via Gemini Veo API – sequential, one at a time
   const generateVideos = async () => {
-    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey) return;
+    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingVideos(true);
     setVideoErrors(new Map());
     setVideoResults(new Map());
