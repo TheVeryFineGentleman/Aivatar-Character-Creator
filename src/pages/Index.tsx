@@ -2684,6 +2684,7 @@ Respond ONLY with JSON:
     
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
+    decrementGeneration();
     setGeneratingVideoIndex(null);
   };
 
