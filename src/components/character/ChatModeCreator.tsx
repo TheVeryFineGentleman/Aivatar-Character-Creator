@@ -135,15 +135,22 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
 
   const tryExtractPrompts = (text: string) => {
     try {
-      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"ready"\s*:\s*true[\s\S]*\}/);
+      // Try multiple JSON extraction patterns
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) 
+        || text.match(/```\s*([\s\S]*?\{[\s\S]*?"ready"\s*:\s*true[\s\S]*?\}[\s\S]*?)```/)
+        || text.match(/(\{[\s\S]*?"ready"\s*:\s*true[\s\S]*?"prompts"\s*:\s*\[[\s\S]*?\]\s*\})/);
       if (jsonMatch) {
         const jsonStr = jsonMatch[1] || jsonMatch[0];
-        const parsed = JSON.parse(jsonStr);
+        const parsed = JSON.parse(jsonStr.trim());
         if (parsed.ready && Array.isArray(parsed.prompts) && parsed.prompts.length >= 1) {
+          console.log(`✅ ${parsed.prompts.length} Prompts erfolgreich extrahiert`);
           setGeneratedPrompts(parsed.prompts);
+          return;
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn("JSON-Parsing fehlgeschlagen:", e);
+    }
   };
 
   const handleSend = () => {
