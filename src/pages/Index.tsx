@@ -1042,8 +1042,16 @@ WICHTIG:
 - Wenn enableSpeaker = false, darf "dialogText" nicht im JSON vorkommen.
 - Die Anzahl der Szenen muss exakt sceneCount entsprechen.
 - Verwende nur Strings, Arrays und Objekte, die in validem JSON erlaubt sind.
-- Gib jetzt nur das JSON zurück.`
-              }]
+- Gib jetzt nur das JSON zurück.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: storyPromptText }]
             }],
             generationConfig: {
               temperature: 0.8,
