@@ -950,18 +950,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
     setFlippedCards(new Set());
     
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
+      const storyPromptText = `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
 AUFGABE:
 Erstelle ein einziges valides JSON-Objekt basierend auf diesen Eingaben.
+KRITISCH: Das "scenes" Array MUSS EXAKT ${storyPointCount} Einträge enthalten. Nicht mehr, nicht weniger.
 
 EINGABEN:
 - storyIdea: "${storyIdea}"
