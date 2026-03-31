@@ -451,6 +451,13 @@ const Index = () => {
   const [storyCustomDetails, setStoryCustomDetails] = useState("");
   const [storySetupCollapsed, setStorySetupCollapsed] = useState(false);
   
+  // Extended story controls
+  const [storySpeakerGender, setStorySpeakerGender] = useState<"male" | "female" | "neutral">("neutral");
+  const [storyVideoMood, setStoryVideoMood] = useState<string>("dramatic");
+  const [storyColorMood, setStoryColorMood] = useState<string>("natural");
+  const [storyHook, setStoryHook] = useState("");
+  const [storyPacing, setStoryPacing] = useState<string>("tension-arc");
+  
   // Scene Edit Popup - Tab-based UI state
   const [sceneEditTab, setSceneEditTab] = useState<"content" | "image" | "video">("content");
   
@@ -478,6 +485,12 @@ const Index = () => {
       sessionStorage.setItem('session_storyCustomDetails', storyCustomDetails);
     } catch {}
   }, [storyCustomDetails]);
+
+  useEffect(() => { try { sessionStorage.setItem('session_storySpeakerGender', storySpeakerGender); } catch {} }, [storySpeakerGender]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyVideoMood', storyVideoMood); } catch {} }, [storyVideoMood]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyColorMood', storyColorMood); } catch {} }, [storyColorMood]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyHook', storyHook); } catch {} }, [storyHook]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyPacing', storyPacing); } catch {} }, [storyPacing]);
 
   useEffect(() => {
     try {
@@ -1073,6 +1086,11 @@ EINGABEN:
 - voiceMode: "${storyVoiceMode}"
 - generationDirection: "${storyGenerationDirection}"
 - numberOfCharacters: ${storyReferenceImages.length}
+- videoMood: "${storyVideoMood}"
+- colorMood: "${storyColorMood}"
+- pacing: "${storyPacing}"
+${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
+${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyReferenceImages.length >= 2 ? `- characterNames: [${storyReferenceLabels.map((l, i) => `"${l || `Person ${i + 1}`}"`).join(', ')}]` : ''}
 
 HARTE AUSGABEREGELN:
@@ -1899,7 +1917,11 @@ Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: Fast, dynamic, social-media energy
+- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic — fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed — smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful — high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching — intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark — shadows, intrigue' : 'Cheerful/Light — bright, upbeat'}
+- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
+${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
 CONTENT COMPLIANCE:
@@ -2257,7 +2279,11 @@ Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: Fast, dynamic, social-media energy
+- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic — fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed — smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful — high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching — intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark — shadows, intrigue' : 'Cheerful/Light — bright, upbeat'}
+- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
+${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
 Respond ONLY with JSON:
@@ -2889,7 +2915,11 @@ Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: Fast, dynamic, social-media energy
+- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic — fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed — smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful — high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching — intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark — shadows, intrigue' : 'Cheerful/Light — bright, upbeat'}
+- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
+${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
 CONTENT COMPLIANCE:
@@ -3096,6 +3126,14 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     if (point.negativePrompts && point.negativePrompts.trim()) lines.push(`Avoid: ${point.negativePrompts}`);
     if ((point as any).videoPrompt && (point as any).videoPrompt.trim()) lines.push(`Video/Scene Context: ${(point as any).videoPrompt}`);
     if (storyCustomDetails && storyCustomDetails.trim()) lines.push(`Global Details: ${storyCustomDetails.trim()}`);
+    if (storyColorMood && storyColorMood !== 'natural') {
+      const colorMap: Record<string, string> = { warm: 'Warm golden hour tones', cold: 'Cool blue tones', dark: 'Dark noir aesthetic', bright: 'Bright friendly lighting', neon: 'Neon cyberpunk palette' };
+      lines.push(`Color Mood: ${colorMap[storyColorMood] || storyColorMood}`);
+    }
+    if (storyVideoMood) {
+      const moodMap: Record<string, string> = { action: 'Dynamic, intense energy', calm: 'Calm, serene atmosphere', dramatic: 'Dramatic, high tension', emotional: 'Emotional, intimate', mysterious: 'Mysterious, dark shadows', cheerful: 'Cheerful, bright and upbeat' };
+      lines.push(`Atmosphere: ${moodMap[storyVideoMood] || storyVideoMood}`);
+    }
     
     return lines.join("\n");
   };
@@ -3782,6 +3820,11 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       if (si('session_storyVoiceMode')) setStoryVoiceMode(si('session_storyVoiceMode') as any);
       if (si('session_storyGenerationDirection')) setStoryGenerationDirection(si('session_storyGenerationDirection') as any);
       if (si('session_storyboardFormat')) setStoryboardFormat(si('session_storyboardFormat')!);
+      if (si('session_storySpeakerGender')) setStorySpeakerGender(si('session_storySpeakerGender') as any);
+      if (si('session_storyVideoMood')) setStoryVideoMood(si('session_storyVideoMood')!);
+      if (si('session_storyColorMood')) setStoryColorMood(si('session_storyColorMood')!);
+      if (si('session_storyHook')) setStoryHook(si('session_storyHook')!);
+      if (si('session_storyPacing')) setStoryPacing(si('session_storyPacing')!);
       
       const savedStoryPoints = si('session_storyPoints');
       if (savedStoryPoints) {
@@ -7266,7 +7309,79 @@ Beispiel einer korrekten Antwort:
                     </div>
                   </div>
 
-                  {/* Row 4: Custom Details */}
+                  {/* Row 2: Video-Stimmung + Farbstimmung */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Video-Stimmung</Label>
+                      <Select value={storyVideoMood} onValueChange={setStoryVideoMood}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="action">Action / Dynamisch</SelectItem>
+                          <SelectItem value="calm">Ruhig / Entspannt</SelectItem>
+                          <SelectItem value="dramatic">Dramatisch / Spannend</SelectItem>
+                          <SelectItem value="emotional">Emotional / Berührend</SelectItem>
+                          <SelectItem value="mysterious">Mysteriös / Dunkel</SelectItem>
+                          <SelectItem value="cheerful">Fröhlich / Leicht</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Farbstimmung</Label>
+                      <Select value={storyColorMood} onValueChange={setStoryColorMood}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="warm">Warm (Golden Hour)</SelectItem>
+                          <SelectItem value="cold">Kalt (Blautöne)</SelectItem>
+                          <SelectItem value="dark">Dunkel / Noir</SelectItem>
+                          <SelectItem value="bright">Hell / Freundlich</SelectItem>
+                          <SelectItem value="neon">Neon / Cyberpunk</SelectItem>
+                          <SelectItem value="natural">Natürlich</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Sprecherstimme (conditional) + Pacing */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {storyEnableSpeaker && (
+                      <div className="space-y-1.5">
+                        <Label className="text-sm">Sprecherstimme</Label>
+                        <Select value={storySpeakerGender} onValueChange={(v) => setStorySpeakerGender(v as any)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Männlich</SelectItem>
+                            <SelectItem value="female">Weiblich</SelectItem>
+                            <SelectItem value="neutral">Neutral</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Pacing / Tempo</Label>
+                      <Select value={storyPacing} onValueChange={setStoryPacing}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="instant-action">Sofort Action (0-2s)</SelectItem>
+                          <SelectItem value="slow-build">Langsamer Aufbau (3-5s)</SelectItem>
+                          <SelectItem value="tension-arc">Spannungsbogen</SelectItem>
+                          <SelectItem value="fast-cuts">Schnelle Schnitte</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 4: Hook */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Hook (Einstieg)</Label>
+                    <Textarea
+                      placeholder="z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."
+                      value={storyHook}
+                      onChange={(e) => setStoryHook(e.target.value)}
+                      className="min-h-[50px] resize-y text-sm"
+                    />
+                  </div>
+
+                  {/* Row 5: Custom Details */}
                   <div className="space-y-1.5">
                     <Label className="text-sm">Besondere Details / Anweisungen</Label>
                     <Textarea
