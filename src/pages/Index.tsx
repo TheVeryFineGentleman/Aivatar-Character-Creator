@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ import { HomeScreen } from "@/components/HomeScreen";
 import { CharacterCreator } from "@/components/CharacterCreator";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
+import { useGenerationLimiter, incrementGeneration, decrementGeneration } from "@/hooks/useGenerationLimiter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -456,10 +457,115 @@ const Index = () => {
   // AI Assistant update mode: "text" = nur Text, "camera" = nur Kamera, "image" = nur Bild neu, "both" = beides
   const [sceneAiMode, setSceneAiMode] = useState<"text" | "camera" | "image" | "both">("text");
   
+  // Global generation limiter
+  const { limitReached: generationLimitReached } = useGenerationLimiter();
+
   // Derived values for backward compatibility
   const sceneAiUpdateText = sceneAiMode === "text" || sceneAiMode === "both";
   const sceneAiUpdateCamera = sceneAiMode === "camera" || sceneAiMode === "both";
   const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
+
+  // ============= SESSION PERSISTENCE =============
+  // Save key state to sessionStorage so users can return to their work
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyIdea', storyIdea);
+    } catch {}
+  }, [storyIdea]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyCustomDetails', storyCustomDetails);
+    } catch {}
+  }, [storyCustomDetails]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyArtStyle', storyArtStyle);
+    } catch {}
+  }, [storyArtStyle]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyPointCount', String(storyPointCount));
+    } catch {}
+  }, [storyPointCount]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_sceneDescription', sceneDescription);
+    } catch {}
+  }, [sceneDescription]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_customPrompt', customPrompt);
+    } catch {}
+  }, [customPrompt]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_selectedBackground', selectedBackground);
+    } catch {}
+  }, [selectedBackground]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_activeView', activeView);
+    } catch {}
+  }, [activeView]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_activeMainTab', activeMainTab);
+    } catch {}
+  }, [activeMainTab]);
+
+  useEffect(() => {
+    try {
+      if (storyPoints.length > 0) {
+        sessionStorage.setItem('session_storyPoints', JSON.stringify(storyPoints));
+      }
+    } catch {}
+  }, [storyPoints]);
+
+  useEffect(() => {
+    try {
+      if (characterImages.length > 0) {
+        sessionStorage.setItem('session_characterImages', JSON.stringify(characterImages));
+      }
+    } catch {}
+  }, [characterImages]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyboardMainLocation', storyboardMainLocation);
+    } catch {}
+  }, [storyboardMainLocation]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyEnableSpeaker', String(storyEnableSpeaker));
+    } catch {}
+  }, [storyEnableSpeaker]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyVoiceMode', storyVoiceMode);
+    } catch {}
+  }, [storyVoiceMode]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyGenerationDirection', storyGenerationDirection);
+    } catch {}
+  }, [storyGenerationDirection]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyboardFormat', storyboardFormat);
+    } catch {}
+  }, [storyboardFormat]);
 
   // Helper: Call text AI - direct Gemini for all plans
   const callGeminiOrFull = async (
@@ -942,8 +1048,9 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
   };
 
   const generateStoryboard = async () => {
-    if (!canGenerate || !storyIdea.trim() || isGeneratingStoryboard) return;
+    if (!canGenerate || !storyIdea.trim() || isGeneratingStoryboard || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingStoryboard(true);
     // Clear existing storypoints when regenerating
     setStoryPoints([]);
@@ -1158,6 +1265,7 @@ WICHTIG:
       console.error("Failed to generate storyboard:", error);
     } finally {
       setIsGeneratingStoryboard(false);
+      decrementGeneration();
     }
   };
   
@@ -1896,8 +2004,9 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
 
   // Generate images and video prompts for all story points (2 parallel)
   const generateStoryImagesAndPrompts = async () => {
-    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages) return;
+    if (!apiKey || storyPoints.length === 0 || isGeneratingStoryImages || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingStoryImages(true);
     setStorySetupCollapsed(true); // Auto-collapse setup panel
     
@@ -1942,6 +2051,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
       console.error("Fehler: Keine Referenzbilder - Die hochgeladenen Referenzbilder konnten nicht geladen werden.");
       setIsGeneratingStoryImages(false);
+      decrementGeneration();
       return;
     }
     
@@ -2075,12 +2185,14 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     
     setGeneratingStoryImageIndex(null);
     setIsGeneratingStoryImages(false);
+    decrementGeneration();
   };
 
   // Generate detailed ~200-word video prompts for all scenes
   const generateVideoPrompts = async () => {
-    if (!apiKey || storyPoints.length === 0 || isGeneratingVideoPrompts) return;
+    if (!apiKey || storyPoints.length === 0 || isGeneratingVideoPrompts || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingVideoPrompts(true);
     
     for (let i = 0; i < storyPoints.length; i++) {
@@ -2274,6 +2386,7 @@ Respond ONLY with JSON:
     
     setGeneratingVideoPromptIndex(null);
     setIsGeneratingVideoPrompts(false);
+    decrementGeneration();
   };
 
   // Session-level cache for working Veo payload format and model
@@ -2555,8 +2668,9 @@ Respond ONLY with JSON:
 
   // Generate videos via Gemini Veo API – sequential, one at a time
   const generateVideos = async () => {
-    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey) return;
+    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey || generationLimitReached) return;
     
+    incrementGeneration();
     setIsGeneratingVideos(true);
     setVideoErrors(new Map());
     setVideoResults(new Map());
@@ -2572,6 +2686,7 @@ Respond ONLY with JSON:
     
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
+    decrementGeneration();
     setGeneratingVideoIndex(null);
   };
 
@@ -2592,7 +2707,7 @@ Respond ONLY with JSON:
   // If only dialogText/videoPrompt changed, goes straight to video
   const regenerateSingleVideo = async (sceneIndex: number) => {
     let point = storyPointsRef.current[sceneIndex];
-    if (!point.videoPrompt || isGeneratingVideos || !apiKey) return;
+    if (!point.videoPrompt || isGeneratingVideos || !apiKey || generationLimitReached) return;
     if (!point.generatedImage && !hasImageFieldsChanged(point)) return;
     
     setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
@@ -2732,6 +2847,7 @@ Respond ONLY with JSON:
     }
     
     // Now generate video — read fresh state from ref
+    incrementGeneration();
     setIsGeneratingVideos(true);
     
     let freshPoint = storyPointsRef.current[sceneIndex];
@@ -2823,6 +2939,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     setVideoGenerationPhase("idle");
     setIsGeneratingVideos(false);
     setGeneratingVideoIndex(null);
+    decrementGeneration();
   };
 
   const navigateStoryPointVersion = (pointIndex: number, direction: 'prev' | 'next') => {
@@ -3646,6 +3763,35 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
         setReferenceImages(files);
       });
     }
+
+    // Restore session state
+    try {
+      const s = sessionStorage;
+      const si = s.getItem.bind(s);
+      if (si('session_storyIdea')) setStoryIdea(si('session_storyIdea')!);
+      if (si('session_storyCustomDetails')) setStoryCustomDetails(si('session_storyCustomDetails')!);
+      if (si('session_storyArtStyle')) setStoryArtStyle(si('session_storyArtStyle')!);
+      if (si('session_storyPointCount')) setStoryPointCount(Number(si('session_storyPointCount')));
+      if (si('session_sceneDescription')) setSceneDescription(si('session_sceneDescription')!);
+      if (si('session_customPrompt')) setCustomPrompt(si('session_customPrompt')!);
+      if (si('session_selectedBackground')) setSelectedBackground(si('session_selectedBackground')!);
+      if (si('session_activeView')) setActiveView(si('session_activeView') as any);
+      if (si('session_activeMainTab')) setActiveMainTab(si('session_activeMainTab') as any);
+      if (si('session_storyboardMainLocation')) setStoryboardMainLocation(si('session_storyboardMainLocation')!);
+      if (si('session_storyEnableSpeaker')) setStoryEnableSpeaker(si('session_storyEnableSpeaker') === 'true');
+      if (si('session_storyVoiceMode')) setStoryVoiceMode(si('session_storyVoiceMode') as any);
+      if (si('session_storyGenerationDirection')) setStoryGenerationDirection(si('session_storyGenerationDirection') as any);
+      if (si('session_storyboardFormat')) setStoryboardFormat(si('session_storyboardFormat')!);
+      
+      const savedStoryPoints = si('session_storyPoints');
+      if (savedStoryPoints) {
+        try { setStoryPoints(JSON.parse(savedStoryPoints)); } catch {}
+      }
+      const savedCharacterImages = si('session_characterImages');
+      if (savedCharacterImages) {
+        try { setCharacterImages(JSON.parse(savedCharacterImages)); } catch {}
+      }
+    } catch {}
   }, []);
 
   // Save API key when it changes
@@ -4141,7 +4287,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("🎯 Hintergrund:", selectedBackground);
     console.log("🔢 Anzahl zu generierende Bilder:", imageCount[0]);
     
-    if (!canGenerate) {
+    if (!canGenerate || generationLimitReached) {
       console.log("❌ Fehler: Keine Generierung möglich");
       return;
     }
@@ -4153,6 +4299,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     }
 
     console.log("✅ Validierung erfolgreich, starte Generierung...");
+    incrementGeneration();
     setIsGenerating(true);
     isGeneratingRef.current = true;
     
@@ -4189,11 +4336,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       setIsGenerating(false);
       isGeneratingRef.current = false;
       generationQueueRef.current = [];
+      decrementGeneration();
     }
   };
 
   const handleGenerateMore = async () => {
-    if (!canGenerate) {
+    if (!canGenerate || generationLimitReached) {
       return;
     }
     
@@ -4230,6 +4378,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
     
+    incrementGeneration();
     setIsGenerating(true);
     isGeneratingRef.current = true;
 
@@ -4255,6 +4404,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       setIsGenerating(false);
       isGeneratingRef.current = false;
       generationQueueRef.current = [];
+      decrementGeneration();
     }
   };
 
