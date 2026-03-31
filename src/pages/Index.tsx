@@ -1086,6 +1086,11 @@ EINGABEN:
 - voiceMode: "${storyVoiceMode}"
 - generationDirection: "${storyGenerationDirection}"
 - numberOfCharacters: ${storyReferenceImages.length}
+- videoMood: "${storyVideoMood}"
+- colorMood: "${storyColorMood}"
+- pacing: "${storyPacing}"
+${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
+${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyReferenceImages.length >= 2 ? `- characterNames: [${storyReferenceLabels.map((l, i) => `"${l || `Person ${i + 1}`}"`).join(', ')}]` : ''}
 
 HARTE AUSGABEREGELN:
