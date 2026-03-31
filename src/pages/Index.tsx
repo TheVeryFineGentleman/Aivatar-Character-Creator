@@ -31,6 +31,7 @@ import { HomeScreen } from "@/components/HomeScreen";
 import { CharacterCreator } from "@/components/CharacterCreator";
 import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
+import { useGenerationLimiter, incrementGeneration, decrementGeneration } from "@/hooks/useGenerationLimiter";
 import {
   DropdownMenu,
   DropdownMenuContent,
