@@ -49,10 +49,20 @@ export default function Legal() {
             <TabsContent value="impressum" className="mt-0">
               <ScrollArea className="max-h-[70vh] pr-4">
                 <div className="space-y-6 text-sm">
-                  <h2 className="text-2xl font-bold text-primary">IMPRESSUM</h2>
+                  <h2 className="text-2xl font-bold text-primary">Impressum</h2>
                   <div className="space-y-4">
                     <div>
+                      <h3 className="font-semibold text-foreground mb-2">Angaben gemäß § 5 TMG</h3>
+                      <p className="text-muted-foreground">Torsten Jaeger</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Kontakt</h3>
+                      <p className="text-muted-foreground">E-Mail: info@torstenjaeger.com</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h3>
                       <p className="text-muted-foreground">
+                        Torsten Jaeger<br />
                         Trevionis LLC<br />
                         2201 MENAUL BLVD NE STE A<br />
                         87107 Albuquerque<br />
@@ -60,9 +70,40 @@ export default function Legal() {
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Haftung für Inhalte</h3>
                       <p className="text-muted-foreground">
-                        Torsten Jaeger
+                        Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Haftung für Links</h3>
+                      <p className="text-muted-foreground">
+                        Unsere Website enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Urheberrecht</h3>
+                      <p className="text-muted-foreground">
+                        Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Online-Streitbeilegung (OS-Plattform)</h3>
+                      <p className="text-muted-foreground">
+                        Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
+                        <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          https://ec.europa.eu/consumers/odr/
+                        </a>
+                      </p>
+                      <p className="text-muted-foreground mt-2">Unsere E-Mail-Adresse findest du oben im Impressum.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Verbraucherstreitbeilegung</h3>
+                      <p className="text-muted-foreground">
+                        Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
                       </p>
                     </div>
                   </div>
@@ -73,101 +114,232 @@ export default function Legal() {
             <TabsContent value="datenschutz" className="mt-0">
               <ScrollArea className="max-h-[70vh] pr-4">
                 <div className="space-y-6 text-sm">
-                  <h2 className="text-2xl font-bold text-primary">DATENSCHUTZERKLÄRUNG</h2>
+                  <h2 className="text-2xl font-bold text-primary">🔒 Datenschutzerklärung</h2>
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">1. Datenschutz auf einen Blick</h3>
-                      <h4 className="font-medium text-foreground mt-3 mb-1">Allgemeine Hinweise</h4>
+                      <h3 className="font-semibold text-foreground mb-2">Verantwortlicher</h3>
                       <p className="text-muted-foreground">
-                        Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen.
+                        Trevionis LLC<br />
+                        2201 MENAUL BLVD NE STE A<br />
+                        87107 Albuquerque<br />
+                        NM USA
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground mb-1">Datenerfassung auf dieser Website</h4>
+                      <h3 className="font-semibold text-foreground mb-2">Allgemeine Hinweise zur Datenverarbeitung</h3>
                       <p className="text-muted-foreground">
-                        <strong>Wer ist verantwortlich für die Datenerfassung auf dieser Website?</strong><br />
-                        Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Impressum dieser Website entnehmen.
+                        Der Schutz deiner personenbezogenen Daten ist uns wichtig. Die Verarbeitung erfolgt ausschließlich im Rahmen der gesetzlichen Bestimmungen, insbesondere der Datenschutz-Grundverordnung (DSGVO).
                       </p>
                       <p className="text-muted-foreground mt-2">
-                        <strong>Wie erfassen wir Ihre Daten?</strong><br />
-                        Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst.
+                        Personenbezogene Daten sind alle Daten, mit denen du persönlich identifiziert werden kannst.
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground mb-1">Wofür nutzen wir Ihre Daten?</h4>
+                      <h3 className="font-semibold text-foreground mb-2">Datenerfassung beim Besuch der Website</h3>
+                      <p className="text-muted-foreground">Beim Aufruf dieser Website werden automatisch folgende Daten erfasst:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>IP-Adresse</li>
+                        <li>Browsertyp und Version</li>
+                        <li>Betriebssystem</li>
+                        <li>Datum und Uhrzeit des Zugriffs</li>
+                        <li>Referrer-URL</li>
+                        <li>aufgerufene Seiten</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Diese Daten dienen der technischen Bereitstellung und Sicherheit der Website.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Datenerfassung durch Eingaben</h3>
+                      <p className="text-muted-foreground">Wenn du Daten aktiv eingibst (z. B. Formular oder Webinar-Anmeldung), werden folgende Daten verarbeitet:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Name</li>
+                        <li>E-Mail-Adresse</li>
+                        <li>Telefonnummer (optional)</li>
+                        <li>Inhalte aus Formularen</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Zweck der Verarbeitung</h3>
+                      <p className="text-muted-foreground">Die Verarbeitung erfolgt zu folgenden Zwecken:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Bereitstellung der Website</li>
+                        <li>Kommunikation</li>
+                        <li>Versand von E-Mails und Informationen</li>
+                        <li>Durchführung von Marketingmaßnahmen</li>
+                        <li>Analyse und Optimierung</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Rechtsgrundlagen</h3>
+                      <p className="text-muted-foreground">Die Verarbeitung erfolgt gemäß:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)</li>
+                        <li>Art. 6 Abs. 1 lit. b DSGVO (Vertrag / vorvertragliche Maßnahmen)</li>
+                        <li>Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse)</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Cookies und Consent Management</h3>
+                      <p className="text-muted-foreground">Unsere Website verwendet Cookies und ähnliche Technologien. Beim ersten Besuch wirst du über ein Cookie-Consent-Tool gefragt, ob du der Nutzung zustimmst.</p>
+                      <p className="text-muted-foreground mt-2">Du kannst auswählen:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>notwendige Cookies</li>
+                        <li>Analyse-Cookies</li>
+                        <li>Marketing-Cookies</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Deine Einstellungen kannst du jederzeit ändern.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Facebook Ads und Meta Pixel</h3>
                       <p className="text-muted-foreground">
-                        Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website zu gewährleisten. Andere Daten können zur Analyse Ihres Nutzerverhaltens verwendet werden.
+                        Wir nutzen Dienste der Meta Platforms Ireland Ltd., 4 Grand Canal Square, Dublin 2, Irland.
+                      </p>
+                      <p className="text-muted-foreground mt-2">Der Meta Pixel ermöglicht:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Tracking des Nutzerverhaltens</li>
+                        <li>Messung von Conversions</li>
+                        <li>Ausspielung personalisierter Werbung</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">
+                        Weitere Informationen:{" "}
+                        <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://www.facebook.com/privacy/policy/</a>
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground mb-1">Welche Rechte haben Sie bezüglich Ihrer Daten?</h4>
+                      <h3 className="font-semibold text-foreground mb-2">Google Dienste (Analytics und Ads)</h3>
                       <p className="text-muted-foreground">
-                        Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen.
+                        Wir nutzen Dienste der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland.
+                      </p>
+                      <p className="text-muted-foreground mt-2">Eingesetzte Dienste:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Google Analytics</li>
+                        <li>Google Ads</li>
+                        <li>Google Conversion Tracking</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Diese erfassen:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Nutzerverhalten</li>
+                        <li>Klicks</li>
+                        <li>Verweildauer</li>
+                        <li>Herkunft</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">
+                        Weitere Informationen:{" "}
+                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://policies.google.com/privacy</a>
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">2. Hosting</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Einsatz von KI-Tools</h3>
+                      <p className="text-muted-foreground">Zur Erstellung und Verarbeitung von Inhalten nutzen wir:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>OpenAI (ChatGPT)</li>
+                        <li>Google KI-Modelle</li>
+                        <li>HeyGen</li>
+                        <li>ElevenLabs</li>
+                        <li>OpenArt</li>
+                        <li>Flux</li>
+                        <li>Sora</li>
+                        <li>Veo</li>
+                        <li>Kling</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Dabei können verarbeitet werden:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Texte</li>
+                        <li>Bilder</li>
+                        <li>Videos</li>
+                        <li>Sprache</li>
+                        <li>Nutzungsdaten</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Die Verarbeitung kann auch außerhalb der EU erfolgen.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">E-Mail-Marketing</h3>
+                      <p className="text-muted-foreground">Wir nutzen folgende Anbieter:</p>
+                      <p className="text-muted-foreground mt-2">
+                        Quentn.com GmbH<br />
+                        Friedrich-Ebert-Straße 51<br />
+                        14469 Potsdam, Deutschland
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        4leads GmbH<br />
+                        Werkstraße 4a<br />
+                        07426 Königsee, Deutschland
+                      </p>
+                      <p className="text-muted-foreground mt-2">Dabei werden verarbeitet:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Name</li>
+                        <li>E-Mail-Adresse</li>
+                        <li>Öffnungs- und Klickverhalten</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Die Anmeldung erfolgt im Double-Opt-in-Verfahren. Abmeldung ist jederzeit möglich.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Funnel- und Landingpage-System</h3>
+                      <p className="text-muted-foreground">Wir nutzen: Funnelcockpit (Just Viral GmbH)</p>
+                      <p className="text-muted-foreground mt-2">Dabei werden verarbeitet:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Kontaktdaten</li>
+                        <li>Formularinhalte</li>
+                        <li>Interaktionsdaten</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Messenger-Tools</h3>
+                      <p className="text-muted-foreground">Wir nutzen: ManyChat Inc.</p>
+                      <p className="text-muted-foreground mt-2">Dabei werden verarbeitet:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Name</li>
+                        <li>Nachrichteninhalte</li>
+                        <li>Interaktionen</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Zahlungsanbieter</h3>
                       <p className="text-muted-foreground">
-                        Die Website wird auf Servern von spezialisierten Hosting-Anbietern gehostet. Personenbezogene Daten, die auf dieser Website erfasst werden, werden auf den Servern des Hosters gespeichert.
+                        Wir nutzen: Digistore24 GmbH<br />
+                        St.-Godehard-Straße 32<br />
+                        31139 Hildesheim, Deutschland
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">3. Allgemeine Hinweise und Pflichtinformationen</h3>
-                      <h4 className="font-medium text-foreground mt-3 mb-1">Datenschutz</h4>
+                      <h3 className="font-semibold text-foreground mb-2">Weitergabe von Daten</h3>
+                      <p className="text-muted-foreground">Eine Weitergabe erfolgt nur:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>an technische Dienstleister</li>
+                        <li>an Marketingplattformen</li>
+                        <li>an Zahlungsanbieter</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Speicherdauer</h3>
                       <p className="text-muted-foreground">
-                        Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.
+                        Daten werden nur so lange gespeichert, wie es für den jeweiligen Zweck erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen.
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground mb-1">Hinweis zur verantwortlichen Stelle</h4>
-                      <p className="text-muted-foreground">
-                        Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:<br /><br />
-                        Digital Rocket Ltd<br />
-                        Torsten Jaeger<br />
-                        Keryneias Mansion, App. 102, Keryneias Street 16<br />
-                        7040 Oroclini<br />
-                        Zypern<br /><br />
-                        Email: info(at)torstenjaeger.com
-                      </p>
+                      <h3 className="font-semibold text-foreground mb-2">Deine Rechte</h3>
+                      <p className="text-muted-foreground">Du hast das Recht auf:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>Auskunft</li>
+                        <li>Berichtigung</li>
+                        <li>Löschung</li>
+                        <li>Einschränkung</li>
+                        <li>Datenübertragbarkeit</li>
+                        <li>Widerspruch</li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">Du kannst dich bei einer Aufsichtsbehörde beschweren.</p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground mb-1">Speicherdauer</h4>
-                      <p className="text-muted-foreground">
-                        Soweit innerhalb dieser Datenschutzerklärung keine speziellere Speicherdauer genannt wurde, verbleiben Ihre personenbezogenen Daten bei uns, bis der Zweck für die Datenverarbeitung entfällt.
-                      </p>
+                      <h3 className="font-semibold text-foreground mb-2">Datensicherheit</h3>
+                      <p className="text-muted-foreground">Wir setzen folgende Maßnahmen ein:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        <li>SSL-Verschlüsselung</li>
+                        <li>Zugriffsbeschränkungen</li>
+                        <li>sichere Server</li>
+                      </ul>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">4. Datenerfassung auf dieser Website</h3>
-                      <h4 className="font-medium text-foreground mt-3 mb-1">Cookies</h4>
-                      <p className="text-muted-foreground">
-                        Unsere Internetseiten verwenden so genannte "Cookies". Cookies sind kleine Textdateien und richten auf Ihrem Endgerät keinen Schaden an.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-foreground mb-1">Server-Log-Dateien</h4>
-                      <p className="text-muted-foreground">
-                        Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">5. Newsletter</h3>
-                      <p className="text-muted-foreground">
-                        Wenn Sie den auf der Website angebotenen Newsletter beziehen möchten, benötigen wir von Ihnen eine E-Mail-Adresse sowie Informationen, welche uns die Überprüfung gestatten, dass Sie der Inhaber der angegebenen E-Mail-Adresse sind.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">6. Plugins und Tools</h3>
-                      <p className="text-muted-foreground">
-                        Diese Website nutzt verschiedene Plugins und Tools zur Verbesserung der Nutzererfahrung.
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs mt-6">
-                        Die vollständige Datenschutzerklärung finden Sie unter:{" "}
-                        <a href="https://aivatarsacademy.online/datenschutz" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          https://aivatarsacademy.online/datenschutz
-                        </a>
-                      </p>
+                      <h3 className="font-semibold text-foreground mb-2">Änderungen</h3>
+                      <p className="text-muted-foreground">Diese Datenschutzerklärung kann jederzeit angepasst werden.</p>
                     </div>
                   </div>
                 </div>
@@ -177,121 +349,84 @@ export default function Legal() {
             <TabsContent value="agb" className="mt-0">
               <ScrollArea className="max-h-[70vh] pr-4">
                 <div className="space-y-6 text-sm">
-                  <h2 className="text-2xl font-bold text-primary">ALLGEMEINE GESCHÄFTSBEDINGUNGEN (AGB)</h2>
+                  <h2 className="text-2xl font-bold text-primary">Allgemeine Geschäftsbedingungen (AGB)</h2>
                   <div className="space-y-4">
                     <div>
                       <h3 className="font-semibold text-foreground mb-2">1. Geltungsbereich</h3>
-                      <p className="text-muted-foreground">Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge zwischen:</p>
+                      <p className="text-muted-foreground">Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge zwischen</p>
                       <p className="text-muted-foreground mt-2">
-                        Trevionis LLC<br />2201 MENAUL BLVD NE STE A<br />87107 Albuquerque<br />NM USA
+                        Torsten Jaeger<br />
+                        Trevionis LLC<br />
+                        2201 MENAUL BLVD NE STE A<br />
+                        87107 Albuquerque<br />
+                        NM USA
                       </p>
-                      <p className="text-muted-foreground mt-2">– nachfolgend „Anbieter" –</p>
-                      <p className="text-muted-foreground mt-2">und den Nutzern der angebotenen digitalen Inhalte, Produkte und Dienstleistungen.</p>
-                      <p className="text-muted-foreground mt-2">Abweichende Bedingungen des Nutzers werden nicht anerkannt.</p>
+                      <p className="text-muted-foreground mt-2">und den Nutzern der angebotenen digitalen Produkte, Softwarelösungen und Dienstleistungen.</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-2">2. Vertragsgegenstand</h3>
-                      <p className="text-muted-foreground">Der Anbieter bietet digitale Produkte und Dienstleistungen an, insbesondere:</p>
-                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                        <li>Onlinekurse und Schulungen</li>
-                        <li>Softwarelösungen und Tools (inkl. KI-basierter Anwendungen)</li>
-                        <li>digitale Inhalte (z. B. Videos, Texte, Vorlagen)</li>
-                        <li>Affiliate-Angebote und Empfehlungen</li>
-                      </ul>
-                      <p className="text-muted-foreground mt-2">Die konkreten Inhalte ergeben sich aus der jeweiligen Produktbeschreibung.</p>
+                      <p className="text-muted-foreground">Gegenstand des Vertrages ist der Zugang zu digitalen Inhalten, Software, Schulungen sowie ggf. Community-Bereichen.</p>
+                      <p className="text-muted-foreground mt-2">Die Leistungen erfolgen ausschließlich digital.</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-2">3. Vertragsschluss</h3>
-                      <p className="text-muted-foreground">Der Vertrag kommt zustande, sobald der Nutzer:</p>
+                      <p className="text-muted-foreground">Der Vertrag kommt zustande, sobald der Nutzer den Bestellprozess abschließt und eine Bestätigung erhält.</p>
+                      <p className="text-muted-foreground mt-2">Die Abwicklung erfolgt in der Regel über Digistore24, Stripe oder vergleichbare Zahlungsanbieter.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">4. Nutzung der Software und Inhalte</h3>
+                      <p className="text-muted-foreground">Der Nutzer erhält ein einfaches, nicht übertragbares Nutzungsrecht.</p>
+                      <p className="text-muted-foreground mt-2">Es ist nicht erlaubt:</p>
                       <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                        <li>ein Produkt auswählt</li>
-                        <li>den Bestellprozess durchläuft</li>
-                        <li>und die Zahlung erfolgreich abschließt</li>
-                      </ul>
-                      <p className="text-muted-foreground mt-2">Die Abwicklung erfolgt in der Regel über externe Zahlungsanbieter (z. B. Digistore24 oder vergleichbare Plattformen).</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">4. Preise und Zahlung</h3>
-                      <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                        <li>Alle Preise sind Endpreise, sofern nicht anders angegeben.</li>
-                        <li>Die Zahlung erfolgt über die im Bestellprozess angebotenen Zahlungsmethoden.</li>
-                        <li>Der Zugriff auf digitale Produkte erfolgt erst nach vollständigem Zahlungseingang.</li>
+                        <li>Inhalte weiterzugeben oder zu verkaufen</li>
+                        <li>Zugänge zu teilen</li>
+                        <li>Inhalte zu kopieren oder öffentlich zugänglich zu machen</li>
                       </ul>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">5. Zugang zu digitalen Produkten</h3>
-                      <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                        <li>Nach dem Kauf erhält der Nutzer Zugriff auf die gebuchten Inhalte.</li>
-                        <li>Der Zugriff kann zeitlich begrenzt oder unbegrenzt sein, abhängig vom jeweiligen Angebot.</li>
-                        <li>Der Anbieter behält sich vor, Inhalte zu aktualisieren, anzupassen oder weiterzuentwickeln.</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">6. Nutzungsrechte</h3>
-                      <p className="text-muted-foreground">Alle Inhalte sind urheberrechtlich geschützt. Der Nutzer erhält ein einfaches, nicht übertragbares Nutzungsrecht.</p>
-                      <p className="text-muted-foreground mt-2">Nicht erlaubt sind insbesondere:</p>
+                      <h3 className="font-semibold text-foreground mb-2">5. Nutzung von API-Schnittstellen</h3>
+                      <p className="text-muted-foreground">Für bestimmte Funktionen (z. B. KI-Generierung, Video- oder Content-Erstellung) ist die Nutzung externer API-Dienste erforderlich.</p>
+                      <p className="text-muted-foreground mt-2">Der Nutzer ist selbst verantwortlich für:</p>
                       <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                        <li>Weitergabe an Dritte</li>
-                        <li>Vervielfältigung oder Verkauf</li>
-                        <li>öffentliche Zugänglichmachung</li>
-                        <li>Nutzung für eigene kommerzielle Weiterverkäufe</li>
+                        <li>die Einrichtung eigener API-Zugänge</li>
+                        <li>die Abrechnung dieser Dienste</li>
+                        <li>die Einhaltung der jeweiligen Nutzungsbedingungen der Anbieter</li>
                       </ul>
-                      <p className="text-muted-foreground mt-2">Verstöße können rechtlich verfolgt werden.</p>
+                      <p className="text-muted-foreground mt-2">Es erfolgt keine Abrechnung über ein internes Credit-System. Kosten für externe Dienste trägt ausschließlich der Nutzer.</p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">7. Nutzung von KI-Tools und API</h3>
-                      <p className="text-muted-foreground">Im Rahmen der angebotenen Leistungen können KI-Tools und externe Schnittstellen (APIs) genutzt werden.</p>
-                      <p className="text-muted-foreground mt-2 font-medium">Wichtig:</p>
+                      <h3 className="font-semibold text-foreground mb-2">6. Verfügbarkeit</h3>
+                      <p className="text-muted-foreground">Wir bemühen uns um eine möglichst unterbrechungsfreie Verfügbarkeit. Es besteht jedoch kein Anspruch auf permanente Erreichbarkeit. Insbesondere bei externen Diensten (z. B. KI-Anbieter) kann es zu Einschränkungen kommen.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">7. Haftung</h3>
+                      <p className="text-muted-foreground">Wir haften nur für Vorsatz und grobe Fahrlässigkeit. Für Ergebnisse, die durch die Nutzung der Software entstehen (z. B. Einnahmen, Reichweite), wird keine Garantie übernommen. Die Nutzung erfolgt auf eigene Verantwortung.</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">8. Updates und Änderungen</h3>
+                      <p className="text-muted-foreground">Wir behalten uns vor:</p>
                       <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                        <li>Der Nutzer ist selbst dafür verantwortlich, eigene API-Zugänge einzurichten und zu bezahlen</li>
-                        <li>Der Anbieter stellt keine Garantie für Verfügbarkeit oder Funktionsfähigkeit externer Dienste</li>
-                        <li>Ergebnisse von KI-Systemen können variieren und sind nicht garantiert</li>
+                        <li>Inhalte zu aktualisieren</li>
+                        <li>Funktionen anzupassen</li>
+                        <li>Angebote weiterzuentwickeln</li>
                       </ul>
-                      <p className="text-muted-foreground mt-2">Der Anbieter haftet nicht für Inhalte, die durch KI generiert werden.</p>
+                      <p className="text-muted-foreground mt-2">Dies dient der Verbesserung der Leistung.</p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">8. Haftung</h3>
-                      <p className="text-muted-foreground">Der Anbieter haftet nur für Vorsatz und grobe Fahrlässigkeit. Für einfache Fahrlässigkeit haftet der Anbieter nur bei Verletzung wesentlicher Vertragspflichten.</p>
-                      <p className="text-muted-foreground mt-2">Keine Haftung besteht für:</p>
-                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                        <li>entgangene Gewinne</li>
-                        <li>indirekte Schäden</li>
-                        <li>Ergebnisse aus der Nutzung der Produkte</li>
-                      </ul>
-                      <p className="text-muted-foreground mt-2">Die Nutzung erfolgt auf eigene Verantwortung.</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">9. Keine Erfolgsgarantie</h3>
-                      <p className="text-muted-foreground">Die angebotenen Inhalte stellen keine Garantie für bestimmte Ergebnisse dar. Insbesondere wird kein Einkommen oder wirtschaftlicher Erfolg zugesichert. Ergebnisse hängen immer von der individuellen Umsetzung des Nutzers ab.</p>
+                      <h3 className="font-semibold text-foreground mb-2">9. Kündigung und Laufzeit</h3>
+                      <p className="text-muted-foreground">Sofern nicht anders angegeben, handelt es sich um einmalige Produkte ohne Laufzeit. Bei Abonnements gelten die jeweils angegebenen Bedingungen.</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-2">10. Widerrufsrecht</h3>
-                      <p className="text-muted-foreground">Bei digitalen Produkten kann das Widerrufsrecht erlöschen, sobald:</p>
-                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                        <li>der Nutzer ausdrücklich zustimmt, dass der Zugriff sofort beginnt</li>
-                        <li>und bestätigt, dass er auf sein Widerrufsrecht verzichtet</li>
-                      </ul>
-                      <p className="text-muted-foreground mt-2">Details werden im Bestellprozess geregelt.</p>
+                      <p className="text-muted-foreground">Es gelten die gesetzlichen Regelungen. Bei digitalen Produkten kann das Widerrufsrecht erlöschen, sobald mit der Ausführung begonnen wurde und der Nutzer zugestimmt hat.</p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">11. Affiliate-Links und Empfehlungen</h3>
-                      <p className="text-muted-foreground">Der Anbieter kann Produkte und Dienstleistungen Dritter empfehlen. Dabei kann eine Provision entstehen. Für Inhalte, Leistungen und Ergebnisse dieser Drittanbieter übernimmt der Anbieter keine Haftung.</p>
+                      <h3 className="font-semibold text-foreground mb-2">11. Urheberrecht</h3>
+                      <p className="text-muted-foreground">Alle Inhalte, Systeme und Materialien sind urheberrechtlich geschützt. Jegliche unerlaubte Nutzung wird rechtlich verfolgt.</p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">12. Verfügbarkeit der Plattform</h3>
-                      <p className="text-muted-foreground">Der Anbieter bemüht sich um eine möglichst unterbrechungsfreie Verfügbarkeit. Es kann jedoch zu Ausfällen oder Wartungen kommen. Ein Anspruch auf permanente Verfügbarkeit besteht nicht.</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">13. Änderungen der AGB</h3>
-                      <p className="text-muted-foreground">Der Anbieter kann diese AGB jederzeit anpassen. Es gelten jeweils die zum Zeitpunkt des Kaufs gültigen Bedingungen.</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">14. Anwendbares Recht</h3>
-                      <p className="text-muted-foreground">Es gilt das Recht des Landes, in dem der Anbieter seinen Sitz hat. Für Verbraucher können zusätzlich zwingende gesetzliche Regelungen ihres Wohnsitzlandes gelten.</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">15. Schlussbestimmungen</h3>
-                      <p className="text-muted-foreground">Sollte eine Bestimmung dieser AGB unwirksam sein, bleibt der Rest unberührt.</p>
+                      <h3 className="font-semibold text-foreground mb-2">12. Schlussbestimmungen</h3>
+                      <p className="text-muted-foreground">Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist, soweit zulässig, der Sitz des Anbieters. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen unberührt.</p>
                     </div>
                   </div>
                 </div>
