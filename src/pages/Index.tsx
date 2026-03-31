@@ -7182,11 +7182,11 @@ Beispiel einer korrekten Antwort:
                 <div className="flex flex-col items-center md:items-end gap-3 pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
-                    disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
+                    disabled={isGeneratingStoryAiIdea || isLoadingStorySuggestions || !storyAiAssistantInput.trim()}
                     className="w-full md:w-10 h-10 md:h-[155px] rounded-lg"
-                    title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
+                    title={storyIdea.trim() ? "Idee anpassen" : "Vorschläge generieren"}
                   >
-                    {isGeneratingStoryAiIdea ? (
+                    {(isGeneratingStoryAiIdea || isLoadingStorySuggestions) ? (
                       <Sparkles className="w-5 h-5 animate-spin" />
                     ) : (
                       <ChevronLeft className="w-6 h-6" />
@@ -7196,7 +7196,7 @@ Beispiel einer korrekten Antwort:
                     value={ideaCount}
                     onChange={(e) => setIdeaCount(e.target.value)}
                     className="w-10 h-7 text-xs text-center rounded border border-border bg-background text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-                    title="Anzahl Ideen"
+                    title="Anzahl Vorschläge"
                   >
                     {[1,2,3,4,5].map(n => (
                       <option key={n} value={String(n)}>{n}</option>
