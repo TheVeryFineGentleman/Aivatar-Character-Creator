@@ -4376,6 +4376,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
     
+    incrementGeneration();
     setIsGenerating(true);
     isGeneratingRef.current = true;
 
