@@ -3126,6 +3126,14 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     if (point.negativePrompts && point.negativePrompts.trim()) lines.push(`Avoid: ${point.negativePrompts}`);
     if ((point as any).videoPrompt && (point as any).videoPrompt.trim()) lines.push(`Video/Scene Context: ${(point as any).videoPrompt}`);
     if (storyCustomDetails && storyCustomDetails.trim()) lines.push(`Global Details: ${storyCustomDetails.trim()}`);
+    if (storyColorMood && storyColorMood !== 'natural') {
+      const colorMap: Record<string, string> = { warm: 'Warm golden hour tones', cold: 'Cool blue tones', dark: 'Dark noir aesthetic', bright: 'Bright friendly lighting', neon: 'Neon cyberpunk palette' };
+      lines.push(`Color Mood: ${colorMap[storyColorMood] || storyColorMood}`);
+    }
+    if (storyVideoMood) {
+      const moodMap: Record<string, string> = { action: 'Dynamic, intense energy', calm: 'Calm, serene atmosphere', dramatic: 'Dramatic, high tension', emotional: 'Emotional, intimate', mysterious: 'Mysterious, dark shadows', cheerful: 'Cheerful, bright and upbeat' };
+      lines.push(`Atmosphere: ${moodMap[storyVideoMood] || storyVideoMood}`);
+    }
     
     return lines.join("\n");
   };
