@@ -1070,7 +1070,7 @@ WICHTIG:
             const mainLocation = parsed.mainLocation || "";
             const scenes = parsed.scenes || [];
             
-            if (Array.isArray(scenes) && scenes.length > 0) {
+            if (Array.isArray(scenes) && scenes.length >= storyPointCount) {
               setStoryboardMainLocation(mainLocation);
               
               setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
@@ -1086,6 +1086,55 @@ WICHTIG:
                 shotType: ""
               })));
               setStoryboardAnimationKey(prev => prev + 1);
+            } else {
+              // AI returned fewer scenes than requested — retry once
+              console.warn(`⚠️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
+              setStoryPoints([]);
+              // Recursive retry (single attempt)
+              const retryResponse = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{
+                      role: "user",
+                      parts: [{
+                        text: `${promptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
+                      }]
+                    }],
+                    generationConfig: {
+                      temperature: 0.8,
+                      maxOutputTokens: 4000,
+                      responseMimeType: "application/json"
+                    }
+                  }),
+                }
+              );
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                const retryText = retryData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (retryText) {
+                  const retryParsed = extractJsonFromAiResponse(retryText);
+                  const retryScenes = retryParsed.scenes || [];
+                  if (Array.isArray(retryScenes) && retryScenes.length > 0) {
+                    setStoryboardMainLocation(retryParsed.mainLocation || "");
+                    setStoryPoints(retryScenes.slice(0, storyPointCount).map((scene: any) => ({
+                      versions: [scene.detailedDescription || scene.summary || ""],
+                      currentVersion: 0,
+                      summary: scene.summary || "",
+                      detailedDescription: scene.detailedDescription || "",
+                      dialogText: scene.dialogText || "",
+                      specificArea: "",
+                      keyAction: "",
+                      emotion: "",
+                      cameraAngle: "",
+                      shotType: ""
+                    })));
+                    setStoryboardAnimationKey(prev => prev + 1);
+                  }
+                }
+              }
             }
           } catch (parseError) {
             console.error("JSON parse error, falling back to line-based parsing:", parseError);
