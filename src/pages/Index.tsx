@@ -866,13 +866,65 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     }
   };
 
-  // Story Idea AI Assistant handler - generates multiple ideas
+  // Story Idea AI Assistant handler - generates multiple ideas or suggestions
   const handleGenerateStoryIdea = async () => {
     if (!canGenerate || isGeneratingStoryAiIdea) return;
     
     const count = parseInt(ideaCount);
     const hasExistingIdea = storyIdea.trim().length > 0;
     const isModifyMode = hasExistingIdea;
+    
+    // When story field is empty, generate short suggestion chips instead of full stories
+    if (!isModifyMode && storyAiAssistantInput.trim()) {
+      setIsLoadingStorySuggestions(true);
+      setStorySuggestions([]);
+      try {
+        const refImageInfo = storyReferenceImages.length > 0
+          ? `\n\nDer Nutzer hat ${storyReferenceImages.length} Referenzbild${storyReferenceImages.length > 1 ? 'er' : ''} hochgeladen. Berücksichtige, dass die Story mit einem Charakter aus den Referenzbildern erstellt wird.`
+          : '';
+        
+        const suggestionPrompt = `Generiere genau ${count} sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung) basierend auf dieser Nutzer-Anfrage:
+
+"${storyAiAssistantInput.trim()}"${refImageInfo}
+
+Jede Zusammenfassung beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen.
+
+Antworte NUR mit den ${count} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: suggestionPrompt }] }],
+              generationConfig: { temperature: 0.9, maxOutputTokens: 500 }
+            })
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const ideas = text.split('\n')
+              .map((line: string) => line.replace(/^[-•*\d.)\s]+/, '').trim())
+              .filter((line: string) => line.length > 5)
+              .slice(0, count);
+            
+            if (ideas.length > 0) {
+              setStorySuggestions(ideas);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to generate suggestions:", error);
+      } finally {
+        setIsLoadingStorySuggestions(false);
+      }
+      return;
+    }
     
     setIsGeneratingStoryAiIdea(true);
     try {
@@ -3674,6 +3726,11 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
   const generateStorySuggestions = async (key: string) => {
     if (!key || isLoadingStorySuggestions) return;
     
+    const count = parseInt(ideaCount) || 3;
+    const refImageInfo = storyReferenceImages.length > 0
+      ? `\n\nDer Nutzer hat ${storyReferenceImages.length} Referenzbild${storyReferenceImages.length > 1 ? 'er' : ''} hochgeladen. Berücksichtige, dass die Story mit einem Charakter aus den Referenzbildern erstellt wird.`
+      : '';
+    
     setIsLoadingStorySuggestions(true);
     try {
       const response = await fetch(
@@ -3685,26 +3742,16 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+                  ? `Generiere genau ${count} sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).${refImageInfo}
 
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
-Gute Beispiele:
-- Konfrontation nach dem Betrug
-- Liebesgeständnis im Regen
-- Letzte Nachricht vor dem Abflug
-
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+Antworte NUR mit den ${count} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau ${count} sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte — optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).${refImageInfo}
 
 WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
-Gute Beispiele:
-- Fremder rettet Kind im Park
-- Traumjob-Absage verändert alles
-- Zufälliges Wiedersehen nach Jahren
-
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+Antworte NUR mit den ${count} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
             }]
           }),
@@ -3716,11 +3763,11 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
           const ideas = text.split('\n')
-            .map((line: string) => line.trim())
-            .filter((line: string) => line.length > 10)
-            .slice(0, 3);
+            .map((line: string) => line.replace(/^[-•*\d.)\s]+/, '').trim())
+            .filter((line: string) => line.length > 5)
+            .slice(0, count);
           
-          if (ideas.length === 3) {
+          if (ideas.length > 0) {
             setStorySuggestions(ideas);
           }
         }
@@ -7135,11 +7182,11 @@ Beispiel einer korrekten Antwort:
                 <div className="flex flex-col items-center md:items-end gap-3 pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
-                    disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
+                    disabled={isGeneratingStoryAiIdea || isLoadingStorySuggestions || !storyAiAssistantInput.trim()}
                     className="w-full md:w-10 h-10 md:h-[155px] rounded-lg"
-                    title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
+                    title={storyIdea.trim() ? "Idee anpassen" : "Vorschläge generieren"}
                   >
-                    {isGeneratingStoryAiIdea ? (
+                    {(isGeneratingStoryAiIdea || isLoadingStorySuggestions) ? (
                       <Sparkles className="w-5 h-5 animate-spin" />
                     ) : (
                       <ChevronLeft className="w-6 h-6" />
@@ -7149,7 +7196,7 @@ Beispiel einer korrekten Antwort:
                     value={ideaCount}
                     onChange={(e) => setIdeaCount(e.target.value)}
                     className="w-10 h-7 text-xs text-center rounded border border-border bg-background text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-                    title="Anzahl Ideen"
+                    title="Anzahl Vorschläge"
                   >
                     {[1,2,3,4,5].map(n => (
                       <option key={n} value={String(n)}>{n}</option>
