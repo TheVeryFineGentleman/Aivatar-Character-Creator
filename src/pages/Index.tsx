@@ -2847,6 +2847,7 @@ Respond ONLY with JSON:
     }
     
     // Now generate video — read fresh state from ref
+    incrementGeneration();
     setIsGeneratingVideos(true);
     
     let freshPoint = storyPointsRef.current[sceneIndex];
