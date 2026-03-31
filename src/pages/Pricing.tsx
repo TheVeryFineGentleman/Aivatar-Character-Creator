@@ -75,6 +75,7 @@ const PLANS = [
     buttonVariant: "upgrade" as const,
     link: "https://www.digistore24.com/product/653613",
     features: [
+      { text: "Alle Basic Features enthalten", bold: true },
       { text: "Alle Pro Features enthalten", bold: true },
       { text: "Automatische Story- und Szenen-Erstellung aus einer Idee", bold: false },
       { text: "KI-generierte Dialoge und Sprechertexte pro Szene", bold: false },
