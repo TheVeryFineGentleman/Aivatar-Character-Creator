@@ -457,10 +457,115 @@ const Index = () => {
   // AI Assistant update mode: "text" = nur Text, "camera" = nur Kamera, "image" = nur Bild neu, "both" = beides
   const [sceneAiMode, setSceneAiMode] = useState<"text" | "camera" | "image" | "both">("text");
   
+  // Global generation limiter
+  const { limitReached: generationLimitReached } = useGenerationLimiter();
+
   // Derived values for backward compatibility
   const sceneAiUpdateText = sceneAiMode === "text" || sceneAiMode === "both";
   const sceneAiUpdateCamera = sceneAiMode === "camera" || sceneAiMode === "both";
   const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
+
+  // ============= SESSION PERSISTENCE =============
+  // Save key state to sessionStorage so users can return to their work
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyIdea', storyIdea);
+    } catch {}
+  }, [storyIdea]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyCustomDetails', storyCustomDetails);
+    } catch {}
+  }, [storyCustomDetails]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyArtStyle', storyArtStyle);
+    } catch {}
+  }, [storyArtStyle]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyPointCount', String(storyPointCount));
+    } catch {}
+  }, [storyPointCount]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_sceneDescription', sceneDescription);
+    } catch {}
+  }, [sceneDescription]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_customPrompt', customPrompt);
+    } catch {}
+  }, [customPrompt]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_selectedBackground', selectedBackground);
+    } catch {}
+  }, [selectedBackground]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_activeView', activeView);
+    } catch {}
+  }, [activeView]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_activeMainTab', activeMainTab);
+    } catch {}
+  }, [activeMainTab]);
+
+  useEffect(() => {
+    try {
+      if (storyPoints.length > 0) {
+        sessionStorage.setItem('session_storyPoints', JSON.stringify(storyPoints));
+      }
+    } catch {}
+  }, [storyPoints]);
+
+  useEffect(() => {
+    try {
+      if (characterImages.length > 0) {
+        sessionStorage.setItem('session_characterImages', JSON.stringify(characterImages));
+      }
+    } catch {}
+  }, [characterImages]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyboardMainLocation', storyboardMainLocation);
+    } catch {}
+  }, [storyboardMainLocation]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyEnableSpeaker', String(storyEnableSpeaker));
+    } catch {}
+  }, [storyEnableSpeaker]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyVoiceMode', storyVoiceMode);
+    } catch {}
+  }, [storyVoiceMode]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyGenerationDirection', storyGenerationDirection);
+    } catch {}
+  }, [storyGenerationDirection]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyboardFormat', storyboardFormat);
+    } catch {}
+  }, [storyboardFormat]);
 
   // Helper: Call text AI - direct Gemini for all plans
   const callGeminiOrFull = async (
