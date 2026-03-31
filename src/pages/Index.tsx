@@ -451,6 +451,13 @@ const Index = () => {
   const [storyCustomDetails, setStoryCustomDetails] = useState("");
   const [storySetupCollapsed, setStorySetupCollapsed] = useState(false);
   
+  // Extended story controls
+  const [storySpeakerGender, setStorySpeakerGender] = useState<"male" | "female" | "neutral">("neutral");
+  const [storyVideoMood, setStoryVideoMood] = useState<string>("dramatic");
+  const [storyColorMood, setStoryColorMood] = useState<string>("natural");
+  const [storyHook, setStoryHook] = useState("");
+  const [storyPacing, setStoryPacing] = useState<string>("tension-arc");
+  
   // Scene Edit Popup - Tab-based UI state
   const [sceneEditTab, setSceneEditTab] = useState<"content" | "image" | "video">("content");
   
