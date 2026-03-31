@@ -7309,7 +7309,79 @@ Beispiel einer korrekten Antwort:
                     </div>
                   </div>
 
-                  {/* Row 4: Custom Details */}
+                  {/* Row 2: Video-Stimmung + Farbstimmung */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Video-Stimmung</Label>
+                      <Select value={storyVideoMood} onValueChange={setStoryVideoMood}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="action">Action / Dynamisch</SelectItem>
+                          <SelectItem value="calm">Ruhig / Entspannt</SelectItem>
+                          <SelectItem value="dramatic">Dramatisch / Spannend</SelectItem>
+                          <SelectItem value="emotional">Emotional / Berührend</SelectItem>
+                          <SelectItem value="mysterious">Mysteriös / Dunkel</SelectItem>
+                          <SelectItem value="cheerful">Fröhlich / Leicht</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Farbstimmung</Label>
+                      <Select value={storyColorMood} onValueChange={setStoryColorMood}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="warm">Warm (Golden Hour)</SelectItem>
+                          <SelectItem value="cold">Kalt (Blautöne)</SelectItem>
+                          <SelectItem value="dark">Dunkel / Noir</SelectItem>
+                          <SelectItem value="bright">Hell / Freundlich</SelectItem>
+                          <SelectItem value="neon">Neon / Cyberpunk</SelectItem>
+                          <SelectItem value="natural">Natürlich</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Sprecherstimme (conditional) + Pacing */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {storyEnableSpeaker && (
+                      <div className="space-y-1.5">
+                        <Label className="text-sm">Sprecherstimme</Label>
+                        <Select value={storySpeakerGender} onValueChange={(v) => setStorySpeakerGender(v as any)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Männlich</SelectItem>
+                            <SelectItem value="female">Weiblich</SelectItem>
+                            <SelectItem value="neutral">Neutral</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Pacing / Tempo</Label>
+                      <Select value={storyPacing} onValueChange={setStoryPacing}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="instant-action">Sofort Action (0-2s)</SelectItem>
+                          <SelectItem value="slow-build">Langsamer Aufbau (3-5s)</SelectItem>
+                          <SelectItem value="tension-arc">Spannungsbogen</SelectItem>
+                          <SelectItem value="fast-cuts">Schnelle Schnitte</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row 4: Hook */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Hook (Einstieg)</Label>
+                    <Textarea
+                      placeholder="z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."
+                      value={storyHook}
+                      onChange={(e) => setStoryHook(e.target.value)}
+                      className="min-h-[50px] resize-y text-sm"
+                    />
+                  </div>
+
+                  {/* Row 5: Custom Details */}
                   <div className="space-y-1.5">
                     <Label className="text-sm">Besondere Details / Anweisungen</Label>
                     <Textarea
