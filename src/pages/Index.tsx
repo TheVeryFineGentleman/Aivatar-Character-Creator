@@ -1229,18 +1229,23 @@ WICHTIG:
             if (Array.isArray(scenes) && scenes.length >= storyPointCount) {
               setStoryboardMainLocation(mainLocation);
               
-              setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
-                versions: [scene.detailedDescription || scene.summary || ""],
-                currentVersion: 0,
-                summary: scene.summary || "",
-                detailedDescription: scene.detailedDescription || "",
-                dialogText: scene.dialogText || "",
-                specificArea: "",
-                keyAction: "",
-                emotion: "",
-                cameraAngle: "",
-                shotType: ""
-              })));
+              setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => {
+                const summary = sanitizeSceneField(scene.summary);
+                const detailedDescription = sanitizeSceneField(scene.detailedDescription);
+                const dialogText = sanitizeSceneField(scene.dialogText);
+                return {
+                  versions: [detailedDescription || summary || ""],
+                  currentVersion: 0,
+                  summary,
+                  detailedDescription,
+                  dialogText,
+                  specificArea: "",
+                  keyAction: "",
+                  emotion: "",
+                  cameraAngle: "",
+                  shotType: ""
+                };
+              }));
               setStoryboardAnimationKey(prev => prev + 1);
             } else {
               // AI returned fewer scenes than requested — retry once
