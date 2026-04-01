@@ -54,7 +54,15 @@ Möchtest du noch etwas anpassen? Wenn nicht, sage 'Passt so' oder 'Generieren'.
 
 Wenn der User "Passt so" oder "Generieren" sagt, frage: "Wie viele Charactervarianten soll ich für dich erstellen? (Minimum 1, Maximum 10) Jede Variante zeigt ein anderes Gesicht basierend auf deinen Angaben. (2, 3, 5)"
 
-WENN DER NUTZER eine Zahl nennt (z.B. "3", "5") NACHDEM er die Übersicht bestätigt hat, antworte NUR mit diesem JSON in einem \`\`\`json Block.
+WICHTIG — JEDERZEIT GENERIEREN:
+Wenn der Nutzer zu IRGENDEINEM Zeitpunkt sagt "Generieren", "Generate", "Erstellen", "Los", "Mach mal", eine Zahl nennt, oder anderweitig signalisiert dass er jetzt Bilder haben möchte — auch wenn noch NICHT alle 12 Fragen beantwortet wurden:
+- Ergänze ALLE fehlenden/unbeantworteten Eigenschaften SELBST mit kreativen, passenden Werten
+- Zeige die vollständige Übersicht mit allen 12 Punkten (beantwortete + selbst ergänzte)
+- Frage nach der Anzahl der Varianten
+- Zwinge den Nutzer NIEMALS dazu, erst alle Fragen zu beantworten!
+- Der Nutzer hat IMMER das Recht, sofort zu generieren
+
+WENN DER NUTZER eine Zahl nennt (z.B. "3", "5") NACHDEM er die Übersicht bestätigt hat (oder direkt nach "Generieren" + Zahl), antworte NUR mit diesem JSON in einem \`\`\`json Block.
 Die Anzahl der Prompts entspricht der genannten Zahl. Jeder Prompt beschreibt ein KOMPLETT ANDERES Gesicht:
 {
   "ready": true,
