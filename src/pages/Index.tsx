@@ -1306,7 +1306,15 @@ WICHTIG:
             console.error("JSON parse error, falling back to line-based parsing:", parseError);
             const points = text.split('\n')
               .map((line: string) => line.trim())
-              .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
+              .filter((line: string) => {
+                if (line.length <= 5) return false;
+                if (/^[\{\}\[\],]$/.test(line)) return false;
+                if (/^["']?\w+["']?\s*:\s*/.test(line)) return false;
+                if (line.startsWith('{') || line.startsWith('[') || line.startsWith('}') || line.startsWith(']')) return false;
+                // Must contain at least 2 spaces (real sentence, not a key-value pair)
+                const spaceCount = (line.match(/ /g) || []).length;
+                return spaceCount >= 2;
+              })
               .slice(0, storyPointCount);
             
             setStoryPoints(points.map((point: string) => ({
