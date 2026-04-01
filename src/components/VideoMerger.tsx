@@ -42,8 +42,8 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     setProgressMessage("FFmpeg wird geladen (~30 MB)...");
 
     const cdnSources = [
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
-      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.6/dist/umd",
+      "https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/umd",
     ];
     const timeoutMs = 120000;
 
