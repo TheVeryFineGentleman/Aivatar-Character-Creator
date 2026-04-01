@@ -99,8 +99,24 @@ const SHOT_OPTIONS = [
 ];
 
 // Robust JSON extraction from AI responses
+function looksLikeJsonFragment(s: string): boolean {
+  if (!s) return false;
+  const trimmed = s.trim();
+  return /^["']?\w+["']?\s*:/.test(trimmed) || /^[\{\[\]\}],?$/.test(trimmed);
+}
+
+function sanitizeSceneField(value: string): string {
+  if (!value) return "";
+  if (looksLikeJsonFragment(value)) return "";
+  return value.replace(/^["']+|["']+$/g, '').trim();
+}
+
 function extractJsonFromAiResponse(text: string): any {
-  let cleaned = text
+  // Step 1: Try extracting from markdown code block first
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const raw = codeBlockMatch ? codeBlockMatch[1].trim() : text;
+
+  let cleaned = raw
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim();
@@ -115,15 +131,29 @@ function extractJsonFromAiResponse(text: string): any {
 
   cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
 
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    cleaned = cleaned
-      .replace(/,\s*}/g, '}')
-      .replace(/,\s*]/g, ']')
-      .replace(/[\x00-\x1F\x7F]/g, '');
-    return JSON.parse(cleaned);
-  }
+  const tryParse = (s: string) => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      // Repair: trailing commas, control chars, unbalanced brackets
+      let repaired = s
+        .replace(/,\s*}/g, '}')
+        .replace(/,\s*]/g, ']')
+        .replace(/[\x00-\x1F\x7F]/g, '');
+      
+      // Balance brackets
+      const openBraces = (repaired.match(/{/g) || []).length;
+      const closeBraces = (repaired.match(/}/g) || []).length;
+      const openBrackets = (repaired.match(/\[/g) || []).length;
+      const closeBrackets = (repaired.match(/]/g) || []).length;
+      repaired += '}'.repeat(Math.max(0, openBraces - closeBraces));
+      repaired += ']'.repeat(Math.max(0, openBrackets - closeBrackets));
+      
+      return JSON.parse(repaired);
+    }
+  };
+
+  return tryParse(cleaned);
 }
 
 // Story Builder Setup Constants
@@ -1199,18 +1229,23 @@ WICHTIG:
             if (Array.isArray(scenes) && scenes.length >= storyPointCount) {
               setStoryboardMainLocation(mainLocation);
               
-              setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => ({
-                versions: [scene.detailedDescription || scene.summary || ""],
-                currentVersion: 0,
-                summary: scene.summary || "",
-                detailedDescription: scene.detailedDescription || "",
-                dialogText: scene.dialogText || "",
-                specificArea: "",
-                keyAction: "",
-                emotion: "",
-                cameraAngle: "",
-                shotType: ""
-              })));
+              setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => {
+                const summary = sanitizeSceneField(scene.summary);
+                const detailedDescription = sanitizeSceneField(scene.detailedDescription);
+                const dialogText = sanitizeSceneField(scene.dialogText);
+                return {
+                  versions: [detailedDescription || summary || ""],
+                  currentVersion: 0,
+                  summary,
+                  detailedDescription,
+                  dialogText,
+                  specificArea: "",
+                  keyAction: "",
+                  emotion: "",
+                  cameraAngle: "",
+                  shotType: ""
+                };
+              }));
               setStoryboardAnimationKey(prev => prev + 1);
             } else {
               // AI returned fewer scenes than requested — retry once
@@ -1245,18 +1280,23 @@ WICHTIG:
                   const retryScenes = retryParsed.scenes || [];
                   if (Array.isArray(retryScenes) && retryScenes.length > 0) {
                     setStoryboardMainLocation(retryParsed.mainLocation || "");
-                    setStoryPoints(retryScenes.slice(0, storyPointCount).map((scene: any) => ({
-                      versions: [scene.detailedDescription || scene.summary || ""],
-                      currentVersion: 0,
-                      summary: scene.summary || "",
-                      detailedDescription: scene.detailedDescription || "",
-                      dialogText: scene.dialogText || "",
-                      specificArea: "",
-                      keyAction: "",
-                      emotion: "",
-                      cameraAngle: "",
-                      shotType: ""
-                    })));
+                    setStoryPoints(retryScenes.slice(0, storyPointCount).map((scene: any) => {
+                      const summary = sanitizeSceneField(scene.summary);
+                      const detailedDescription = sanitizeSceneField(scene.detailedDescription);
+                      const dialogText = sanitizeSceneField(scene.dialogText);
+                      return {
+                        versions: [detailedDescription || summary || ""],
+                        currentVersion: 0,
+                        summary,
+                        detailedDescription,
+                        dialogText,
+                        specificArea: "",
+                        keyAction: "",
+                        emotion: "",
+                        cameraAngle: "",
+                        shotType: ""
+                      };
+                    }));
                     setStoryboardAnimationKey(prev => prev + 1);
                   }
                 }
@@ -1266,7 +1306,15 @@ WICHTIG:
             console.error("JSON parse error, falling back to line-based parsing:", parseError);
             const points = text.split('\n')
               .map((line: string) => line.trim())
-              .filter((line: string) => line.length > 5 && !line.startsWith('[') && !line.startsWith('{'))
+              .filter((line: string) => {
+                if (line.length <= 5) return false;
+                if (/^[\{\}\[\],]$/.test(line)) return false;
+                if (/^["']?\w+["']?\s*:\s*/.test(line)) return false;
+                if (line.startsWith('{') || line.startsWith('[') || line.startsWith('}') || line.startsWith(']')) return false;
+                // Must contain at least 2 spaces (real sentence, not a key-value pair)
+                const spaceCount = (line.match(/ /g) || []).length;
+                return spaceCount >= 2;
+              })
               .slice(0, storyPointCount);
             
             setStoryPoints(points.map((point: string) => ({
