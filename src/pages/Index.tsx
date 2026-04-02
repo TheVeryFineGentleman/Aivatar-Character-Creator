@@ -78,7 +78,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const BACKGROUND_OPTIONS = [
-  { id: "white", label: "WeiÜer Hintergrund" },
+  { id: "white", label: "Weißer Hintergrund" },
   { id: "greenscreen", label: "Green Screen" },
   { id: "scenery", label: "Eigene Szenerie" },
 ];
@@ -5977,7 +5977,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
 
     try {
       // Build context from selected options
-      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "WeiÜer Hintergrund";
+      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "Weißer Hintergrund";
       const shotLabel = SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Ganzkörper";
       const formatLabel = FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Quadratisch";
       const skinLabel = isPro ? (SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "") : "";
@@ -7151,7 +7151,7 @@ Beispiel einer korrekten Antwort:
                       
                       {/* Label */}
                       <span>
-                        {option.id === "white" && "WeiÜ"}
+                        {option.id === "white" && "Weiß"}
                         {option.id === "greenscreen" && "Green Screen"}
                         {option.id === "scenery" && "Custom"}
                       </span>
