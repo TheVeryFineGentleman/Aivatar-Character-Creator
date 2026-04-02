@@ -2667,7 +2667,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           console.log(`  Fetching: ${imageUrl.substring(0, 50)}...`);
           const response = await fetch(imageUrl);
           if (!response.ok) {
-            console.error(`  Ü Failed to fetch image: ${response.status}`);
+            console.error(`  ❌ Failed to fetch image: ${response.status}`);
             continue;
           }
           const blob = await response.blob();
