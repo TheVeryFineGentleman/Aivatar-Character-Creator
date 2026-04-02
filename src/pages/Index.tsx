@@ -1133,7 +1133,7 @@ const Index = () => {
     }
 
     for (const option of SCENE_ASSISTANT_ENUM_OPTIONS[field]) {
-      const candidates = [option.value, option.label, ...(option.aliases ?? [])].map(normalizeSceneAssistantToken);
+      const candidates = [option.value, option.label, ...('aliases' in option ? option.aliases : [])].map(normalizeSceneAssistantToken);
       if (candidates.includes(normalized)) {
         return option.value;
       }
