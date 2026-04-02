@@ -78,7 +78,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const BACKGROUND_OPTIONS = [
-  { id: "white", label: "WeiÜer Hintergrund" },
+  { id: "white", label: "Weißer Hintergrund" },
   { id: "greenscreen", label: "Green Screen" },
   { id: "scenery", label: "Eigene Szenerie" },
 ];
@@ -1001,9 +1001,9 @@ const Index = () => {
     { value: "medium-close-up", label: "Medium Close-Up", description: "Zeigt Kopf und Schultern bis zur Brust. Mehr Kontext als Close-Up, aber immer noch Fokus auf Gesicht. Typisch für Interviews oder Dialoge." },
     { value: "medium-shot", label: "Medium Shot", description: "Zeigt Person von Hüfte aufwärts (Cowboy Shot). Oberkörper, Arme und Hände sichtbar. Balance zwischen Gesicht und Körpersprache, Umgebung angedeutet." },
     { value: "medium-long-shot", label: "Medium Long Shot", description: "Zeigt Person von Knien aufwärts. Mehr Körpersprache sichtbar, Beine teilweise im Bild. Interaktion mit unmittelbarer Umgebung erkennbar." },
-    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis FuÜ mit etwas Raum drumherum. Volle Körperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
+    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis Fuß mit etwas Raum drumherum. Volle Körperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
     { value: "long-shot", label: "Long Shot", description: "Person im ganzen Körper, mit viel Umgebung drumherum (Wide Shot). Person ist kleiner im Bild, Landschaft/Raum dominiert. Zeigt Location und Atmosphäre." },
-    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer groÜen Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
+    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer großen Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
   ];
 
   const SCENE_ASSISTANT_ENUM_OPTIONS = {
@@ -1133,7 +1133,7 @@ const Index = () => {
     }
 
     for (const option of SCENE_ASSISTANT_ENUM_OPTIONS[field]) {
-      const candidates = [option.value, option.label, ...(option.aliases ?? [])].map(normalizeSceneAssistantToken);
+      const candidates = [option.value, option.label, ...('aliases' in option ? option.aliases : [])].map(normalizeSceneAssistantToken);
       if (candidates.includes(normalized)) {
         return option.value;
       }
@@ -2039,7 +2039,7 @@ Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
 
 ${storyPoints.map((p, i) => `Szene ${String(i + 1).padStart(2, '0')}: ${p.sceneTitle || p.versions[p.currentVersion].substring(0, 50)}...`).join('\n')}
 
-Viel SpaÜ beim Erstellen deines Videos!
+Viel Spaß beim Erstellen deines Videos!
 `;
       
       zip.file("VEO3_ANLEITUNG.txt", instructionsContent);
@@ -2236,6 +2236,9 @@ REGELN:
       currentVersion: number;
       cameraAngle?: string;
       shotType?: string;
+      specificArea?: string;
+      keyAction?: string;
+      emotion?: string;
       generatedImage?: string;
       detailedImagePrompt?: string;
       videoPrompt?: string;
@@ -2243,6 +2246,9 @@ REGELN:
       generationError?: string;
       sceneTitle?: string;
       sceneDescription?: string;
+      participants?: string;
+      dialogText?: string;
+      continuityNotes?: string;
     },
     characterBase64Images: string[],
     maxRetries: number = 3
@@ -2667,7 +2673,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           console.log(`  Fetching: ${imageUrl.substring(0, 50)}...`);
           const response = await fetch(imageUrl);
           if (!response.ok) {
-            console.error(`  Ü Failed to fetch image: ${response.status}`);
+            console.error(`  ❌ Failed to fetch image: ${response.status}`);
             continue;
           }
           const blob = await response.blob();
@@ -2737,7 +2743,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         
         if (!result?.success) {
           const sceneError = finalErrorMessage || "Szene konnte nicht generiert werden";
-          console.error(`Ü Szene ${sceneIndex + 1} dauerhaft fehlgeschlagen: ${sceneError}`);
+          console.error(`❌ Szene ${sceneIndex + 1} dauerhaft fehlgeschlagen: ${sceneError}`);
           setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: sceneError } : p));
           continue;
         }
@@ -3128,7 +3134,7 @@ Respond ONLY with JSON:
       // Check for error
       if (data.error) {
         const errMsg = data.error.message || JSON.stringify(data.error);
-        console.error("Ü Veo operation error:", errMsg);
+        console.error("❌ Veo operation error:", errMsg);
         // Safety filter detection
         if (errMsg.toLowerCase().includes('safety') || errMsg.toLowerCase().includes('blocked') || errMsg.toLowerCase().includes('filter')) {
           return { status: "failed", error: `Video durch Sicherheitsfilter blockiert: ${errMsg}` };
@@ -3177,7 +3183,7 @@ Respond ONLY with JSON:
       // Check for raiMediaFilteredReasons (content policy)
       const filteredReasons = resp.generateVideoResponse?.raiMediaFilteredReasons;
       if (filteredReasons && Array.isArray(filteredReasons) && filteredReasons.length > 0) {
-        console.error("Ü Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
+        console.error("❌ Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
         // Translate common Veo content policy messages to German
         const translatedReasons = filteredReasons.map((reason: string) => {
           if (reason.includes("photorealistic children")) return "Das Bild enthält Personen, die als minderjährig eingestuft wurden. Bitte ändere das Referenzbild oder den Prompt, sodass die Figur eindeutig erwachsen wirkt.";
@@ -3195,7 +3201,7 @@ Respond ONLY with JSON:
       // Structured diagnostics on failure
       const diagKeys = JSON.stringify(Object.keys(resp));
       const deepKeys = resp.generateVideoResponse ? JSON.stringify(Object.keys(resp.generateVideoResponse)) : "n/a";
-      console.error(`Ü Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
+      console.error(`❌ Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
       console.error("✅ Response preview:", JSON.stringify(resp).substring(0, 800));
       return { status: "failed", error: "Video-Generierung fehlgeschlagen. Bitte den Prompt oder das Bild anpassen und erneut versuchen." };
     }
@@ -3299,7 +3305,7 @@ Respond ONLY with JSON:
           return;
         }
         if (retry >= MAX_RETRIES) {
-          console.error(`Ü Szene ${sceneIndex + 1} endgültig fehlgeschlagen:`, error);
+          console.error(`❌ Szene ${sceneIndex + 1} endgültig fehlgeschlagen:`, error);
           setVideoErrors(prev => new Map(prev).set(sceneIndex, errMsg));
           return;
         }
@@ -3791,7 +3797,7 @@ Rules:
 Scene Details:
 ${sceneContext}`;
 
-    console.log(`ÜÜ Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
+    console.log(`🔄 Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
     
     try {
       const aiPrompt = await callGeminiOrFull(
@@ -4688,7 +4694,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Ü Gemini API error ${response.status}:`, errorText);
+        console.error(`❌ Gemini API error ${response.status}:`, errorText);
         // Create user-friendly error message based on status
         let userFriendlyError = "";
         switch (response.status) {
@@ -4722,7 +4728,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // Check promptFeedback for block reasons
       if (data.promptFeedback?.blockReason) {
         const blockReason = data.promptFeedback.blockReason;
-        console.error("Ü Prompt blocked:", blockReason);
+        console.error("❌ Prompt blocked:", blockReason);
       const blockMessages: Record<string, string> = {
           "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
           "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
@@ -4788,12 +4794,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         .map((p: any) => p.text)
         .filter(Boolean)
         .join("\n");
-      console.error("Ü Gemini did not return an image. Text response:", textFallback);
+      console.error("❌ Gemini did not return an image. Text response:", textFallback);
       
-      console.error("Ü No image in response for image", index + 1);
+      console.error("❌ No image in response for image", index + 1);
       throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
     } catch (error) {
-      console.error(`Ü Error generating image ${index}:`, error);
+      console.error(`❌ Error generating image ${index}:`, error);
       // Re-throw with user-friendly message so processQueue catches it
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
         throw new Error("Netzwerkfehler ✅ prüfe deine Internetverbindung");
@@ -4892,7 +4898,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           });
         }
       } catch (error) {
-        console.error(`Ü Error in processQueue for index ${index}:`, error);
+        console.error(`❌ Error in processQueue for index ${index}:`, error);
         const errorMessage = getDetailedErrorMessage(error);
         setImageSlots((prev) => {
           const updated = [...prev];
@@ -4938,13 +4944,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     console.log("✅ Anzahl zu generierende Bilder:", imageCount[0]);
     
     if (!canGenerate || generationLimitReached) {
-      console.log("Ü Fehler: Keine Generierung möglich");
+      console.log("❌ Fehler: Keine Generierung möglich");
       return;
     }
     
 
     if (referenceImages.length === 0) {
-      console.log("Ü Fehler: Keine Reference Images");
+      console.log("❌ Fehler: Keine Reference Images");
       return;
     }
 
@@ -5201,7 +5207,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Ü Google API error: ${response.status}`, errorText);
+        console.error(`❌ Google API error: ${response.status}`, errorText);
         throw new Error(`Image generation failed: ${response.status}`);
       }
 
@@ -5249,7 +5255,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       throw new Error("No image in response");
     } catch (error) {
-      console.error("Ü Error with custom prompt:", error);
+      console.error("❌ Error with custom prompt:", error);
       
       // Check if it was a timeout/abort error
       const errorMessage = error instanceof Error 
@@ -5575,7 +5581,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       });
 
     } catch (error) {
-      console.error("Ü Regeneration error:", error);
+      console.error("❌ Regeneration error:", error);
       const errorMsg = error instanceof Error ? error.message : "Unbekannter Fehler";
       // Show error state with message so user can see reason and retry
       updateSlotSafe(index, (slot) => ({
@@ -5977,7 +5983,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
 
     try {
       // Build context from selected options
-      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "WeiÜer Hintergrund";
+      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "Weißer Hintergrund";
       const shotLabel = SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Ganzkörper";
       const formatLabel = FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Quadratisch";
       const skinLabel = isPro ? (SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "") : "";
@@ -6549,7 +6555,7 @@ Beispiel einer korrekten Antwort:
                     <div className="rounded-lg border border-border p-4 space-y-2">
                       <h4 className="font-semibold text-sm uppercase tracking-wide">Daten verwalten</h4>
                       <p className="text-xs text-muted-foreground">
-                        Exportiere deine Daten gemäÜ DSGVO Art. 20 (Datenübertragbarkeit).
+                        Exportiere deine Daten gemäß DSGVO Art. 20 (Datenübertragbarkeit).
                       </p>
                       <Button 
                         variant="outline" 
@@ -7151,7 +7157,7 @@ Beispiel einer korrekten Antwort:
                       
                       {/* Label */}
                       <span>
-                        {option.id === "white" && "WeiÜ"}
+                        {option.id === "white" && "Weiß"}
                         {option.id === "greenscreen" && "Green Screen"}
                         {option.id === "scenery" && "Custom"}
                       </span>
@@ -9477,7 +9483,7 @@ Beispiel einer korrekten Antwort:
                       Aivatar Academy
                     </div>
                     <h3 className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-                      Willst du deinen Avatar richtig groÜ rausbringen?
+                      Willst du deinen Avatar richtig groß rausbringen?
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
                       Mehr Reichweite, mehr Style, mehr Möglichkeiten ✅ entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
