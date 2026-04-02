@@ -2236,6 +2236,9 @@ REGELN:
       currentVersion: number;
       cameraAngle?: string;
       shotType?: string;
+      specificArea?: string;
+      keyAction?: string;
+      emotion?: string;
       generatedImage?: string;
       detailedImagePrompt?: string;
       videoPrompt?: string;
@@ -2243,6 +2246,9 @@ REGELN:
       generationError?: string;
       sceneTitle?: string;
       sceneDescription?: string;
+      participants?: string;
+      dialogText?: string;
+      continuityNotes?: string;
     },
     characterBase64Images: string[],
     maxRetries: number = 3
