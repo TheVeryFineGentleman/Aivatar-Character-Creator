@@ -575,6 +575,71 @@ All colors MUST be HSL.
   animation: image-flip-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+@keyframes regeneration-surface-sweep {
+  0% {
+    transform: translate3d(-24%, 20%, 0) rotate(-10deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(22%, -16%, 0) rotate(-10deg) scale(1.08);
+  }
+}
+
+@keyframes regeneration-surface-pulse {
+  0%,
+  100% {
+    opacity: 0.88;
+    box-shadow:
+      inset 0 0 0 1px rgba(254, 202, 202, 0.18),
+      inset 0 0 34px rgba(220, 38, 38, 0.08),
+      0 0 18px rgba(220, 38, 38, 0.04);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      inset 0 0 0 1px rgba(254, 202, 202, 0.26),
+      inset 0 0 46px rgba(220, 38, 38, 0.12),
+      0 0 24px rgba(220, 38, 38, 0.06);
+  }
+}
+
+.regeneration-surface-overlay {
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(127, 29, 29, 0.12), rgba(127, 29, 29, 0.07)),
+    linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(127, 29, 29, 0.05));
+}
+
+.regeneration-surface-overlay::before {
+  content: "";
+  position: absolute;
+  inset: -55%;
+  background: linear-gradient(
+    130deg,
+    rgba(127, 29, 29, 0) 18%,
+    rgba(185, 28, 28, 0.1) 30%,
+    rgba(220, 38, 38, 0.24) 44%,
+    rgba(252, 165, 165, 0.14) 52%,
+    rgba(220, 38, 38, 0.22) 60%,
+    rgba(127, 29, 29, 0.08) 70%,
+    rgba(127, 29, 29, 0) 82%
+  );
+  filter: blur(16px);
+  animation: regeneration-surface-sweep 8.5s ease-in-out infinite alternate;
+}
+
+.regeneration-surface-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at top left, rgba(254, 226, 226, 0.08), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(127, 29, 29, 0.1), transparent 48%),
+    linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(127, 29, 29, 0.08));
+  animation: regeneration-surface-pulse 6.2s ease-in-out infinite;
+}
+
 @keyframes slideIn {
   0% {
     opacity: 0;

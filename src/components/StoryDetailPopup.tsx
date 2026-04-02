@@ -387,6 +387,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
   const isDirty = isSceneDirty(point);
   const hasFinalized = !!point.finalSnapshot;
   
+  const hasImage = !!point.generatedImage;
   const hasVideo = !!point.generatedVideo;
   
   // isDirty covers snapshot fields (camera, emotion etc), videoPromptChanged covers description
@@ -755,6 +756,9 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
           const hasVideoPrompt = !!point.videoPrompt;
           
           if (!hasVideo) {
+            if (!hasImage) {
+              return null;
+            }
             // No video exists — always offer image regeneration
             if (hasChanges) {
               // Changes detected → save + regenerate image with current settings
@@ -1143,7 +1147,7 @@ export const StoryDetailPopup: React.FC<StoryDetailPopupProps> = ({
             {/* Input area */}
             <div className="flex gap-3 items-stretch">
               <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 h-[80px]">
-                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder='z.B. "Mach es dramatischer", "Ändere den Dialog zu ...", "Nahaufnahme von unten", "Setze die Emotion auf wütend"...' className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
+                <Textarea value={sceneAssistantInput} onChange={e => setSceneAssistantInput(e.target.value)} placeholder='z.B. "Mach die Szene cooler und filmischer", "Mehr Spannung zwischen den Figuren", "Mach die Szene emotionaler und dunkler"...' className="h-full min-h-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0" disabled={isGeneratingAssistant || regeneratingIndex !== null} onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   onAssistantSubmit();

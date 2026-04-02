@@ -148,9 +148,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+    const { messages, apiKey } = await req.json();
+    const geminiApiKey = typeof apiKey === "string" ? apiKey.trim() : "";
+    if (!geminiApiKey) {
+      return new Response(JSON.stringify({ error: "Kein API-Key angegeben." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const recentMessages = Array.isArray(messages) ? messages.slice(-40) : [];
     const contents = recentMessages.map((m: { role: string; content: string }) => ({
@@ -159,7 +164,7 @@ serve(async (req) => {
     }));
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent?alt=sse&key=${geminiApiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

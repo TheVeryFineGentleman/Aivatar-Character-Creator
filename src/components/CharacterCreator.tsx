@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -39,11 +39,29 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const isBasic = planCode !== "PREMIUM" && planCode !== "FULL";
-  const maxImages = isBasic ? 2 : 10;
+  const maxImages = isBasic ? 1 : 10;
+
+  useEffect(() => {
+    if (isBasic && mode === "chat") {
+      setMode("quick");
+    }
+  }, [isBasic, mode]);
+
+  useEffect(() => {
+    if (isBasic && characterImageCount[0] !== 1) {
+      setCharacterImageCount([1]);
+    }
+  }, [isBasic, characterImageCount]);
+
+  useEffect(() => {
+    if (isBasic && allImages.length > 1) {
+      setAllImages(prev => prev.slice(-1));
+    }
+  }, [allImages.length, isBasic, setAllImages]);
 
   const handleImagesGenerated = useCallback((newImages: string[]) => {
-    setAllImages(prev => [...prev, ...newImages]);
-  }, [setAllImages]);
+    setAllImages(prev => isBasic ? [...prev, ...newImages].slice(-1) : [...prev, ...newImages]);
+  }, [isBasic, setAllImages]);
 
   const handleGenerationStart = useCallback((total: number) => {
     setIsGenerating(true);
@@ -132,24 +150,39 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           <canvas ref={canvasRef} className="hidden" />
 
           <div className="flex gap-2 mb-6">
-            {MODES.map(m => (
-              <button
-                key={m.id}
-                onClick={() => setMode(m.id)}
-                className={cn(
-                  "flex-1 flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200",
-                  mode === m.id
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
-                )}
-              >
-                <m.icon className="w-4 h-4" />
-                <div className="text-left">
-                  <div>{m.label}</div>
-                  <div className="text-xs font-normal opacity-70">{m.desc}</div>
-                </div>
-              </button>
-            ))}
+            {MODES.map(m => {
+              const isLocked = isBasic && m.id === "chat";
+
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    if (isLocked) return;
+                    setMode(m.id);
+                  }}
+                  disabled={isLocked}
+                  title={isLocked ? "KI-Chat Modus ist erst ab Pro verfügbar" : undefined}
+                  className={cn(
+                    "flex-1 flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200",
+                    mode === m.id && !isLocked
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30",
+                    isLocked && "opacity-60 cursor-not-allowed hover:border-border/50"
+                  )}
+                >
+                  <m.icon className="w-4 h-4" />
+                  <div className="text-left flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>{m.label}</span>
+                      {isLocked && <Lock className="w-3.5 h-3.5 shrink-0" />}
+                    </div>
+                    <div className="text-xs font-normal opacity-70">
+                      {isLocked ? "Ab Pro verfügbar" : m.desc}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {/* Image Count Slider - hidden in chat mode (AI decides count) */}
@@ -159,7 +192,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                 <Label className="flex items-center gap-2">
                   Anzahl Bilder
                   {isBasic && (
-                    <span className="text-xs text-muted-foreground">(max 2 für Basic)</span>
+                    <span className="text-xs text-muted-foreground">(max 1 für Basic)</span>
                   )}
                 </Label>
                 <span className="text-sm text-muted-foreground">{Math.floor(characterImageCount[0])} / {maxImages}</span>
@@ -171,7 +204,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
                 max={10}
                 step={1}
                 className="w-full"
-                lockedStart={isBasic ? 2 : undefined}
+                lockedStart={isBasic ? 1 : undefined}
               />
             </div>
           )}

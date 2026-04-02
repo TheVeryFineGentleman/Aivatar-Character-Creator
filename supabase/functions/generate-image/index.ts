@@ -5,6 +5,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const IMAGE_DATA_URL_RE = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/i;
+
+function normalizeReferenceImage(input: unknown): { mimeType: string; data: string } | null {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const dataUrlMatch = trimmed.match(IMAGE_DATA_URL_RE);
+  if (dataUrlMatch) {
+    return {
+      mimeType: dataUrlMatch[1],
+      data: dataUrlMatch[2],
+    };
+  }
+
+  const rawBase64 = trimmed.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/i, "");
+  if (!rawBase64) return null;
+
+  return {
+    mimeType: "image/png",
+    data: rawBase64,
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -35,12 +59,13 @@ serve(async (req) => {
       const textParts: any[] = [{ text: prompt }];
       
       if (referenceImages && referenceImages.length > 0) {
-        for (const base64Image of referenceImages) {
-          const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+        for (const referenceImage of referenceImages) {
+          const normalized = normalizeReferenceImage(referenceImage);
+          if (!normalized) continue;
           textParts.push({
             inlineData: {
-              mimeType: "image/png",
-              data: cleanBase64
+              mimeType: normalized.mimeType,
+              data: normalized.data
             }
           });
         }
@@ -90,12 +115,13 @@ serve(async (req) => {
     const parts: any[] = [{ text: enhancedPrompt }];
 
     if (referenceImages && referenceImages.length > 0) {
-      for (const base64Image of referenceImages) {
-        const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+      for (const referenceImage of referenceImages) {
+        const normalized = normalizeReferenceImage(referenceImage);
+        if (!normalized) continue;
         parts.push({
           inlineData: {
-            mimeType: "image/png",
-            data: cleanBase64
+            mimeType: normalized.mimeType,
+            data: normalized.data
           }
         });
       }

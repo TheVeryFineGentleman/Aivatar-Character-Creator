@@ -6,6 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Download, Sparkles } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const FUNCTION_HEADERS = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+  apikey: SUPABASE_PUBLISHABLE_KEY,
+};
+
 interface CharacterViewsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -51,7 +58,7 @@ export const CharacterViewsDialog: React.FC<CharacterViewsDialogProps> = ({ open
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-views`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: FUNCTION_HEADERS,
             body: JSON.stringify({
               referenceImage,
               angle: ANGLES[i].id,

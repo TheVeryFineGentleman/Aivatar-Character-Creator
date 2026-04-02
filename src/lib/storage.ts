@@ -6,7 +6,8 @@ export const setCookie = (name: string, value: string, days: number = 30) => {
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = `expires=${date.toUTCString()}`;
-  document.cookie = `${name}=${value};${expires};path=/`;
+  const secureFlag = window.location.protocol === "https:" ? ";Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)};${expires};path=/;SameSite=Lax${secureFlag}`;
 };
 
 export const getCookie = (name: string): string | null => {
@@ -15,14 +16,19 @@ export const getCookie = (name: string): string | null => {
   for (let cookie of cookies) {
     cookie = cookie.trim();
     if (cookie.indexOf(nameEQ) === 0) {
-      return cookie.substring(nameEQ.length);
+      const rawValue = cookie.substring(nameEQ.length);
+      try {
+        return decodeURIComponent(rawValue);
+      } catch {
+        return rawValue;
+      }
     }
   }
   return null;
 };
 
 export const deleteCookie = (name: string) => {
-  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`;
 };
 
 // ============= BLOB URL MEMORY MANAGEMENT =============
@@ -301,7 +307,5 @@ export const getDetailedErrorMessage = (error: any): string => {
   }
   
   // Generic - return full message (no truncation)
-  return errorMessage;
-  
   return errorMessage;
 };

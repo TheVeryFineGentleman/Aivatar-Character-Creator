@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2 } from "lucide-react";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 
 interface LoginDialogProps {
   onLogin: (email: string, licenseKey: string) => Promise<{ success: boolean; message?: string }>;
@@ -19,14 +18,14 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
   const [showRemindDialog, setShowRemindDialog] = useState(false);
   const [remindEmail, setRemindEmail] = useState("");
   const [isReminding, setIsReminding] = useState(false);
-  const [remindMessage, setRemindMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [remindMessage, setRemindMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleRemindSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!remindEmail) {
-      setRemindMessage({ type: 'error', text: 'Bitte geben Sie Ihre E-Mail-Adresse ein.' });
+      setRemindMessage({ type: "error", text: "Bitte geben Sie Ihre E-Mail-Adresse ein." });
       return;
     }
 
@@ -34,34 +33,43 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     setRemindMessage(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('license-remind', {
-        body: { email: remindEmail }
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/license-remind`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ email: remindEmail }),
       });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.reason || data?.error || `Netzwerkfehler (${response.status})`);
+      }
 
       if (data.sent) {
-        setRemindMessage({ type: 'success', text: 'Ihr Lizenzschlüssel wurde an Ihre E-Mail-Adresse gesendet.' });
+        setRemindMessage({ type: "success", text: "Ihr Lizenzschluessel wurde an Ihre E-Mail-Adresse gesendet." });
       } else {
-        let errorText = 'Ein Fehler ist aufgetreten.';
+        let errorText = "Ein Fehler ist aufgetreten.";
         switch (data.reason) {
-          case 'USER_NOT_FOUND':
-            errorText = 'Kein Benutzer mit dieser E-Mail-Adresse gefunden.';
+          case "USER_NOT_FOUND":
+            errorText = "Kein Benutzer mit dieser E-Mail-Adresse gefunden.";
             break;
-          case 'ACTIVE_LICENSE_NOT_FOUND':
-            errorText = 'Keine aktive Lizenz für diese E-Mail-Adresse gefunden.';
+          case "ACTIVE_LICENSE_NOT_FOUND":
+            errorText = "Keine aktive Lizenz fuer diese E-Mail-Adresse gefunden.";
             break;
-          case 'INVALID_TOOL_API_KEY':
-            errorText = 'Technischer Fehler. Bitte kontaktieren Sie den Support.';
+          case "INVALID_TOOL_API_KEY":
+            errorText = "Technischer Fehler. Bitte kontaktieren Sie den Support.";
             break;
           default:
-            errorText = data.reason || 'Ein unbekannter Fehler ist aufgetreten.';
+            errorText = data.reason || "Ein unbekannter Fehler ist aufgetreten.";
         }
-        setRemindMessage({ type: 'error', text: errorText });
+        setRemindMessage({ type: "error", text: errorText });
       }
     } catch (error) {
-      console.error('Error reminding license:', error);
-      setRemindMessage({ type: 'error', text: 'Verbindungsfehler. Bitte versuchen Sie es erneut.' });
+      console.error("Error reminding license:", error);
+      setRemindMessage({ type: "error", text: "Verbindungsfehler. Bitte versuchen Sie es erneut." });
     } finally {
       setIsReminding(false);
     }
@@ -70,9 +78,9 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
-    
+
     if (!email || !licenseKey) {
-      setLoginError("Bitte füllen Sie alle Felder aus.");
+      setLoginError("Bitte fuellen Sie alle Felder aus.");
       return;
     }
 
@@ -81,7 +89,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     setIsLoading(false);
 
     if (!result.success) {
-      setLoginError(result.message || "Bitte überprüfen Sie Ihre Zugangsdaten.");
+      setLoginError(result.message || "Bitte ueberpruefen Sie Ihre Zugangsdaten.");
     }
   };
 
@@ -91,9 +99,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
         <CardHeader className="text-center">
           <AnimatedTitle text="AvatarCreatorStudio" className="text-3xl font-bold text-primary mb-2 block" />
           <CardTitle className="text-center">Anmelden</CardTitle>
-          <CardDescription>
-            Bitte geben Sie Ihre E-Mail und Ihren License Key ein, um fortzufahren.
-          </CardDescription>
+          <CardDescription>Bitte geben Sie Ihre E-Mail und Ihren License Key ein, um fortzufahren.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -119,21 +125,19 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
                 disabled={isLoading}
               />
             </div>
-            {loginError && (
-              <p className="text-sm text-destructive">{loginError}</p>
-            )}
+            {loginError && <p className="text-sm text-destructive">{loginError}</p>}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Wird überprüft...
+                  Wird ueberprueft...
                 </>
               ) : (
                 "Anmelden"
               )}
             </Button>
             <div className="text-center pt-2">
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   setShowRemindDialog(true);
@@ -142,7 +146,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
                 }}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                Lizenzschlüssel vergessen?
+                Lizenzschluessel vergessen?
               </button>
             </div>
           </form>
@@ -152,10 +156,8 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
       <Dialog open={showRemindDialog} onOpenChange={setShowRemindDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Lizenzschlüssel anfordern</DialogTitle>
-            <DialogDescription>
-              Geben Sie Ihre E-Mail-Adresse ein, um Ihren Lizenzschlüssel zu erhalten.
-            </DialogDescription>
+            <DialogTitle>Lizenzschluessel anfordern</DialogTitle>
+            <DialogDescription>Geben Sie Ihre E-Mail-Adresse ein, um Ihren Lizenzschluessel zu erhalten.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleRemindSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -170,7 +172,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
               />
             </div>
             {remindMessage && (
-              <p className={`text-sm ${remindMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+              <p className={`text-sm ${remindMessage.type === "success" ? "text-green-500" : "text-red-500"}`}>
                 {remindMessage.text}
               </p>
             )}
@@ -181,7 +183,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
                   Wird gesendet...
                 </>
               ) : (
-                "Lizenzschlüssel senden"
+                "Lizenzschluessel senden"
               )}
             </Button>
           </form>

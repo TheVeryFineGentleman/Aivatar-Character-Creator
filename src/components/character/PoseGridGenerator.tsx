@@ -10,6 +10,13 @@ import { DownloadButton } from "@/components/DownloadButton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const FUNCTION_HEADERS = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+  apikey: SUPABASE_PUBLISHABLE_KEY,
+};
+
 interface PoseGridGeneratorProps {
   allImages: string[];
   apiKey: string;
@@ -67,7 +74,7 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-poses`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: FUNCTION_HEADERS,
             body: JSON.stringify({
               referenceImage,
               poseIndex: i,

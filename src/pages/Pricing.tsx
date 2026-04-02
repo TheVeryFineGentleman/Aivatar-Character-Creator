@@ -74,6 +74,7 @@ const PLANS = [
     buttonLabel: "Upgrade erforderlich",
     buttonVariant: "upgrade" as const,
     link: "https://www.digistore24.com/product/653613",
+    comingSoon: true,
     features: [
       { text: "Alle Basic Features enthalten", bold: true },
       { text: "Alle Pro Features enthalten", bold: true },
@@ -182,6 +183,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentPlanCode }) => {
                     <Button disabled variant="outline" className="w-full opacity-50 cursor-default">
                       Inklusiv
                     </Button>
+                  ) : plan.comingSoon ? (
+                    <div className="w-full rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-center text-sm text-muted-foreground">
+                      Noch nicht freigegeben
+                    </div>
                   ) : (
                     <Button
                       className={cn(

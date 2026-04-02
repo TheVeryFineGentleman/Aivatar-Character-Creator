@@ -15,12 +15,11 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { mode } = body;
-
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
+    const requestApiKey = typeof body?.apiKey === "string" ? body.apiKey.trim() : "";
+    if (!requestApiKey) {
       return new Response(
-        JSON.stringify({ success: false, error: "GEMINI_API_KEY nicht konfiguriert" }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: "Kein API-Key angegeben" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -40,7 +39,7 @@ serve(async (req) => {
       }
 
       const response = await fetch(
-        `${GEMINI_API_BASE}/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        `${GEMINI_API_BASE}/${model}:generateContent?key=${requestApiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -96,7 +95,7 @@ serve(async (req) => {
       let response;
       try {
         response = await fetch(
-          `${GEMINI_API_BASE}/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          `${GEMINI_API_BASE}/${model}:generateContent?key=${requestApiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
