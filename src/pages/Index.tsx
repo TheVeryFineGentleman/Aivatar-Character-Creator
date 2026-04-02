@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
@@ -78,7 +78,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const BACKGROUND_OPTIONS = [
-  { id: "white", label: "WeiÃŸer Hintergrund" },
+  { id: "white", label: "WeiÜer Hintergrund" },
   { id: "greenscreen", label: "Green Screen" },
   { id: "scenery", label: "Eigene Szenerie" },
 ];
@@ -94,8 +94,8 @@ const FORMAT_OPTIONS = [
 ];
 
 const SHOT_OPTIONS = [
-  { id: "fullbody", label: "GanzkÃ¶rper", description: "full body shot" },
-  { id: "upperbody", label: "OberkÃ¶rper", description: "upper body shot from waist up" },
+  { id: "fullbody", label: "Ganzkörper", description: "full body shot" },
+  { id: "upperbody", label: "Oberkörper", description: "upper body shot from waist up" },
   { id: "closeup", label: "Nahaufnahme Gesicht", description: "close-up face shot" },
 ];
 
@@ -359,7 +359,7 @@ function classifyRetryableSceneError(errorMessage: string): "retryable" | "non_r
   const lower = errorMessage.toLowerCase();
   if (
     lower.includes("api-key") ||
-    lower.includes("ungÃ¼ltige anfrage") ||
+    lower.includes("ungültige anfrage") ||
     lower.includes("ungueltige anfrage") ||
     lower.includes("zugriff verweigert") ||
     lower.includes("sicherheitsfilter") ||
@@ -410,7 +410,7 @@ const STORY_TRANSITION_TYPES = [
   { id: "dissolve", label: "Dissolve" },
   { id: "swipe-left", label: "Swipe Links" },
   { id: "swipe-right", label: "Swipe Rechts" },
-  { id: "zoom", label: "Zoom Ãœbergang" },
+  { id: "zoom", label: "Zoom Übergang" },
 ];
 
 const ART_STYLE_ENGLISH: Record<string, string> = {
@@ -477,7 +477,7 @@ const VIDEO_SPEED_OPTIONS = [
   { id: "fast", label: "Schnell", description: "dynamic, fast-paced" },
 ];
 
-// Veo3-optimierte Kamerabewegungen fÃ¼r Video-Prompts
+// Veo3-optimierte Kamerabewegungen für Video-Prompts
 const VEO3_CAMERA_MOVEMENTS = [
   { id: "dolly-in", label: "Dolly-In", description: "Langsame Fahrt nach vorn auf das Subjekt zu" },
   { id: "dolly-out", label: "Dolly-Out", description: "Langsame Fahrt nach hinten, vom Subjekt weg" },
@@ -487,16 +487,16 @@ const VEO3_CAMERA_MOVEMENTS = [
   { id: "tilt-down", label: "Tilt-Down", description: "Kamera neigt sich nach unten" },
   { id: "pan-left", label: "Pan Links", description: "Horizontales Schwenken nach links" },
   { id: "pan-right", label: "Pan Rechts", description: "Horizontales Schwenken nach rechts" },
-  { id: "crane-up", label: "Crane-Up", description: "Vertikale AufwÃ¤rtsfahrt mit Kran" },
-  { id: "crane-down", label: "Crane-Down", description: "Vertikale AbwÃ¤rtsfahrt mit Kran" },
+  { id: "crane-up", label: "Crane-Up", description: "Vertikale Aufwärtsfahrt mit Kran" },
+  { id: "crane-down", label: "Crane-Down", description: "Vertikale Abwärtsfahrt mit Kran" },
   { id: "arc-left", label: "Arc Links", description: "Bogenfahrt um das Subjekt nach links" },
   { id: "arc-right", label: "Arc Rechts", description: "Bogenfahrt um das Subjekt nach rechts" },
-  { id: "steadicam-follow", label: "Steadicam-Follow", description: "FlÃ¼ssige Verfolgung des Subjekts" },
+  { id: "steadicam-follow", label: "Steadicam-Follow", description: "Flüssige Verfolgung des Subjekts" },
   { id: "push-in", label: "Push-In", description: "Schnelle Fahrt nach vorn mit Zoom" },
   { id: "pull-back", label: "Pull-Back", description: "Schnelle Fahrt nach hinten mit Zoom" },
 ];
 
-// Veo3 Format-Optionen fÃ¼r Storyboard-Bildgenerierung
+// Veo3 Format-Optionen für Storyboard-Bildgenerierung
 const VEO3_FORMAT_OPTIONS = [
   { id: "16:9", label: "16:9 (Widescreen)" },
   { id: "9:16", label: "9:16 (Vertikal)" },
@@ -556,11 +556,11 @@ const Index = () => {
   
   // Dynamic AI suggestions state
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([
-    "Langsam lÃ¤cheln und in die Kamera schauen",
+    "Langsam lächeln und in die Kamera schauen",
     "Sprechen und dabei gestikulieren",
-    "Zur Seite drehen und zurÃ¼ckblicken",
-    "Langsam nÃ¤her kommen",
-    "Winken und grÃ¼ÃŸen"
+    "Zur Seite drehen und zurückblicken",
+    "Langsam näher kommen",
+    "Winken und grüÜen"
   ]);
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
@@ -591,9 +591,9 @@ const Index = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
   const [isAnimatingSuggestion, setIsAnimatingSuggestion] = useState(false);
   const [storySuggestions, setStorySuggestions] = useState<string[]>([
-    "ZufÃ¤lliges Wiedersehen im Supermarkt",
+    "Zufälliges Wiedersehen im Supermarkt",
     "Stilles Treffen ohne Worte",
-    "Verlorener Brief verÃ¤ndert alles"
+    "Verlorener Brief verändert alles"
   ]);
   const [lastSuggestionMode, setLastSuggestionMode] = useState<string | null>(null);
   const [isLoadingStorySuggestions, setIsLoadingStorySuggestions] = useState(false);
@@ -673,7 +673,7 @@ const Index = () => {
     if (!cleanDialog) {
       return storyEnableSpeaker
         ? ""
-        : '\nIMPORTANT: NO dialogue or speech — the character does NOT speak in this scene. No lip movement, no voiceover. The scene is completely silent with no spoken words.';
+        : '\nIMPORTANT: NO dialogue or speech ? the character does NOT speak in this scene. No lip movement, no voiceover. The scene is completely silent with no spoken words.';
     }
 
     const speakerNames = extractSpeakerNamesFromDialogText(cleanDialog);
@@ -711,7 +711,7 @@ const Index = () => {
     veo3CameraMovement?: string;  // z.B. "dolly-in", "pan-left"
     veo3StartState?: string;      // Beschreibung des Startframes
     veo3Motion?: string;          // Bewegung/Aktion
-    veo3EndState?: string;        // Beschreibung des Endframes fÃ¼r Ãœbergang
+    veo3EndState?: string;        // Beschreibung des Endframes für Übergang
     // NEW: Additional structured fields
     participants?: string;
     audienceEffect?: string;
@@ -797,7 +797,7 @@ const Index = () => {
   // Story Builder Setup Options
   const [storyEnableSpeaker, setStoryEnableSpeaker] = useState(true);
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
-  // "sprecher" = ErzÃ¤hler/Voiceover, "dialog" = GesprÃ¤ch zwischen Charakteren
+  // "sprecher" = Erzähler/Voiceover, "dialog" = Gespräch zwischen Charakteren
   const [storyVoiceMode, setStoryVoiceMode] = useState<"sprecher" | "dialog">("sprecher");
   // "speaker-from-description" = KI generiert Sprechertext aus Szenenbeschreibung
   // "description-from-speaker" = KI generiert Szenenbeschreibung aus Sprechertext
@@ -969,7 +969,7 @@ const Index = () => {
   useEffect(() => {
     const { compatible, issues } = checkBrowserCompatibility();
     if (!compatible) {
-      console.warn("âš ï¸ Browser compatibility issues:", issues);
+      console.warn("⚠️ Browser compatibility issues:", issues);
     }
     
     // Cleanup Blob URLs on page unload
@@ -984,26 +984,26 @@ const Index = () => {
     };
   }, []);
   const CAMERA_ANGLE_OPTIONS = [
-    { value: "random", label: "ZufÃ¤llig", description: "Die KI wÃ¤hlt einen passenden Kamerawinkel zur Szene" },
-    { value: "frontal", label: "Frontal", description: "Kamera direkt vor der Person auf AugenhÃ¶he, Blick geht direkt in die Kamera. Zeigt das Gesicht vollstÃ¤ndig von vorne, symmetrische Komposition." },
-    { value: "seitlich", label: "Seitlich", description: "Kamera im 90-Grad-Winkel zur Person (Profilansicht). Zeigt das Profil des Gesichts, Nase und Kinn sind im Fokus, dramatische Silhouette mÃ¶glich." },
-    { value: "von-oben", label: "Von oben", description: "Kamera oberhalb der Person, schrÃ¤g nach unten gerichtet (High Angle). Die Person erscheint kleiner, verletzlicher oder unterlegen. Boden/Umgebung um die Person herum sichtbar." },
-    { value: "von-unten", label: "Von unten", description: "Kamera unterhalb der Person, schrÃ¤g nach oben gerichtet (Low Angle). Die Person wirkt mÃ¤chtig, dominant oder heroisch. Decke/Himmel im Hintergrund sichtbar." },
-    { value: "ueber-schulter", label: "Ãœber die Schulter", description: "Kamera hinter einer Person, blickt Ã¼ber deren Schulter auf das Geschehen. Typisch fÃ¼r Dialogszenen, zeigt Schulter/Kopfhintergrund im Vordergrund unscharf." },
-    { value: "dutch-angle", label: "Dutch Angle", description: "Kamera ist seitlich geneigt (10-45 Grad), Horizont ist schrÃ¤g. Erzeugt Unruhe, Spannung, Desorientierung oder psychologische InstabilitÃ¤t." },
+    { value: "random", label: "Zufällig", description: "Die KI wählt einen passenden Kamerawinkel zur Szene" },
+    { value: "frontal", label: "Frontal", description: "Kamera direkt vor der Person auf Augenhöhe, Blick geht direkt in die Kamera. Zeigt das Gesicht vollständig von vorne, symmetrische Komposition." },
+    { value: "seitlich", label: "Seitlich", description: "Kamera im 90-Grad-Winkel zur Person (Profilansicht). Zeigt das Profil des Gesichts, Nase und Kinn sind im Fokus, dramatische Silhouette möglich." },
+    { value: "von-oben", label: "Von oben", description: "Kamera oberhalb der Person, schräg nach unten gerichtet (High Angle). Die Person erscheint kleiner, verletzlicher oder unterlegen. Boden/Umgebung um die Person herum sichtbar." },
+    { value: "von-unten", label: "Von unten", description: "Kamera unterhalb der Person, schräg nach oben gerichtet (Low Angle). Die Person wirkt mächtig, dominant oder heroisch. Decke/Himmel im Hintergrund sichtbar." },
+    { value: "ueber-schulter", label: "Über die Schulter", description: "Kamera hinter einer Person, blickt über deren Schulter auf das Geschehen. Typisch für Dialogszenen, zeigt Schulter/Kopfhintergrund im Vordergrund unscharf." },
+    { value: "dutch-angle", label: "Dutch Angle", description: "Kamera ist seitlich geneigt (10-45 Grad), Horizont ist schräg. Erzeugt Unruhe, Spannung, Desorientierung oder psychologische Instabilität." },
     { value: "vogelperspektive", label: "Vogelperspektive", description: "Kamera direkt von oben (Bird's Eye View), fast senkrecht nach unten. Zeigt die Person von oben, Kopf/Schultern dominant, Umgebungslayout erkennbar." },
-    { value: "froschperspektive", label: "Froschperspektive", description: "Kamera auf BodenhÃ¶he oder tiefer (Worm's Eye View), extrem nach oben gerichtet. Starke Verzerrung, Person ragt empor, sehr dramatisch und imposant." }
+    { value: "froschperspektive", label: "Froschperspektive", description: "Kamera auf Bodenhöhe oder tiefer (Worm's Eye View), extrem nach oben gerichtet. Starke Verzerrung, Person ragt empor, sehr dramatisch und imposant." }
   ];
 
   const SHOT_TYPE_OPTIONS = [
-    { value: "extreme-close-up", label: "Extreme Close-Up", description: "Zeigt nur ein Detail: Augen, Mund, oder Hand. FÃ¼llt den gesamten Bildschirm mit diesem Detail. Extrem intim, zeigt feinste Emotionen oder wichtige Objekte." },
-    { value: "close-up", label: "Close-Up", description: "Zeigt das Gesicht von Kinn bis Stirn. Schultern kÃ¶nnen angedeutet sein. Fokus auf Gesichtsausdruck und Emotionen, Hintergrund minimal oder unscharf." },
-    { value: "medium-close-up", label: "Medium Close-Up", description: "Zeigt Kopf und Schultern bis zur Brust. Mehr Kontext als Close-Up, aber immer noch Fokus auf Gesicht. Typisch fÃ¼r Interviews oder Dialoge." },
-    { value: "medium-shot", label: "Medium Shot", description: "Zeigt Person von HÃ¼fte aufwÃ¤rts (Cowboy Shot). OberkÃ¶rper, Arme und HÃ¤nde sichtbar. Balance zwischen Gesicht und KÃ¶rpersprache, Umgebung angedeutet." },
-    { value: "medium-long-shot", label: "Medium Long Shot", description: "Zeigt Person von Knien aufwÃ¤rts. Mehr KÃ¶rpersprache sichtbar, Beine teilweise im Bild. Interaktion mit unmittelbarer Umgebung erkennbar." },
-    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis FuÃŸ mit etwas Raum drumherum. Volle KÃ¶rperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
-    { value: "long-shot", label: "Long Shot", description: "Person im ganzen KÃ¶rper, mit viel Umgebung drumherum (Wide Shot). Person ist kleiner im Bild, Landschaft/Raum dominiert. Zeigt Location und AtmosphÃ¤re." },
-    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer groÃŸen Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
+    { value: "extreme-close-up", label: "Extreme Close-Up", description: "Zeigt nur ein Detail: Augen, Mund, oder Hand. Füllt den gesamten Bildschirm mit diesem Detail. Extrem intim, zeigt feinste Emotionen oder wichtige Objekte." },
+    { value: "close-up", label: "Close-Up", description: "Zeigt das Gesicht von Kinn bis Stirn. Schultern können angedeutet sein. Fokus auf Gesichtsausdruck und Emotionen, Hintergrund minimal oder unscharf." },
+    { value: "medium-close-up", label: "Medium Close-Up", description: "Zeigt Kopf und Schultern bis zur Brust. Mehr Kontext als Close-Up, aber immer noch Fokus auf Gesicht. Typisch für Interviews oder Dialoge." },
+    { value: "medium-shot", label: "Medium Shot", description: "Zeigt Person von Hüfte aufwärts (Cowboy Shot). Oberkörper, Arme und Hände sichtbar. Balance zwischen Gesicht und Körpersprache, Umgebung angedeutet." },
+    { value: "medium-long-shot", label: "Medium Long Shot", description: "Zeigt Person von Knien aufwärts. Mehr Körpersprache sichtbar, Beine teilweise im Bild. Interaktion mit unmittelbarer Umgebung erkennbar." },
+    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis FuÜ mit etwas Raum drumherum. Volle Körperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
+    { value: "long-shot", label: "Long Shot", description: "Person im ganzen Körper, mit viel Umgebung drumherum (Wide Shot). Person ist kleiner im Bild, Landschaft/Raum dominiert. Zeigt Location und Atmosphäre." },
+    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer groÜen Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
   ];
 
   const SCENE_ASSISTANT_ENUM_OPTIONS = {
@@ -1408,7 +1408,7 @@ Antworte NUR mit einem validen JSON-Objekt in genau dieser Form:
     try {
       const sceneText = currentPoint.detailedDescription || currentPoint.versions[currentPoint.currentVersion] || "";
       
-      const promptRequest = `Du bist ein professioneller Video-Prompt-Autor fÃ¼r KI-Video-Generatoren.
+      const promptRequest = `Du bist ein professioneller Video-Prompt-Autor für KI-Video-Generatoren.
 
 AKTUELLER VIDEO PROMPT:
 "${currentPoint.videoPrompt || 'Noch kein Video-Prompt vorhanden.'}"
@@ -1421,12 +1421,12 @@ ${currentPoint.cameraAngle ? `Kamerawinkel: ${currentPoint.cameraAngle}` : ''}
 ${currentPoint.shotType ? `Shot-Typ: ${currentPoint.shotType}` : ''}
 
 NUTZERANWEISUNG:
-"${sceneAssistantInput.trim() || 'Optimiere den Video-Prompt fÃ¼r maximale visuelle Wirkung und Detailgrad.'}"
+"${sceneAssistantInput.trim() || 'Optimiere den Video-Prompt für maximale visuelle Wirkung und Detailgrad.'}"
 
-Erstelle einen VERBESSERTEN Video-Prompt (ca. 200 WÃ¶rter, auf Englisch) basierend auf der Nutzeranweisung.
-Der Prompt soll prÃ¤zise Kamerabewegungen, Charakter-Aktionen, Licht und AtmosphÃ¤re beschreiben.
+Erstelle einen VERBESSERTEN Video-Prompt (ca. 200 Wörter, auf Englisch) basierend auf der Nutzeranweisung.
+Der Prompt soll präzise Kamerabewegungen, Charakter-Aktionen, Licht und Atmosphäre beschreiben.
 
-Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine ErklÃ¤rungen.`;
+Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklärungen.`;
 
       const resultText = await callGeminiOrFull(
         [{ text: promptRequest }],
@@ -1452,12 +1452,12 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine ErklÃ
   const handleUnifiedSceneAssistant = async () => {
     if (!apiKey || expandedStoryPointIndex === null) return;
     
-    // 1. Text & Kamera optimieren (wenn ausgewÃ¤hlt)
+    // 1. Text & Kamera optimieren (wenn ausgewählt)
     if (sceneAiUpdateText) {
       await handleSceneAssistant();
     }
     
-    // 2. Bild neu generieren (wenn ausgewÃ¤hlt)
+    // 2. Bild neu generieren (wenn ausgewählt)
     if (sceneAiRegenerateImage && expandedStoryPointIndex !== null) {
       await regenerateSingleStoryScene(expandedStoryPointIndex);
     }
@@ -1476,33 +1476,33 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine ErklÃ
       const currentIdea = generatedIdeas[currentIdeaIndex] || storyIdea;
       
       const prompt = isModifyMode
-        ? `Du bist ein Story-Autor fÃ¼r REALISTISCHE, lebensnahe Geschichten.
+        ? `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten.
 
 AKTUELLE STORY-IDEE:
 "${currentIdea}"
 
-${storyAiAssistantInput.trim() ? `Ã„NDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
+${storyAiAssistantInput.trim() ? `ÜNDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
 
-Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewÃ¼nschten Ã„nderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
+Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Ünderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
-- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausfÃ¼hrliche, detaillierte Story-Idee (4-8 SÃ¤tze)
-- NUR realistische, alltÃ¤gliche Szenarien! KEINE Fantasy, Magie, Ã¼bernatÃ¼rliche Elemente, Sci-Fi
+- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausführliche, detaillierte Story-Idee (4-8 Sätze)
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Schreibe auf Deutsch
-${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder ErklÃ¤rungen`
-        : `Du bist ein Story-Autor fÃ¼r REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
+${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
+        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
 "${storyAiAssistantInput.trim() || 'Erstelle realistische, detaillierte Story-Ideen'}"
 
 WICHTIGE REGELN:
-- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausfÃ¼hrliche Story-Idee ('} 6-10 SÃ¤tze)
-- NUR realistische, alltÃ¤gliche Szenarien! KEINE Fantasy, Magie, Ã¼bernatÃ¼rliche Elemente, Sci-Fi
+- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausführliche Story-Idee ('} 6-10 Sätze)
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
-- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein fÃ¼r ein Storyboard
+- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
 - Schreibe auf Deutsch
-${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder ErklÃ¤rungen`;
+${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1678,11 +1678,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
       const storyCharacterDialogueRule = storyCharacterNames.length > 0
         ? `  - falls voiceMode = "dialog": JEDER gesprochene Satz MUSS mit einem exakten Charakternamen aus dieser Liste beginnen: ${storyCharacterNames.map((name) => `"${name}"`).join(', ')}`
         : '  - falls voiceMode = "dialog": Verteile die Dialoge logisch auf die sichtbaren Figuren der Szene';
-      const storyPromptText = `Du bist ein professioneller Drehbuchautor fÃ¼r visuelle Storyboards.
+      const storyPromptText = `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
 AUFGABE:
 Erstelle ein einziges valides JSON-Objekt basierend auf diesen Eingaben.
-KRITISCH: Das "scenes" Array MUSS EXAKT ${storyPointCount} EintrÃ¤ge enthalten. Nicht mehr, nicht weniger.
+KRITISCH: Das "scenes" Array MUSS EXAKT ${storyPointCount} Einträge enthalten. Nicht mehr, nicht weniger.
 
 EINGABEN:
 - storyIdea: "${storyIdea}"
@@ -1702,28 +1702,28 @@ ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
 
 HARTE AUSGABEREGELN:
-- Antworte ausschlieÃŸlich mit einem einzigen validen JSON-Objekt.
+- Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
 - Das erste Zeichen deiner Antwort muss { sein.
 - Das letzte Zeichen deiner Antwort muss } sein.
 - Kein Markdown.
-- Keine CodeblÃ¶cke.
+- Keine Codeblöcke.
 - Keine Einleitung.
-- Keine ErklÃ¤rung.
+- Keine Erklärung.
 - Keine Kommentare.
-- Keine zusÃ¤tzlichen Zeichen vor oder nach dem JSON.
-- Keine umschlieÃŸenden AnfÃ¼hrungszeichen um das gesamte JSON.
+- Keine zusätzlichen Zeichen vor oder nach dem JSON.
+- Keine umschlieÜenden Anführungszeichen um das gesamte JSON.
 - Die Antwort muss mit JSON.parse() direkt parsebar sein.
 
 INHALTSREGELN:
-- Definiere zuerst einen einzigen Hauptort fÃ¼r die gesamte Geschichte.
+- Definiere zuerst einen einzigen Hauptort für die gesamte Geschichte.
 - Alle Szenen spielen nur an diesem Hauptort.
 - Nur der konkrete Bereich innerhalb des Hauptorts wechselt.
-- Alle Szenen mÃ¼ssen realistisch sein. Keine Fantasy, keine Magie.
+- Alle Szenen müssen realistisch sein. Keine Fantasy, keine Magie.
 - Jede Szene hat genau eine klare zentrale Aktion oder Gestik.
 - Die Szenen bauen logisch aufeinander auf.
-- Emotionen mÃ¼ssen visuell erkennbar sein.
+- Emotionen müssen visuell erkennbar sein.
 - Wenn Referenzcharaktere vorhanden sind, bleibt jeder Name fest an genau sein Referenzbild gebunden.
-- Frisur, Gesicht, Kleidung, Accessoires und markante Merkmale der benannten Charaktere bleiben Ã¼ber alle Szenen konsistent, sofern die Geschichte keine explizite Ã„nderung verlangt.
+- Frisur, Gesicht, Kleidung, Accessoires und markante Merkmale der benannten Charaktere bleiben über alle Szenen konsistent, sofern die Geschichte keine explizite Ünderung verlangt.
 - Verwende in participants und dialogText nur die exakten Charakternamen aus den Referenzcharakteren.
 
 ERLAUBTE WERTE:
@@ -1735,7 +1735,7 @@ JSON-SCHEMA:
   "mainLocation": "string",
   "scenes": [
     {
-      "summary": "string, max 15 WÃ¶rter",
+      "summary": "string, max 15 Wörter",
       "participants": "string, exakte sichtbare Charakternamen kommasepariert",
       "specificArea": "string",
       "keyAction": "string",
@@ -1751,27 +1751,27 @@ JSON-SCHEMA:
 
 FELDREGELN:
 - "mainLocation": der eine Hauptort der gesamten Geschichte
-- "summary": 1 Satz, maximal 15 WÃ¶rter
+- "summary": 1 Satz, maximal 15 Wörter
 - "specificArea": konkreter Bereich innerhalb des Hauptorts
 - "keyAction": genau eine zentrale sichtbare Aktion oder Gestik
 - "emotion": klar sichtbar und visuell darstellbar
 - "detailedDescription":
   - falls enableSceneDescription = true:
     - falls enableSpeaker = true und generationDirection = "description-from-speaker":
-      visuelle Beschreibung basierend auf dialogText, 3-4 SÃ¤tze
+      visuelle Beschreibung basierend auf dialogText, 3-4 Sätze
     - sonst:
-      ausfÃ¼hrliche visuelle Beschreibung, 3-4 SÃ¤tze
+      ausführliche visuelle Beschreibung, 3-4 Sätze
   - falls enableSceneDescription = false:
       "(wird vom Nutzer manuell erstellt)"
 - "dialogText":
   - nur ausgeben, falls enableSpeaker = true
-  - falls voiceMode = "sprecher": Schreibe einen ErzÃ¤hler-/Voiceover-Text in der 3. Person oder als Off-Stimme. KEIN Dialog zwischen Personen. Der Text beschreibt/kommentiert die Szene wie ein Sprecher.
+  - falls voiceMode = "sprecher": Schreibe einen Erzähler-/Voiceover-Text in der 3. Person oder als Off-Stimme. KEIN Dialog zwischen Personen. Der Text beschreibt/kommentiert die Szene wie ein Sprecher.
   - falls voiceMode = "dialog":
 ${storyCharacterDialogueRule}
     - Verwende niemals erfundene neue Namen.
     - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
   - falls generationDirection = "speaker-from-description":
-      Text passend zur Szenenbeschreibung, 1-3 SÃ¤tze
+      Text passend zur Szenenbeschreibung, 1-3 Sätze
   - falls generationDirection = "description-from-speaker":
       Text zuerst inhaltlich erzeugen, damit die visuelle Beschreibung darauf basiert
 - "participants":
@@ -1779,8 +1779,8 @@ ${storyCharacterDialogueRule}
   - wenn nur ein Referenzcharakter sichtbar ist, nenne nur diesen einen Namen
   - wenn kein Referenzcharakter vorhanden ist, kann das Feld leer bleiben
 - "continuityNotes":
-  - kurze KontinuitÃ¤tsnotiz zu Kleidung, Haaren, Accessoires, Requisiten oder Sprecherzuordnung
-  - falls Referenzcharaktere vorhanden sind, erinnere an deren feste IdentitÃ¤t
+  - kurze Kontinuitätsnotiz zu Kleidung, Haaren, Accessoires, Requisiten oder Sprecherzuordnung
+  - falls Referenzcharaktere vorhanden sind, erinnere an deren feste Identität
 - "cameraAngle": nur erlaubter Enum-Wert
 - "shotType": nur erlaubter Enum-Wert
 
@@ -1788,7 +1788,7 @@ WICHTIG:
 - Wenn enableSpeaker = false, darf "dialogText" nicht im JSON vorkommen.
 - Die Anzahl der Szenen muss exakt sceneCount entsprechen.
 - Verwende nur Strings, Arrays und Objekte, die in validem JSON erlaubt sind.
-- Gib jetzt nur das JSON zurÃ¼ck.`;
+- Gib jetzt nur das JSON zurück.`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1823,8 +1823,8 @@ WICHTIG:
               setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
               setStoryboardAnimationKey(prev => prev + 1);
             } else {
-              // AI returned fewer scenes than requested â€” retry once
-              console.warn(`âš ï¸ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
+              // AI returned fewer scenes than requested ✅ retry once
+              console.warn(`⚠️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
               // Recursive retry (single attempt)
               const retryResponse = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1835,7 +1835,7 @@ WICHTIG:
                     contents: [{
                       role: "user",
                       parts: [{
-                        text: `${storyPromptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} EintrÃ¤ge im "scenes" Array.`
+                        text: `${storyPromptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
                       }]
                     }],
                     generationConfig: {
@@ -1909,13 +1909,13 @@ WICHTIG:
     setVideoTaskIds(new Map());
   };
 
-  // Export Storyboard fÃ¼r Veo3 als ZIP-Datei
+  // Export Storyboard für Veo3 als ZIP-Datei
   const exportForVeo3 = async () => {
     if (storyPoints.length === 0 || isExportingVeo3) return;
     
     const hasImages = storyPoints.some(p => p.generatedImage);
     if (!hasImages) {
-      console.warn("Keine Bilder vorhanden fÃ¼r Veo3 Export");
+      console.warn("Keine Bilder vorhanden für Veo3 Export");
       return;
     }
     
@@ -1925,14 +1925,14 @@ WICHTIG:
       const zip = new JSZip();
       const scenesFolder = zip.folder("veo3_scenes");
       
-      // Ãœbersichtsdatei erstellen
+      // Übersichtsdatei erstellen
       let overviewContent = `# Veo3 Storyboard Export
 # Erstellt am: ${new Date().toLocaleString('de-DE')}
 # Story: ${storyIdea}
 # Anzahl Szenen: ${storyPoints.length}
 
 ========================================
-ÃœBERSICHT ALLER SZENEN
+ÜBERSICHT ALLER SZENEN
 ========================================
 
 `;
@@ -1961,14 +1961,14 @@ WICHTIG:
         const promptContent = `=== SZENE ${sceneNum} ===
 BILD: scene_${sceneNum}.png
 
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-VEO3 VIDEO-PROMPT (Kopieren fÃ¼r Veo3)
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+VEO3 VIDEO-PROMPT (Kopieren für Veo3)
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 ${point.videoPrompt || 'Kein Video-Prompt generiert'}
 
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 STRUKTURIERTE DETAILS
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 KAMERABEWEGUNG: ${cameraMovementInfo ? `${cameraMovementInfo.label} (${cameraMovementInfo.description})` : 'Nicht definiert'}
 
 START-FRAME:
@@ -1977,69 +1977,69 @@ ${point.veo3StartState || point.sceneDescription || 'Nicht definiert'}
 BEWEGUNG/AKTION:
 ${point.veo3Motion || 'Nicht definiert'}
 
-END-FRAME (fÃ¼r Ãœbergang zu nÃ¤chster Szene):
+END-FRAME (für Übergang zu nächster Szene):
 ${point.veo3EndState || 'Nicht definiert'}
 
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 SZENEN-DETAILS
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 TITEL: ${point.sceneTitle || 'Ohne Titel'}
 BESCHREIBUNG: ${point.sceneDescription || point.versions[point.currentVersion]}
 KAMERAWINKEL: ${point.cameraAngle || 'Automatisch'}
 SHOT-TYP: ${point.shotType || 'Automatisch'}
 
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 BILD-PROMPT (Referenz)
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-${point.detailedImagePrompt || 'Nicht verfÃ¼gbar'}
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+${point.detailedImagePrompt || 'Nicht verfügbar'}
 
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-ÃœBERGANG
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+ÜBERGANG
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 DAUER: 5 Sekunden empfohlen
 SCHNITT: ${i < storyPoints.length - 1 ? 'Cut oder Fade zu Szene ' + (i + 2) : 'Letzte Szene'}
 `;
         
         scenesFolder?.file(`scene_${sceneNum}_prompt.txt`, promptContent);
         
-        // Zur Ãœbersicht hinzufÃ¼gen
+        // Zur Übersicht hinzufügen
         overviewContent += `
 SZENE ${sceneNum}: ${point.sceneTitle || 'Ohne Titel'}
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 ${point.videoPrompt || 'Kein Video-Prompt'}
 Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
-Ãœbergang: ${point.veo3EndState?.substring(0, 100) || '-'}...
+Übergang: ${point.veo3EndState?.substring(0, 100) || '-'}...
 
 `;
       }
       
-      // Ãœbersichtsdatei speichern
+      // Übersichtsdatei speichern
       zip.file("STORYBOARD_OVERVIEW.txt", overviewContent);
       
-      // Anleitung fÃ¼r Veo3 hinzufÃ¼gen
-      const instructionsContent = `# Anleitung fÃ¼r Google Veo3
+      // Anleitung für Veo3 hinzufügen
+      const instructionsContent = `# Anleitung für Google Veo3
 
 ## So verwendest du diese Dateien:
 
-1. Ã–ffne Google AI Studio oder Veo3 Interface
-2. FÃ¼r JEDE Szene:
+1. Üffne Google AI Studio oder Veo3 Interface
+2. Für JEDE Szene:
    a) Lade das Bild (scene_XX.png) als Startframe hoch
    b) Kopiere den VEO3 VIDEO-PROMPT aus der entsprechenden .txt Datei
    c) Generiere das Video (empfohlen: 5 Sekunden)
 
-## Tipps fÃ¼r beste Ergebnisse:
+## Tipps für beste Ergebnisse:
 
 - Verwende die Bilder als "First Frame" / Startbild
 - Halte die Prompts so wie sie sind - sie sind auf Veo3 optimiert
-- Die Szenen sind fÃ¼r nahtlose ÃœbergÃ¤nge konzipiert
-- Empfohlene AuflÃ¶sung: 16:9 (Widescreen)
-- Empfohlene QualitÃ¤t: HÃ¶chste verfÃ¼gbare
+- Die Szenen sind für nahtlose Übergänge konzipiert
+- Empfohlene Auflösung: 16:9 (Widescreen)
+- Empfohlene Qualität: Höchste verfügbare
 
 ## Szenen-Reihenfolge:
 
 ${storyPoints.map((p, i) => `Szene ${String(i + 1).padStart(2, '0')}: ${p.sceneTitle || p.versions[p.currentVersion].substring(0, 50)}...`).join('\n')}
 
-Viel SpaÃŸ beim Erstellen deines Videos!
+Viel SpaÜ beim Erstellen deines Videos!
 `;
       
       zip.file("VEO3_ANLEITUNG.txt", instructionsContent);
@@ -2095,28 +2095,28 @@ Viel SpaÃŸ beim Erstellen deines Videos!
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Du bist ein professioneller Drehbuchautor fÃ¼r visuelle Storyboards.
+                text: `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
 STORY-IDEE: "${storyIdea}"
 HAUPTORT: "${storyboardMainLocation}"
 ${storyCharacterProfiles.length > 0 ? `\nCHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}\n- Die Namen bleiben fest an ihr Referenzbild gebunden.\n- Kleidung, Haare und markante Merkmale bleiben gleich.` : ''}
 
-Generiere eine KOMPLETT NEUE Alternative fÃ¼r Szene ${index + 1} von ${storyPoints.length}.
+Generiere eine KOMPLETT NEUE Alternative für Szene ${index + 1} von ${storyPoints.length}.
 
 Bisherige Szene: "${point.versions[point.currentVersion]}"
 ${prevPoint ? `Vorherige Szene: "${prevPoint.versions[prevPoint.currentVersion]}"` : "Dies ist die erste Szene."}
-${nextPoint ? `NÃ¤chste Szene: "${nextPoint.versions[nextPoint.currentVersion]}"` : "Dies ist die letzte Szene."}
+${nextPoint ? `Nächste Szene: "${nextPoint.versions[nextPoint.currentVersion]}"` : "Dies ist die letzte Szene."}
 
 WICHTIG: Antworte NUR mit diesem validen JSON-Format:
 {
-  "summary": "1-Satz Zusammenfassung (max. 15 WÃ¶rter)",
+  "summary": "1-Satz Zusammenfassung (max. 15 Wörter)",
   "participants": "Exakte sichtbare Charakternamen kommasepariert",
   "specificArea": "Welcher Bereich des Hauptorts (z.B. 'im Flur', 'auf dem Balkon')",
   "keyAction": "Die EINE zentrale Aktion/Gestik der Person",
   "emotion": "Die sichtbare Emotion (z.B. 'melancholisch', 'hoffnungsvoll')",
-  "detailedDescription": "AusfÃ¼hrliche visuelle Beschreibung (3-4 SÃ¤tze): AtmosphÃ¤re, Beleuchtung, was die Person tut",
-  "dialogText": "Was der Charakter in dieser Szene sagt (1-3 SÃ¤tze gesprochener Dialog, in AnfÃ¼hrungszeichen). Leer lassen wenn keine Rede.",
-  "continuityNotes": "Kurze KontinuitÃ¤tsnotiz zu Outfit, Haaren, Accessoires, Sprecherzuordnung",
+  "detailedDescription": "Ausführliche visuelle Beschreibung (3-4 Sätze): Atmosphäre, Beleuchtung, was die Person tut",
+  "dialogText": "Was der Charakter in dieser Szene sagt (1-3 Sätze gesprochener Dialog, in Anführungszeichen). Leer lassen wenn keine Rede.",
+  "continuityNotes": "Kurze Kontinuitätsnotiz zu Outfit, Haaren, Accessoires, Sprecherzuordnung",
   "cameraAngle": "eye-level|low-angle|high-angle|dutch-angle|over-shoulder|bird-eye|worm-eye",
   "shotType": "extreme-close-up|close-up|medium-close-up|medium-shot|medium-full-shot|full-shot|long-shot|extreme-long-shot"
 }
@@ -2129,7 +2129,7 @@ REGELN:
 - Wenn Referenzcharaktere vorhanden sind, verwende nur deren exakte Namen: ${sceneCharacterNames.length > 0 ? sceneCharacterNames.map((name) => `"${name}"`).join(', ') : 'keine'}
 - Wenn Dialog verwendet wird und Referenzcharaktere vorhanden sind, muss jede Dialogzeile mit dem exakten Sprechernamen beginnen
 - participants darf nur Charaktere enthalten, die in dieser Szene wirklich sichtbar sind
-- Antworte NUR mit dem JSON, keine zusÃ¤tzlichen ErklÃ¤rungen`
+- Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen`
               }]
             }],
             generationConfig: {
@@ -2190,7 +2190,7 @@ REGELN:
       clearTimeout(timeoutId);
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "ZeitÃ¼berschreitung â€“ keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung ✅ keine Antwort nach 20s" : error.message;
       }
       console.error("Failed to regenerate story point:", errorMessage);
       
@@ -2211,9 +2211,9 @@ REGELN:
   const getErrorMessageFromStatus = (status: number, step: string): string => {
     switch (status) {
       case 400:
-        return `${step}: UngÃ¼ltige Anfrage`;
+        return `${step}: Ungültige Anfrage`;
       case 401:
-        return `${step}: API-Key ungÃ¼ltig oder abgelaufen`;
+        return `${step}: API-Key ungültig oder abgelaufen`;
       case 403:
         return `${step}: Zugriff verweigert`;
       case 429:
@@ -2221,7 +2221,7 @@ REGELN:
       case 500:
         return `${step}: Server-Fehler bei Google`;
       case 503:
-        return `${step}: API Ã¼berlastet - bitte spÃ¤ter versuchen`;
+        return `${step}: API überlastet - bitte später versuchen`;
       default:
         return `${step}: Fehler (${status})`;
     }
@@ -2262,23 +2262,23 @@ REGELN:
           // Locations
           "ballsaal": "ballroom", "villa": "villa", "wald": "forest", "strand": "beach",
           "garten": "garden", "zimmer": "room", "haus": "house", "schloss": "castle",
-          "straÃŸe": "street", "stadt": "city", "dorf": "village", "bÃ¼ro": "office",
-          "kÃ¼che": "kitchen", "wohnzimmer": "living room", "schlafzimmer": "bedroom",
+          "straÜe": "street", "stadt": "city", "dorf": "village", "büro": "office",
+          "küche": "kitchen", "wohnzimmer": "living room", "schlafzimmer": "bedroom",
           "keller": "basement", "dachboden": "attic", "terrasse": "terrace", "balkon": "balcony",
           "park": "park", "see": "lake", "meer": "ocean", "berg": "mountain", "tal": "valley",
-          "fluss": "river", "brÃ¼cke": "bridge", "turm": "tower", "kirche": "church",
-          "restaurant": "restaurant", "cafÃ©": "cafe", "bar": "bar", "hotel": "hotel",
+          "fluss": "river", "brücke": "bridge", "turm": "tower", "kirche": "church",
+          "restaurant": "restaurant", "café": "cafe", "bar": "bar", "hotel": "hotel",
           "bahnhof": "train station", "flughafen": "airport", "hafen": "harbor",
           // Atmosphere
-          "gedÃ¤mpft": "dim lighting", "dunkel": "dark", "hell": "bright", "warm": "warm",
+          "gedämpft": "dim lighting", "dunkel": "dark", "hell": "bright", "warm": "warm",
           "kalt": "cold", "neblig": "foggy", "sonnig": "sunny", "regnerisch": "rainy",
           "abend": "evening", "nacht": "night", "morgen": "morning", "mittag": "noon",
-          "dÃ¤mmung": "dusk", "stimmungsvoll": "atmospheric", "romantisch": "romantic",
+          "dämmung": "dusk", "stimmungsvoll": "atmospheric", "romantisch": "romantic",
           "geheimnisvoll": "mysterious", "elegant": "elegant", "rustikal": "rustic",
-          "modern": "modern", "alt": "old", "antik": "antique", "luxuriÃ¶s": "luxurious",
+          "modern": "modern", "alt": "old", "antik": "antique", "luxuriös": "luxurious",
           // Common words
           "und": "and", "mit": "with", "in": "in", "auf": "on", "unter": "under",
-          "neben": "beside", "vor": "before", "hinter": "behind", "Ã¼ber": "above",
+          "neben": "beside", "vor": "before", "hinter": "behind", "über": "above",
           "ist": "", "sind": "", "war": "", "waren": "", "wird": "", "werden": "",
           "der": "", "die": "", "das": "", "ein": "", "eine": "", "einem": "", "einer": "",
         };
@@ -2287,7 +2287,7 @@ REGELN:
         const extractSceneKeywords = (text: string): string => {
           // 1. Remove ALL problematic words (German)
           let cleaned = text
-            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schieÃŸen|erschieÃŸen|tÃ¶ten|leiche|tod|opfer|kampf|angriff|verletzt|schmerz|angst|panik|terror|gefahr)\b/gi, '')
+            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schieÜen|erschieÜen|töten|leiche|tod|opfer|kampf|angriff|verletzt|schmerz|angst|panik|terror|gefahr)\b/gi, '')
             .toLowerCase()
             .replace(/[.,!?;:'"()[\]{}]/g, ' ')
             .replace(/\s+/g, ' ')
@@ -2301,7 +2301,7 @@ REGELN:
           // 3. Remove any remaining German articles/filler and empty strings
           cleaned = cleaned
             .split(/\s+/)
-            .filter(word => word.length > 2 && !/^(der|die|das|ein|eine|und|oder|aber|von|zu|bei|nach|fÃ¼r|mit|aus|Ã¼ber|unter|durch|gegen|ohne|um|an|auf|in|als|wie|so|wenn|weil|dass|ob|doch|noch|schon|auch|nur|sehr|ganz|immer|wieder|hier|dort|jetzt|dann|da)$/i.test(word))
+            .filter(word => word.length > 2 && !/^(der|die|das|ein|eine|und|oder|aber|von|zu|bei|nach|für|mit|aus|über|unter|durch|gegen|ohne|um|an|auf|in|als|wie|so|wenn|weil|dass|ob|doch|noch|schon|auch|nur|sehr|ganz|immer|wieder|hier|dort|jetzt|dann|da)$/i.test(word))
             .join(' ');
           
           // 4. Keep only first 5 words
@@ -2355,12 +2355,12 @@ REGELN:
           const locationKeywords = [
             // Outdoor locations
             "forest", "wald", "beach", "strand", "mountain", "berg", "city", "stadt", "village", "dorf",
-            "desert", "wÃ¼ste", "jungle", "dschungel", "ocean", "meer", "lake", "see", "river", "fluss",
+            "desert", "wüste", "jungle", "dschungel", "ocean", "meer", "lake", "see", "river", "fluss",
             "garden", "garten", "park", "meadow", "wiese", "field", "feld", "valley", "tal",
             // Indoor locations
-            "castle", "schloss", "burg", "cave", "hÃ¶hle", "temple", "tempel", "palace", "palast",
+            "castle", "schloss", "burg", "cave", "höhle", "temple", "tempel", "palace", "palast",
             "house", "haus", "mansion", "villa", "church", "kirche", "library", "bibliothek",
-            "hospital", "krankenhaus", "school", "schule", "office", "bÃ¼ro", "factory", "fabrik",
+            "hospital", "krankenhaus", "school", "schule", "office", "büro", "factory", "fabrik",
             "museum", "theater", "restaurant", "hotel", "bar", "club", "arena", "stadium", "station",
             // Fantasy/Sci-Fi
             "spaceship", "raumschiff", "space station", "raumstation", "planet", "moon", "mond",
@@ -2373,11 +2373,11 @@ REGELN:
               // Return English version
               const translations: Record<string, string> = {
                 "wald": "forest", "strand": "beach", "berg": "mountain", "stadt": "city", "dorf": "village",
-                "wÃ¼ste": "desert", "dschungel": "jungle", "meer": "ocean", "see": "lake", "fluss": "river",
+                "wüste": "desert", "dschungel": "jungle", "meer": "ocean", "see": "lake", "fluss": "river",
                 "garten": "garden", "wiese": "meadow", "feld": "field", "tal": "valley",
-                "schloss": "castle", "burg": "castle", "hÃ¶hle": "cave", "tempel": "temple", "palast": "palace",
+                "schloss": "castle", "burg": "castle", "höhle": "cave", "tempel": "temple", "palast": "palace",
                 "haus": "house", "kirche": "church", "bibliothek": "library", "krankenhaus": "hospital",
-                "schule": "school", "bÃ¼ro": "office", "fabrik": "factory",
+                "schule": "school", "büro": "office", "fabrik": "factory",
                 "raumschiff": "spaceship", "raumstation": "space station", "mond": "moon",
                 "kerker": "dungeon", "turm": "tower", "festung": "fortress", "ruinen": "ruins"
               };
@@ -2512,7 +2512,7 @@ CONTENT COMPLIANCE:
             // Build story synopsis for full narrative context
             const storySynopsis = currentStoryPoints.map((sp, idx) => {
               const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-              const marker = idx === sceneIndex ? " â† YOU ARE HERE" : "";
+              const marker = idx === sceneIndex ? " 👉 YOU ARE HERE" : "";
               return `${idx + 1}. "${spText}"${marker}`;
             }).join('\n');
             
@@ -2533,16 +2533,16 @@ CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${
 ${buildEnglishCharacterIdentityBlock(scenePoint)}
 
 NARRATIVE CONTEXT:
-- Previous: ${prevText ? `"${prevText}" â€” end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Previous: ${prevText ? `"${prevText}" ✅ end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
-- Next: ${nextText ? `"${nextText}" â€” this scene must set up a logical visual transition` : "None (this is the final scene â€” end with impact)"}
+- Next: ${nextText ? `"${nextText}" ✅ this scene must set up a logical visual transition` : "None (this is the final scene ✅ end with impact)"}
 
 Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
 - PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic â€” fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed â€” smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful â€” high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching â€” intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark â€” shadows, intrigue' : 'Cheerful/Light â€” bright, upbeat'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic ✅ fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed ✅ smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful ✅ high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching ✅ intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark ✅ shadows, intrigue' : 'Cheerful/Light ✅ bright, upbeat'}
 - COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
 ${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
@@ -2631,7 +2631,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         
         if (attempt < maxRetries) {
           const delayMs = attempt <= 2 ? 2000 : 3000;
-          console.log(`ðŸ”„ Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
+          console.log(`✅ Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
 
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
@@ -2639,7 +2639,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         
         let errorMessage = "Unbekannter Fehler";
         if (error instanceof Error) {
-          errorMessage = error.name === 'AbortError' ? `ZeitÃ¼berschreitung (2 Min.)` : error.message;
+          errorMessage = error.name === 'AbortError' ? `Zeitüberschreitung (2 Min.)` : error.message;
         }
         
         return { success: false, errorMessage };
@@ -2660,27 +2660,27 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     try {
       // Get character reference images from STORY reference images (URLs) as data URLs
       const characterBase64Images: string[] = [];
-      console.log(`ðŸ“¸ Loading ${storyReferenceImages.length} story reference images...`);
+      console.log(`✅ Loading ${storyReferenceImages.length} story reference images...`);
       
       for (const imageUrl of storyReferenceImages) {
         try {
           console.log(`  Fetching: ${imageUrl.substring(0, 50)}...`);
           const response = await fetch(imageUrl);
           if (!response.ok) {
-            console.error(`  âŒ Failed to fetch image: ${response.status}`);
+            console.error(`  Ü Failed to fetch image: ${response.status}`);
             continue;
           }
           const blob = await response.blob();
           const dataUrl = await blobToDataUrl(blob);
           const { base64 } = splitImageDataUrl(dataUrl);
-          console.log(`  âœ… Loaded ${Math.round(base64.length / 1024)}KB`);
+          console.log(`  ✅ Loaded ${Math.round(base64.length / 1024)}KB`);
           characterBase64Images.push(dataUrl);
         } catch (error) {
           console.error('Error converting story reference image to base64:', error);
         }
       }
       
-      console.log(`ðŸ“¸ Successfully loaded ${characterBase64Images.length}/${storyReferenceImages.length} reference images`);
+      console.log(`✅ Successfully loaded ${characterBase64Images.length}/${storyReferenceImages.length} reference images`);
       
       if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
         console.error("Fehler: Keine Referenzbilder - Die hochgeladenen Referenzbilder konnten nicht geladen werden.");
@@ -2723,21 +2723,21 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           totalAttempts += RETRIES_PER_CYCLE;
           
           if (result?.success) {
-            console.log(`âœ… Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen`);
+            console.log(`✅ Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen`);
             break;
           }
 
           finalErrorMessage = result?.errorMessage || "Unbekannter Fehler";
           const retryClass = classifyRetryableSceneError(finalErrorMessage);
           if (retryClass === "non_retryable") {
-            console.warn(`â›” Szene ${sceneIndex + 1}: Nicht-retrybarer Fehler erkannt -> Stoppe weitere Versuche`);
+            console.warn(`✅ Szene ${sceneIndex + 1}: Nicht-retrybarer Fehler erkannt -> Stoppe weitere Versuche`);
             break;
           }
         }
         
         if (!result?.success) {
           const sceneError = finalErrorMessage || "Szene konnte nicht generiert werden";
-          console.error(`âŒ Szene ${sceneIndex + 1} dauerhaft fehlgeschlagen: ${sceneError}`);
+          console.error(`Ü Szene ${sceneIndex + 1} dauerhaft fehlgeschlagen: ${sceneError}`);
           setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: sceneError } : p));
           continue;
         }
@@ -2794,7 +2794,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         successCount++;
       }
       
-      console.log(`âœ… Story-Bilder fertig: ${successCount}/${storyPointsRef.current.length} Szenen erfolgreich`);
+      console.log(`✅ Story-Bilder fertig: ${successCount}/${storyPointsRef.current.length} Szenen erfolgreich`);
     } finally {
       setGeneratingStoryImageIndex(null);
       setIsGeneratingStoryImages(false);
@@ -2834,8 +2834,8 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       if (point.audienceEffect) metadataLines.push(`Wirkung: ${effectToEnglish[point.audienceEffect] || point.audienceEffect}`);
       if (storyboardMainLocation) metadataLines.push(`Hauptort: ${storyboardMainLocation}`);
       if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
-      if (point.continuityNotes) metadataLines.push(`KontinuitÃ¤ts-Hinweise: ${point.continuityNotes}`);
-      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog WÃ–RTLICH in der Originalsprache in den Video-Prompt, sodass der Charakter genau diese Worte sichtbar spricht. Der Dialog darf NICHT ins Englische Ã¼bersetzt werden.`);
+      if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
+      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog WÜRTLICH in der Originalsprache in den Video-Prompt, sodass der Charakter genau diese Worte sichtbar spricht. Der Dialog darf NICHT ins Englische übersetzt werden.`);
       
       const isLastScene = i === storyPoints.length - 1;
       const nextScene = !isLastScene ? storyPoints[i + 1] : null;
@@ -2844,7 +2844,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       // Build story synopsis for full narrative context
       const storySynopsis = storyPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-        const marker = idx === i ? " â† YOU ARE HERE" : "";
+        const marker = idx === i ? " 👉 YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
@@ -2867,16 +2867,16 @@ SCENE METADATA:
 ${metadataLines.length > 0 ? metadataLines.join('\n') : 'No specific settings'}
 
 NARRATIVE CONTEXT:
-- Previous: ${prevText ? `"${prevText}" â€” end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene â€” open with a strong hook)"}
+- Previous: ${prevText ? `"${prevText}" ✅ end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene ✅ open with a strong hook)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
-- Next: ${nextSceneText ? `"${nextSceneText}" â€” this scene must set up a logical visual transition to the next` : "None (this is the final scene â€” end with maximum impact)"}
+- Next: ${nextSceneText ? `"${nextSceneText}" ✅ this scene must set up a logical visual transition to the next` : "None (this is the final scene ✅ end with maximum impact)"}
 
 Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
 - PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic â€” fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed â€” smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful â€” high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching â€” intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark â€” shadows, intrigue' : 'Cheerful/Light â€” bright, upbeat'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic ✅ fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed ✅ smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful ✅ high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching ✅ intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark ✅ shadows, intrigue' : 'Cheerful/Light ✅ bright, upbeat'}
 - COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
 ${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
@@ -2962,7 +2962,7 @@ Respond ONLY with JSON:
       const prevCount = (i > 0 && storyPoints[i - 1]?.generatedImage) ? 1 : 0;
       const currentCount = point.generatedImage ? 1 : 0;
       const nextCount = storyPoints[i + 1]?.generatedImage ? 1 : 0;
-      console.log(`ðŸŽ¬ Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder fÃ¼r Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nÃ¤chste Szene)`);
+      console.log(`✅ Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nächste Szene)`);
 
       try {
         // Build parts: text + optional reference images
@@ -3067,7 +3067,7 @@ Respond ONLY with JSON:
     let lastError = "";
 
     for (const model of orderedModels) {
-      console.log(`ðŸŽ¬ Veo attempt: configured=${mapStoryModelLabel(storyVideoModel)}, model=${model}`);
+      console.log(`✅ Veo attempt: configured=${mapStoryModelLabel(storyVideoModel)}, model=${model}`);
 
       const response = await fetch(
         `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
@@ -3083,22 +3083,22 @@ Respond ONLY with JSON:
         const operationName = data.name;
         if (!operationName) throw new Error("Keine Operation-ID erhalten");
         veoWorkingConfigRef.current = { payloadFormat: 'bytesBase64Encoded', model };
-        console.log(`âœ… Veo OK: model=${model}, op=${operationName}`);
+        console.log(`✅ Veo OK: model=${model}, op=${operationName}`);
         return operationName;
       }
 
       const errText = await response.text();
-      console.warn(`âš ï¸ Veo ${model} â†’ ${response.status}: ${errText.substring(0, 300)}`);
+      console.warn(`⚠️ Veo ${model} ✅ ${response.status}: ${errText.substring(0, 300)}`);
 
       if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
-      if (response.status === 401 || response.status === 403) throw new Error("API-Key ungÃ¼ltig oder keine Berechtigung fÃ¼r Video-Generierung");
+      if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
 
       if (response.status === 400) {
         lastError = errText.substring(0, 200);
         continue;
       }
 
-      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} â€“ ${errText.substring(0, 200)}`);
+      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} ✅ ${errText.substring(0, 200)}`);
     }
 
     throw new Error(`Alle Veo-Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
@@ -3128,7 +3128,7 @@ Respond ONLY with JSON:
       // Check for error
       if (data.error) {
         const errMsg = data.error.message || JSON.stringify(data.error);
-        console.error("âŒ Veo operation error:", errMsg);
+        console.error("Ü Veo operation error:", errMsg);
         // Safety filter detection
         if (errMsg.toLowerCase().includes('safety') || errMsg.toLowerCase().includes('blocked') || errMsg.toLowerCase().includes('filter')) {
           return { status: "failed", error: `Video durch Sicherheitsfilter blockiert: ${errMsg}` };
@@ -3137,7 +3137,7 @@ Respond ONLY with JSON:
       }
       
       const resp = data.response || {};
-      console.log("ðŸ“¦ Veo done â€“ response keys:", Object.keys(resp).join(", "));
+      console.log("✅ Veo done ✅ response keys:", Object.keys(resp).join(", "));
       
       // Multi-path video URI extraction
       const videoUri = 
@@ -3151,16 +3151,16 @@ Respond ONLY with JSON:
         const remoteUrl = videoUri.startsWith("http") 
           ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
           : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
-        console.log("âœ… Video URL extrahiert, konvertiere zu Blob...");
+        console.log("✅ Video URL extrahiert, konvertiere zu Blob...");
         try {
           const videoResp = await fetch(remoteUrl);
           if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
           const videoBlob = await videoResp.blob();
           const blobUrl = createManagedBlobUrl(videoBlob);
-          console.log("âœ… Video als Blob-URL gespeichert");
+          console.log("✅ Video als Blob-URL gespeichert");
           return { status: "completed", videoUrl: blobUrl };
         } catch (dlErr) {
-          console.warn("âš ï¸ Blob-Konvertierung fehlgeschlagen, nutze direkte URL:", dlErr);
+          console.warn("⚠️ Blob-Konvertierung fehlgeschlagen, nutze direkte URL:", dlErr);
           return { status: "completed", videoUrl: remoteUrl };
         }
       }
@@ -3168,7 +3168,7 @@ Respond ONLY with JSON:
       // Fallback: direct base64 video in predictions
       const prediction = resp.predictions?.[0];
       if (prediction?.bytesBase64Encoded) {
-        console.log("âœ… Video als Base64 in predictions erhalten");
+        console.log("✅ Video als Base64 in predictions erhalten");
         const mimeType = prediction.mimeType || "video/mp4";
         const videoUrl = `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
         return { status: "completed", videoUrl };
@@ -3177,16 +3177,16 @@ Respond ONLY with JSON:
       // Check for raiMediaFilteredReasons (content policy)
       const filteredReasons = resp.generateVideoResponse?.raiMediaFilteredReasons;
       if (filteredReasons && Array.isArray(filteredReasons) && filteredReasons.length > 0) {
-        console.error("âŒ Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
+        console.error("Ü Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
         // Translate common Veo content policy messages to German
         const translatedReasons = filteredReasons.map((reason: string) => {
-          if (reason.includes("photorealistic children")) return "Das Bild enthÃ¤lt Personen, die als minderjÃ¤hrig eingestuft wurden. Bitte Ã¤ndere das Referenzbild oder den Prompt, sodass die Figur eindeutig erwachsen wirkt.";
+          if (reason.includes("photorealistic children")) return "Das Bild enthält Personen, die als minderjährig eingestuft wurden. Bitte ändere das Referenzbild oder den Prompt, sodass die Figur eindeutig erwachsen wirkt.";
           if (reason.includes("violence")) return "Der Inhalt wurde wegen Gewaltdarstellung blockiert.";
           if (reason.includes("sexual")) return "Der Inhalt wurde wegen sexueller Darstellung blockiert.";
-          if (reason.includes("dangerous")) return "Der Inhalt wurde als gefÃ¤hrlich eingestuft.";
+          if (reason.includes("dangerous")) return "Der Inhalt wurde als gefährlich eingestuft.";
           if (reason.includes("hate")) return "Der Inhalt wurde wegen Hassrede blockiert.";
-          if (reason.includes("harassment")) return "Der Inhalt wurde wegen BelÃ¤stigung blockiert.";
-          if (reason.includes("deceptive")) return "Der Inhalt wurde als irrefÃ¼hrend eingestuft.";
+          if (reason.includes("harassment")) return "Der Inhalt wurde wegen Belästigung blockiert.";
+          if (reason.includes("deceptive")) return "Der Inhalt wurde als irreführend eingestuft.";
           return `Inhaltsrichtlinie: ${reason}`;
         });
         return { status: "failed", error: translatedReasons.join(" | ") };
@@ -3195,14 +3195,14 @@ Respond ONLY with JSON:
       // Structured diagnostics on failure
       const diagKeys = JSON.stringify(Object.keys(resp));
       const deepKeys = resp.generateVideoResponse ? JSON.stringify(Object.keys(resp.generateVideoResponse)) : "n/a";
-      console.error(`âŒ Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
-      console.error("ðŸ“‹ Response preview:", JSON.stringify(resp).substring(0, 800));
+      console.error(`Ü Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
+      console.error("✅ Response preview:", JSON.stringify(resp).substring(0, 800));
       return { status: "failed", error: "Video-Generierung fehlgeschlagen. Bitte den Prompt oder das Bild anpassen und erneut versuchen." };
     }
     
     // Log progress metadata if available
     if (data.metadata) {
-      console.log("â³ Veo progress:", JSON.stringify(data.metadata).substring(0, 200));
+      console.log("⏳ Veo progress:", JSON.stringify(data.metadata).substring(0, 200));
     }
     
     return { status: "processing" };
@@ -3230,10 +3230,10 @@ Respond ONLY with JSON:
     for (let retry = 0; retry <= MAX_RETRIES; retry++) {
       try {
         if (retry > 0) {
-          console.log(`ðŸ”„ Szene ${sceneIndex + 1}: Erneuter Versuch ${retry}/${MAX_RETRIES}...`);
+          console.log(`✅ Szene ${sceneIndex + 1}: Erneuter Versuch ${retry}/${MAX_RETRIES}...`);
           setVideoErrors(prev => {
             const n = new Map(prev);
-            n.set(sceneIndex, `Server-Fehler â€“ erneuter Versuch ${retry}/${MAX_RETRIES}...`);
+            n.set(sceneIndex, `Server-Fehler ✅ erneuter Versuch ${retry}/${MAX_RETRIES}...`);
             return n;
           });
           // Wait before retry
@@ -3249,7 +3249,7 @@ Respond ONLY with JSON:
         const endBase64 = nextImage ? await imageToBase64(nextImage) : undefined;
 
         const operationName = await startGeminiVideoGeneration(point.videoPrompt!, startBase64, endBase64, storyboardFormat);
-        console.log(`âœ… Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
+        console.log(`✅ Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
         setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
 
         // Poll for result
@@ -3263,31 +3263,31 @@ Respond ONLY with JSON:
 
           try {
             const result = await pollGeminiVideoOperation(operationName);
-            console.log(`ðŸ“Š Szene ${sceneIndex + 1} Status: ${result.status}`);
+            console.log(`✅ Szene ${sceneIndex + 1} Status: ${result.status}`);
 
             if (result.status === "completed" && result.videoUrl) {
               setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
               setStoryPoints(prev => prev.map((p, i) =>
                 i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
               ));
-              return; // Success â€“ exit retry loop
+              return; // Success ✅ exit retry loop
             } else if (result.status === "failed") {
               const isInternalError = result.error?.toLowerCase().includes('internal') || 
                                       result.error?.toLowerCase().includes('server');
               if (isInternalError && retry < MAX_RETRIES) {
-                console.warn(`âš ï¸ Szene ${sceneIndex + 1}: Interner Server-Fehler, wird erneut versucht...`);
+                console.warn(`⚠️ Szene ${sceneIndex + 1}: Interner Server-Fehler, wird erneut versucht...`);
                 break; // Break poll loop to retry
               }
               setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
               return; // Non-retryable failure
             }
           } catch (error) {
-            console.warn(`âš ï¸ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
           }
         }
 
         if (pollCount >= maxPolls) {
-          setVideoErrors(prev => new Map(prev).set(sceneIndex, "ZeitÃ¼berschreitung"));
+          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
           return;
         }
         // If we broke out of poll loop due to internal error, continue retry loop
@@ -3299,7 +3299,7 @@ Respond ONLY with JSON:
           return;
         }
         if (retry >= MAX_RETRIES) {
-          console.error(`âŒ Szene ${sceneIndex + 1} endgÃ¼ltig fehlgeschlagen:`, error);
+          console.error(`Ü Szene ${sceneIndex + 1} endgültig fehlgeschlagen:`, error);
           setVideoErrors(prev => new Map(prev).set(sceneIndex, errMsg));
           return;
         }
@@ -3307,7 +3307,7 @@ Respond ONLY with JSON:
     }
   };
 
-  // Generate videos via Gemini Veo API â€“ sequential, one at a time
+  // Generate videos via Gemini Veo API ✅ sequential, one at a time
   const generateVideos = async () => {
     if (storyPoints.length === 0 || isGeneratingVideos || !apiKey || generationLimitReached) return;
     
@@ -3461,7 +3461,7 @@ Respond ONLY with JSON:
         clearTimeout(timeoutId);
         let errorMessage = "Unbekannter Fehler";
         if (error instanceof Error) {
-          errorMessage = error.name === 'AbortError' ? "ZeitÃ¼berschreitung â€“ keine Antwort nach 40s" : error.message;
+          errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung ✅ keine Antwort nach 40s" : error.message;
         }
         console.error(`Bild-Regeneration Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
         setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: errorMessage } : p));
@@ -3474,7 +3474,7 @@ Respond ONLY with JSON:
       }
     }
     
-    // Now generate video â€” read fresh state from ref
+    // Now generate video ✅ read fresh state from ref
     incrementGeneration();
     setIsGeneratingVideos(true);
     
@@ -3487,7 +3487,7 @@ Respond ONLY with JSON:
       
       const storySynopsis = currentStoryPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-        const marker = idx === sceneIndex ? " â† YOU ARE HERE" : "";
+        const marker = idx === sceneIndex ? " 👉 YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
@@ -3510,16 +3510,16 @@ CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${
 ${characterIdentityBlock}
 
 NARRATIVE CONTEXT:
-- Previous: ${prevText ? `"${prevText}" â€” end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Previous: ${prevText ? `"${prevText}" ✅ end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
-- Next: ${nextText ? `"${nextText}" â€” this scene must set up a logical visual transition` : "None (this is the final scene â€” end with impact)"}
+- Next: ${nextText ? `"${nextText}" ✅ this scene must set up a logical visual transition` : "None (this is the final scene ✅ end with impact)"}
 
 Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
 - PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic â€” fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed â€” smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful â€” high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching â€” intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark â€” shadows, intrigue' : 'Cheerful/Light â€” bright, upbeat'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic ✅ fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed ✅ smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful ✅ high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching ✅ intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark ✅ shadows, intrigue' : 'Cheerful/Light ✅ bright, upbeat'}
 - COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
 ${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
@@ -3588,7 +3588,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     }));
   };
 
-  // ===== TRANSLATION MAPS for German dropdown values â†’ English =====
+  // ===== TRANSLATION MAPS for German dropdown values ✅ English =====
   const emotionToEnglish: Record<string, string> = {
     "gluecklich": "happy, joyful expression",
     "traurig": "sad, melancholic expression",
@@ -3756,22 +3756,22 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     
     const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
     const styleBlock = styleDesc
-      ? `\n\n!!! MANDATORY ART STYLE: "${styleDesc}" !!!\nThe ENTIRE image MUST be rendered in this style. Every element â€” characters, background, lighting, textures â€” must look like a ${styleDesc}. Do NOT render anything photorealistically unless the style explicitly says so. Describe the visual medium, textures, colors, and rendering technique of "${styleDesc}" in your prompt.\n`
+      ? `\n\n!!! MANDATORY ART STYLE: "${styleDesc}" !!!\nThe ENTIRE image MUST be rendered in this style. Every element ✅ characters, background, lighting, textures ✅ must look like a ${styleDesc}. Do NOT render anything photorealistically unless the style explicitly says so. Describe the visual medium, textures, colors, and rendering technique of "${styleDesc}" in your prompt.\n`
       : "";
     
     const systemInstruction = `You are an expert image prompt writer. You MUST faithfully include ALL scene details below. Do NOT omit, simplify, or generalize any of them.
 ${styleBlock}
 PRIORITY HIERARCHY (strictly follow this order):
-1. User-defined scene settings (HIGHEST â€” always override defaults)
+1. User-defined scene settings (HIGHEST ✅ always override defaults)
 2. Scene uniqueness (each scene must look distinct)
-3. Visual consistency with other scenes (LOWEST â€” only for character identity)
+3. Visual consistency with other scenes (LOWEST ✅ only for character identity)
 
-REQUIRED FIELDS â€” you MUST explicitly include EACH of these in your prompt:
-- Art Style/Medium: ${styleDesc ? `"${styleDesc}" (MANDATORY â€” describe the visual medium, textures, rendering technique)` : "describe the visual style"}
+REQUIRED FIELDS ✅ you MUST explicitly include EACH of these in your prompt:
+- Art Style/Medium: ${styleDesc ? `"${styleDesc}" (MANDATORY ✅ describe the visual medium, textures, rendering technique)` : "describe the visual style"}
 - Shot Type: Use the EXACT shot type specified (e.g. close-up, full-shot). Do NOT change it.
 - Camera Angle: Use the EXACT camera angle specified. Do NOT default to eye-level.
 - Location + Specific Area: Describe the exact environment and sub-location.
-- Character Action: Describe the EXACT action specified â€” not a generic standing/posing.
+- Character Action: Describe the EXACT action specified ✅ not a generic standing/posing.
 - Character Expression/Emotion: Show the SPECIFIC emotion on the character's face and body language.
 - Composition: Follow any composition notes precisely.
 - Camera Movement: Reflect any specified camera movement in the framing.
@@ -3780,7 +3780,7 @@ REQUIRED FIELDS â€” you MUST explicitly include EACH of these in your promp
 
 Rules:
 - Write a single descriptive paragraph (max 250 words).${styleDesc ? `\n- START the prompt by describing the art style/medium (e.g. "A ${styleDesc} depicting..."). This is critical.` : ""}
-- Reference images are ONLY for character identity (face, body, clothing) â€” do NOT copy pose, style, or scene from them.
+- Reference images are ONLY for character identity (face, body, clothing) ✅ do NOT copy pose, style, or scene from them.
 - If named character references are provided, never swap identities between those names.
 - The character must have a NEW pose matching the scene action.
 - Do NOT copy the visual style or medium of reference images.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
@@ -3791,7 +3791,7 @@ Rules:
 Scene Details:
 ${sceneContext}`;
 
-    console.log(`ðŸ¤– Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
+    console.log(`ÜÜ Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
     
     try {
       const aiPrompt = await callGeminiOrFull(
@@ -3800,14 +3800,14 @@ ${sceneContext}`;
       );
       
       if (!aiPrompt) {
-        console.warn("âš ï¸ Empty AI prompt, falling back to scene context");
+        console.warn("⚠️ Empty AI prompt, falling back to scene context");
         return sceneContext;
       }
       
-      console.log(`âœ… AI-generated image prompt for scene ${sceneIndex + 1}:`, aiPrompt.substring(0, 200) + '...');
+      console.log(`✅ AI-generated image prompt for scene ${sceneIndex + 1}:`, aiPrompt.substring(0, 200) + '...');
       return aiPrompt;
     } catch (error) {
-      console.warn("âš ï¸ AI prompt generation error, falling back to scene context:", error);
+      console.warn("⚠️ AI prompt generation error, falling back to scene context:", error);
       return sceneContext;
     }
   };
@@ -3833,7 +3833,7 @@ ${sceneContext}`;
     
     // Use updatedPoint if provided (contains latest edits from popup), otherwise use latest ref state
     const point = updatedPoint || storyPointsRef.current[sceneIndex];
-    console.log("ðŸ” Regenerating with point data:", {
+    console.log("✅ Regenerating with point data:", {
       detailedDescription: point.detailedDescription,
       emotion: point.emotion,
       keyAction: point.keyAction,
@@ -3866,7 +3866,7 @@ ${sceneContext}`;
       // Step 1: Let Text-AI write the image prompt
       const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
       
-      console.log(`ðŸŽ¨ Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
+      console.log(`✅ Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
       
       // Build image parts - collect all reference images as base64
       const allReferenceImages: string[] = [...characterBase64Images];
@@ -3962,7 +3962,7 @@ ${sceneContext}`;
             detailedImagePrompt: imagePromptText,
             generationError: undefined,
             generationSnapshot,
-            // Clear video if it existed â€” it's now stale since the image changed
+            // Clear video if it existed ✅ it's now stale since the image changed
             ...(hadVideo ? { generatedVideo: undefined } : {}),
           };
           // Auto-save as new version on regeneration
@@ -3988,7 +3988,7 @@ ${sceneContext}`;
       
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "ZeitÃ¼berschreitung â€“ keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung ✅ keine Antwort nach 20s" : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
@@ -4157,7 +4157,7 @@ ${sceneContext}`;
       
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "ZeitÃ¼berschreitung â€“ keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung ✅ keine Antwort nach 20s" : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
@@ -4192,30 +4192,30 @@ ${sceneContext}`;
       try {
         const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
         const expandPrompt = isDialogMode
-          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog â€” optimiert fÃ¼r ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
+          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog ✅ optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
 
 REGELN:
-- 4-8 SÃ¤tze gesprochener Dialog, filmisch und emotional
-- Hook-First: Der ERSTE Satz muss sofort fesseln (provokant, Ã¼berraschend, emotional)
-- NatÃ¼rlich klingende Sprache, keine steifen Formulierungen
-- Emotionale IntensitÃ¤t: Jeder Satz muss eine Reaktion auslÃ¶sen
-- Denke an Pacing: Kurze, punchy SÃ¤tze wechseln sich mit emotionalen Momenten ab
+- 4-8 Sätze gesprochener Dialog, filmisch und emotional
+- Hook-First: Der ERSTE Satz muss sofort fesseln (provokant, überraschend, emotional)
+- Natürlich klingende Sprache, keine steifen Formulierungen
+- Emotionale Intensität: Jeder Satz muss eine Reaktion auslösen
+- Denke an Pacing: Kurze, punchy Sätze wechseln sich mit emotionalen Momenten ab
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit dem fertigen Dialog-Text, ohne ErklÃ¤rungen oder AnfÃ¼hrungszeichen drumherum. Auf Deutsch.`
-          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung â€” optimiert fÃ¼r kurze Social-Media-Videos (TikTok/Reels/Shorts, 15-60 Sekunden).
+Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
+          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung ✅ optimiert für kurze Social-Media-Videos (TikTok/Reels/Shorts, 15-60 Sekunden).
 
 REGELN:
-- 3-6 SÃ¤tze, visuell und atmosphÃ¤risch
-- Hook-First: Die Beschreibung muss mit dem visuell stÃ¤rksten Moment starten
-- Dynamisch: Beschreibe Bewegung, Aktion, Emotionen â€” keine statischen Bilder
+- 3-6 Sätze, visuell und atmosphärisch
+- Hook-First: Die Beschreibung muss mit dem visuell stärksten Moment starten
+- Dynamisch: Beschreibe Bewegung, Aktion, Emotionen ✅ keine statischen Bilder
 - Emotional: Jede Szene braucht einen klaren emotionalen Beat
 - Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit der fertigen Beschreibung, ohne ErklÃ¤rungen. Auf Deutsch.`;
+Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -4267,26 +4267,26 @@ Antworte NUR mit der fertigen Beschreibung, ohne ErklÃ¤rungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 WÃ¶rter pro Zusammenfassung). Jede beschreibt knapp das Thema eines mÃ¶glichen Dialogs â€” optimiert fÃ¼r kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs ✅ optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
 Gute Beispiele:
 - Konfrontation nach dem Betrug
-- LiebesgestÃ¤ndnis im Regen
+- Liebesgeständnis im Regen
 - Letzte Nachricht vor dem Abflug
 
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder AufzÃ¤hlungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 WÃ¶rter pro Zusammenfassung). Jede beschreibt knapp das Thema einer mÃ¶glichen Geschichte â€” optimiert fÃ¼r kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte ✅ optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 
-WICHTIG: Die Geschichten mÃ¼ssen sofort fesseln (Hook-First), emotional intensiv sein und sich fÃ¼r schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
+WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
 Gute Beispiele:
 - Fremder rettet Kind im Park
-- Traumjob-Absage verÃ¤ndert alles
-- ZufÃ¤lliges Wiedersehen nach Jahren
+- Traumjob-Absage verändert alles
+- Zufälliges Wiedersehen nach Jahren
 
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder AufzÃ¤hlungszeichen. Auf Deutsch.`
+Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
             }]
           }),
@@ -4579,10 +4579,10 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       
       // Use custom prompt if provided
       if (customPromptText && customPromptText.trim()) {
-        prompt = `${customPromptText}. Ultra high resolution. ðŸš« ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
+        prompt = `${customPromptText}. Ultra high resolution. ✅ ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
       } else {
         // Simplified prompt - only view angle and shot type
-        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution. ðŸš« ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
+        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution. ✅ ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
@@ -4613,8 +4613,8 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
-- ðŸš« ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
-- ðŸš« NO letterboxing, NO black bars on any side (top, bottom, left, right)!
+- ✅ ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
+- ✅ NO letterboxing, NO black bars on any side (top, bottom, left, right)!
 
 Create a professional photoshoot of the person from the reference image(s). 
 - ONLY ONE PERSON must appear in the entire image
@@ -4676,7 +4676,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         );
       } catch (err: any) {
         if (err?.name === "AbortError") {
-          throw new Error(externalSignal?.aborted ? "Generierung abgebrochen" : "ZeitÃ¼berschreitung - keine Antwort nach 20s");
+          throw new Error(externalSignal?.aborted ? "Generierung abgebrochen" : "Zeitüberschreitung - keine Antwort nach 20s");
         }
         throw err;
       } finally {
@@ -4684,31 +4684,31 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         externalSignal?.removeEventListener('abort', onExternalAbort);
       }
 
-      console.log("ðŸ” API Request sent, Response status:", response.status);
+      console.log("✅ API Request sent, Response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`âŒ Gemini API error ${response.status}:`, errorText);
+        console.error(`Ü Gemini API error ${response.status}:`, errorText);
         // Create user-friendly error message based on status
         let userFriendlyError = "";
         switch (response.status) {
           case 400:
-            userFriendlyError = "UngÃ¼ltige Anfrage - Prompt prÃ¼fen";
+            userFriendlyError = "Ungültige Anfrage - Prompt prüfen";
             break;
           case 401:
-            userFriendlyError = "API-Key ungÃ¼ltig oder abgelaufen";
+            userFriendlyError = "API-Key ungültig oder abgelaufen";
             break;
           case 403:
             userFriendlyError = "Zugriff verweigert";
             break;
           case 429:
-            userFriendlyError = "API Ã¼berlastet - bitte warte kurz";
+            userFriendlyError = "API überlastet - bitte warte kurz";
             break;
           case 500:
             userFriendlyError = "Server-Fehler bei Google";
             break;
           case 503:
-            userFriendlyError = "API Ã¼berlastet - spÃ¤ter versuchen";
+            userFriendlyError = "API überlastet - später versuchen";
             break;
           default:
             userFriendlyError = `API-Fehler (${response.status})`;
@@ -4717,17 +4717,17 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       }
 
       const data = await response.json();
-      console.log("ðŸ“¦ Full API Response for image", index + 1);
+      console.log("✅ Full API Response for image", index + 1);
 
       // Check promptFeedback for block reasons
       if (data.promptFeedback?.blockReason) {
         const blockReason = data.promptFeedback.blockReason;
-        console.error("âŒ Prompt blocked:", blockReason);
+        console.error("Ü Prompt blocked:", blockReason);
       const blockMessages: Record<string, string> = {
-          "SAFETY": "âš ï¸ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte Ã¤ndere deinen Prompt oder verwende ein anderes Referenzbild.",
-          "OTHER": "âš ï¸ Die Generierung wurde blockiert. Bitte Ã¤ndere dein Referenzbild oder passe deinen Prompt an.",
-          "BLOCKLIST": "âš ï¸ Dein Prompt enthÃ¤lt blockierte Begriffe. Bitte formuliere deinen Prompt um.",
-          "PROHIBITED_CONTENT": "âš ï¸ Verbotener Inhalt erkannt. Bitte Ã¤ndere deinen Prompt oder dein Referenzbild.",
+          "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "⚠️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "⚠️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
         };
         throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
       }
@@ -4735,26 +4735,26 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // ===== IMAGE EXTRACTION =====
       const candidates = data.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("âš ï¸ Keine Antwort von der API. Bitte versuche es erneut oder Ã¤ndere dein Referenzbild.");
+        throw new Error("⚠️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
       }
 
       // Check finishReason for specific error causes
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
-        console.warn("âš ï¸ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        throw new Error("âš ï¸ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
+        console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
+        throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
-        console.warn("âš ï¸ SAFETY filter triggered");
-        throw new Error("âš ï¸ Sicherheitsfilter ausgelÃ¶st. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
+        console.warn("⚠️ SAFETY filter triggered");
+        throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
       if (finishReason === "MAX_TOKENS") {
-        console.warn("âš ï¸ MAX_TOKENS reached");
-        throw new Error("âš ï¸ Token-Limit erreicht. Bitte verwende einen kÃ¼rzeren Prompt.");
+        console.warn("⚠️ MAX_TOKENS reached");
+        throw new Error("⚠️ Token-Limit erreicht. Bitte verwende einen kürzeren Prompt.");
       }
       if (finishReason === "RECITATION") {
-        console.warn("âš ï¸ RECITATION detected");
-        throw new Error("âš ï¸ Urheberrechtsfilter ausgelÃ¶st. Bitte Ã¤ndere deinen Prompt.");
+        console.warn("⚠️ RECITATION detected");
+        throw new Error("⚠️ Urheberrechtsfilter ausgelöst. Bitte ändere deinen Prompt.");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
@@ -4766,7 +4766,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       );
 
       if (imagePart) {
-        // ===== BASE64 â†’ BLOB (Browser) =====
+        // ===== BASE64 ✅ BLOB (Browser) =====
         const base64 = imagePart.inlineData.data;
         const mimeType = imagePart.inlineData.mimeType || "image/png";
 
@@ -4779,7 +4779,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
         // Use managed Blob URL to prevent memory leaks on older devices
         const objectUrl = createManagedBlobUrl(blob);
-        console.log(`âœ… Image ${index + 1} generated successfully:`, objectUrl);
+        console.log(`✅ Image ${index + 1} generated successfully:`, objectUrl);
         return objectUrl;
       }
 
@@ -4788,18 +4788,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         .map((p: any) => p.text)
         .filter(Boolean)
         .join("\n");
-      console.error("âŒ Gemini did not return an image. Text response:", textFallback);
+      console.error("Ü Gemini did not return an image. Text response:", textFallback);
       
-      console.error("âŒ No image in response for image", index + 1);
-      throw new Error("âš ï¸ Kein Bild in der Antwort. Bitte versuche es erneut oder Ã¤ndere deinen Prompt.");
+      console.error("Ü No image in response for image", index + 1);
+      throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
     } catch (error) {
-      console.error(`âŒ Error generating image ${index}:`, error);
+      console.error(`Ü Error generating image ${index}:`, error);
       // Re-throw with user-friendly message so processQueue catches it
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        throw new Error("Netzwerkfehler â€“ prÃ¼fe deine Internetverbindung");
+        throw new Error("Netzwerkfehler ✅ prüfe deine Internetverbindung");
       }
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error("ZeitÃ¼berschreitung â€“ keine Antwort nach 20s");
+        throw new Error("Zeitüberschreitung ✅ keine Antwort nach 20s");
       }
       // Re-throw original error if it already has a message
       throw error;
@@ -4815,19 +4815,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     totalCount: number,
     customPromptText?: string
   ) => {
-    console.log("ðŸ”„ processQueue gestartet!");
-    console.log("ðŸ”„ Queue LÃ¤nge:", generationQueueRef.current.length);
-    console.log("ðŸ”„ isGenerating:", isGenerating);
-    console.log("ðŸ”„ totalCount:", totalCount);
-    console.log("ðŸ”„ base64Images LÃ¤nge:", base64Images.length);
+    console.log("✅ processQueue gestartet!");
+    console.log("✅ Queue Länge:", generationQueueRef.current.length);
+    console.log("✅ isGenerating:", isGenerating);
+    console.log("✅ totalCount:", totalCount);
+    console.log("✅ base64Images Länge:", base64Images.length);
     
     const CONCURRENT_REQUESTS = isPro ? 2 : 1;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
-    console.log("ðŸ”„ Starte worker-pool...");
+    console.log("✅ Starte worker-pool...");
     
     const processSlot = async (index: number) => {
-      console.log(`ðŸŽ¨ Starte Generierung fÃ¼r Index ${index}`);
+      console.log(`✅ Starte Generierung für Index ${index}`);
       
       const slotController = new AbortController();
       abortControllersRef.current.set(index, slotController);
@@ -4887,12 +4887,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           setImageSlots((prev) => {
             const updated = [...prev];
             if (index >= updated.length) return prev;
-            updated[index] = { status: "error", progress: 0, errorMessage: "âš ï¸ Kein Bild generiert. Bitte Ã¤ndere dein Referenzbild oder deinen Prompt und versuche es erneut." };
+            updated[index] = { status: "error", progress: 0, errorMessage: "⚠️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
             return updated;
           });
         }
       } catch (error) {
-        console.error(`âŒ Error in processQueue for index ${index}:`, error);
+        console.error(`Ü Error in processQueue for index ${index}:`, error);
         const errorMessage = getDetailedErrorMessage(error);
         setImageSlots((prev) => {
           const updated = [...prev];
@@ -4930,25 +4930,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   const handleGenerate = async () => {
-    console.log("ðŸš€ handleGenerate aufgerufen!");
-    console.log("ðŸ”‘ API Key vorhanden?", !!apiKey);
-    console.log("ðŸ”‘ API Key LÃ¤nge:", apiKey?.length || 0);
-    console.log("ðŸ–¼ï¸ Anzahl Reference Images:", referenceImages.length);
-    console.log("ðŸŽ¯ Hintergrund:", selectedBackground);
-    console.log("ðŸ”¢ Anzahl zu generierende Bilder:", imageCount[0]);
+    console.log("✅ handleGenerate aufgerufen!");
+    console.log("✅ API Key vorhanden?", !!apiKey);
+    console.log("✅ API Key Länge:", apiKey?.length || 0);
+    console.log("✅⚠️ Anzahl Reference Images:", referenceImages.length);
+    console.log("✅ Hintergrund:", selectedBackground);
+    console.log("✅ Anzahl zu generierende Bilder:", imageCount[0]);
     
     if (!canGenerate || generationLimitReached) {
-      console.log("âŒ Fehler: Keine Generierung mÃ¶glich");
+      console.log("Ü Fehler: Keine Generierung möglich");
       return;
     }
     
 
     if (referenceImages.length === 0) {
-      console.log("âŒ Fehler: Keine Reference Images");
+      console.log("Ü Fehler: Keine Reference Images");
       return;
     }
 
-    console.log("âœ… Validierung erfolgreich, starte Generierung...");
+    console.log("✅ Validierung erfolgreich, starte Generierung...");
     incrementGeneration();
     setIsGenerating(true);
     isGeneratingRef.current = true;
@@ -5067,9 +5067,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
 
-    console.log("ðŸŽ¨ Starting custom prompt generation with reference images");
-    console.log("ðŸŽ¨ Custom Prompt:", customPrompt);
-    console.log("ðŸŽ¨ Reference Images:", referenceImages.length);
+    console.log("✅ Starting custom prompt generation with reference images");
+    console.log("✅ Custom Prompt:", customPrompt);
+    console.log("✅ Reference Images:", referenceImages.length);
 
     // Capture the index before state update and use ref to track it
     let capturedIndex = -1;
@@ -5146,13 +5146,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const randomExpression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
       
       // Build the main prompt
-      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality. Ultra high resolution. ðŸš« ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame! ðŸš« NO letterboxing, NO black bars on any side!`;
+      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality. Ultra high resolution. ✅ ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame! ✅ NO letterboxing, NO black bars on any side!`;
       
       // Combine base prompt with custom prompt
       const fullPrompt = `${basePrompt}\n\nADDITIONAL REQUIREMENTS: ${customPrompt}`;
 
-      console.log("ðŸŽ¨ Full combined prompt:", fullPrompt);
-      console.log("ðŸŽ¨ Using", normalizedReferenceImages.length, "reference images for blending");
+      console.log("✅ Full combined prompt:", fullPrompt);
+      console.log("✅ Using", normalizedReferenceImages.length, "reference images for blending");
 
       // Build parts array with text prompt and ALL reference images
       const parts = [
@@ -5201,12 +5201,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`âŒ Google API error: ${response.status}`, errorText);
+        console.error(`Ü Google API error: ${response.status}`, errorText);
         throw new Error(`Image generation failed: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("ðŸ“¦ Custom prompt API response received");
+      console.log("✅ Custom prompt API response received");
       
       // Extract the generated image from the response
       if (data.candidates && data.candidates[0]?.content?.parts) {
@@ -5217,7 +5217,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
           const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
-          console.log("âœ… Custom prompt image generated successfully");
+          console.log("✅ Custom prompt image generated successfully");
           
           // Convert Base64 to Blob
           const byteCharacters = atob(imageData);
@@ -5249,11 +5249,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       throw new Error("No image in response");
     } catch (error) {
-      console.error("âŒ Error with custom prompt:", error);
+      console.error("Ü Error with custom prompt:", error);
       
       // Check if it was a timeout/abort error
       const errorMessage = error instanceof Error 
-        ? (error.name === 'AbortError' ? 'ZeitÃ¼berschreitung - bitte versuche es erneut' : error.message)
+        ? (error.name === 'AbortError' ? 'Zeitüberschreitung - bitte versuche es erneut' : error.message)
         : "Ein Fehler ist aufgetreten";
       
       updateSlotSafe(newIndex, { status: "error", progress: 0 });
@@ -5314,7 +5314,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           canvas.toBlob((blob) => {
             if (!blob) { resolve(fullResUrl); return; }
             const thumbUrl = createManagedBlobUrl(blob);
-            console.log(`ðŸ–¼ï¸ Thumbnail created: ${canvas.width}x${canvas.height}`);
+            console.log(`✅⚠️ Thumbnail created: ${canvas.width}x${canvas.height}`);
             resolve(thumbUrl);
           }, "image/jpeg", 0.85);
         } catch (e) {
@@ -5491,10 +5491,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       if (!response.ok) {
         const statusMessages: Record<number, string> = {
-          400: "âš ï¸ UngÃ¼ltige Anfrage. Bitte passe deinen Prompt oder dein Referenzbild an.",
-          429: "âš ï¸ Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
-          403: "âš ï¸ API-Key ungÃ¼ltig oder gesperrt.",
-          500: "âš ï¸ Server-Fehler bei Google. Bitte versuche es erneut.",
+          400: "⚠️ Ungültige Anfrage. Bitte passe deinen Prompt oder dein Referenzbild an.",
+          429: "⚠️ Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
+          403: "⚠️ API-Key ungültig oder gesperrt.",
+          500: "⚠️ Server-Fehler bei Google. Bitte versuche es erneut.",
         };
         throw new Error(statusMessages[response.status] || `API-Fehler (${response.status})`);
       }
@@ -5505,25 +5505,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       if (result.promptFeedback?.blockReason) {
         const blockReason = result.promptFeedback.blockReason;
         const blockMessages: Record<string, string> = {
-          "SAFETY": "âš ï¸ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte Ã¤ndere deinen Prompt oder verwende ein anderes Referenzbild.",
-          "OTHER": "âš ï¸ Die Generierung wurde blockiert. Bitte Ã¤ndere dein Referenzbild oder passe deinen Prompt an.",
-          "BLOCKLIST": "âš ï¸ Dein Prompt enthÃ¤lt blockierte Begriffe. Bitte formuliere deinen Prompt um.",
-          "PROHIBITED_CONTENT": "âš ï¸ Verbotener Inhalt erkannt. Bitte Ã¤ndere deinen Prompt oder dein Referenzbild.",
+          "SAFETY": "⚠️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "⚠️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "⚠️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "⚠️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
         };
         throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
       }
 
       const candidates = result.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("âš ï¸ Keine Antwort von der API. Bitte versuche es erneut oder Ã¤ndere dein Referenzbild.");
+        throw new Error("⚠️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
       }
 
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
-        throw new Error("âš ï¸ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
+        throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
-        throw new Error("âš ï¸ Sicherheitsfilter ausgelÃ¶st. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
+        throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
@@ -5539,7 +5539,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         }
       }
 
-      if (!imageUrl) throw new Error("âš ï¸ Kein Bild in der Antwort. Bitte versuche es erneut oder Ã¤ndere deinen Prompt.");
+      if (!imageUrl) throw new Error("⚠️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
 
       // Animate to 100%
       for (let p = 85; p <= 100; p += 5) {
@@ -5575,7 +5575,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       });
 
     } catch (error) {
-      console.error("âŒ Regeneration error:", error);
+      console.error("Ü Regeneration error:", error);
       const errorMsg = error instanceof Error ? error.message : "Unbekannter Fehler";
       // Show error state with message so user can see reason and retry
       updateSlotSafe(index, (slot) => ({
@@ -5716,7 +5716,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       try {
         const response = await fetch(imageUrl);
         if (!response.ok) {
-          throw new Error("Bild nicht mehr verfÃ¼gbar");
+          throw new Error("Bild nicht mehr verfügbar");
         }
         blob = await response.blob();
       } catch (fetchError) {
@@ -5747,20 +5747,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
               {
                 parts: [
                   {
-                    text: `Analysiere dieses Bild sehr genau und erstelle einen DETAILLIERTEN, kreativen Prompt fÃ¼r eine Video-Animation. 
+                    text: `Analysiere dieses Bild sehr genau und erstelle einen DETAILLIERTEN, kreativen Prompt für eine Video-Animation. 
 
-Beschreibe AUSFÃœHRLICH:
-1. Die genaue Bewegung der Person (Kopf, Arme, KÃ¶rper, Mimik)
-2. Die Geschwindigkeit und Art der Bewegung (langsam, flieÃŸend, dynamisch)
-3. Details wie Haarbewegung, Kleidungsbewegung, LichtverÃ¤nderungen
-4. Die Stimmung und AtmosphÃ¤re der Animation
+Beschreibe AUSFÜHRLICH:
+1. Die genaue Bewegung der Person (Kopf, Arme, Körper, Mimik)
+2. Die Geschwindigkeit und Art der Bewegung (langsam, flieÜend, dynamisch)
+3. Details wie Haarbewegung, Kleidungsbewegung, Lichtveränderungen
+4. Die Stimmung und Atmosphäre der Animation
 5. Kamerabewegung oder -perspektive wenn passend
 
-Beispiele fÃ¼r gute, detaillierte Prompts:
-- "Die Person dreht langsam und elegant den Kopf nach links, wÃ¤hrend ein sanftes LÃ¤cheln Ã¼ber ihr Gesicht gleitet. Die Haare bewegen sich weich im Wind, einzelne StrÃ¤hnen fallen natÃ¼rlich ins Gesicht. Die Augen blinzeln langsam und vertrÃ¤umt, wÃ¤hrend das warme Licht Ã¼ber die Haut wandert."
-- "Sanfte, flieÃŸende Bewegung: Die Person hebt langsam die Hand zur BegrÃ¼ÃŸung, die Finger spreizen sich elegant. Der Kopf neigt sich leicht zur Seite mit einem warmen, einladenden LÃ¤cheln. Die Kleidung bewegt sich subtil, als wÃ¼rde ein leichter Wind wehen."
+Beispiele für gute, detaillierte Prompts:
+- "Die Person dreht langsam und elegant den Kopf nach links, während ein sanftes Lächeln über ihr Gesicht gleitet. Die Haare bewegen sich weich im Wind, einzelne Strähnen fallen natürlich ins Gesicht. Die Augen blinzeln langsam und verträumt, während das warme Licht über die Haut wandert."
+- "Sanfte, flieÜende Bewegung: Die Person hebt langsam die Hand zur BegrüÜung, die Finger spreizen sich elegant. Der Kopf neigt sich leicht zur Seite mit einem warmen, einladenden Lächeln. Die Kleidung bewegt sich subtil, als würde ein leichter Wind wehen."
 
-Antworte NUR mit dem Prompt, ohne zusÃ¤tzliche ErklÃ¤rungen. Der Prompt sollte auf Deutsch sein und 3-5 SÃ¤tze lang sein mit vielen Details.`
+Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte auf Deutsch sein und 3-5 Sätze lang sein mit vielen Details.`
                   },
                   {
                     inlineData: {
@@ -5824,11 +5824,11 @@ Antworte NUR mit dem Prompt, ohne zusÃ¤tzliche ErklÃ¤rungen. Der Prompt soll
                     text: `Basierend auf diesem Video-Prompt:
 "${contextPrompt}"
 
-Generiere 5 kurze, kreative VorschlÃ¤ge fÃ¼r Variationen oder Erweiterungen dieses Video-Prompts.
+Generiere 5 kurze, kreative Vorschläge für Variationen oder Erweiterungen dieses Video-Prompts.
 Jeder Vorschlag sollte eine andere Bewegung, Emotion oder Kamera-Aktion beschreiben.
-Die VorschlÃ¤ge sollten kurz sein (max 6-8 WÃ¶rter) und auf Deutsch.
+Die Vorschläge sollten kurz sein (max 6-8 Wörter) und auf Deutsch.
 
-Antworte NUR mit den 5 VorschlÃ¤gen, einer pro Zeile, ohne Nummerierung oder zusÃ¤tzliche ErklÃ¤rungen.`
+Antworte NUR mit den 5 Vorschlägen, einer pro Zeile, ohne Nummerierung oder zusätzliche Erklärungen.`
                   }
                 ]
               }
@@ -5896,23 +5896,23 @@ Antworte NUR mit den 5 VorschlÃ¤gen, einer pro Zeile, ohne Nummerierung oder z
               {
                 parts: [
                   {
-                    text: `Du bist ein Experte fÃ¼r detaillierte Video-Animation-Prompts.
+                    text: `Du bist ein Experte für detaillierte Video-Animation-Prompts.
 
 Aktueller Video-Prompt:
 "${currentVideoPrompt}"
 
-Der Nutzer mÃ¶chte folgende Ã„nderung/ErgÃ¤nzung:
+Der Nutzer möchte folgende Ünderung/Ergänzung:
 "${promptChatInput}"
 
 Bearbeite den Video-Prompt entsprechend und mache ihn SEHR DETAILLIERT. Der neue Prompt soll:
-- Die gewÃ¼nschten Ã„nderungen vollstÃ¤ndig integrieren
-- DETAILLIERT beschreiben: Bewegungen, Geschwindigkeit, Mimik, AtmosphÃ¤re
-- Spezifische Details zu KÃ¶rperbewegung, Haaren, Kleidung, Licht enthalten
+- Die gewünschten Ünderungen vollständig integrieren
+- DETAILLIERT beschreiben: Bewegungen, Geschwindigkeit, Mimik, Atmosphäre
+- Spezifische Details zu Körperbewegung, Haaren, Kleidung, Licht enthalten
 - Als professioneller Video-Animation-Prompt geeignet sein
-- 3-5 SÃ¤tze lang sein mit vielen konkreten Details
+- 3-5 Sätze lang sein mit vielen konkreten Details
 - Auf Deutsch sein
 
-Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusÃ¤tzliche ErklÃ¤rungen.`
+Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen.`
                   }
                 ]
               }
@@ -5977,24 +5977,24 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusÃ¤tzliche ErklÃ¤ru
 
     try {
       // Build context from selected options
-      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "WeiÃŸer Hintergrund";
-      const shotLabel = SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "GanzkÃ¶rper";
+      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "WeiÜer Hintergrund";
+      const shotLabel = SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Ganzkörper";
       const formatLabel = FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Quadratisch";
       const skinLabel = isPro ? (SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "") : "";
       
       let backgroundContext = "";
       if (selectedBackground === "white") {
-        backgroundContext = "WICHTIG: Der Hintergrund ist WEISS/neutral - erwÃ¤hne KEINE Umgebung, Stadt, Natur oder Szenerien. Fokussiere nur auf die Person, Pose und Ausdruck.";
+        backgroundContext = "WICHTIG: Der Hintergrund ist WEISS/neutral - erwähne KEINE Umgebung, Stadt, Natur oder Szenerien. Fokussiere nur auf die Person, Pose und Ausdruck.";
       } else if (selectedBackground === "greenscreen") {
-        backgroundContext = "WICHTIG: Der Hintergrund ist ein GREEN SCREEN - erwÃ¤hne KEINE spezifische Umgebung. Fokussiere nur auf die Person, Pose und Ausdruck.";
+        backgroundContext = "WICHTIG: Der Hintergrund ist ein GREEN SCREEN - erwähne KEINE spezifische Umgebung. Fokussiere nur auf die Person, Pose und Ausdruck.";
       } else if (selectedBackground === "scenery") {
         backgroundContext = sceneDescription 
           ? `Der Hintergrund soll "${sceneDescription}" sein. Integriere diese Umgebung passend in den Prompt.`
-          : "Der Hintergrund kann eine passende Szene sein, die die KI wÃ¤hlt.";
+          : "Der Hintergrund kann eine passende Szene sein, die die KI wählt.";
       }
 
       const settingsContext = `
-AKTUELLE EINSTELLUNGEN (berÃ¼cksichtige diese!):
+AKTUELLE EINSTELLUNGEN (berücksichtige diese!):
 - Hintergrund: ${backgroundLabel}
 - Aufnahme-Typ: ${shotLabel}
 - Bildformat: ${formatLabel}
@@ -6003,7 +6003,7 @@ ${skinLabel ? `- Hauttyp: ${skinLabel}` : ""}
 ${backgroundContext}`;
 
       const existingPromptContext = customPromptVersions.length > 0 
-        ? `\n\nAktueller Prompt zur Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"\n\nVerbessere oder ergÃ¤nze diesen basierend auf der Nutzer-Anfrage.`
+        ? `\n\nAktueller Prompt zur Referenz:\n"${customPromptVersions[currentCustomPromptIndex]}"\n\nVerbessere oder ergänze diesen basierend auf der Nutzer-Anfrage.`
         : "";
 
       // Build parts array with text and reference images
@@ -6039,9 +6039,9 @@ ${backgroundContext}`;
       
       // Add the text prompt
       parts.push({
-        text: `Du bist ein Experte fÃ¼r Bild-Generierungs-Prompts.
+        text: `Du bist ein Experte für Bild-Generierungs-Prompts.
 
-${currentRefImages.length > 0 ? "Die beigefÃ¼gten Bilder zeigen die Person/den Charakter, fÃ¼r die/den der Prompt erstellt werden soll. Nutze diese als Referenz fÃ¼r Beschreibungen von Aussehen, Stil und Merkmalen." : ""}
+${currentRefImages.length > 0 ? "Die beigefügten Bilder zeigen die Person/den Charakter, für die/den der Prompt erstellt werden soll. Nutze diese als Referenz für Beschreibungen von Aussehen, Stil und Merkmalen." : ""}
 
 Erstelle einen Prompt basierend auf dieser Nutzer-Anfrage:
 "${customPromptChatInput}"
@@ -6052,17 +6052,17 @@ PROMPT: [Dein generierter Prompt]
 BACKGROUND: [white, greenscreen, oder scenery]
 SCENE: [Nur wenn BACKGROUND=scenery: Detaillierte Szenenbeschreibung, sonst leer]
 
-WICHTIGE REGELN FÃœR DEN PROMPT:
-- Beschreibe NUR die Person: Pose, KÃ¶rperhaltung, Gesichtsausdruck, Blickrichtung, Kleidung
+WICHTIGE REGELN FÜR DEN PROMPT:
+- Beschreibe NUR die Person: Pose, Körperhaltung, Gesichtsausdruck, Blickrichtung, Kleidung
 - Nutze die Referenzbilder um Merkmale der Person korrekt zu beschreiben
-- KEINE Kameraeinstellungen erwÃ¤hnen (kein "Close-Up", "GanzkÃ¶rper", etc.)
+- KEINE Kameraeinstellungen erwähnen (kein "Close-Up", "Ganzkörper", etc.)
 - KEINE Hintergrundbeschreibungen im Prompt
-- 2-4 SÃ¤tze auf Deutsch
+- 2-4 Sätze auf Deutsch
 
-REGELN FÃœR SCENE (nur wenn scenery):
+REGELN FÜR SCENE (nur wenn scenery):
 - Beschreibe den Ort detailliert (z.B. "Ein verlassener Industriehof mit rostigen Metallstrukturen")
 - Lichtstimmung (goldene Stunde, weiches Morgenlicht, dramatische Schatten)
-- AtmosphÃ¤rische Details (Nebel, Regen, Sonnenstrahlen)`
+- Atmosphärische Details (Nebel, Regen, Sonnenstrahlen)`
       });
 
       const response = await fetch(
@@ -6166,19 +6166,19 @@ REGELN FÃœR SCENE (nur wenn scenery):
                 text: `Der Nutzer hat folgenden Bild-Prompt erstellt:
 "${customPrompt}"
 
-Beschreibe einen passenden Hintergrund/Szenerie fÃ¼r dieses Bild.
+Beschreibe einen passenden Hintergrund/Szenerie für dieses Bild.
 
 STRENGE REGELN:
 - Antworte NUR mit der reinen Hintergrundbeschreibung
-- KEINE Einleitungen wie "Passend wÃ¤re..." oder "Statt..."
-- KEINE ErklÃ¤rungen oder Kommentare
-- KEINE Details Ã¼ber Personen, Menschen, Charaktere oder deren Erscheinung
-- NUR der Ort, die Umgebung, Lichtstimmung und atmosphÃ¤rische Details
-- Beschreibe ausschlieÃŸlich die Kulisse/Szenerie selbst
-- 2-3 SÃ¤tze auf Deutsch
+- KEINE Einleitungen wie "Passend wäre..." oder "Statt..."
+- KEINE Erklärungen oder Kommentare
+- KEINE Details über Personen, Menschen, Charaktere oder deren Erscheinung
+- NUR der Ort, die Umgebung, Lichtstimmung und atmosphärische Details
+- Beschreibe ausschlieÜlich die Kulisse/Szenerie selbst
+- 2-3 Sätze auf Deutsch
 
 Beispiel einer korrekten Antwort:
-"Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fÃ¤llt. Efeu rankt an den alten BacksteinwÃ¤nden empor, wÃ¤hrend Staub in den Lichtstrahlen tanzt."`
+"Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fällt. Efeu rankt an den alten Backsteinwänden empor, während Staub in den Lichtstrahlen tanzt."`
               }]
             }],
             generationConfig: {
@@ -6217,22 +6217,22 @@ Beispiel einer korrekten Antwort:
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Der Nutzer wÃ¼nscht folgenden Hintergrund fÃ¼r sein Bild:
+                text: `Der Nutzer wünscht folgenden Hintergrund für sein Bild:
 "${customPromptChatInput}"
 
 Erstelle eine detaillierte Hintergrundbeschreibung basierend auf dieser Anfrage.
 
 STRENGE REGELN:
 - Antworte NUR mit der reinen Hintergrundbeschreibung
-- KEINE Einleitungen wie "Passend wÃ¤re..." oder "Statt..."
-- KEINE ErklÃ¤rungen oder Kommentare
-- KEINE Details Ã¼ber Personen, Menschen, Charaktere oder deren Erscheinung
-- NUR der Ort, die Umgebung, Lichtstimmung und atmosphÃ¤rische Details
-- Beschreibe ausschlieÃŸlich die Kulisse/Szenerie selbst
-- 2-3 SÃ¤tze auf Deutsch
+- KEINE Einleitungen wie "Passend wäre..." oder "Statt..."
+- KEINE Erklärungen oder Kommentare
+- KEINE Details über Personen, Menschen, Charaktere oder deren Erscheinung
+- NUR der Ort, die Umgebung, Lichtstimmung und atmosphärische Details
+- Beschreibe ausschlieÜlich die Kulisse/Szenerie selbst
+- 2-3 Sätze auf Deutsch
 
 Beispiel einer korrekten Antwort:
-"Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fÃ¤llt. Efeu rankt an den alten BacksteinwÃ¤nden empor, wÃ¤hrend Staub in den Lichtstrahlen tanzt."`
+"Ein verlassener Industriehof bei Sonnenuntergang mit rostigen Metallstrukturen und warmem, goldenem Licht das durch zerbrochene Fenster fällt. Efeu rankt an den alten Backsteinwänden empor, während Staub in den Lichtstrahlen tanzt."`
               }]
             }],
             generationConfig: {
@@ -6397,7 +6397,7 @@ Beispiel einer korrekten Antwort:
             // Ignore cleanup errors
           }
         });
-        console.log(`ðŸ§¹ Cleaned up ${createdUrls.length} blob URLs after download`);
+        console.log(`⚠️ Cleaned up ${createdUrls.length} blob URLs after download`);
       }, 1000); // Delay cleanup to ensure download starts
     }
   };
@@ -6505,7 +6505,7 @@ Beispiel einer korrekten Antwort:
                     </div>
                     {!isPro && (
                       <p className="text-xs text-muted-foreground">
-                        Weitere Themes sind nur mit Pro verfÃ¼gbar.
+                        Weitere Themes sind nur mit Pro verfügbar.
                       </p>
                     )}
                   </div>
@@ -6531,7 +6531,7 @@ Beispiel einer korrekten Antwort:
                     <div className="rounded-lg border border-border p-4 space-y-2">
                       <h4 className="font-semibold text-sm uppercase tracking-wide">Paket verwalten</h4>
                       <p className="text-xs text-muted-foreground">
-                        Verwalte dein Abonnement, Ã¤ndere deine Zahlungsmethode oder kÃ¼ndige dein Abo.
+                        Verwalte dein Abonnement, ändere deine Zahlungsmethode oder kündige dein Abo.
                       </p>
                       <Button 
                         variant="outline" 
@@ -6549,7 +6549,7 @@ Beispiel einer korrekten Antwort:
                     <div className="rounded-lg border border-border p-4 space-y-2">
                       <h4 className="font-semibold text-sm uppercase tracking-wide">Daten verwalten</h4>
                       <p className="text-xs text-muted-foreground">
-                        Exportiere deine Daten gemÃ¤ÃŸ DSGVO Art. 20 (DatenÃ¼bertragbarkeit).
+                        Exportiere deine Daten gemäÜ DSGVO Art. 20 (Datenübertragbarkeit).
                       </p>
                       <Button 
                         variant="outline" 
@@ -6694,7 +6694,7 @@ Beispiel einer korrekten Antwort:
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-8">
             <div className="space-y-8 px-4">
               <div className="w-[85%] mx-auto">
-                <h2 className="text-lg font-bold mb-3">Ãœbersicht</h2>
+                <h2 className="text-lg font-bold mb-3">Übersicht</h2>
                 <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
                   <iframe 
                     src="https://player.vimeo.com/video/1152205989?badge=0&autopause=0&player_id=0&app_id=58479" 
@@ -6730,7 +6730,7 @@ Beispiel einer korrekten Antwort:
           style={{ animationDelay: '0ms', animationDuration: '600ms', animationFillMode: 'both' }}
         >
           <p className="text-sm text-muted-foreground mb-2 tracking-wide">
-            Zentrale Steuerung fÃ¼r deinen KI-Avatar.
+            Zentrale Steuerung für deinen KI-Avatar.
           </p>
           <div className="flex items-center justify-center gap-3 mb-2 flex-wrap overflow-visible">
             <h1 className="text-4xl sm:text-5xl font-bold">
@@ -6754,7 +6754,7 @@ Beispiel einer korrekten Antwort:
             </span>
           </div>
           <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
-            Erstelle mit KI konsistente Bilder in 4K, individuelle Szenen und Videos â€“ alles aus einer Quelle, flexibel steuerbar nach Stil, Umgebung und Perspektive.
+            Erstelle mit KI konsistente Bilder in 4K, individuelle Szenen und Videos ✅ alles aus einer Quelle, flexibel steuerbar nach Stil, Umgebung und Perspektive.
           </p>
         </div>
 
@@ -6785,7 +6785,7 @@ Beispiel einer korrekten Antwort:
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" />
-            ZurÃ¼ck zur Ãœbersicht
+            Zurück zur Übersicht
           </Button>
         </div>
 
@@ -6857,7 +6857,7 @@ Beispiel einer korrekten Antwort:
                   })}
                 </span>
               </Label>
-              <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestÃ¤tigst du, dass du die Rechte besitzt.</p>
+              <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt.</p>
               <div className="flex flex-wrap gap-4">
                 {referenceImages.map((file, index) => (
                   <ReferenceImagePreview 
@@ -6913,7 +6913,7 @@ Beispiel einer korrekten Antwort:
                     setActiveMainTab("character");
                   }}
                   className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
-                  title="Character Creator Ã¶ffnen"
+                  title="Character Creator öffnen"
                 >
                   <User className="w-5 h-5 text-muted-foreground" />
                   <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
@@ -6930,7 +6930,7 @@ Beispiel einer korrekten Antwort:
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full justify-between">
-                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Format wÃ¤hlen"}
+                      {FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Format wählen"}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full bg-popover">
@@ -6966,7 +6966,7 @@ Beispiel einer korrekten Antwort:
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full justify-between">
-                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Aufnahme wÃ¤hlen"}
+                      {SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Aufnahme wählen"}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full bg-popover">
@@ -6990,7 +6990,7 @@ Beispiel einer korrekten Antwort:
                     className={`w-full justify-between opacity-60 ${shakingElement === "shot" ? "animate-shake border-red-500 bg-red-500/20" : ""}`}
                     onClick={() => { setShakingElement("shot"); setTimeout(() => setShakingElement(null), 500); setShowUpgradePopup(true); }}
                   >
-                    GanzkÃ¶rper <Lock className={`w-4 h-4 ${shakingElement === "shot" ? "text-red-500" : "text-muted-foreground/70"}`} />
+                    Ganzkörper <Lock className={`w-4 h-4 ${shakingElement === "shot" ? "text-red-500" : "text-muted-foreground/70"}`} />
                   </Button>
                 </div>
               )}
@@ -7002,7 +7002,7 @@ Beispiel einer korrekten Antwort:
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="w-full justify-between">
-                        {CAMERA_ANGLE_OPTIONS.find(c => c.value === selectedCameraAngle)?.label || "Winkel wÃ¤hlen"}
+                        {CAMERA_ANGLE_OPTIONS.find(c => c.value === selectedCameraAngle)?.label || "Winkel wählen"}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-full bg-popover">
@@ -7026,7 +7026,7 @@ Beispiel einer korrekten Antwort:
                     className={`w-full justify-between opacity-60 ${shakingElement === "camera" ? "animate-shake border-red-500 bg-red-500/20" : ""}`}
                     onClick={() => { setShakingElement("camera"); setTimeout(() => setShakingElement(null), 500); setShowUpgradePopup(true); }}
                   >
-                    ZufÃ¤llig <Lock className={`w-4 h-4 ${shakingElement === "camera" ? "text-red-500" : "text-muted-foreground/70"}`} />
+                    Zufällig <Lock className={`w-4 h-4 ${shakingElement === "camera" ? "text-red-500" : "text-muted-foreground/70"}`} />
                   </Button>
                 </div>
               )}
@@ -7038,7 +7038,7 @@ Beispiel einer korrekten Antwort:
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="w-full justify-between">
-                        {SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "Hauttyp wÃ¤hlen"}
+                        {SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "Hauttyp wählen"}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-full bg-popover">
@@ -7074,7 +7074,7 @@ Beispiel einer korrekten Antwort:
                 <Label className="flex items-center gap-2">
                   Anzahl Bilder
                   {!isPro && (
-                    <span className="text-xs text-muted-foreground">(max 6 fÃ¼r Basic)</span>
+                    <span className="text-xs text-muted-foreground">(max 6 für Basic)</span>
                   )}
                 </Label>
                 <span className="text-sm text-muted-foreground">{Math.floor(imageCount[0])} / 40</span>
@@ -7151,7 +7151,7 @@ Beispiel einer korrekten Antwort:
                       
                       {/* Label */}
                       <span>
-                        {option.id === "white" && "WeiÃŸ"}
+                        {option.id === "white" && "WeiÜ"}
                         {option.id === "greenscreen" && "Green Screen"}
                         {option.id === "scenery" && "Custom"}
                       </span>
@@ -7205,7 +7205,7 @@ Beispiel einer korrekten Antwort:
                           className="flex-1"
                         >
                           <Check className="w-4 h-4 mr-1" />
-                          Ãœbernehmen
+                          Übernehmen
                         </Button>
                         <Button
                           onClick={handleGenerateBackgroundSuggestion}
@@ -7337,7 +7337,7 @@ Beispiel einer korrekten Antwort:
                             onClick={handleGenerateCustomPromptWithAI}
                             disabled={!canGenerate || !customPromptChatInput.trim() || isGeneratingCustomPrompt || isGeneratingBackgroundSuggestion}
                             className="w-10 flex-1 rounded-lg"
-                            title={aiAssistantTarget === "background" ? "Hintergrund generieren" : aiAssistantTarget === "both" ? "Prompt & Hintergrund generieren" : "Prompt generieren und links einfÃ¼gen"}
+                            title={aiAssistantTarget === "background" ? "Hintergrund generieren" : aiAssistantTarget === "both" ? "Prompt & Hintergrund generieren" : "Prompt generieren und links einfügen"}
                           >
                             {(isGeneratingCustomPrompt || isGeneratingBackgroundSuggestion) ? (
                               <Sparkles className="w-5 h-5 animate-spin" />
@@ -7382,7 +7382,7 @@ Beispiel einer korrekten Antwort:
                                   className={`h-6 px-2 text-xs ${aiAssistantTarget === "background" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
                                   onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("background")}
                                   disabled={selectedBackground !== "scenery"}
-                                  title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfÃ¼gbar" : ""}
+                                  title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
                                 >
                                   Hintergrund
                                 </Button>
@@ -7392,7 +7392,7 @@ Beispiel einer korrekten Antwort:
                                   className={`h-6 px-2 text-xs ${aiAssistantTarget === "both" ? "" : "text-muted-foreground hover:text-foreground"} ${selectedBackground !== "scenery" ? "opacity-50 cursor-not-allowed" : ""}`}
                                   onClick={() => selectedBackground === "scenery" && setAiAssistantTarget("both")}
                                   disabled={selectedBackground !== "scenery"}
-                                  title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfÃ¼gbar" : ""}
+                                  title={selectedBackground !== "scenery" ? "Nur bei 'Eigene Szenerie' verfügbar" : ""}
                                 >
                                   Beides
                                 </Button>
@@ -7405,10 +7405,10 @@ Beispiel einer korrekten Antwort:
                             <Textarea
                               placeholder={
                                 aiAssistantTarget === "prompt" 
-                                  ? "Beschreibe was du mÃ¶chtest, z.B. 'Person sitzt auf einem Stuhl und lÃ¤chelt'..."
+                                  ? "Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'..."
                                   : aiAssistantTarget === "background"
-                                  ? "Beschreibe den gewÃ¼nschten Hintergrund, z.B. 'Strand bei Sonnenuntergang'..."
-                                  : "Beschreibe Person und Hintergrund, z.B. 'Person liest ein Buch im gemÃ¼tlichen CafÃ©'..."
+                                  ? "Beschreibe den gewünschten Hintergrund, z.B. 'Strand bei Sonnenuntergang'..."
+                                  : "Beschreibe Person und Hintergrund, z.B. 'Person liest ein Buch im gemütlichen Café'..."
                               }
                               value={customPromptChatInput}
                               onChange={(e) => setCustomPromptChatInput(e.target.value)}
@@ -7450,8 +7450,8 @@ Beispiel einer korrekten Antwort:
                     size="lg"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    <span className="hidden sm:inline">{isGenerating ? 'Bilder hinzufÃ¼gen' : 'Bilder dazu generieren'}</span>
-                    <span className="sm:hidden">{isGenerating ? 'HinzufÃ¼gen' : 'Mehr generieren'}</span>
+                    <span className="hidden sm:inline">{isGenerating ? 'Bilder hinzufügen' : 'Bilder dazu generieren'}</span>
+                    <span className="sm:hidden">{isGenerating ? 'Hinzufügen' : 'Mehr generieren'}</span>
                   </Button>
                   
                   <AlertDialog>
@@ -7468,9 +7468,9 @@ Beispiel einer korrekten Antwort:
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Alle Bilder lÃ¶schen?</AlertDialogTitle>
+                        <AlertDialogTitle>Alle Bilder löschen?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Dies wird alle aktuell generierten Bilder lÃ¶schen und neue generieren. Diese Aktion kann nicht rÃ¼ckgÃ¤ngig gemacht werden.
+                          Dies wird alle aktuell generierten Bilder löschen und neue generieren. Diese Aktion kann nicht rückgängig gemacht werden.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -7601,7 +7601,7 @@ Beispiel einer korrekten Antwort:
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
-                        ðŸŽ™ï¸ Sprecher
+                        ✅ Sprecher
                       </button>
                       <button
                         type="button"
@@ -7616,7 +7616,7 @@ Beispiel einer korrekten Antwort:
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
-                        ðŸ’¬ Dialog
+                        ✅ Dialog
                       </button>
                     </div>
                   )}
@@ -7637,8 +7637,8 @@ Beispiel einer korrekten Antwort:
                           style={{ display: 'inline-block' }}
                         >
                           {storyGenerationDirection === "speaker-from-description"
-                            ? `Details â†’ ${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"}`
-                            : `${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"} â†’ Details`}
+                            ? `Details ✅ ${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"}`
+                            : `${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"} ✅ Details`}
                         </span>
                       </button>
                       <span
@@ -7717,8 +7717,8 @@ Beispiel einer korrekten Antwort:
                       <div className="absolute inset-0 p-3 pointer-events-none overflow-hidden">
                         <p className={`text-sm text-muted-foreground mb-4 transition-opacity duration-300 ${isAnimatingSuggestion ? 'opacity-0' : 'opacity-100'}`}>
                           {storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                            ? "WÃ¤hle einen Dialog oder schreibe deinen eigenen..."
-                            : "WÃ¤hle eine Idee oder schreibe deine eigene..."
+                            ? "Wähle einen Dialog oder schreibe deinen eigenen..."
+                            : "Wähle eine Idee oder schreibe deine eigene..."
                           }
                         </p>
                         <div className="relative pointer-events-auto pb-6">
@@ -7747,7 +7747,7 @@ Beispiel einer korrekten Antwort:
                                     transitionDuration: '300ms',
                                   }}
                                 >
-                                  {isSelected ? suggestion : `â€¢ ${suggestion}`}
+                                  {isSelected ? suggestion : `👉 ${suggestion}`}
                                 </p>
                               );
                             })
@@ -7795,8 +7795,8 @@ Beispiel einer korrekten Antwort:
                   <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                     <Textarea
                       placeholder={generatedIdeas.length > 0 
-                        ? "Beschreibe die gewÃ¼nschte Ã„nderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
-                        : "Beschreibe was fÃ¼r eine Story du mÃ¶chtest, z.B. 'Eine romantische Geschichte in Paris'..."
+                        ? "Beschreibe die gewünschte Ünderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
+                        : "Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
                       }
                       value={storyAiAssistantInput}
                       onChange={(e) => setStoryAiAssistantInput(e.target.value)}
@@ -7837,7 +7837,7 @@ Beispiel einer korrekten Antwort:
                     })}
                   </span>
                 </Label>
-                <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestÃ¤tigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden fÃ¼r Sprecher- und Charakter-Konsistenz in Story und Video verwendet.</p>
+                <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden für Sprecher- und Charakter-Konsistenz in Story und Video verwendet.</p>
                 <div className="flex flex-wrap gap-4">
                   {storyReferenceImages.map((imageUrl, index) => (
                     <div key={`story-ref-${index}`} className="relative flex flex-col items-center gap-1">
@@ -7900,7 +7900,7 @@ Beispiel einer korrekten Antwort:
                         setActiveMainTab("character");
                       }}
                       className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
-                      title="Character Creator Ã¶ffnen"
+                      title="Character Creator öffnen"
                     >
                       <User className="w-5 h-5 text-muted-foreground" />
                       <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
@@ -7937,7 +7937,7 @@ Beispiel einer korrekten Antwort:
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-sm">Standard-Ãœbergang</Label>
+                      <Label className="text-sm">Standard-Übergang</Label>
                       <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -7959,9 +7959,9 @@ Beispiel einer korrekten Antwort:
                           <SelectItem value="action">Action / Dynamisch</SelectItem>
                           <SelectItem value="calm">Ruhig / Entspannt</SelectItem>
                           <SelectItem value="dramatic">Dramatisch / Spannend</SelectItem>
-                          <SelectItem value="emotional">Emotional / BerÃ¼hrend</SelectItem>
-                          <SelectItem value="mysterious">MysteriÃ¶s / Dunkel</SelectItem>
-                          <SelectItem value="cheerful">FrÃ¶hlich / Leicht</SelectItem>
+                          <SelectItem value="emotional">Emotional / Berührend</SelectItem>
+                          <SelectItem value="mysterious">Mysteriös / Dunkel</SelectItem>
+                          <SelectItem value="cheerful">Fröhlich / Leicht</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -7971,11 +7971,11 @@ Beispiel einer korrekten Antwort:
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="warm">Warm (Golden Hour)</SelectItem>
-                          <SelectItem value="cold">Kalt (BlautÃ¶ne)</SelectItem>
+                          <SelectItem value="cold">Kalt (Blautöne)</SelectItem>
                           <SelectItem value="dark">Dunkel / Noir</SelectItem>
                           <SelectItem value="bright">Hell / Freundlich</SelectItem>
                           <SelectItem value="neon">Neon / Cyberpunk</SelectItem>
-                          <SelectItem value="natural">NatÃ¼rlich</SelectItem>
+                          <SelectItem value="natural">Natürlich</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -7989,7 +7989,7 @@ Beispiel einer korrekten Antwort:
                         <Select value={storySpeakerGender} onValueChange={(v) => setStorySpeakerGender(v as any)}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="male">MÃ¤nnlich</SelectItem>
+                            <SelectItem value="male">Männlich</SelectItem>
                             <SelectItem value="female">Weiblich</SelectItem>
                             <SelectItem value="neutral">Neutral</SelectItem>
                           </SelectContent>
@@ -8119,7 +8119,7 @@ Beispiel einer korrekten Antwort:
                               onBlur={() => setStoryboardHoverHighlight(null)}
                               disabled={isGeneratingVideos || isGeneratingStoryImages || isGeneratingStoryboard || isGeneratingVideoPrompts}
                               className="flex-1"
-                              title="Generiert Videos fÃ¼r alle Szenen mit vorhandenem Video-Prompt"
+                              title="Generiert Videos für alle Szenen mit vorhandenem Video-Prompt"
                             >
                               {isGeneratingVideos ? (
                                 <>
@@ -8145,7 +8145,7 @@ Beispiel einer korrekten Antwort:
                               onBlur={() => setStoryboardHoverHighlight(null)}
                               disabled={isGeneratingVideoPrompts || isGeneratingStoryImages || isGeneratingStoryboard}
                               className="flex-1"
-                              title="Erstellt Video-Prompts fÃ¼r alle Szenen"
+                              title="Erstellt Video-Prompts für alle Szenen"
                             >
                               {isGeneratingVideoPrompts ? (
                                 <>
@@ -8172,7 +8172,7 @@ Beispiel einer korrekten Antwort:
                             onBlur={() => setStoryboardHoverHighlight(null)}
                             disabled={isGeneratingStoryImages || isGeneratingStoryboard}
                             className="flex-1"
-                            title="Generiert Bilder fÃ¼r alle Szenen"
+                            title="Generiert Bilder für alle Szenen"
                           >
                             {isGeneratingStoryImages ? (
                               <>
@@ -8207,20 +8207,20 @@ Beispiel einer korrekten Antwort:
                             className="shrink-0"
                           >
                             <X className="w-4 h-4 mr-2" />
-                            Alles lÃ¶schen
+                            Alles löschen
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Storyboard komplett lÃ¶schen?</AlertDialogTitle>
+                            <AlertDialogTitle>Storyboard komplett löschen?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Alle generierten Szenen und Bilder werden unwiderruflich gelÃ¶scht. Diese Aktion kann nicht rÃ¼ckgÃ¤ngig gemacht werden.
+                              Alle generierten Szenen und Bilder werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                             <AlertDialogAction onClick={clearAllStoryboard}>
-                              Alles lÃ¶schen
+                              Alles löschen
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -8242,7 +8242,7 @@ Beispiel einer korrekten Antwort:
                         ) : (
                           <>
                             <Download className="w-4 h-4 mr-2" />
-                            FÃ¼r Veo3 exportieren
+                            Für Veo3 exportieren
                           </>
                         )}
                       </Button>
@@ -8391,8 +8391,8 @@ Beispiel einer korrekten Antwort:
                                   size="icon"
                                   className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary"
                                   onClick={() => setExpandedStoryPointIndex(index)}
-                                  title="Szenendetails Ã¶ffnen"
-                                  aria-label={`Szenendetails fÃ¼r Szene ${index + 1} Ã¶ffnen`}
+                                  title="Szenendetails öffnen"
+                                  aria-label={`Szenendetails für Szene ${index + 1} öffnen`}
                                 >
                                   <Maximize2 className="w-3.5 h-3.5" />
                                 </Button>
@@ -8535,7 +8535,7 @@ Beispiel einer korrekten Antwort:
                                                 <Button
                                                   size="sm"
                                                   className="gap-1.5 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 text-xs"
-                                                  title="Erstellt nur das Video fÃ¼r diese Szene aus dem vorhandenen Bild"
+                                                  title="Erstellt nur das Video für diese Szene aus dem vorhandenen Bild"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
                                                     regenerateSingleVideo(index);
@@ -8602,8 +8602,8 @@ Beispiel einer korrekten Antwort:
                                           ? "Nur Video neu"
                                           : "Nur Bild neu";
                                         const previewActionTitle = point.generatedVideo
-                                          ? "Generiert nur das Video dieser Szene neu. Das Bild bleibt unverÃ¤ndert."
-                                          : "Generiert nur das Bild dieser Szene neu. Die restliche Szene bleibt unverÃ¤ndert.";
+                                          ? "Generiert nur das Video dieser Szene neu. Das Bild bleibt unverändert."
+                                          : "Generiert nur das Bild dieser Szene neu. Die restliche Szene bleibt unverändert.";
 
                                         return (
                                           <div 
@@ -8642,7 +8642,7 @@ Beispiel einer korrekten Antwort:
                                                 onMouseLeave={() => setStoryboardHoverHighlight(null)}
                                                 onFocus={() => setStoryboardHoverHighlight({ scope: "media", index, label: previewActionLabel })}
                                                 onBlur={() => setStoryboardHoverHighlight(null)}
-                                                aria-label={`${previewActionLabel} fÃ¼r Szene ${index + 1}`}
+                                                aria-label={`${previewActionLabel} für Szene ${index + 1}`}
                                                 onClick={(e) => { 
                                                   e.stopPropagation(); 
                                                   if (point.generatedVideo) {
@@ -8659,8 +8659,8 @@ Beispiel einer korrekten Antwort:
                                                 size="icon"
                                                 variant="secondary"
                                                 className="h-9 w-9 rounded-full shadow-lg"
-                                                title="Ã–ffnet die Details und Bearbeitung fÃ¼r diese Szene"
-                                                aria-label={`Details fÃ¼r Szene ${index + 1} Ã¶ffnen`}
+                                                title="Üffnet die Details und Bearbeitung für diese Szene"
+                                                aria-label={`Details für Szene ${index + 1} öffnen`}
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   setExpandedStoryPointIndex(index);
@@ -8772,7 +8772,7 @@ Beispiel einer korrekten Antwort:
                                         </p>
                                       </div>
                                       <p className="text-xs text-muted-foreground mt-2 text-center">
-                                        Klicke auf <Maximize2 className="w-3 h-3 inline mx-0.5" /> fÃ¼r Details
+                                        Klicke auf <Maximize2 className="w-3 h-3 inline mx-0.5" /> für Details
                                       </p>
                                     </div>
                                   )}
@@ -8888,15 +8888,15 @@ Beispiel einer korrekten Antwort:
                   <AlertDialog open={showRegenerationCloseWarning} onOpenChange={setShowRegenerationCloseWarning}>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Generierung lÃ¤uft noch</AlertDialogTitle>
+                        <AlertDialogTitle>Generierung läuft noch</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Ein Bild wird gerade generiert. Wenn du jetzt schlieÃŸt, wird die Generierung abgebrochen.
+                          Ein Bild wird gerade generiert. Wenn du jetzt schlieÜt, wird die Generierung abgebrochen.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Weiterlaufen lassen</AlertDialogCancel>
                         <AlertDialogAction onClick={handleForceCloseExpandedCard}>
-                          Abbrechen & SchlieÃŸen
+                          Abbrechen & SchlieÜen
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -9175,7 +9175,7 @@ Beispiel einer korrekten Antwort:
                                   {!isEditingPrompt && (
                                     <div className="flex flex-col gap-1.5">
                                       <Textarea
-                                        placeholder="Beschreibe was im Video passieren soll, z.B. 'Die Person lÃ¤chelt und winkt in die Kamera'"
+                                        placeholder="Beschreibe was im Video passieren soll, z.B. 'Die Person lächelt und winkt in die Kamera'"
                                         value={promptChatInput}
                                         onChange={(e) => setPromptChatInput(e.target.value)}
                                         className="flex-1 text-xs min-h-[80px] resize-y"
@@ -9202,10 +9202,10 @@ Beispiel einer korrekten Antwort:
                                 <div className="space-y-1.5 pt-2 border-t border-border/30">
                                   <div className="flex items-center justify-between">
                                     <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                      VorschlÃ¤ge {isGeneratingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin inline ml-1" />}
+                                      Vorschläge {isGeneratingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin inline ml-1" />}
                                     </Label>
                                     {selectedSuggestions.size > 0 && (
-                                      <span className="text-[9px] text-primary">{selectedSuggestions.size} ausgewÃ¤hlt</span>
+                                      <span className="text-[9px] text-primary">{selectedSuggestions.size} ausgewählt</span>
                                     )}
                                   </div>
                                   <div className="flex flex-wrap gap-1">
@@ -9237,7 +9237,7 @@ Beispiel einer korrekten Antwort:
                                       { label: "Slow Motion", prompt: "Ultra Zeitlupe mit dramatischem Effekt" },
                                       { label: "Zoom-In", prompt: "Langsamer Zoom auf das Gesicht" },
                                       { label: "Orbit", prompt: "Kamera umkreist die Person langsam" },
-                                      { label: "Dolly", prompt: "Kamera fÃ¤hrt langsam nach vorne" },
+                                      { label: "Dolly", prompt: "Kamera fährt langsam nach vorne" },
                                       { label: "Statisch", prompt: "Statische Kamera, nur Person bewegt sich" }
                                     ].map((style) => {
                                       const isSelected = selectedSuggestions.has(style.prompt);
@@ -9267,7 +9267,7 @@ Beispiel einer korrekten Antwort:
                                       { label: "Weich", prompt: "Weiches, schmeichelhaftes Licht" },
                                       { label: "Golden Hour", prompt: "Warmes goldenes Sonnenlicht" },
                                       { label: "Noir", prompt: "Film Noir Stil mit hartem Kontrast" },
-                                      { label: "VertrÃ¤umt", prompt: "VertrÃ¤umte, leicht unscharfe AtmosphÃ¤re" }
+                                      { label: "Verträumt", prompt: "Verträumte, leicht unscharfe Atmosphäre" }
                                     ].map((effect) => {
                                       const isSelected = selectedSuggestions.has(effect.prompt);
                                       return (
@@ -9376,7 +9376,7 @@ Beispiel einer korrekten Antwort:
                   </div>
                   <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
                   <p className="text-muted-foreground">
-                    Um dieses Feature zu nutzen, benÃ¶tigst du die Pro Version von AvatarCreatorStudio.
+                    Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
                   </p>
                   <Button
                     onClick={() => {
@@ -9477,10 +9477,10 @@ Beispiel einer korrekten Antwort:
                       Aivatar Academy
                     </div>
                     <h3 className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-                      Willst du deinen Avatar richtig groÃŸ rausbringen?
+                      Willst du deinen Avatar richtig groÜ rausbringen?
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-                      Mehr Reichweite, mehr Style, mehr MÃ¶glichkeiten â€“ entdecke unser exklusives Webinar und hebe dein KI-Game aufs nÃ¤chste Level.
+                      Mehr Reichweite, mehr Style, mehr Möglichkeiten ✅ entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
                     </p>
                     <div className="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all duration-300 pt-2">
                       Jetzt entdecken
