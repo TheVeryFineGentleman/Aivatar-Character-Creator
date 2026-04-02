@@ -78,7 +78,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const BACKGROUND_OPTIONS = [
-  { id: "white", label: "Wei�?er Hintergrund" },
+  { id: "white", label: "WeiÜer Hintergrund" },
   { id: "greenscreen", label: "Green Screen" },
   { id: "scenery", label: "Eigene Szenerie" },
 ];
@@ -410,7 +410,7 @@ const STORY_TRANSITION_TYPES = [
   { id: "dissolve", label: "Dissolve" },
   { id: "swipe-left", label: "Swipe Links" },
   { id: "swipe-right", label: "Swipe Rechts" },
-  { id: "zoom", label: "Zoom �?bergang" },
+  { id: "zoom", label: "Zoom Übergang" },
 ];
 
 const ART_STYLE_ENGLISH: Record<string, string> = {
@@ -560,7 +560,7 @@ const Index = () => {
     "Sprechen und dabei gestikulieren",
     "Zur Seite drehen und zurückblicken",
     "Langsam näher kommen",
-    "Winken und grü�?en"
+    "Winken und grüÜen"
   ]);
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
@@ -711,7 +711,7 @@ const Index = () => {
     veo3CameraMovement?: string;  // z.B. "dolly-in", "pan-left"
     veo3StartState?: string;      // Beschreibung des Startframes
     veo3Motion?: string;          // Bewegung/Aktion
-    veo3EndState?: string;        // Beschreibung des Endframes für �?bergang
+    veo3EndState?: string;        // Beschreibung des Endframes für Übergang
     // NEW: Additional structured fields
     participants?: string;
     audienceEffect?: string;
@@ -969,7 +969,7 @@ const Index = () => {
   useEffect(() => {
     const { compatible, issues } = checkBrowserCompatibility();
     if (!compatible) {
-      console.warn("�?�️ Browser compatibility issues:", issues);
+      console.warn("Ü�️ Browser compatibility issues:", issues);
     }
     
     // Cleanup Blob URLs on page unload
@@ -989,7 +989,7 @@ const Index = () => {
     { value: "seitlich", label: "Seitlich", description: "Kamera im 90-Grad-Winkel zur Person (Profilansicht). Zeigt das Profil des Gesichts, Nase und Kinn sind im Fokus, dramatische Silhouette möglich." },
     { value: "von-oben", label: "Von oben", description: "Kamera oberhalb der Person, schräg nach unten gerichtet (High Angle). Die Person erscheint kleiner, verletzlicher oder unterlegen. Boden/Umgebung um die Person herum sichtbar." },
     { value: "von-unten", label: "Von unten", description: "Kamera unterhalb der Person, schräg nach oben gerichtet (Low Angle). Die Person wirkt mächtig, dominant oder heroisch. Decke/Himmel im Hintergrund sichtbar." },
-    { value: "ueber-schulter", label: "�?ber die Schulter", description: "Kamera hinter einer Person, blickt über deren Schulter auf das Geschehen. Typisch für Dialogszenen, zeigt Schulter/Kopfhintergrund im Vordergrund unscharf." },
+    { value: "ueber-schulter", label: "Über die Schulter", description: "Kamera hinter einer Person, blickt über deren Schulter auf das Geschehen. Typisch für Dialogszenen, zeigt Schulter/Kopfhintergrund im Vordergrund unscharf." },
     { value: "dutch-angle", label: "Dutch Angle", description: "Kamera ist seitlich geneigt (10-45 Grad), Horizont ist schräg. Erzeugt Unruhe, Spannung, Desorientierung oder psychologische Instabilität." },
     { value: "vogelperspektive", label: "Vogelperspektive", description: "Kamera direkt von oben (Bird's Eye View), fast senkrecht nach unten. Zeigt die Person von oben, Kopf/Schultern dominant, Umgebungslayout erkennbar." },
     { value: "froschperspektive", label: "Froschperspektive", description: "Kamera auf Bodenhöhe oder tiefer (Worm's Eye View), extrem nach oben gerichtet. Starke Verzerrung, Person ragt empor, sehr dramatisch und imposant." }
@@ -1001,9 +1001,9 @@ const Index = () => {
     { value: "medium-close-up", label: "Medium Close-Up", description: "Zeigt Kopf und Schultern bis zur Brust. Mehr Kontext als Close-Up, aber immer noch Fokus auf Gesicht. Typisch für Interviews oder Dialoge." },
     { value: "medium-shot", label: "Medium Shot", description: "Zeigt Person von Hüfte aufwärts (Cowboy Shot). Oberkörper, Arme und Hände sichtbar. Balance zwischen Gesicht und Körpersprache, Umgebung angedeutet." },
     { value: "medium-long-shot", label: "Medium Long Shot", description: "Zeigt Person von Knien aufwärts. Mehr Körpersprache sichtbar, Beine teilweise im Bild. Interaktion mit unmittelbarer Umgebung erkennbar." },
-    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis Fu�? mit etwas Raum drumherum. Volle Körperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
+    { value: "full-shot", label: "Full Shot", description: "Zeigt die komplette Person von Kopf bis FuÜ mit etwas Raum drumherum. Volle Körperhaltung und Position im Raum erkennbar, Umgebung bietet Kontext." },
     { value: "long-shot", label: "Long Shot", description: "Person im ganzen Körper, mit viel Umgebung drumherum (Wide Shot). Person ist kleiner im Bild, Landschaft/Raum dominiert. Zeigt Location und Atmosphäre." },
-    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer gro�?en Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
+    { value: "extreme-long-shot", label: "Extreme Long Shot", description: "Sehr weite Ansicht, Person ist klein in einer groÜen Landschaft/Umgebung. Establishing Shot, zeigt den gesamten Schauplatz. Person oft nur als Silhouette erkennbar." }
   ];
 
   const SCENE_ASSISTANT_ENUM_OPTIONS = {
@@ -1481,9 +1481,9 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
 AKTUELLE STORY-IDEE:
 "${currentIdea}"
 
-${storyAiAssistantInput.trim() ? `�?NDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
+${storyAiAssistantInput.trim() ? `ÜNDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
 
-Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten �?nderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
+Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Ünderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
 - Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausführliche, detaillierte Story-Idee (4-8 Sätze)
@@ -1702,7 +1702,7 @@ ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
 
 HARTE AUSGABEREGELN:
-- Antworte ausschlie�?lich mit einem einzigen validen JSON-Objekt.
+- Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
 - Das erste Zeichen deiner Antwort muss { sein.
 - Das letzte Zeichen deiner Antwort muss } sein.
 - Kein Markdown.
@@ -1711,7 +1711,7 @@ HARTE AUSGABEREGELN:
 - Keine Erklärung.
 - Keine Kommentare.
 - Keine zusätzlichen Zeichen vor oder nach dem JSON.
-- Keine umschlie�?enden Anführungszeichen um das gesamte JSON.
+- Keine umschlieÜenden Anführungszeichen um das gesamte JSON.
 - Die Antwort muss mit JSON.parse() direkt parsebar sein.
 
 INHALTSREGELN:
@@ -1723,7 +1723,7 @@ INHALTSREGELN:
 - Die Szenen bauen logisch aufeinander auf.
 - Emotionen müssen visuell erkennbar sein.
 - Wenn Referenzcharaktere vorhanden sind, bleibt jeder Name fest an genau sein Referenzbild gebunden.
-- Frisur, Gesicht, Kleidung, Accessoires und markante Merkmale der benannten Charaktere bleiben über alle Szenen konsistent, sofern die Geschichte keine explizite �?nderung verlangt.
+- Frisur, Gesicht, Kleidung, Accessoires und markante Merkmale der benannten Charaktere bleiben über alle Szenen konsistent, sofern die Geschichte keine explizite Ünderung verlangt.
 - Verwende in participants und dialogText nur die exakten Charakternamen aus den Referenzcharakteren.
 
 ERLAUBTE WERTE:
@@ -1823,8 +1823,8 @@ WICHTIG:
               setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
               setStoryboardAnimationKey(prev => prev + 1);
             } else {
-              // AI returned fewer scenes than requested �?? retry once
-              console.warn(`�?�️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
+              // AI returned fewer scenes than requested Ü? retry once
+              console.warn(`Ü�️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
               // Recursive retry (single attempt)
               const retryResponse = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1925,14 +1925,14 @@ WICHTIG:
       const zip = new JSZip();
       const scenesFolder = zip.folder("veo3_scenes");
       
-      // �?bersichtsdatei erstellen
+      // Übersichtsdatei erstellen
       let overviewContent = `# Veo3 Storyboard Export
 # Erstellt am: ${new Date().toLocaleString('de-DE')}
 # Story: ${storyIdea}
 # Anzahl Szenen: ${storyPoints.length}
 
 ========================================
-�?BERSICHT ALLER SZENEN
+ÜBERSICHT ALLER SZENEN
 ========================================
 
 `;
@@ -1961,14 +1961,14 @@ WICHTIG:
         const promptContent = `=== SZENE ${sceneNum} ===
 BILD: scene_${sceneNum}.png
 
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 VEO3 VIDEO-PROMPT (Kopieren für Veo3)
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 ${point.videoPrompt || 'Kein Video-Prompt generiert'}
 
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 STRUKTURIERTE DETAILS
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 KAMERABEWEGUNG: ${cameraMovementInfo ? `${cameraMovementInfo.label} (${cameraMovementInfo.description})` : 'Nicht definiert'}
 
 START-FRAME:
@@ -1977,43 +1977,43 @@ ${point.veo3StartState || point.sceneDescription || 'Nicht definiert'}
 BEWEGUNG/AKTION:
 ${point.veo3Motion || 'Nicht definiert'}
 
-END-FRAME (für �?bergang zu nächster Szene):
+END-FRAME (für Übergang zu nächster Szene):
 ${point.veo3EndState || 'Nicht definiert'}
 
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 SZENEN-DETAILS
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 TITEL: ${point.sceneTitle || 'Ohne Titel'}
 BESCHREIBUNG: ${point.sceneDescription || point.versions[point.currentVersion]}
 KAMERAWINKEL: ${point.cameraAngle || 'Automatisch'}
 SHOT-TYP: ${point.shotType || 'Automatisch'}
 
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 BILD-PROMPT (Referenz)
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 ${point.detailedImagePrompt || 'Nicht verfügbar'}
 
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
-�?BERGANG
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
+ÜBERGANG
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 DAUER: 5 Sekunden empfohlen
 SCHNITT: ${i < storyPoints.length - 1 ? 'Cut oder Fade zu Szene ' + (i + 2) : 'Letzte Szene'}
 `;
         
         scenesFolder?.file(`scene_${sceneNum}_prompt.txt`, promptContent);
         
-        // Zur �?bersicht hinzufügen
+        // Zur Übersicht hinzufügen
         overviewContent += `
 SZENE ${sceneNum}: ${point.sceneTitle || 'Ohne Titel'}
-�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??�??
+Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?Ü?
 ${point.videoPrompt || 'Kein Video-Prompt'}
 Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
-�?bergang: ${point.veo3EndState?.substring(0, 100) || '-'}...
+Übergang: ${point.veo3EndState?.substring(0, 100) || '-'}...
 
 `;
       }
       
-      // �?bersichtsdatei speichern
+      // Übersichtsdatei speichern
       zip.file("STORYBOARD_OVERVIEW.txt", overviewContent);
       
       // Anleitung für Veo3 hinzufügen
@@ -2021,7 +2021,7 @@ Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
 
 ## So verwendest du diese Dateien:
 
-1. �?ffne Google AI Studio oder Veo3 Interface
+1. Üffne Google AI Studio oder Veo3 Interface
 2. Für JEDE Szene:
    a) Lade das Bild (scene_XX.png) als Startframe hoch
    b) Kopiere den VEO3 VIDEO-PROMPT aus der entsprechenden .txt Datei
@@ -2031,7 +2031,7 @@ Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
 
 - Verwende die Bilder als "First Frame" / Startbild
 - Halte die Prompts so wie sie sind - sie sind auf Veo3 optimiert
-- Die Szenen sind für nahtlose �?bergänge konzipiert
+- Die Szenen sind für nahtlose Übergänge konzipiert
 - Empfohlene Auflösung: 16:9 (Widescreen)
 - Empfohlene Qualität: Höchste verfügbare
 
@@ -2039,7 +2039,7 @@ Kamerabewegung: ${cameraMovementInfo?.label || 'Nicht definiert'}
 
 ${storyPoints.map((p, i) => `Szene ${String(i + 1).padStart(2, '0')}: ${p.sceneTitle || p.versions[p.currentVersion].substring(0, 50)}...`).join('\n')}
 
-Viel Spa�? beim Erstellen deines Videos!
+Viel SpaÜ beim Erstellen deines Videos!
 `;
       
       zip.file("VEO3_ANLEITUNG.txt", instructionsContent);
@@ -2190,7 +2190,7 @@ REGELN:
       clearTimeout(timeoutId);
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung �?? keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung Ü? keine Antwort nach 20s" : error.message;
       }
       console.error("Failed to regenerate story point:", errorMessage);
       
@@ -2262,7 +2262,7 @@ REGELN:
           // Locations
           "ballsaal": "ballroom", "villa": "villa", "wald": "forest", "strand": "beach",
           "garten": "garden", "zimmer": "room", "haus": "house", "schloss": "castle",
-          "stra�?e": "street", "stadt": "city", "dorf": "village", "büro": "office",
+          "straÜe": "street", "stadt": "city", "dorf": "village", "büro": "office",
           "küche": "kitchen", "wohnzimmer": "living room", "schlafzimmer": "bedroom",
           "keller": "basement", "dachboden": "attic", "terrasse": "terrace", "balkon": "balcony",
           "park": "park", "see": "lake", "meer": "ocean", "berg": "mountain", "tal": "valley",
@@ -2287,7 +2287,7 @@ REGELN:
         const extractSceneKeywords = (text: string): string => {
           // 1. Remove ALL problematic words (German)
           let cleaned = text
-            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schie�?en|erschie�?en|töten|leiche|tod|opfer|kampf|angriff|verletzt|schmerz|angst|panik|terror|gefahr)\b/gi, '')
+            .replace(/\b(tot|sterben|stirbt|blut|waffe|gewalt|nackt|sex|kind|mord|krieg|schieÜen|erschieÜen|töten|leiche|tod|opfer|kampf|angriff|verletzt|schmerz|angst|panik|terror|gefahr)\b/gi, '')
             .toLowerCase()
             .replace(/[.,!?;:'"()[\]{}]/g, ' ')
             .replace(/\s+/g, ' ')
@@ -2512,7 +2512,7 @@ CONTENT COMPLIANCE:
             // Build story synopsis for full narrative context
             const storySynopsis = currentStoryPoints.map((sp, idx) => {
               const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-              const marker = idx === sceneIndex ? " �?� YOU ARE HERE" : "";
+              const marker = idx === sceneIndex ? " Ü� YOU ARE HERE" : "";
               return `${idx + 1}. "${spText}"${marker}`;
             }).join('\n');
             
@@ -2533,16 +2533,16 @@ CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${
 ${buildEnglishCharacterIdentityBlock(scenePoint)}
 
 NARRATIVE CONTEXT:
-- Previous: ${prevText ? `"${prevText}" �?? end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Previous: ${prevText ? `"${prevText}" Ü? end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
-- Next: ${nextText ? `"${nextText}" �?? this scene must set up a logical visual transition` : "None (this is the final scene �?? end with impact)"}
+- Next: ${nextText ? `"${nextText}" Ü? this scene must set up a logical visual transition` : "None (this is the final scene Ü? end with impact)"}
 
 Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
 - PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic �?? fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed �?? smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful �?? high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching �?? intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark �?? shadows, intrigue' : 'Cheerful/Light �?? bright, upbeat'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic Ü? fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed Ü? smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful Ü? high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching Ü? intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark Ü? shadows, intrigue' : 'Cheerful/Light Ü? bright, upbeat'}
 - COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
 ${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
@@ -2631,7 +2631,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         
         if (attempt < maxRetries) {
           const delayMs = attempt <= 2 ? 2000 : 3000;
-          console.log(`�??? Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
+          console.log(`Ü?? Scene ${sceneIndex + 1}: Attempt ${attempt} failed, trying ${attempt + 1} in ${delayMs/1000}s...`);
 
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
@@ -2660,27 +2660,27 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     try {
       // Get character reference images from STORY reference images (URLs) as data URLs
       const characterBase64Images: string[] = [];
-      console.log(`�??� Loading ${storyReferenceImages.length} story reference images...`);
+      console.log(`Ü?� Loading ${storyReferenceImages.length} story reference images...`);
       
       for (const imageUrl of storyReferenceImages) {
         try {
           console.log(`  Fetching: ${imageUrl.substring(0, 50)}...`);
           const response = await fetch(imageUrl);
           if (!response.ok) {
-            console.error(`  �? Failed to fetch image: ${response.status}`);
+            console.error(`  Ü Failed to fetch image: ${response.status}`);
             continue;
           }
           const blob = await response.blob();
           const dataUrl = await blobToDataUrl(blob);
           const { base64 } = splitImageDataUrl(dataUrl);
-          console.log(`  �?? Loaded ${Math.round(base64.length / 1024)}KB`);
+          console.log(`  Ü? Loaded ${Math.round(base64.length / 1024)}KB`);
           characterBase64Images.push(dataUrl);
         } catch (error) {
           console.error('Error converting story reference image to base64:', error);
         }
       }
       
-      console.log(`�??� Successfully loaded ${characterBase64Images.length}/${storyReferenceImages.length} reference images`);
+      console.log(`Ü?� Successfully loaded ${characterBase64Images.length}/${storyReferenceImages.length} reference images`);
       
       if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
         console.error("Fehler: Keine Referenzbilder - Die hochgeladenen Referenzbilder konnten nicht geladen werden.");
@@ -2723,21 +2723,21 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           totalAttempts += RETRIES_PER_CYCLE;
           
           if (result?.success) {
-            console.log(`�?? Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen`);
+            console.log(`Ü? Szene ${sceneIndex + 1} erfolgreich nach ${totalAttempts} Gesamtversuchen`);
             break;
           }
 
           finalErrorMessage = result?.errorMessage || "Unbekannter Fehler";
           const retryClass = classifyRetryableSceneError(finalErrorMessage);
           if (retryClass === "non_retryable") {
-            console.warn(`�?? Szene ${sceneIndex + 1}: Nicht-retrybarer Fehler erkannt -> Stoppe weitere Versuche`);
+            console.warn(`Ü? Szene ${sceneIndex + 1}: Nicht-retrybarer Fehler erkannt -> Stoppe weitere Versuche`);
             break;
           }
         }
         
         if (!result?.success) {
           const sceneError = finalErrorMessage || "Szene konnte nicht generiert werden";
-          console.error(`�? Szene ${sceneIndex + 1} dauerhaft fehlgeschlagen: ${sceneError}`);
+          console.error(`Ü Szene ${sceneIndex + 1} dauerhaft fehlgeschlagen: ${sceneError}`);
           setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: sceneError } : p));
           continue;
         }
@@ -2794,7 +2794,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         successCount++;
       }
       
-      console.log(`�?? Story-Bilder fertig: ${successCount}/${storyPointsRef.current.length} Szenen erfolgreich`);
+      console.log(`Ü? Story-Bilder fertig: ${successCount}/${storyPointsRef.current.length} Szenen erfolgreich`);
     } finally {
       setGeneratingStoryImageIndex(null);
       setIsGeneratingStoryImages(false);
@@ -2835,7 +2835,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       if (storyboardMainLocation) metadataLines.push(`Hauptort: ${storyboardMainLocation}`);
       if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
       if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
-      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog W�?RTLICH in der Originalsprache in den Video-Prompt, sodass der Charakter genau diese Worte sichtbar spricht. Der Dialog darf NICHT ins Englische übersetzt werden.`);
+      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog WÜRTLICH in der Originalsprache in den Video-Prompt, sodass der Charakter genau diese Worte sichtbar spricht. Der Dialog darf NICHT ins Englische übersetzt werden.`);
       
       const isLastScene = i === storyPoints.length - 1;
       const nextScene = !isLastScene ? storyPoints[i + 1] : null;
@@ -2844,7 +2844,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       // Build story synopsis for full narrative context
       const storySynopsis = storyPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-        const marker = idx === i ? " �?� YOU ARE HERE" : "";
+        const marker = idx === i ? " Ü� YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
@@ -2867,16 +2867,16 @@ SCENE METADATA:
 ${metadataLines.length > 0 ? metadataLines.join('\n') : 'No specific settings'}
 
 NARRATIVE CONTEXT:
-- Previous: ${prevText ? `"${prevText}" �?? end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene �?? open with a strong hook)"}
+- Previous: ${prevText ? `"${prevText}" Ü? end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene Ü? open with a strong hook)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
-- Next: ${nextSceneText ? `"${nextSceneText}" �?? this scene must set up a logical visual transition to the next` : "None (this is the final scene �?? end with maximum impact)"}
+- Next: ${nextSceneText ? `"${nextSceneText}" Ü? this scene must set up a logical visual transition to the next` : "None (this is the final scene Ü? end with maximum impact)"}
 
 Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
 - PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic �?? fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed �?? smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful �?? high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching �?? intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark �?? shadows, intrigue' : 'Cheerful/Light �?? bright, upbeat'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic Ü? fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed Ü? smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful Ü? high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching Ü? intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark Ü? shadows, intrigue' : 'Cheerful/Light Ü? bright, upbeat'}
 - COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
 ${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
@@ -2962,7 +2962,7 @@ Respond ONLY with JSON:
       const prevCount = (i > 0 && storyPoints[i - 1]?.generatedImage) ? 1 : 0;
       const currentCount = point.generatedImage ? 1 : 0;
       const nextCount = storyPoints[i + 1]?.generatedImage ? 1 : 0;
-      console.log(`�??� Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nächste Szene)`);
+      console.log(`Ü?� Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nächste Szene)`);
 
       try {
         // Build parts: text + optional reference images
@@ -3067,7 +3067,7 @@ Respond ONLY with JSON:
     let lastError = "";
 
     for (const model of orderedModels) {
-      console.log(`�??� Veo attempt: configured=${mapStoryModelLabel(storyVideoModel)}, model=${model}`);
+      console.log(`Ü?� Veo attempt: configured=${mapStoryModelLabel(storyVideoModel)}, model=${model}`);
 
       const response = await fetch(
         `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
@@ -3083,12 +3083,12 @@ Respond ONLY with JSON:
         const operationName = data.name;
         if (!operationName) throw new Error("Keine Operation-ID erhalten");
         veoWorkingConfigRef.current = { payloadFormat: 'bytesBase64Encoded', model };
-        console.log(`�?? Veo OK: model=${model}, op=${operationName}`);
+        console.log(`Ü? Veo OK: model=${model}, op=${operationName}`);
         return operationName;
       }
 
       const errText = await response.text();
-      console.warn(`�?�️ Veo ${model} �?? ${response.status}: ${errText.substring(0, 300)}`);
+      console.warn(`Ü�️ Veo ${model} Ü? ${response.status}: ${errText.substring(0, 300)}`);
 
       if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
       if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
@@ -3098,7 +3098,7 @@ Respond ONLY with JSON:
         continue;
       }
 
-      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} �?? ${errText.substring(0, 200)}`);
+      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} Ü? ${errText.substring(0, 200)}`);
     }
 
     throw new Error(`Alle Veo-Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
@@ -3128,7 +3128,7 @@ Respond ONLY with JSON:
       // Check for error
       if (data.error) {
         const errMsg = data.error.message || JSON.stringify(data.error);
-        console.error("�? Veo operation error:", errMsg);
+        console.error("Ü Veo operation error:", errMsg);
         // Safety filter detection
         if (errMsg.toLowerCase().includes('safety') || errMsg.toLowerCase().includes('blocked') || errMsg.toLowerCase().includes('filter')) {
           return { status: "failed", error: `Video durch Sicherheitsfilter blockiert: ${errMsg}` };
@@ -3137,7 +3137,7 @@ Respond ONLY with JSON:
       }
       
       const resp = data.response || {};
-      console.log("�??� Veo done �?? response keys:", Object.keys(resp).join(", "));
+      console.log("Ü?� Veo done Ü? response keys:", Object.keys(resp).join(", "));
       
       // Multi-path video URI extraction
       const videoUri = 
@@ -3151,16 +3151,16 @@ Respond ONLY with JSON:
         const remoteUrl = videoUri.startsWith("http") 
           ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
           : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
-        console.log("�?? Video URL extrahiert, konvertiere zu Blob...");
+        console.log("Ü? Video URL extrahiert, konvertiere zu Blob...");
         try {
           const videoResp = await fetch(remoteUrl);
           if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
           const videoBlob = await videoResp.blob();
           const blobUrl = createManagedBlobUrl(videoBlob);
-          console.log("�?? Video als Blob-URL gespeichert");
+          console.log("Ü? Video als Blob-URL gespeichert");
           return { status: "completed", videoUrl: blobUrl };
         } catch (dlErr) {
-          console.warn("�?�️ Blob-Konvertierung fehlgeschlagen, nutze direkte URL:", dlErr);
+          console.warn("Ü�️ Blob-Konvertierung fehlgeschlagen, nutze direkte URL:", dlErr);
           return { status: "completed", videoUrl: remoteUrl };
         }
       }
@@ -3168,7 +3168,7 @@ Respond ONLY with JSON:
       // Fallback: direct base64 video in predictions
       const prediction = resp.predictions?.[0];
       if (prediction?.bytesBase64Encoded) {
-        console.log("�?? Video als Base64 in predictions erhalten");
+        console.log("Ü? Video als Base64 in predictions erhalten");
         const mimeType = prediction.mimeType || "video/mp4";
         const videoUrl = `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
         return { status: "completed", videoUrl };
@@ -3177,7 +3177,7 @@ Respond ONLY with JSON:
       // Check for raiMediaFilteredReasons (content policy)
       const filteredReasons = resp.generateVideoResponse?.raiMediaFilteredReasons;
       if (filteredReasons && Array.isArray(filteredReasons) && filteredReasons.length > 0) {
-        console.error("�? Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
+        console.error("Ü Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
         // Translate common Veo content policy messages to German
         const translatedReasons = filteredReasons.map((reason: string) => {
           if (reason.includes("photorealistic children")) return "Das Bild enthält Personen, die als minderjährig eingestuft wurden. Bitte ändere das Referenzbild oder den Prompt, sodass die Figur eindeutig erwachsen wirkt.";
@@ -3195,8 +3195,8 @@ Respond ONLY with JSON:
       // Structured diagnostics on failure
       const diagKeys = JSON.stringify(Object.keys(resp));
       const deepKeys = resp.generateVideoResponse ? JSON.stringify(Object.keys(resp.generateVideoResponse)) : "n/a";
-      console.error(`�? Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
-      console.error("�??? Response preview:", JSON.stringify(resp).substring(0, 800));
+      console.error(`Ü Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
+      console.error("Ü?? Response preview:", JSON.stringify(resp).substring(0, 800));
       return { status: "failed", error: "Video-Generierung fehlgeschlagen. Bitte den Prompt oder das Bild anpassen und erneut versuchen." };
     }
     
@@ -3230,10 +3230,10 @@ Respond ONLY with JSON:
     for (let retry = 0; retry <= MAX_RETRIES; retry++) {
       try {
         if (retry > 0) {
-          console.log(`�??? Szene ${sceneIndex + 1}: Erneuter Versuch ${retry}/${MAX_RETRIES}...`);
+          console.log(`Ü?? Szene ${sceneIndex + 1}: Erneuter Versuch ${retry}/${MAX_RETRIES}...`);
           setVideoErrors(prev => {
             const n = new Map(prev);
-            n.set(sceneIndex, `Server-Fehler �?? erneuter Versuch ${retry}/${MAX_RETRIES}...`);
+            n.set(sceneIndex, `Server-Fehler Ü? erneuter Versuch ${retry}/${MAX_RETRIES}...`);
             return n;
           });
           // Wait before retry
@@ -3249,7 +3249,7 @@ Respond ONLY with JSON:
         const endBase64 = nextImage ? await imageToBase64(nextImage) : undefined;
 
         const operationName = await startGeminiVideoGeneration(point.videoPrompt!, startBase64, endBase64, storyboardFormat);
-        console.log(`�?? Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
+        console.log(`Ü? Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
         setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
 
         // Poll for result
@@ -3263,26 +3263,26 @@ Respond ONLY with JSON:
 
           try {
             const result = await pollGeminiVideoOperation(operationName);
-            console.log(`�??? Szene ${sceneIndex + 1} Status: ${result.status}`);
+            console.log(`Ü?? Szene ${sceneIndex + 1} Status: ${result.status}`);
 
             if (result.status === "completed" && result.videoUrl) {
               setVideoResults(prev => new Map(prev).set(sceneIndex, result.videoUrl!));
               setStoryPoints(prev => prev.map((p, i) =>
                 i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
               ));
-              return; // Success �?? exit retry loop
+              return; // Success Ü? exit retry loop
             } else if (result.status === "failed") {
               const isInternalError = result.error?.toLowerCase().includes('internal') || 
                                       result.error?.toLowerCase().includes('server');
               if (isInternalError && retry < MAX_RETRIES) {
-                console.warn(`�?�️ Szene ${sceneIndex + 1}: Interner Server-Fehler, wird erneut versucht...`);
+                console.warn(`Ü�️ Szene ${sceneIndex + 1}: Interner Server-Fehler, wird erneut versucht...`);
                 break; // Break poll loop to retry
               }
               setVideoErrors(prev => new Map(prev).set(sceneIndex, result.error || "Video-Generierung fehlgeschlagen"));
               return; // Non-retryable failure
             }
           } catch (error) {
-            console.warn(`�?�️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+            console.warn(`Ü�️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
           }
         }
 
@@ -3299,7 +3299,7 @@ Respond ONLY with JSON:
           return;
         }
         if (retry >= MAX_RETRIES) {
-          console.error(`�? Szene ${sceneIndex + 1} endgültig fehlgeschlagen:`, error);
+          console.error(`Ü Szene ${sceneIndex + 1} endgültig fehlgeschlagen:`, error);
           setVideoErrors(prev => new Map(prev).set(sceneIndex, errMsg));
           return;
         }
@@ -3307,7 +3307,7 @@ Respond ONLY with JSON:
     }
   };
 
-  // Generate videos via Gemini Veo API �?? sequential, one at a time
+  // Generate videos via Gemini Veo API Ü? sequential, one at a time
   const generateVideos = async () => {
     if (storyPoints.length === 0 || isGeneratingVideos || !apiKey || generationLimitReached) return;
     
@@ -3461,7 +3461,7 @@ Respond ONLY with JSON:
         clearTimeout(timeoutId);
         let errorMessage = "Unbekannter Fehler";
         if (error instanceof Error) {
-          errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung �?? keine Antwort nach 40s" : error.message;
+          errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung Ü? keine Antwort nach 40s" : error.message;
         }
         console.error(`Bild-Regeneration Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
         setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: errorMessage } : p));
@@ -3474,7 +3474,7 @@ Respond ONLY with JSON:
       }
     }
     
-    // Now generate video �?? read fresh state from ref
+    // Now generate video Ü? read fresh state from ref
     incrementGeneration();
     setIsGeneratingVideos(true);
     
@@ -3487,7 +3487,7 @@ Respond ONLY with JSON:
       
       const storySynopsis = currentStoryPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-        const marker = idx === sceneIndex ? " �?� YOU ARE HERE" : "";
+        const marker = idx === sceneIndex ? " Ü� YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
@@ -3510,16 +3510,16 @@ CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${
 ${characterIdentityBlock}
 
 NARRATIVE CONTEXT:
-- Previous: ${prevText ? `"${prevText}" �?? end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
+- Previous: ${prevText ? `"${prevText}" Ü? end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
-- Next: ${nextText ? `"${nextText}" �?? this scene must set up a logical visual transition` : "None (this is the final scene �?? end with impact)"}
+- Next: ${nextText ? `"${nextText}" Ü? this scene must set up a logical visual transition` : "None (this is the final scene Ü? end with impact)"}
 
 Write a punchy video prompt (80-120 words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
 - PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic �?? fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed �?? smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful �?? high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching �?? intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark �?? shadows, intrigue' : 'Cheerful/Light �?? bright, upbeat'}
+- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic Ü? fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed Ü? smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful Ü? high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching Ü? intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark Ü? shadows, intrigue' : 'Cheerful/Light Ü? bright, upbeat'}
 - COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
 ${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
@@ -3588,7 +3588,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     }));
   };
 
-  // ===== TRANSLATION MAPS for German dropdown values �?? English =====
+  // ===== TRANSLATION MAPS for German dropdown values Ü? English =====
   const emotionToEnglish: Record<string, string> = {
     "gluecklich": "happy, joyful expression",
     "traurig": "sad, melancholic expression",
@@ -3756,22 +3756,22 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     
     const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
     const styleBlock = styleDesc
-      ? `\n\n!!! MANDATORY ART STYLE: "${styleDesc}" !!!\nThe ENTIRE image MUST be rendered in this style. Every element �?? characters, background, lighting, textures �?? must look like a ${styleDesc}. Do NOT render anything photorealistically unless the style explicitly says so. Describe the visual medium, textures, colors, and rendering technique of "${styleDesc}" in your prompt.\n`
+      ? `\n\n!!! MANDATORY ART STYLE: "${styleDesc}" !!!\nThe ENTIRE image MUST be rendered in this style. Every element Ü? characters, background, lighting, textures Ü? must look like a ${styleDesc}. Do NOT render anything photorealistically unless the style explicitly says so. Describe the visual medium, textures, colors, and rendering technique of "${styleDesc}" in your prompt.\n`
       : "";
     
     const systemInstruction = `You are an expert image prompt writer. You MUST faithfully include ALL scene details below. Do NOT omit, simplify, or generalize any of them.
 ${styleBlock}
 PRIORITY HIERARCHY (strictly follow this order):
-1. User-defined scene settings (HIGHEST �?? always override defaults)
+1. User-defined scene settings (HIGHEST Ü? always override defaults)
 2. Scene uniqueness (each scene must look distinct)
-3. Visual consistency with other scenes (LOWEST �?? only for character identity)
+3. Visual consistency with other scenes (LOWEST Ü? only for character identity)
 
-REQUIRED FIELDS �?? you MUST explicitly include EACH of these in your prompt:
-- Art Style/Medium: ${styleDesc ? `"${styleDesc}" (MANDATORY �?? describe the visual medium, textures, rendering technique)` : "describe the visual style"}
+REQUIRED FIELDS Ü? you MUST explicitly include EACH of these in your prompt:
+- Art Style/Medium: ${styleDesc ? `"${styleDesc}" (MANDATORY Ü? describe the visual medium, textures, rendering technique)` : "describe the visual style"}
 - Shot Type: Use the EXACT shot type specified (e.g. close-up, full-shot). Do NOT change it.
 - Camera Angle: Use the EXACT camera angle specified. Do NOT default to eye-level.
 - Location + Specific Area: Describe the exact environment and sub-location.
-- Character Action: Describe the EXACT action specified �?? not a generic standing/posing.
+- Character Action: Describe the EXACT action specified Ü? not a generic standing/posing.
 - Character Expression/Emotion: Show the SPECIFIC emotion on the character's face and body language.
 - Composition: Follow any composition notes precisely.
 - Camera Movement: Reflect any specified camera movement in the framing.
@@ -3780,7 +3780,7 @@ REQUIRED FIELDS �?? you MUST explicitly include EACH of these in your prompt:
 
 Rules:
 - Write a single descriptive paragraph (max 250 words).${styleDesc ? `\n- START the prompt by describing the art style/medium (e.g. "A ${styleDesc} depicting..."). This is critical.` : ""}
-- Reference images are ONLY for character identity (face, body, clothing) �?? do NOT copy pose, style, or scene from them.
+- Reference images are ONLY for character identity (face, body, clothing) Ü? do NOT copy pose, style, or scene from them.
 - If named character references are provided, never swap identities between those names.
 - The character must have a NEW pose matching the scene action.
 - Do NOT copy the visual style or medium of reference images.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
@@ -3791,7 +3791,7 @@ Rules:
 Scene Details:
 ${sceneContext}`;
 
-    console.log(`�?�? Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
+    console.log(`ÜÜ Step 1: Asking Text-AI to write image prompt for scene ${sceneIndex + 1}...`);
     
     try {
       const aiPrompt = await callGeminiOrFull(
@@ -3800,14 +3800,14 @@ ${sceneContext}`;
       );
       
       if (!aiPrompt) {
-        console.warn("�?�️ Empty AI prompt, falling back to scene context");
+        console.warn("Ü�️ Empty AI prompt, falling back to scene context");
         return sceneContext;
       }
       
-      console.log(`�?? AI-generated image prompt for scene ${sceneIndex + 1}:`, aiPrompt.substring(0, 200) + '...');
+      console.log(`Ü? AI-generated image prompt for scene ${sceneIndex + 1}:`, aiPrompt.substring(0, 200) + '...');
       return aiPrompt;
     } catch (error) {
-      console.warn("�?�️ AI prompt generation error, falling back to scene context:", error);
+      console.warn("Ü�️ AI prompt generation error, falling back to scene context:", error);
       return sceneContext;
     }
   };
@@ -3833,7 +3833,7 @@ ${sceneContext}`;
     
     // Use updatedPoint if provided (contains latest edits from popup), otherwise use latest ref state
     const point = updatedPoint || storyPointsRef.current[sceneIndex];
-    console.log("�??� Regenerating with point data:", {
+    console.log("Ü?� Regenerating with point data:", {
       detailedDescription: point.detailedDescription,
       emotion: point.emotion,
       keyAction: point.keyAction,
@@ -3866,7 +3866,7 @@ ${sceneContext}`;
       // Step 1: Let Text-AI write the image prompt
       const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
       
-      console.log(`�??� Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
+      console.log(`Ü?� Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
       
       // Build image parts - collect all reference images as base64
       const allReferenceImages: string[] = [...characterBase64Images];
@@ -3962,7 +3962,7 @@ ${sceneContext}`;
             detailedImagePrompt: imagePromptText,
             generationError: undefined,
             generationSnapshot,
-            // Clear video if it existed �?? it's now stale since the image changed
+            // Clear video if it existed Ü? it's now stale since the image changed
             ...(hadVideo ? { generatedVideo: undefined } : {}),
           };
           // Auto-save as new version on regeneration
@@ -3988,7 +3988,7 @@ ${sceneContext}`;
       
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung �?? keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung Ü? keine Antwort nach 20s" : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
@@ -4157,7 +4157,7 @@ ${sceneContext}`;
       
       let errorMessage = "Unbekannter Fehler";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung �?? keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung Ü? keine Antwort nach 20s" : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
@@ -4192,7 +4192,7 @@ ${sceneContext}`;
       try {
         const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
         const expandPrompt = isDialogMode
-          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog �?? optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
+          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog Ü? optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
 
 REGELN:
 - 4-8 Sätze gesprochener Dialog, filmisch und emotional
@@ -4204,12 +4204,12 @@ REGELN:
 Zusammenfassung: "${suggestion}"
 
 Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
-          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung �?? optimiert für kurze Social-Media-Videos (TikTok/Reels/Shorts, 15-60 Sekunden).
+          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung Ü? optimiert für kurze Social-Media-Videos (TikTok/Reels/Shorts, 15-60 Sekunden).
 
 REGELN:
 - 3-6 Sätze, visuell und atmosphärisch
 - Hook-First: Die Beschreibung muss mit dem visuell stärksten Moment starten
-- Dynamisch: Beschreibe Bewegung, Aktion, Emotionen �?? keine statischen Bilder
+- Dynamisch: Beschreibe Bewegung, Aktion, Emotionen Ü? keine statischen Bilder
 - Emotional: Jede Szene braucht einen klaren emotionalen Beat
 - Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik
 
@@ -4267,7 +4267,7 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs �?? optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs Ü? optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
@@ -4277,7 +4277,7 @@ Gute Beispiele:
 - Letzte Nachricht vor dem Abflug
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte �?? optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte Ü? optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 
 WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
@@ -4579,10 +4579,10 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       
       // Use custom prompt if provided
       if (customPromptText && customPromptText.trim()) {
-        prompt = `${customPromptText}. Ultra high resolution. �??� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
+        prompt = `${customPromptText}. Ultra high resolution. Ü?� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
       } else {
         // Simplified prompt - only view angle and shot type
-        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution. �??� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
+        prompt = `Professional photoshoot with EXACTLY ONE person only, ${viewAngle}, ${bgText}, ${shotText}. Match the exact style, realism level, art style, lighting quality, and visual aesthetic from the reference images. Ultra high resolution. Ü?� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!`;
       }
       
       console.log(`Generating image ${index + 1} with prompt: ${prompt}`);
@@ -4613,8 +4613,8 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
 - Generate EXACTLY ONE single person in the image. NEVER create multiple people or characters.
 - Generate ONE SINGLE COMPLETE IMAGE only. NEVER create collages, grids, or multiple images in one frame.
 - NO photo strips, NO side-by-side comparisons, NO split screens.
-- �??� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
-- �??� NO letterboxing, NO black bars on any side (top, bottom, left, right)!
+- Ü?� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame!
+- Ü?� NO letterboxing, NO black bars on any side (top, bottom, left, right)!
 
 Create a professional photoshoot of the person from the reference image(s). 
 - ONLY ONE PERSON must appear in the entire image
@@ -4684,11 +4684,11 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         externalSignal?.removeEventListener('abort', onExternalAbort);
       }
 
-      console.log("�??� API Request sent, Response status:", response.status);
+      console.log("Ü?� API Request sent, Response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`�? Gemini API error ${response.status}:`, errorText);
+        console.error(`Ü Gemini API error ${response.status}:`, errorText);
         // Create user-friendly error message based on status
         let userFriendlyError = "";
         switch (response.status) {
@@ -4717,17 +4717,17 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       }
 
       const data = await response.json();
-      console.log("�??� Full API Response for image", index + 1);
+      console.log("Ü?� Full API Response for image", index + 1);
 
       // Check promptFeedback for block reasons
       if (data.promptFeedback?.blockReason) {
         const blockReason = data.promptFeedback.blockReason;
-        console.error("�? Prompt blocked:", blockReason);
+        console.error("Ü Prompt blocked:", blockReason);
       const blockMessages: Record<string, string> = {
-          "SAFETY": "�?�️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
-          "OTHER": "�?�️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
-          "BLOCKLIST": "�?�️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
-          "PROHIBITED_CONTENT": "�?�️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
+          "SAFETY": "Ü�️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "Ü�️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "Ü�️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "Ü�️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
         };
         throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
       }
@@ -4735,26 +4735,26 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       // ===== IMAGE EXTRACTION =====
       const candidates = data.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("�?�️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
+        throw new Error("Ü�️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
       }
 
       // Check finishReason for specific error causes
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
-        console.warn("�?�️ IMAGE_OTHER detected - Model couldn't generate with reference image");
-        throw new Error("�?�️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
+        console.warn("Ü�️ IMAGE_OTHER detected - Model couldn't generate with reference image");
+        throw new Error("Ü�️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
-        console.warn("�?�️ SAFETY filter triggered");
-        throw new Error("�?�️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
+        console.warn("Ü�️ SAFETY filter triggered");
+        throw new Error("Ü�️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
       if (finishReason === "MAX_TOKENS") {
-        console.warn("�?�️ MAX_TOKENS reached");
-        throw new Error("�?�️ Token-Limit erreicht. Bitte verwende einen kürzeren Prompt.");
+        console.warn("Ü�️ MAX_TOKENS reached");
+        throw new Error("Ü�️ Token-Limit erreicht. Bitte verwende einen kürzeren Prompt.");
       }
       if (finishReason === "RECITATION") {
-        console.warn("�?�️ RECITATION detected");
-        throw new Error("�?�️ Urheberrechtsfilter ausgelöst. Bitte ändere deinen Prompt.");
+        console.warn("Ü�️ RECITATION detected");
+        throw new Error("Ü�️ Urheberrechtsfilter ausgelöst. Bitte ändere deinen Prompt.");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
@@ -4766,7 +4766,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       );
 
       if (imagePart) {
-        // ===== BASE64 �?? BLOB (Browser) =====
+        // ===== BASE64 Ü? BLOB (Browser) =====
         const base64 = imagePart.inlineData.data;
         const mimeType = imagePart.inlineData.mimeType || "image/png";
 
@@ -4779,7 +4779,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
         // Use managed Blob URL to prevent memory leaks on older devices
         const objectUrl = createManagedBlobUrl(blob);
-        console.log(`�?? Image ${index + 1} generated successfully:`, objectUrl);
+        console.log(`Ü? Image ${index + 1} generated successfully:`, objectUrl);
         return objectUrl;
       }
 
@@ -4788,18 +4788,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         .map((p: any) => p.text)
         .filter(Boolean)
         .join("\n");
-      console.error("�? Gemini did not return an image. Text response:", textFallback);
+      console.error("Ü Gemini did not return an image. Text response:", textFallback);
       
-      console.error("�? No image in response for image", index + 1);
-      throw new Error("�?�️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
+      console.error("Ü No image in response for image", index + 1);
+      throw new Error("Ü�️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
     } catch (error) {
-      console.error(`�? Error generating image ${index}:`, error);
+      console.error(`Ü Error generating image ${index}:`, error);
       // Re-throw with user-friendly message so processQueue catches it
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        throw new Error("Netzwerkfehler �?? prüfe deine Internetverbindung");
+        throw new Error("Netzwerkfehler Ü? prüfe deine Internetverbindung");
       }
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error("Zeitüberschreitung �?? keine Antwort nach 20s");
+        throw new Error("Zeitüberschreitung Ü? keine Antwort nach 20s");
       }
       // Re-throw original error if it already has a message
       throw error;
@@ -4815,19 +4815,19 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     totalCount: number,
     customPromptText?: string
   ) => {
-    console.log("�??? processQueue gestartet!");
-    console.log("�??? Queue Länge:", generationQueueRef.current.length);
-    console.log("�??? isGenerating:", isGenerating);
-    console.log("�??? totalCount:", totalCount);
-    console.log("�??? base64Images Länge:", base64Images.length);
+    console.log("Ü?? processQueue gestartet!");
+    console.log("Ü?? Queue Länge:", generationQueueRef.current.length);
+    console.log("Ü?? isGenerating:", isGenerating);
+    console.log("Ü?? totalCount:", totalCount);
+    console.log("Ü?? base64Images Länge:", base64Images.length);
     
     const CONCURRENT_REQUESTS = isPro ? 2 : 1;
     const angles = ["front", "front-right", "right", "back-right", "back", "back-left", "left", "front-left"];
 
-    console.log("�??? Starte worker-pool...");
+    console.log("Ü?? Starte worker-pool...");
     
     const processSlot = async (index: number) => {
-      console.log(`�??� Starte Generierung für Index ${index}`);
+      console.log(`Ü?� Starte Generierung für Index ${index}`);
       
       const slotController = new AbortController();
       abortControllersRef.current.set(index, slotController);
@@ -4887,12 +4887,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           setImageSlots((prev) => {
             const updated = [...prev];
             if (index >= updated.length) return prev;
-            updated[index] = { status: "error", progress: 0, errorMessage: "�?�️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
+            updated[index] = { status: "error", progress: 0, errorMessage: "Ü�️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
             return updated;
           });
         }
       } catch (error) {
-        console.error(`�? Error in processQueue for index ${index}:`, error);
+        console.error(`Ü Error in processQueue for index ${index}:`, error);
         const errorMessage = getDetailedErrorMessage(error);
         setImageSlots((prev) => {
           const updated = [...prev];
@@ -4930,25 +4930,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
   };
 
   const handleGenerate = async () => {
-    console.log("�??? handleGenerate aufgerufen!");
-    console.log("�??? API Key vorhanden?", !!apiKey);
-    console.log("�??? API Key Länge:", apiKey?.length || 0);
-    console.log("�??�️ Anzahl Reference Images:", referenceImages.length);
-    console.log("�??� Hintergrund:", selectedBackground);
-    console.log("�??� Anzahl zu generierende Bilder:", imageCount[0]);
+    console.log("Ü?? handleGenerate aufgerufen!");
+    console.log("Ü?? API Key vorhanden?", !!apiKey);
+    console.log("Ü?? API Key Länge:", apiKey?.length || 0);
+    console.log("Ü?�️ Anzahl Reference Images:", referenceImages.length);
+    console.log("Ü?� Hintergrund:", selectedBackground);
+    console.log("Ü?� Anzahl zu generierende Bilder:", imageCount[0]);
     
     if (!canGenerate || generationLimitReached) {
-      console.log("�? Fehler: Keine Generierung möglich");
+      console.log("Ü Fehler: Keine Generierung möglich");
       return;
     }
     
 
     if (referenceImages.length === 0) {
-      console.log("�? Fehler: Keine Reference Images");
+      console.log("Ü Fehler: Keine Reference Images");
       return;
     }
 
-    console.log("�?? Validierung erfolgreich, starte Generierung...");
+    console.log("Ü? Validierung erfolgreich, starte Generierung...");
     incrementGeneration();
     setIsGenerating(true);
     isGeneratingRef.current = true;
@@ -5067,9 +5067,9 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       return;
     }
 
-    console.log("�??� Starting custom prompt generation with reference images");
-    console.log("�??� Custom Prompt:", customPrompt);
-    console.log("�??� Reference Images:", referenceImages.length);
+    console.log("Ü?� Starting custom prompt generation with reference images");
+    console.log("Ü?� Custom Prompt:", customPrompt);
+    console.log("Ü?� Reference Images:", referenceImages.length);
 
     // Capture the index before state update and use ref to track it
     let capturedIndex = -1;
@@ -5146,13 +5146,13 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const randomExpression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
       
       // Build the main prompt
-      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality. Ultra high resolution. �??� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame! �??� NO letterboxing, NO black bars on any side!`;
+      const basePrompt = `Professional photoshoot, ${randomPose}, ${randomExpression}, ${bgText}, ${shotText}, studio lighting, high-end fashion photography, professional camera quality. Ultra high resolution. Ü?� ABSOLUTELY NO BLACK BORDERS - the image must fill 100% of the frame! Ü?� NO letterboxing, NO black bars on any side!`;
       
       // Combine base prompt with custom prompt
       const fullPrompt = `${basePrompt}\n\nADDITIONAL REQUIREMENTS: ${customPrompt}`;
 
-      console.log("�??� Full combined prompt:", fullPrompt);
-      console.log("�??� Using", normalizedReferenceImages.length, "reference images for blending");
+      console.log("Ü?� Full combined prompt:", fullPrompt);
+      console.log("Ü?� Using", normalizedReferenceImages.length, "reference images for blending");
 
       // Build parts array with text prompt and ALL reference images
       const parts = [
@@ -5201,12 +5201,12 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`�? Google API error: ${response.status}`, errorText);
+        console.error(`Ü Google API error: ${response.status}`, errorText);
         throw new Error(`Image generation failed: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("�??� Custom prompt API response received");
+      console.log("Ü?� Custom prompt API response received");
       
       // Extract the generated image from the response
       if (data.candidates && data.candidates[0]?.content?.parts) {
@@ -5217,7 +5217,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         if (imagePart?.inlineData?.data) {
           const imageData = imagePart.inlineData.data;
           const mimeType = imagePart.inlineData.mimeType || "image/jpeg";
-          console.log("�?? Custom prompt image generated successfully");
+          console.log("Ü? Custom prompt image generated successfully");
           
           // Convert Base64 to Blob
           const byteCharacters = atob(imageData);
@@ -5249,7 +5249,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       throw new Error("No image in response");
     } catch (error) {
-      console.error("�? Error with custom prompt:", error);
+      console.error("Ü Error with custom prompt:", error);
       
       // Check if it was a timeout/abort error
       const errorMessage = error instanceof Error 
@@ -5314,7 +5314,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           canvas.toBlob((blob) => {
             if (!blob) { resolve(fullResUrl); return; }
             const thumbUrl = createManagedBlobUrl(blob);
-            console.log(`�??�️ Thumbnail created: ${canvas.width}x${canvas.height}`);
+            console.log(`Ü?�️ Thumbnail created: ${canvas.width}x${canvas.height}`);
             resolve(thumbUrl);
           }, "image/jpeg", 0.85);
         } catch (e) {
@@ -5491,10 +5491,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       if (!response.ok) {
         const statusMessages: Record<number, string> = {
-          400: "�?�️ Ungültige Anfrage. Bitte passe deinen Prompt oder dein Referenzbild an.",
-          429: "�?�️ Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
-          403: "�?�️ API-Key ungültig oder gesperrt.",
-          500: "�?�️ Server-Fehler bei Google. Bitte versuche es erneut.",
+          400: "Ü�️ Ungültige Anfrage. Bitte passe deinen Prompt oder dein Referenzbild an.",
+          429: "Ü�️ Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
+          403: "Ü�️ API-Key ungültig oder gesperrt.",
+          500: "Ü�️ Server-Fehler bei Google. Bitte versuche es erneut.",
         };
         throw new Error(statusMessages[response.status] || `API-Fehler (${response.status})`);
       }
@@ -5505,25 +5505,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       if (result.promptFeedback?.blockReason) {
         const blockReason = result.promptFeedback.blockReason;
         const blockMessages: Record<string, string> = {
-          "SAFETY": "�?�️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
-          "OTHER": "�?�️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
-          "BLOCKLIST": "�?�️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
-          "PROHIBITED_CONTENT": "�?�️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
+          "SAFETY": "Ü�️ Dein Prompt oder Referenzbild wurde durch den Sicherheitsfilter blockiert. Bitte ändere deinen Prompt oder verwende ein anderes Referenzbild.",
+          "OTHER": "Ü�️ Die Generierung wurde blockiert. Bitte ändere dein Referenzbild oder passe deinen Prompt an.",
+          "BLOCKLIST": "Ü�️ Dein Prompt enthält blockierte Begriffe. Bitte formuliere deinen Prompt um.",
+          "PROHIBITED_CONTENT": "Ü�️ Verbotener Inhalt erkannt. Bitte ändere deinen Prompt oder dein Referenzbild.",
         };
         throw new Error(blockMessages[blockReason] || `Prompt blockiert (${blockReason})`);
       }
 
       const candidates = result.candidates ?? [];
       if (candidates.length === 0) {
-        throw new Error("�?�️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
+        throw new Error("Ü�️ Keine Antwort von der API. Bitte versuche es erneut oder ändere dein Referenzbild.");
       }
 
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
-        throw new Error("�?�️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
+        throw new Error("Ü�️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
-        throw new Error("�?�️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
+        throw new Error("Ü�️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
 
       const partsOut = candidates[0]?.content?.parts ?? [];
@@ -5539,7 +5539,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         }
       }
 
-      if (!imageUrl) throw new Error("�?�️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
+      if (!imageUrl) throw new Error("Ü�️ Kein Bild in der Antwort. Bitte versuche es erneut oder ändere deinen Prompt.");
 
       // Animate to 100%
       for (let p = 85; p <= 100; p += 5) {
@@ -5575,7 +5575,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       });
 
     } catch (error) {
-      console.error("�? Regeneration error:", error);
+      console.error("Ü Regeneration error:", error);
       const errorMsg = error instanceof Error ? error.message : "Unbekannter Fehler";
       // Show error state with message so user can see reason and retry
       updateSlotSafe(index, (slot) => ({
@@ -5749,16 +5749,16 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
                   {
                     text: `Analysiere dieses Bild sehr genau und erstelle einen DETAILLIERTEN, kreativen Prompt für eine Video-Animation. 
 
-Beschreibe AUSF�?HRLICH:
+Beschreibe AUSFÜHRLICH:
 1. Die genaue Bewegung der Person (Kopf, Arme, Körper, Mimik)
-2. Die Geschwindigkeit und Art der Bewegung (langsam, flie�?end, dynamisch)
+2. Die Geschwindigkeit und Art der Bewegung (langsam, flieÜend, dynamisch)
 3. Details wie Haarbewegung, Kleidungsbewegung, Lichtveränderungen
 4. Die Stimmung und Atmosphäre der Animation
 5. Kamerabewegung oder -perspektive wenn passend
 
 Beispiele für gute, detaillierte Prompts:
 - "Die Person dreht langsam und elegant den Kopf nach links, während ein sanftes Lächeln über ihr Gesicht gleitet. Die Haare bewegen sich weich im Wind, einzelne Strähnen fallen natürlich ins Gesicht. Die Augen blinzeln langsam und verträumt, während das warme Licht über die Haut wandert."
-- "Sanfte, flie�?ende Bewegung: Die Person hebt langsam die Hand zur Begrü�?ung, die Finger spreizen sich elegant. Der Kopf neigt sich leicht zur Seite mit einem warmen, einladenden Lächeln. Die Kleidung bewegt sich subtil, als würde ein leichter Wind wehen."
+- "Sanfte, flieÜende Bewegung: Die Person hebt langsam die Hand zur BegrüÜung, die Finger spreizen sich elegant. Der Kopf neigt sich leicht zur Seite mit einem warmen, einladenden Lächeln. Die Kleidung bewegt sich subtil, als würde ein leichter Wind wehen."
 
 Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte auf Deutsch sein und 3-5 Sätze lang sein mit vielen Details.`
                   },
@@ -5901,11 +5901,11 @@ Antworte NUR mit den 5 Vorschlägen, einer pro Zeile, ohne Nummerierung oder zus
 Aktueller Video-Prompt:
 "${currentVideoPrompt}"
 
-Der Nutzer möchte folgende �?nderung/Ergänzung:
+Der Nutzer möchte folgende Ünderung/Ergänzung:
 "${promptChatInput}"
 
 Bearbeite den Video-Prompt entsprechend und mache ihn SEHR DETAILLIERT. Der neue Prompt soll:
-- Die gewünschten �?nderungen vollständig integrieren
+- Die gewünschten Ünderungen vollständig integrieren
 - DETAILLIERT beschreiben: Bewegungen, Geschwindigkeit, Mimik, Atmosphäre
 - Spezifische Details zu Körperbewegung, Haaren, Kleidung, Licht enthalten
 - Als professioneller Video-Animation-Prompt geeignet sein
@@ -5977,7 +5977,7 @@ Antworte NUR mit dem neuen, detaillierten Prompt, ohne zusätzliche Erklärungen
 
     try {
       // Build context from selected options
-      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "Wei�?er Hintergrund";
+      const backgroundLabel = BACKGROUND_OPTIONS.find(b => b.id === selectedBackground)?.label || "WeiÜer Hintergrund";
       const shotLabel = SHOT_OPTIONS.find(s => s.id === selectedShot)?.label || "Ganzkörper";
       const formatLabel = FORMAT_OPTIONS.find(f => f.id === selectedFormat)?.label || "Quadratisch";
       const skinLabel = isPro ? (SKIN_OPTIONS.find(s => s.id === selectedSkinType)?.label || "") : "";
@@ -6052,14 +6052,14 @@ PROMPT: [Dein generierter Prompt]
 BACKGROUND: [white, greenscreen, oder scenery]
 SCENE: [Nur wenn BACKGROUND=scenery: Detaillierte Szenenbeschreibung, sonst leer]
 
-WICHTIGE REGELN F�?R DEN PROMPT:
+WICHTIGE REGELN FÜR DEN PROMPT:
 - Beschreibe NUR die Person: Pose, Körperhaltung, Gesichtsausdruck, Blickrichtung, Kleidung
 - Nutze die Referenzbilder um Merkmale der Person korrekt zu beschreiben
 - KEINE Kameraeinstellungen erwähnen (kein "Close-Up", "Ganzkörper", etc.)
 - KEINE Hintergrundbeschreibungen im Prompt
 - 2-4 Sätze auf Deutsch
 
-REGELN F�?R SCENE (nur wenn scenery):
+REGELN FÜR SCENE (nur wenn scenery):
 - Beschreibe den Ort detailliert (z.B. "Ein verlassener Industriehof mit rostigen Metallstrukturen")
 - Lichtstimmung (goldene Stunde, weiches Morgenlicht, dramatische Schatten)
 - Atmosphärische Details (Nebel, Regen, Sonnenstrahlen)`
@@ -6174,7 +6174,7 @@ STRENGE REGELN:
 - KEINE Erklärungen oder Kommentare
 - KEINE Details über Personen, Menschen, Charaktere oder deren Erscheinung
 - NUR der Ort, die Umgebung, Lichtstimmung und atmosphärische Details
-- Beschreibe ausschlie�?lich die Kulisse/Szenerie selbst
+- Beschreibe ausschlieÜlich die Kulisse/Szenerie selbst
 - 2-3 Sätze auf Deutsch
 
 Beispiel einer korrekten Antwort:
@@ -6228,7 +6228,7 @@ STRENGE REGELN:
 - KEINE Erklärungen oder Kommentare
 - KEINE Details über Personen, Menschen, Charaktere oder deren Erscheinung
 - NUR der Ort, die Umgebung, Lichtstimmung und atmosphärische Details
-- Beschreibe ausschlie�?lich die Kulisse/Szenerie selbst
+- Beschreibe ausschlieÜlich die Kulisse/Szenerie selbst
 - 2-3 Sätze auf Deutsch
 
 Beispiel einer korrekten Antwort:
@@ -6397,7 +6397,7 @@ Beispiel einer korrekten Antwort:
             // Ignore cleanup errors
           }
         });
-        console.log(`�?�� Cleaned up ${createdUrls.length} blob URLs after download`);
+        console.log(`Ü�� Cleaned up ${createdUrls.length} blob URLs after download`);
       }, 1000); // Delay cleanup to ensure download starts
     }
   };
@@ -6549,7 +6549,7 @@ Beispiel einer korrekten Antwort:
                     <div className="rounded-lg border border-border p-4 space-y-2">
                       <h4 className="font-semibold text-sm uppercase tracking-wide">Daten verwalten</h4>
                       <p className="text-xs text-muted-foreground">
-                        Exportiere deine Daten gemä�? DSGVO Art. 20 (Datenübertragbarkeit).
+                        Exportiere deine Daten gemäÜ DSGVO Art. 20 (Datenübertragbarkeit).
                       </p>
                       <Button 
                         variant="outline" 
@@ -6694,7 +6694,7 @@ Beispiel einer korrekten Antwort:
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-8">
             <div className="space-y-8 px-4">
               <div className="w-[85%] mx-auto">
-                <h2 className="text-lg font-bold mb-3">�?bersicht</h2>
+                <h2 className="text-lg font-bold mb-3">Übersicht</h2>
                 <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
                   <iframe 
                     src="https://player.vimeo.com/video/1152205989?badge=0&autopause=0&player_id=0&app_id=58479" 
@@ -6754,7 +6754,7 @@ Beispiel einer korrekten Antwort:
             </span>
           </div>
           <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
-            Erstelle mit KI konsistente Bilder in 4K, individuelle Szenen und Videos �?? alles aus einer Quelle, flexibel steuerbar nach Stil, Umgebung und Perspektive.
+            Erstelle mit KI konsistente Bilder in 4K, individuelle Szenen und Videos Ü? alles aus einer Quelle, flexibel steuerbar nach Stil, Umgebung und Perspektive.
           </p>
         </div>
 
@@ -6785,7 +6785,7 @@ Beispiel einer korrekten Antwort:
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" />
-            Zurück zur �?bersicht
+            Zurück zur Übersicht
           </Button>
         </div>
 
@@ -7151,7 +7151,7 @@ Beispiel einer korrekten Antwort:
                       
                       {/* Label */}
                       <span>
-                        {option.id === "white" && "Wei�?"}
+                        {option.id === "white" && "WeiÜ"}
                         {option.id === "greenscreen" && "Green Screen"}
                         {option.id === "scenery" && "Custom"}
                       </span>
@@ -7205,7 +7205,7 @@ Beispiel einer korrekten Antwort:
                           className="flex-1"
                         >
                           <Check className="w-4 h-4 mr-1" />
-                          �?bernehmen
+                          Übernehmen
                         </Button>
                         <Button
                           onClick={handleGenerateBackgroundSuggestion}
@@ -7601,7 +7601,7 @@ Beispiel einer korrekten Antwort:
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
-                        �???️ Sprecher
+                        Ü??️ Sprecher
                       </button>
                       <button
                         type="button"
@@ -7616,7 +7616,7 @@ Beispiel einer korrekten Antwort:
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
-                        �??� Dialog
+                        Ü?� Dialog
                       </button>
                     </div>
                   )}
@@ -7637,8 +7637,8 @@ Beispiel einer korrekten Antwort:
                           style={{ display: 'inline-block' }}
                         >
                           {storyGenerationDirection === "speaker-from-description"
-                            ? `Details �?? ${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"}`
-                            : `${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"} �?? Details`}
+                            ? `Details Ü? ${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"}`
+                            : `${storyVoiceMode === "sprecher" ? "Sprechertext" : "Dialog"} Ü? Details`}
                         </span>
                       </button>
                       <span
@@ -7747,7 +7747,7 @@ Beispiel einer korrekten Antwort:
                                     transitionDuration: '300ms',
                                   }}
                                 >
-                                  {isSelected ? suggestion : `�?� ${suggestion}`}
+                                  {isSelected ? suggestion : `Ü� ${suggestion}`}
                                 </p>
                               );
                             })
@@ -7795,7 +7795,7 @@ Beispiel einer korrekten Antwort:
                   <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
                     <Textarea
                       placeholder={generatedIdeas.length > 0 
-                        ? "Beschreibe die gewünschte �?nderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
+                        ? "Beschreibe die gewünschte Ünderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
                         : "Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
                       }
                       value={storyAiAssistantInput}
@@ -7937,7 +7937,7 @@ Beispiel einer korrekten Antwort:
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-sm">Standard-�?bergang</Label>
+                      <Label className="text-sm">Standard-Übergang</Label>
                       <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -8659,7 +8659,7 @@ Beispiel einer korrekten Antwort:
                                                 size="icon"
                                                 variant="secondary"
                                                 className="h-9 w-9 rounded-full shadow-lg"
-                                                title="�?ffnet die Details und Bearbeitung für diese Szene"
+                                                title="Üffnet die Details und Bearbeitung für diese Szene"
                                                 aria-label={`Details für Szene ${index + 1} öffnen`}
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -8890,13 +8890,13 @@ Beispiel einer korrekten Antwort:
                       <AlertDialogHeader>
                         <AlertDialogTitle>Generierung läuft noch</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Ein Bild wird gerade generiert. Wenn du jetzt schlie�?t, wird die Generierung abgebrochen.
+                          Ein Bild wird gerade generiert. Wenn du jetzt schlieÜt, wird die Generierung abgebrochen.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Weiterlaufen lassen</AlertDialogCancel>
                         <AlertDialogAction onClick={handleForceCloseExpandedCard}>
-                          Abbrechen & Schlie�?en
+                          Abbrechen & SchlieÜen
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -9477,10 +9477,10 @@ Beispiel einer korrekten Antwort:
                       Aivatar Academy
                     </div>
                     <h3 className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-                      Willst du deinen Avatar richtig gro�? rausbringen?
+                      Willst du deinen Avatar richtig groÜ rausbringen?
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-                      Mehr Reichweite, mehr Style, mehr Möglichkeiten �?? entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
+                      Mehr Reichweite, mehr Style, mehr Möglichkeiten Ü? entdecke unser exklusives Webinar und hebe dein KI-Game aufs nächste Level.
                     </p>
                     <div className="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all duration-300 pt-2">
                       Jetzt entdecken
