@@ -1715,13 +1715,26 @@ ${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
 ${storyCreatorMode === "reel" ? `
-REEL-MODUS ANWEISUNGEN:
-- Optimiert für TikTok, Instagram Reels & YouTube Shorts (vertikales 9:16 Format)
-- Hook in den ersten 1-2 Sekunden: Starte mit einem visuell packenden Moment
-- Schnelle Schnitte, hoher visueller Kontrast zwischen Szenen
-- Jede Szene muss visuell eigenständig auffallen und Aufmerksamkeit grabben
-- Kurze, prägnante Szenen - keine langen Einleitungen
-- Maximale visuelle Dynamik und Energie
+REEL-MODUS - KRITISCHE ANWEISUNGEN (höchste Priorität):
+Du erstellst ein Storyboard für ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
+Jede Szene wird zu einem 3-5 Sekunden Videoclip. Das gesamte Reel dauert 15-60 Sekunden.
+
+REEL-DRAMATURGIE:
+- Szene 1 = DER HOOK: Muss innerhalb von 1-2 Sekunden visuell schockieren, überraschen oder emotional packen. Kein langsamer Aufbau. Sofortige visuelle Spannung.
+- Jede weitere Szene = NEUER VISUELLER PUNCH: Jede Szene muss einen eigenen "Wow-Moment" haben - Perspektivwechsel, emotionaler Umschwung, überraschende Wendung.
+- Letzte Szene = PAYOFF/CLIFFHANGER: Entweder ein befriedigender Abschluss ODER ein offenes Ende das zum Kommentieren/Teilen anregt.
+
+REEL-VISUELLE REGELN:
+- KONTRASTREICHE Szenenübergänge: Jede Szene muss sich VISUELL STARK von der vorherigen unterscheiden (anderer Kamerawinkel, andere Entfernung, andere Bildkomposition)
+- Extreme Kamerawinkel bevorzugen: Close-Ups für Emotionen, Low-Angle für Macht, Dutch-Angle für Spannung
+- Dynamische Aktionen: Keine statischen Posen. Jede Szene zeigt BEWEGUNG oder einen emotionalen AUSBRUCH
+- Vertikales 9:16 Format: Komposition muss vertikal gedacht werden - Gesichter und Aktionen im oberen Drittel
+
+REEL-INHALTLICHE REGELN:
+- Geschichten die POLARISIEREN oder EMOTIONEN auslösen (Kontroversen, Dilemmas, unerwartete Wendungen)
+- Charaktere zeigen ÜBERTRIEBENE Emotionen - subtil funktioniert nicht auf Social Media
+- Jede Szene muss auch OHNE Ton visuell verständlich und fesselnd sein
+- Denke an "Scroll-Stopping Content": Was würde jemanden beim Scrollen stoppen lassen?
 ` : ''}
 HARTE AUSGABEREGELN:
 - Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
@@ -2552,7 +2565,20 @@ CONTENT COMPLIANCE:
             const dialogInfo = buildDialogIdentityInstruction(scenePoint?.dialogText);
             
             const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
-
+${storyCreatorMode === "reel" ? `
+REEL MODE - CRITICAL PRIORITY:
+This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
+Each scene = 3-5 second clip. Total reel = 15-60 seconds.
+RULES FOR REEL PROMPTS:
+- FIRST FRAME must be visually explosive - no slow intros, no establishing shots
+- Every second counts: Pack maximum visual information into minimum time
+- HIGH CONTRAST between scenes: If previous scene was close-up, this should be wide or vice versa
+- MOVEMENT is mandatory: Camera must move, characters must act, environment must feel alive
+- Vertical composition: Key action in upper 2/3 of frame, faces prominent
+- Think "scroll-stopping": What would make someone stop scrolling?
+- Exaggerated emotions and dramatic lighting over subtle, realistic aesthetics
+- Colors should POP: High saturation, strong contrast, cinematic color grading
+` : ''}
 FULL STORY ARC (${currentStoryPoints.length} scenes):
 ${storySynopsis}
 
@@ -2565,7 +2591,7 @@ NARRATIVE CONTEXT:
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
 - Next: ${nextText ? `"${nextText}" - this scene must set up a logical visual transition` : "None (this is the final scene - end with impact)"}
 
-Write a punchy video prompt (80-120 words, English):
+Write a punchy video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
@@ -2883,7 +2909,19 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       const characterIdentityBlock = buildEnglishCharacterIdentityBlock(point);
 
       const videoPromptRequest = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
-
+${storyCreatorMode === "reel" ? `
+REEL MODE - CRITICAL PRIORITY:
+This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
+Each scene = 3-5 second clip. Total reel = 15-60 seconds.
+RULES FOR REEL PROMPTS:
+- FIRST FRAME must be visually explosive - no slow intros
+- Every second counts: Maximum visual density in minimum time
+- HIGH CONTRAST between consecutive scenes (alternate close-up/wide, static/dynamic)
+- MOVEMENT is mandatory: Camera moves, characters act, environment is alive
+- Vertical composition: Key action in upper 2/3 of frame
+- "Scroll-stopping" visuals: Exaggerated emotions, dramatic lighting, high saturation
+- Colors must POP with strong contrast and cinematic grading
+` : ''}
 FULL STORY ARC (${storyPoints.length} scenes):
 ${storySynopsis}
 
@@ -2899,7 +2937,7 @@ NARRATIVE CONTEXT:
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
 - Next: ${nextSceneText ? `"${nextSceneText}" - this scene must set up a logical visual transition to the next` : "None (this is the final scene - end with maximum impact)"}
 
-Write a punchy video prompt (80-120 words, English):
+Write a punchy video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
@@ -2913,7 +2951,7 @@ ${VEO_PROMPT_WRITER_COMPLIANCE_BLOCK}
 
 Respond ONLY with JSON:
 {
-  "videoPrompt": "The complete English video prompt (80-120 words)",
+  "videoPrompt": "The complete English video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words)",
   "cameraMovement": "descriptive camera movement id",
   "startState": "Start frame description (1 sentence)",
   "motion": "Motion description (1 sentence)",
@@ -4219,6 +4257,11 @@ ${sceneContext}`;
       
       try {
         const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
+        const reelExpandExtra = storyCreatorMode === "reel" ? `
+- REEL-OPTIMIERT: Denke an viralen TikTok-Content mit Millionen Views
+- Übertriebene Emotionen: Subtilität funktioniert NICHT auf Social Media
+- Jeder Satz muss "scroll-stopping" sein - warum sollte jemand weiterschauen?
+- Polarisierend oder emotional schockierend` : '';
         const expandPrompt = isDialogMode
           ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog - optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
 
@@ -4227,7 +4270,7 @@ REGELN:
 - Hook-First: Der ERSTE Satz muss sofort fesseln (provokant, überraschend, emotional)
 - Natürlich klingende Sprache, keine steifen Formulierungen
 - Emotionale Intensität: Jeder Satz muss eine Reaktion auslösen
-- Denke an Pacing: Kurze, punchy Sätze wechseln sich mit emotionalen Momenten ab
+- Denke an Pacing: Kurze, punchy Sätze wechseln sich mit emotionalen Momenten ab${reelExpandExtra}
 
 Zusammenfassung: "${suggestion}"
 
@@ -4239,7 +4282,7 @@ REGELN:
 - Hook-First: Die Beschreibung muss mit dem visuell stärksten Moment starten
 - Dynamisch: Beschreibe Bewegung, Aktion, Emotionen - keine statischen Bilder
 - Emotional: Jede Szene braucht einen klaren emotionalen Beat
-- Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik
+- Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik${reelExpandExtra}
 
 Zusammenfassung: "${suggestion}"
 
@@ -4296,23 +4339,38 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
                   ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
-
+${storyCreatorMode === "reel" ? `
+REEL-FOKUS: Die Dialoge müssen SOFORT polarisieren oder emotional schocken. Denke an virale TikTok-Dialoge:
+- Konfrontationen, Geständnisse, überraschende Enthüllungen
+- Emotionale Ausbrüche, dramatische Wendungen
+- Der erste Satz muss zum Weiterschauen zwingen
+` : ''}
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
 Gute Beispiele:
-- Konfrontation nach dem Betrug
+${storyCreatorMode === "reel" ? `- Freundin erwischt bei Lüge
+- Unbekannter kennt dein Geheimnis
+- Chef sagt die Wahrheit` : `- Konfrontation nach dem Betrug
 - Liebesgeständnis im Regen
-- Letzte Nachricht vor dem Abflug
+- Letzte Nachricht vor dem Abflug`}
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
                   : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
-
+${storyCreatorMode === "reel" ? `
+REEL-FOKUS: Die Geschichten müssen VIRAL-POTENZIAL haben. Denke an Content der auf TikTok Millionen Views bekommt:
+- Schockierende Wendungen, emotionale Achterbahnen
+- Relateable Situationen mit unerwartetem Ausgang
+- "Was würdest DU tun?" Szenarien
+- Polarisierende oder kontroverse Alltagssituationen
+` : ''}
 WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
 Gute Beispiele:
-- Fremder rettet Kind im Park
+${storyCreatorMode === "reel" ? `- Taxifahrer erkennt vermisste Tochter
+- Date merkt: Es ist der Ex
+- Paket enthält unmöglichen Brief` : `- Fremder rettet Kind im Park
 - Traumjob-Absage verändert alles
-- Zufälliges Wiedersehen nach Jahren
+- Zufälliges Wiedersehen nach Jahren`}
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
