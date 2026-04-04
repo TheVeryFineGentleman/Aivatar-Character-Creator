@@ -4257,6 +4257,11 @@ ${sceneContext}`;
       
       try {
         const isDialogMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker";
+        const reelExpandExtra = storyCreatorMode === "reel" ? `
+- REEL-OPTIMIERT: Denke an viralen TikTok-Content mit Millionen Views
+- Übertriebene Emotionen: Subtilität funktioniert NICHT auf Social Media
+- Jeder Satz muss "scroll-stopping" sein - warum sollte jemand weiterschauen?
+- Polarisierend oder emotional schockierend` : '';
         const expandPrompt = isDialogMode
           ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog - optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
 
@@ -4265,7 +4270,7 @@ REGELN:
 - Hook-First: Der ERSTE Satz muss sofort fesseln (provokant, überraschend, emotional)
 - Natürlich klingende Sprache, keine steifen Formulierungen
 - Emotionale Intensität: Jeder Satz muss eine Reaktion auslösen
-- Denke an Pacing: Kurze, punchy Sätze wechseln sich mit emotionalen Momenten ab
+- Denke an Pacing: Kurze, punchy Sätze wechseln sich mit emotionalen Momenten ab${reelExpandExtra}
 
 Zusammenfassung: "${suggestion}"
 
@@ -4277,7 +4282,7 @@ REGELN:
 - Hook-First: Die Beschreibung muss mit dem visuell stärksten Moment starten
 - Dynamisch: Beschreibe Bewegung, Aktion, Emotionen - keine statischen Bilder
 - Emotional: Jede Szene braucht einen klaren emotionalen Beat
-- Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik
+- Denke in Szenen die man FILMEN kann: Kamerabewegungen, Licht, Mimik${reelExpandExtra}
 
 Zusammenfassung: "${suggestion}"
 
