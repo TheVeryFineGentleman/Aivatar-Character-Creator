@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera, ArrowRightLeft, ArrowLeft, User } from "lucide-react";
+import { Sparkles, Upload, Image as ImageIcon, Download, ChevronLeft, ChevronRight, ChevronDown, X, Settings, RotateCcw, Plus, LogOut, Lock, Scale, Video, Loader2, Send, Undo2, Clock, Move, Zap, BookOpen, RefreshCw, Maximize2, MessageSquare, Check, Mountain, AlertCircle, Camera, ArrowRightLeft, ArrowLeft, User, Smartphone, Clapperboard } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageGallery, ImageSlotData } from "@/components/ImageGallery";
 import { DownloadButton } from "@/components/DownloadButton";
@@ -686,6 +686,7 @@ const Index = () => {
   
   // Storyboard state
   const [storyPointCount, setStoryPointCount] = useState(2);
+  const [storyCreatorMode, setStoryCreatorMode] = useState<"general" | "reel">("general");
   // Global main location for unified storyboard setting
   const [storyboardMainLocation, setStoryboardMainLocation] = useState<string>("");
   
@@ -848,6 +849,19 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyColorMood', storyColorMood); } catch {} }, [storyColorMood]);
   useEffect(() => { try { sessionStorage.setItem('session_storyHook', storyHook); } catch {} }, [storyHook]);
   useEffect(() => { try { sessionStorage.setItem('session_storyPacing', storyPacing); } catch {} }, [storyPacing]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
+
+  const handleStoryCreatorModeChange = (mode: "general" | "reel") => {
+    setStoryCreatorMode(mode);
+    if (mode === "reel") {
+      setStoryboardFormat("9:16");
+      setStoryPacing("fast-cuts");
+      setStoryVideoMood("action");
+      setStoryColorMood("neon");
+      if (storyPointCount < 3) setStoryPointCount(3);
+      if (storyPointCount > 6) setStoryPointCount(6);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -1700,7 +1714,15 @@ EINGABEN:
 ${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
-
+${storyCreatorMode === "reel" ? `
+REEL-MODUS ANWEISUNGEN:
+- Optimiert für TikTok, Instagram Reels & YouTube Shorts (vertikales 9:16 Format)
+- Hook in den ersten 1-2 Sekunden: Starte mit einem visuell packenden Moment
+- Schnelle Schnitte, hoher visueller Kontrast zwischen Szenen
+- Jede Szene muss visuell eigenständig auffallen und Aufmerksamkeit grabben
+- Kurze, prägnante Szenen - keine langen Einleitungen
+- Maximale visuelle Dynamik und Energie
+` : ''}
 HARTE AUSGABEREGELN:
 - Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
 - Das erste Zeichen deiner Antwort muss { sein.
@@ -4430,6 +4452,7 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       if (si('session_storyColorMood')) setStoryColorMood(si('session_storyColorMood')!);
       if (si('session_storyHook')) setStoryHook(si('session_storyHook')!);
       if (si('session_storyPacing')) setStoryPacing(si('session_storyPacing')!);
+      if (si('session_storyCreatorMode')) setStoryCreatorMode(si('session_storyCreatorMode') as any);
       
       const savedStoryPoints = si('session_storyPoints');
       if (savedStoryPoints) {
@@ -7583,6 +7606,41 @@ Beispiel einer korrekten Antwort:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
+               {/* Mode Toggle: General vs Reel */}
+               <div className="flex gap-2 p-1 rounded-lg bg-muted/30 border border-border/50 max-w-md">
+                 <button
+                   type="button"
+                   onClick={() => handleStoryCreatorModeChange("general")}
+                   className={cn(
+                     "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                     storyCreatorMode === "general"
+                       ? "bg-background text-foreground shadow-sm border border-border/50"
+                       : "text-muted-foreground hover:text-foreground"
+                   )}
+                 >
+                   <Clapperboard className="w-4 h-4" />
+                   Generell
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => handleStoryCreatorModeChange("reel")}
+                   className={cn(
+                     "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                     storyCreatorMode === "reel"
+                       ? "bg-background text-foreground shadow-sm border border-border/50"
+                       : "text-muted-foreground hover:text-foreground"
+                   )}
+                 >
+                   <Smartphone className="w-4 h-4" />
+                   Reel
+                 </button>
+               </div>
+               <p className="text-xs text-muted-foreground -mt-4">
+                 {storyCreatorMode === "general" 
+                   ? "Volle Kontrolle über alle Parameter" 
+                   : "Optimiert für TikTok, Instagram Reels & Shorts"}
+               </p>
+
                {/* Speaker Toggle + Direction - above story idea */}
                 <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/20 max-w-xl">
@@ -8002,6 +8060,7 @@ Beispiel einer korrekten Antwort:
                         </Select>
                       </div>
                     )}
+                    {storyCreatorMode !== "reel" && (
                     <div className="space-y-1.5">
                       <Label className="text-sm">Pacing / Tempo</Label>
                       <Select value={storyPacing} onValueChange={setStoryPacing}>
@@ -8014,13 +8073,19 @@ Beispiel einer korrekten Antwort:
                         </SelectContent>
                       </Select>
                     </div>
+                    )}
                   </div>
 
                   {/* Row 4: Hook */}
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Hook (Einstieg)</Label>
+                  <div className={cn("space-y-1.5", storyCreatorMode === "reel" && "p-3 rounded-lg border border-primary/30 bg-primary/5")}>
+                    <Label className="text-sm flex items-center gap-2">
+                      Hook (Einstieg)
+                      {storyCreatorMode === "reel" && <span className="text-xs text-primary font-normal">Wichtig für Reels!</span>}
+                    </Label>
                     <Textarea
-                      placeholder="z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."
+                      placeholder={storyCreatorMode === "reel" 
+                        ? "z.B. 'Schockierender Moment direkt am Anfang', 'Provokante Frage', 'Unerwarteter Twist'..."
+                        : "z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."}
                       value={storyHook}
                       onChange={(e) => setStoryHook(e.target.value)}
                       className="min-h-[50px] resize-y text-sm"
@@ -8049,8 +8114,8 @@ Beispiel einer korrekten Antwort:
                     <Slider
                       value={[storyPointCount]}
                       onValueChange={(value) => setStoryPointCount(Math.round(value[0]))}
-                      min={2}
-                      max={8}
+                      min={storyCreatorMode === "reel" ? 3 : 2}
+                      max={storyCreatorMode === "reel" ? 6 : 8}
                       step={1}
                       className="w-32"
                     />
@@ -8105,7 +8170,7 @@ Beispiel einer korrekten Antwort:
                             )}
                           </Button>
                           {/* Veo3 Format Dropdown */}
-                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat} disabled={storyCreatorMode === "reel"}>
                             <SelectTrigger className="w-[130px] shrink-0">
                               <SelectValue />
                             </SelectTrigger>
@@ -8193,7 +8258,7 @@ Beispiel einer korrekten Antwort:
                             )}
                           </Button>
                           {/* Veo3 Format Dropdown */}
-                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat} disabled={storyCreatorMode === "reel"}>
                             <SelectTrigger className="w-[130px] shrink-0">
                               <SelectValue />
                             </SelectTrigger>
