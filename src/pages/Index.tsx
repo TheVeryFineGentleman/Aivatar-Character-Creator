@@ -1715,13 +1715,26 @@ ${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
 ${storyCreatorMode === "reel" ? `
-REEL-MODUS ANWEISUNGEN:
-- Optimiert für TikTok, Instagram Reels & YouTube Shorts (vertikales 9:16 Format)
-- Hook in den ersten 1-2 Sekunden: Starte mit einem visuell packenden Moment
-- Schnelle Schnitte, hoher visueller Kontrast zwischen Szenen
-- Jede Szene muss visuell eigenständig auffallen und Aufmerksamkeit grabben
-- Kurze, prägnante Szenen - keine langen Einleitungen
-- Maximale visuelle Dynamik und Energie
+REEL-MODUS - KRITISCHE ANWEISUNGEN (höchste Priorität):
+Du erstellst ein Storyboard für ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
+Jede Szene wird zu einem 3-5 Sekunden Videoclip. Das gesamte Reel dauert 15-60 Sekunden.
+
+REEL-DRAMATURGIE:
+- Szene 1 = DER HOOK: Muss innerhalb von 1-2 Sekunden visuell schockieren, überraschen oder emotional packen. Kein langsamer Aufbau. Sofortige visuelle Spannung.
+- Jede weitere Szene = NEUER VISUELLER PUNCH: Jede Szene muss einen eigenen "Wow-Moment" haben - Perspektivwechsel, emotionaler Umschwung, überraschende Wendung.
+- Letzte Szene = PAYOFF/CLIFFHANGER: Entweder ein befriedigender Abschluss ODER ein offenes Ende das zum Kommentieren/Teilen anregt.
+
+REEL-VISUELLE REGELN:
+- KONTRASTREICHE Szenenübergänge: Jede Szene muss sich VISUELL STARK von der vorherigen unterscheiden (anderer Kamerawinkel, andere Entfernung, andere Bildkomposition)
+- Extreme Kamerawinkel bevorzugen: Close-Ups für Emotionen, Low-Angle für Macht, Dutch-Angle für Spannung
+- Dynamische Aktionen: Keine statischen Posen. Jede Szene zeigt BEWEGUNG oder einen emotionalen AUSBRUCH
+- Vertikales 9:16 Format: Komposition muss vertikal gedacht werden - Gesichter und Aktionen im oberen Drittel
+
+REEL-INHALTLICHE REGELN:
+- Geschichten die POLARISIEREN oder EMOTIONEN auslösen (Kontroversen, Dilemmas, unerwartete Wendungen)
+- Charaktere zeigen ÜBERTRIEBENE Emotionen - subtil funktioniert nicht auf Social Media
+- Jede Szene muss auch OHNE Ton visuell verständlich und fesselnd sein
+- Denke an "Scroll-Stopping Content": Was würde jemanden beim Scrollen stoppen lassen?
 ` : ''}
 HARTE AUSGABEREGELN:
 - Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
