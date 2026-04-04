@@ -206,7 +206,7 @@ serve(async (req) => {
     const imageBase64 = imagePart.inlineData.data;
     const mimeType = imagePart.inlineData.mimeType || "image/png";
 
-    console.log("✅ Image generated successfully via direct Gemini API");
+    console.log("- Image generated successfully via direct Gemini API");
 
     return new Response(
       JSON.stringify({ 
