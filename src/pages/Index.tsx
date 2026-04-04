@@ -8052,6 +8052,7 @@ Beispiel einer korrekten Antwort:
                         </Select>
                       </div>
                     )}
+                    {storyCreatorMode !== "reel" && (
                     <div className="space-y-1.5">
                       <Label className="text-sm">Pacing / Tempo</Label>
                       <Select value={storyPacing} onValueChange={setStoryPacing}>
@@ -8064,6 +8065,7 @@ Beispiel einer korrekten Antwort:
                         </SelectContent>
                       </Select>
                     </div>
+                    )}
                   </div>
 
                   {/* Row 4: Hook */}
