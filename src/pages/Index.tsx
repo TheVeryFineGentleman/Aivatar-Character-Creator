@@ -8077,10 +8077,15 @@ Beispiel einer korrekten Antwort:
                   </div>
 
                   {/* Row 4: Hook */}
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Hook (Einstieg)</Label>
+                  <div className={cn("space-y-1.5", storyCreatorMode === "reel" && "p-3 rounded-lg border border-primary/30 bg-primary/5")}>
+                    <Label className="text-sm flex items-center gap-2">
+                      Hook (Einstieg)
+                      {storyCreatorMode === "reel" && <span className="text-xs text-primary font-normal">Wichtig für Reels!</span>}
+                    </Label>
                     <Textarea
-                      placeholder="z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."
+                      placeholder={storyCreatorMode === "reel" 
+                        ? "z.B. 'Schockierender Moment direkt am Anfang', 'Provokante Frage', 'Unerwarteter Twist'..."
+                        : "z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."}
                       value={storyHook}
                       onChange={(e) => setStoryHook(e.target.value)}
                       className="min-h-[50px] resize-y text-sm"
