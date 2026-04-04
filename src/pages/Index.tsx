@@ -7598,6 +7598,41 @@ Beispiel einer korrekten Antwort:
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
+               {/* Mode Toggle: General vs Reel */}
+               <div className="flex gap-2 p-1 rounded-lg bg-muted/30 border border-border/50 max-w-md">
+                 <button
+                   type="button"
+                   onClick={() => handleStoryCreatorModeChange("general")}
+                   className={cn(
+                     "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                     storyCreatorMode === "general"
+                       ? "bg-background text-foreground shadow-sm border border-border/50"
+                       : "text-muted-foreground hover:text-foreground"
+                   )}
+                 >
+                   <Clapperboard className="w-4 h-4" />
+                   Generell
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => handleStoryCreatorModeChange("reel")}
+                   className={cn(
+                     "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                     storyCreatorMode === "reel"
+                       ? "bg-background text-foreground shadow-sm border border-border/50"
+                       : "text-muted-foreground hover:text-foreground"
+                   )}
+                 >
+                   <Smartphone className="w-4 h-4" />
+                   Reel
+                 </button>
+               </div>
+               <p className="text-xs text-muted-foreground -mt-4">
+                 {storyCreatorMode === "general" 
+                   ? "Volle Kontrolle über alle Parameter" 
+                   : "Optimiert für TikTok, Instagram Reels & Shorts"}
+               </p>
+
                {/* Speaker Toggle + Direction - above story idea */}
                 <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/20 max-w-xl">
