@@ -157,7 +157,7 @@ serve(async (req) => {
         );
       }
 
-      console.log("✅ Image generated successfully via Gemini 3.1 Flash Image Preview");
+      console.log("- Image generated successfully via Gemini 3.1 Flash Image Preview");
 
       return new Response(
         JSON.stringify({

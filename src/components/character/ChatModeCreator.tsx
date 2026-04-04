@@ -143,7 +143,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
         const jsonStr = jsonMatch[1] || jsonMatch[0];
         const parsed = JSON.parse(jsonStr.trim());
         if (parsed.ready && Array.isArray(parsed.prompts) && parsed.prompts.length >= 1) {
-          console.log(`✅ ${parsed.prompts.length} Prompts erfolgreich extrahiert`);
+          console.log(`- ${parsed.prompts.length} Prompts erfolgreich extrahiert`);
           setGeneratedPrompts(parsed.prompts);
           return;
         }
@@ -300,7 +300,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
                       : "bg-muted/50 text-foreground rounded-bl-md"
                   )}>
                     {msg.role === "assistant" && msg.content.includes('"ready"')
-                      ? "✅ Prompts erstellt! Bilder werden generiert..."
+                      ? "- Prompts erstellt! Bilder werden generiert..."
                       : msg.content}
                   </div>
                 </div>

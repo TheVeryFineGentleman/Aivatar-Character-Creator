@@ -180,7 +180,7 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
               loading="lazy"
               decoding="async"
               sizes="(max-width: 768px) 50vw, 25vw"
-              onLoad={() => console.log(`✅ Image ${index + 1} loaded successfully`)}
+              onLoad={() => console.log(`- Image ${index + 1} loaded successfully`)}
               onError={(e) => {
                 console.error(`❌ Image ${index + 1} failed to load`);
                 console.error("Image URL:", imageUrl.substring(0, 100));
