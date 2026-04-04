@@ -1714,7 +1714,15 @@ EINGABEN:
 ${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
-
+${storyCreatorMode === "reel" ? `
+REEL-MODUS ANWEISUNGEN:
+- Optimiert für TikTok, Instagram Reels & YouTube Shorts (vertikales 9:16 Format)
+- Hook in den ersten 1-2 Sekunden: Starte mit einem visuell packenden Moment
+- Schnelle Schnitte, hoher visueller Kontrast zwischen Szenen
+- Jede Szene muss visuell eigenständig auffallen und Aufmerksamkeit grabben
+- Kurze, prägnante Szenen - keine langen Einleitungen
+- Maximale visuelle Dynamik und Energie
+` : ''}
 HARTE AUSGABEREGELN:
 - Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
 - Das erste Zeichen deiner Antwort muss { sein.
