@@ -4444,6 +4444,7 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       if (si('session_storyColorMood')) setStoryColorMood(si('session_storyColorMood')!);
       if (si('session_storyHook')) setStoryHook(si('session_storyHook')!);
       if (si('session_storyPacing')) setStoryPacing(si('session_storyPacing')!);
+      if (si('session_storyCreatorMode')) setStoryCreatorMode(si('session_storyCreatorMode') as any);
       
       const savedStoryPoints = si('session_storyPoints');
       if (savedStoryPoints) {
