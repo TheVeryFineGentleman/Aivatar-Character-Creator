@@ -8099,8 +8099,8 @@ Beispiel einer korrekten Antwort:
                     <Slider
                       value={[storyPointCount]}
                       onValueChange={(value) => setStoryPointCount(Math.round(value[0]))}
-                      min={2}
-                      max={8}
+                      min={storyCreatorMode === "reel" ? 3 : 2}
+                      max={storyCreatorMode === "reel" ? 6 : 8}
                       step={1}
                       className="w-32"
                     />
