@@ -2565,7 +2565,20 @@ CONTENT COMPLIANCE:
             const dialogInfo = buildDialogIdentityInstruction(scenePoint?.dialogText);
             
             const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
-
+${storyCreatorMode === "reel" ? `
+REEL MODE - CRITICAL PRIORITY:
+This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
+Each scene = 3-5 second clip. Total reel = 15-60 seconds.
+RULES FOR REEL PROMPTS:
+- FIRST FRAME must be visually explosive - no slow intros, no establishing shots
+- Every second counts: Pack maximum visual information into minimum time
+- HIGH CONTRAST between scenes: If previous scene was close-up, this should be wide or vice versa
+- MOVEMENT is mandatory: Camera must move, characters must act, environment must feel alive
+- Vertical composition: Key action in upper 2/3 of frame, faces prominent
+- Think "scroll-stopping": What would make someone stop scrolling?
+- Exaggerated emotions and dramatic lighting over subtle, realistic aesthetics
+- Colors should POP: High saturation, strong contrast, cinematic color grading
+` : ''}
 FULL STORY ARC (${currentStoryPoints.length} scenes):
 ${storySynopsis}
 
@@ -2578,7 +2591,7 @@ NARRATIVE CONTEXT:
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
 - Next: ${nextText ? `"${nextText}" - this scene must set up a logical visual transition` : "None (this is the final scene - end with impact)"}
 
-Write a punchy video prompt (80-120 words, English):
+Write a punchy video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
