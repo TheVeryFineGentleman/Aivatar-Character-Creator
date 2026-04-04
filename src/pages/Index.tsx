@@ -8245,7 +8245,7 @@ Beispiel einer korrekten Antwort:
                             )}
                           </Button>
                           {/* Veo3 Format Dropdown */}
-                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat}>
+                          <Select value={storyboardFormat} onValueChange={setStoryboardFormat} disabled={storyCreatorMode === "reel"}>
                             <SelectTrigger className="w-[130px] shrink-0">
                               <SelectValue />
                             </SelectTrigger>
