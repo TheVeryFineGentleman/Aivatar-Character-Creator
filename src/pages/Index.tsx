@@ -2518,7 +2518,7 @@ CONTENT COMPLIANCE:
             // Build story synopsis for full narrative context
             const storySynopsis = currentStoryPoints.map((sp, idx) => {
               const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-              const marker = idx === sceneIndex ? " 👉 YOU ARE HERE" : "";
+              const marker = idx === sceneIndex ? " • YOU ARE HERE" : "";
               return `${idx + 1}. "${spText}"${marker}`;
             }).join('\n');
             
@@ -2850,7 +2850,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       // Build story synopsis for full narrative context
       const storySynopsis = storyPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-        const marker = idx === i ? " 👉 YOU ARE HERE" : "";
+        const marker = idx === i ? " • YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
@@ -3493,7 +3493,7 @@ Respond ONLY with JSON:
       
       const storySynopsis = currentStoryPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
-        const marker = idx === sceneIndex ? " 👉 YOU ARE HERE" : "";
+        const marker = idx === sceneIndex ? " • YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
@@ -7753,7 +7753,7 @@ Beispiel einer korrekten Antwort:
                                     transitionDuration: '300ms',
                                   }}
                                 >
-                                  {isSelected ? suggestion : `👉 ${suggestion}`}
+                                  {isSelected ? suggestion : `• ${suggestion}`}
                                 </p>
                               );
                             })
