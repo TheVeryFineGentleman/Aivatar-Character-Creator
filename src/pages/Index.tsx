@@ -4334,23 +4334,38 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
                   ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
-
+${storyCreatorMode === "reel" ? `
+REEL-FOKUS: Die Dialoge müssen SOFORT polarisieren oder emotional schocken. Denke an virale TikTok-Dialoge:
+- Konfrontationen, Geständnisse, überraschende Enthüllungen
+- Emotionale Ausbrüche, dramatische Wendungen
+- Der erste Satz muss zum Weiterschauen zwingen
+` : ''}
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
 Gute Beispiele:
-- Konfrontation nach dem Betrug
+${storyCreatorMode === "reel" ? `- Freundin erwischt bei Lüge
+- Unbekannter kennt dein Geheimnis
+- Chef sagt die Wahrheit` : `- Konfrontation nach dem Betrug
 - Liebesgeständnis im Regen
-- Letzte Nachricht vor dem Abflug
+- Letzte Nachricht vor dem Abflug`}
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
                   : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
-
+${storyCreatorMode === "reel" ? `
+REEL-FOKUS: Die Geschichten müssen VIRAL-POTENZIAL haben. Denke an Content der auf TikTok Millionen Views bekommt:
+- Schockierende Wendungen, emotionale Achterbahnen
+- Relateable Situationen mit unerwartetem Ausgang
+- "Was würdest DU tun?" Szenarien
+- Polarisierende oder kontroverse Alltagssituationen
+` : ''}
 WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
 Gute Beispiele:
-- Fremder rettet Kind im Park
+${storyCreatorMode === "reel" ? `- Taxifahrer erkennt vermisste Tochter
+- Date merkt: Es ist der Ex
+- Paket enthält unmöglichen Brief` : `- Fremder rettet Kind im Park
 - Traumjob-Absage verändert alles
-- Zufälliges Wiedersehen nach Jahren
+- Zufälliges Wiedersehen nach Jahren`}
 
 Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
