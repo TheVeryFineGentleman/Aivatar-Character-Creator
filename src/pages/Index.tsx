@@ -849,6 +849,19 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyColorMood', storyColorMood); } catch {} }, [storyColorMood]);
   useEffect(() => { try { sessionStorage.setItem('session_storyHook', storyHook); } catch {} }, [storyHook]);
   useEffect(() => { try { sessionStorage.setItem('session_storyPacing', storyPacing); } catch {} }, [storyPacing]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
+
+  const handleStoryCreatorModeChange = (mode: "general" | "reel") => {
+    setStoryCreatorMode(mode);
+    if (mode === "reel") {
+      setStoryboardFormat("9:16");
+      setStoryPacing("fast-cuts");
+      setStoryVideoMood("action");
+      setStoryColorMood("neon");
+      if (storyPointCount < 3) setStoryPointCount(3);
+      if (storyPointCount > 6) setStoryPointCount(6);
+    }
+  };
 
   useEffect(() => {
     try {
