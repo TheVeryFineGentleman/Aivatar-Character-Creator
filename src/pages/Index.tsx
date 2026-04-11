@@ -852,6 +852,7 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
 
   const handleStoryCreatorModeChange = (mode: "general" | "reel") => {
+    if (mode === "reel" && !isFullPlan) return;
     setStoryCreatorMode(mode);
     if (mode === "reel") {
       setStoryboardFormat("9:16");
@@ -7680,18 +7681,26 @@ Beispiel einer korrekten Antwort:
                    Generell
                  </button>
                  <button
-                   type="button"
-                   onClick={() => handleStoryCreatorModeChange("reel")}
-                   className={cn(
-                     "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
-                     storyCreatorMode === "reel"
-                       ? "bg-background text-foreground shadow-sm border border-border/50"
-                       : "text-muted-foreground hover:text-foreground"
-                   )}
-                 >
-                   <Smartphone className="w-4 h-4" />
-                   Reel
-                 </button>
+                    type="button"
+                    onClick={() => {
+                      if (!isFullPlan) {
+                        setShowUpgradePopup(true);
+                        return;
+                      }
+                      handleStoryCreatorModeChange("reel");
+                    }}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                      !isFullPlan && "opacity-50 cursor-not-allowed",
+                      storyCreatorMode === "reel"
+                        ? "bg-background text-foreground shadow-sm border border-border/50"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    Reel
+                    {!isFullPlan && <Lock className="w-3 h-3" />}
+                  </button>
                </div>
                <p className="text-xs text-muted-foreground -mt-4">
                  {storyCreatorMode === "general" 
