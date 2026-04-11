@@ -852,7 +852,6 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
 
   const handleStoryCreatorModeChange = (mode: "general" | "reel") => {
-    if (mode === "reel" && !isFullPlan) return;
     setStoryCreatorMode(mode);
     if (mode === "reel") {
       setStoryboardFormat("9:16");
