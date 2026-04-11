@@ -6850,7 +6850,7 @@ Beispiel einer korrekten Antwort:
           <HomeScreen
             planCode={authData.planCode}
             onSelectFeature={(feature) => {
-              if (feature === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+              if (feature === "story" && authData.planCode !== "FULL") {
                 setShowUpgradePopup(true);
                 return;
               }
@@ -6880,7 +6880,7 @@ Beispiel einer korrekten Antwort:
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
           <Tabs value={activeMainTab} onValueChange={(v) => {
             const tab = v as "poses" | "story" | "character";
-            if (tab === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+            if (tab === "story" && authData.planCode !== "FULL") {
               setShowUpgradePopup(true);
               return;
             }
@@ -6891,10 +6891,10 @@ Beispiel einer korrekten Antwort:
                 <Sparkles className="w-4 h-4" />
                 Avatar Shooting Studio
               </TabsTrigger>
-              <TabsTrigger value="story" className={cn("flex items-center gap-2", authData.planCode !== "PREMIUM" && authData.planCode !== "FULL" && "opacity-50")}>
+              <TabsTrigger value="story" className={cn("flex items-center gap-2", authData.planCode !== "FULL" && "opacity-50")}>
                 <BookOpen className="w-4 h-4" />
                 Reel/Story Videocreator
-                {authData.planCode !== "PREMIUM" && authData.planCode !== "FULL" && <Lock className="w-3 h-3 ml-1" />}
+                {authData.planCode !== "FULL" && <Lock className="w-3 h-3 ml-1" />}
               </TabsTrigger>
               <TabsTrigger value="character" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
