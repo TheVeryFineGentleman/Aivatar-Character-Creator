@@ -9503,9 +9503,9 @@ Beispiel einer korrekten Antwort:
                   <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
                     <Lock className="w-8 h-8 text-red-500" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
+                  <h3 className="text-xl font-bold text-foreground">Premium Version erforderlich</h3>
                   <p className="text-muted-foreground">
-                    Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
+                    Um dieses Feature zu nutzen, benötigst du die Premium Version von AvatarCreatorStudio. Trag dich jetzt auf die Warteliste ein!
                   </p>
                   <Button
                     onClick={() => {
