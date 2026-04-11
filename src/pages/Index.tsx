@@ -852,7 +852,6 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
 
   const handleStoryCreatorModeChange = (mode: "general" | "reel") => {
-    if (mode === "reel" && !isFullPlan) return;
     setStoryCreatorMode(mode);
     if (mode === "reel") {
       setStoryboardFormat("9:16");
@@ -6851,7 +6850,7 @@ Beispiel einer korrekten Antwort:
           <HomeScreen
             planCode={authData.planCode}
             onSelectFeature={(feature) => {
-              if (feature === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+              if (feature === "story" && authData.planCode !== "FULL") {
                 setShowUpgradePopup(true);
                 return;
               }
@@ -6881,7 +6880,7 @@ Beispiel einer korrekten Antwort:
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
           <Tabs value={activeMainTab} onValueChange={(v) => {
             const tab = v as "poses" | "story" | "character";
-            if (tab === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+            if (tab === "story" && authData.planCode !== "FULL") {
               setShowUpgradePopup(true);
               return;
             }
@@ -6892,10 +6891,10 @@ Beispiel einer korrekten Antwort:
                 <Sparkles className="w-4 h-4" />
                 Avatar Shooting Studio
               </TabsTrigger>
-              <TabsTrigger value="story" className={cn("flex items-center gap-2", authData.planCode !== "PREMIUM" && authData.planCode !== "FULL" && "opacity-50")}>
+              <TabsTrigger value="story" className={cn("flex items-center gap-2", authData.planCode !== "FULL" && "opacity-50")}>
                 <BookOpen className="w-4 h-4" />
                 Reel/Story Videocreator
-                {authData.planCode !== "PREMIUM" && authData.planCode !== "FULL" && <Lock className="w-3 h-3 ml-1" />}
+                {authData.planCode !== "FULL" && <Lock className="w-3 h-3 ml-1" />}
               </TabsTrigger>
               <TabsTrigger value="character" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
@@ -7682,16 +7681,9 @@ Beispiel einer korrekten Antwort:
                  </button>
                  <button
                     type="button"
-                    onClick={() => {
-                      if (!isFullPlan) {
-                        setShowUpgradePopup(true);
-                        return;
-                      }
-                      handleStoryCreatorModeChange("reel");
-                    }}
+                    onClick={() => handleStoryCreatorModeChange("reel")}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
-                      !isFullPlan && "opacity-50 cursor-not-allowed",
                       storyCreatorMode === "reel"
                         ? "bg-background text-foreground shadow-sm border border-border/50"
                         : "text-muted-foreground hover:text-foreground"
@@ -7699,7 +7691,6 @@ Beispiel einer korrekten Antwort:
                   >
                     <Smartphone className="w-4 h-4" />
                     Reel
-                    {!isFullPlan && <Lock className="w-3 h-3" />}
                   </button>
                </div>
                <p className="text-xs text-muted-foreground -mt-4">
