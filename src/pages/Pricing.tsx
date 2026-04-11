@@ -184,9 +184,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentPlanCode }) => {
                       Inklusiv
                     </Button>
                   ) : plan.comingSoon ? (
-                    <div className="w-full rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-center text-sm text-muted-foreground">
-                      Noch nicht freigegeben
-                    </div>
+                    <Button
+                      className="w-full font-semibold bg-gradient-to-r from-purple-500 to-violet-600 text-white hover:from-purple-600 hover:to-violet-700"
+                      onClick={() => window.open("https://www.aivataracademy.com/acspremium_warteliste/", "_blank")}
+                    >
+                      Auf die Warteliste
+                    </Button>
                   ) : (
                     <Button
                       className={cn(
