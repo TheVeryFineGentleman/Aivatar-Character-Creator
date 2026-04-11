@@ -25,7 +25,7 @@ const features = [
     icon: BookOpen,
     gradient: "from-amber-500/20 to-amber-500/5",
     iconColor: "text-amber-500",
-    minPlan: "PRO",
+    minPlan: "FULL",
   },
   {
     id: "character" as const,
