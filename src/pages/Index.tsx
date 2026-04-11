@@ -9503,18 +9503,18 @@ Beispiel einer korrekten Antwort:
                   <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
                     <Lock className="w-8 h-8 text-red-500" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
+                  <h3 className="text-xl font-bold text-foreground">Premium Version erforderlich</h3>
                   <p className="text-muted-foreground">
-                    Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
+                    Um dieses Feature zu nutzen, benötigst du die Premium Version von AvatarCreatorStudio. Trag dich jetzt auf die Warteliste ein!
                   </p>
                   <Button
                     onClick={() => {
-                      window.open("https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal", "_blank");
+                      window.open("https://www.aivataracademy.com/acspremium_warteliste/", "_blank");
                       setShowUpgradePopup(false);
                     }}
-                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
+                    className="w-full bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold hover:from-purple-600 hover:to-violet-700"
                   >
-                    Jetzt Pro Version kaufen
+                    Auf die Premium Warteliste
                   </Button>
                 </div>
               </div>
