@@ -530,6 +530,7 @@ const Index = () => {
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const [shakingElement, setShakingElement] = useState<string | null>(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [upgradePopupType, setUpgradePopupType] = useState<"pro" | "premium">("pro");
   const [switchSnapping, setSwitchSnapping] = useState(false);
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
