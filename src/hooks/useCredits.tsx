@@ -49,9 +49,9 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
     setCredits((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/credits-balance`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/credits-balance`, {
         method: "POST",
-        headers: FUNCTION_HEADERS,
+        headers: getFunctionHeaders(),
         body: JSON.stringify({
           email: savedCredentials.email,
           licenseKey: savedCredentials.licenseKey,
@@ -75,8 +75,10 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
     async (amount: number = 1): Promise<{ success: boolean; newBalance?: number; error?: string }> => {
       if (!isFullPlan) return { success: true };
       if (isDevAccount()) return { success: true, newBalance: 999 };
-      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-        return { success: false, error: "Supabase-Konfiguration fehlt" };
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        return { success: false, error: "Konfiguration fehlt" };
+      }
       }
 
       const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
@@ -91,9 +93,9 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
       try {
         const idempotencyKey = `consume-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/credits-consume`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/credits-consume`, {
           method: "POST",
-          headers: FUNCTION_HEADERS,
+          headers: getFunctionHeaders(),
           body: JSON.stringify({
             email: savedCredentials.email,
             licenseKey: savedCredentials.licenseKey,
