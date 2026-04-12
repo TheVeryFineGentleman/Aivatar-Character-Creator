@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { getFromLocalStorage } from "@/lib/storage";
 
 const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const FUNCTION_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-  apikey: SUPABASE_PUBLISHABLE_KEY,
+const getFunctionHeaders = () => {
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${key}`,
+    apikey: key,
+  };
 };
 
 interface CreditsState {
