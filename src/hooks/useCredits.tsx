@@ -40,7 +40,8 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
       setCredits({ balance: 999, isLoading: false, error: null });
       return;
     }
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) return;
 
     const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
     if (!savedCredentials?.email || !savedCredentials?.licenseKey) return;
