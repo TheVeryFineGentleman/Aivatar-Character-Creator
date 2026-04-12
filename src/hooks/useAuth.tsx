@@ -3,8 +3,6 @@ import { saveToLocalStorage, getFromLocalStorage, removeFromLocalStorage } from 
 
 const AUTH_STORAGE_KEY = "aivatar_auth";
 const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface AuthData {
   isAuthenticated: boolean;
@@ -47,10 +45,13 @@ const EMPTY_AUTH: AuthData = {
   productId: undefined,
 };
 
-const FUNCTION_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-  apikey: SUPABASE_PUBLISHABLE_KEY,
+const getFunctionHeaders = () => {
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${key}`,
+    apikey: key,
+  };
 };
 
 export const useAuth = () => {
@@ -75,14 +76,16 @@ export const useAuth = () => {
         };
       }
 
-      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (!supabaseUrl || !supabaseKey) {
         return { success: false, message: "Supabase-Konfiguration fehlt" };
       }
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/license-check`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/license-check`, {
           method: "POST",
-          headers: FUNCTION_HEADERS,
+          headers: getFunctionHeaders(),
           body: JSON.stringify({ email, licenseKey }),
         });
 
