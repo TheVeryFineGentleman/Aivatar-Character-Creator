@@ -79,7 +79,6 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
       if (!supabaseUrl) {
         return { success: false, error: "Konfiguration fehlt" };
       }
-      }
 
       const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
       if (!savedCredentials?.email || !savedCredentials?.licenseKey) {
