@@ -9527,7 +9527,7 @@ Beispiel einer korrekten Antwort:
                   ) : (
                     <Button
                       onClick={() => {
-                        window.open("https://www.aivataracademy.com/acs-pro/", "_blank");
+                        window.open("https://www.digistore24.com/product/644591", "_blank");
                         setShowUpgradePopup(false);
                       }}
                       className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
