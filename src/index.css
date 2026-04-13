@@ -655,3 +655,18 @@ All colors MUST be HSL.
   0% { opacity: 0; }
   100% { opacity: 1; }
 }
+
+/* Prevent text selection on UI elements, allow in inputs/textareas */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+pre,
+code {
+  -webkit-user-select: text;
+  user-select: text;
+}
