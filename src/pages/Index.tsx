@@ -8755,11 +8755,11 @@ Beispiel einer korrekten Antwort:
                 </div>
 
                 {/* Generate Button + Count Dropdown */}
-                <div className="flex flex-col items-center md:self-stretch md:items-center md:justify-start md:pt-7 gap-3">
+                <div className="flex flex-col items-center md:items-center md:justify-start md:pt-[calc(1.75rem+0.5rem)] gap-3">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || (!storyAiAssistantInput.trim() && !storyIdea.trim() && !smartReelIdeaSeed.trim())}
-                    className="w-full md:w-10 h-10 md:h-auto md:min-h-[160px] md:flex-1 rounded-lg"
+                    className="w-full md:w-10 h-10 md:h-[160px] rounded-lg"
                     title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
                   >
                     {isGeneratingStoryAiIdea ? (
