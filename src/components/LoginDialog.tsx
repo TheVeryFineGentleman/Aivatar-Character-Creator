@@ -6,6 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2 } from "lucide-react";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { getFunctionHeaders, getFunctionUrl, hasBackendConfig } from "@/lib/backend";
+
+interface LicenseRemindResponse {
+  sent?: boolean;
+  reason?: string;
+  error?: string;
+}
 
 interface LoginDialogProps {
   onLogin: (email: string, licenseKey: string) => Promise<{ success: boolean; message?: string }>;
@@ -33,17 +40,26 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     setRemindMessage(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/license-remind`, {
+      if (!hasBackendConfig()) {
+        setRemindMessage({ type: "error", text: "Backend-Konfiguration fehlt." });
+        return;
+      }
+
+      const response = await fetch(getFunctionUrl("license-remind"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: getFunctionHeaders(),
         body: JSON.stringify({ email: remindEmail }),
       });
 
-      const data = await response.json();
+      const rawResponse = await response.text();
+      let data: LicenseRemindResponse = {};
+
+      try {
+        data = rawResponse ? (JSON.parse(rawResponse) as LicenseRemindResponse) : {};
+      } catch {
+        throw new Error("Unerwartete Server-Antwort");
+      }
+
       if (!response.ok) {
         throw new Error(data?.reason || data?.error || `Netzwerkfehler (${response.status})`);
       }
