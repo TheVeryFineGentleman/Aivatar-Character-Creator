@@ -8651,7 +8651,7 @@ Beispiel einer korrekten Antwort:
               </div>
 
               {/* Story Idea and AI Assistant side by side */}
-              <div className="flex flex-col md:flex-row md:items-stretch gap-4">
+              <div className="flex flex-col md:flex-row md:items-start gap-4">
                 {/* Left: Generated Story Idea Display */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
