@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, RotateCcw, Send, MessageSquare, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
 
 interface ChatModeCreatorProps {
   apiKey: string;
@@ -69,14 +70,9 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
     let assistantContent = "";
 
     try {
-      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-chat`;
-      const resp = await fetch(CHAT_URL, {
+      const resp = await fetch(getFunctionUrl("character-chat"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: getFunctionHeaders(),
         body: JSON.stringify({ messages: newMessages, apiKey }),
       });
 

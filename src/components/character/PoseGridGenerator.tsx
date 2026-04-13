@@ -9,13 +9,7 @@ import { Loader2, Download, Trash2, Grid3X3, Sparkles } from "lucide-react";
 import { DownloadButton } from "@/components/DownloadButton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const FUNCTION_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-  apikey: SUPABASE_PUBLISHABLE_KEY,
-};
+import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
 
 interface PoseGridGeneratorProps {
   allImages: string[];
@@ -71,10 +65,10 @@ export const PoseGridGenerator: React.FC<PoseGridGeneratorProps> = ({ allImages,
       setCurrentPose(i);
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-poses`,
+          getFunctionUrl("character-poses"),
           {
             method: "POST",
-            headers: FUNCTION_HEADERS,
+            headers: getFunctionHeaders(),
             body: JSON.stringify({
               referenceImage,
               poseIndex: i,

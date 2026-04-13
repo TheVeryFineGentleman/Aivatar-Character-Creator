@@ -17,6 +17,7 @@ import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
 import { getCookie, saveToLocalStorage, getFromLocalStorage, createManagedBlobUrl, revokeManagedBlobUrl, cleanupAllBlobUrls, getDetailedErrorMessage, checkBrowserCompatibility, getDeviceInfo, compressImageToFitSize } from "@/lib/storage";
+import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -2527,14 +2528,10 @@ CONTENT COMPLIANCE:
         
         // 1) Start image generation (don't await yet)
         const imagePromise = fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+          getFunctionUrl("generate-image"),
           {
             method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-            },
+            headers: getFunctionHeaders(),
             signal: controller.signal,
             body: JSON.stringify({
               prompt: imagePromptText,
@@ -3462,14 +3459,10 @@ Respond ONLY with JSON:
         }
         
         const imageResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+          getFunctionUrl("generate-image"),
           {
             method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-            },
+            headers: getFunctionHeaders(),
             signal: controller.signal,
             body: JSON.stringify({
               prompt: imagePromptText,
@@ -3952,14 +3945,10 @@ ${sceneContext}`;
       
       // Call edge function for image generation
       const imageResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        getFunctionUrl("generate-image"),
         {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-          },
+          headers: getFunctionHeaders(),
           signal: controller.signal,
           body: JSON.stringify({
             prompt: imagePromptText,
@@ -4135,14 +4124,10 @@ ${sceneContext}`;
 
       // Call edge function for image generation (same as regenerateSingleStoryScene)
       const imageResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        getFunctionUrl("generate-image"),
         {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-          },
+          headers: getFunctionHeaders(),
           signal: controller.signal,
           body: JSON.stringify({
             prompt: imagePromptText,
