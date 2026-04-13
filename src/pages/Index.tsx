@@ -8680,7 +8680,7 @@ Beispiel einer korrekten Antwort:
                       </Button>
                     </div>
                   </div>
-                  <div className="relative flex-1 flex flex-col">
+                   <div className="relative flex-1 flex flex-col min-h-[160px] resize-y overflow-hidden">
                     <Textarea
                       id="story-idea"
                       placeholder=""
@@ -8695,7 +8695,7 @@ Beispiel einer korrekten Antwort:
                           });
                         }
                       }}
-                      className="min-h-[160px] resize-y"
+                      className="flex-1 resize-none"
                     />
                     
                     {/* Generating overlay */}
@@ -8788,23 +8788,21 @@ Beispiel einer korrekten Antwort:
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
-                  <div className="relative flex-1 flex flex-col">
+                  <div className="relative flex-1 flex flex-col min-h-[160px] resize-y overflow-hidden rounded-lg border border-border/50 bg-muted/30 p-3">
                     {smartReelModeEnabled && storyCreatorMode === "reel" ? (
-                      <div className="min-h-[160px] rounded-lg border border-border/50 bg-muted/30 p-3 overflow-auto">
-                        <div className="h-full min-h-[140px] space-y-3 text-sm">
-                          <p className="text-muted-foreground">
-                            Der Smart Reel Modus liefert das Briefing jetzt direkt aus Transcript, Referenzbildern und Chat-Antworten.
-                          </p>
-                          {smartReelBriefSummary && (
-                            <div className="rounded-lg border border-border/50 bg-background/60 p-3">
-                              <p className="text-xs font-medium text-foreground">Zusammenfassung</p>
-                              <p className="text-xs text-muted-foreground mt-1">{smartReelBriefSummary}</p>
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            Optionalen Zusatzwunsch kannst du oben im Smart Reel Chat ergänzen. Mit dem Pfeil werden daraus Ideen erzeugt.
-                          </p>
-                        </div>
+                      <div className="flex-1 space-y-3 text-sm">
+                        <p className="text-muted-foreground">
+                          Der Smart Reel Modus liefert das Briefing jetzt direkt aus Transcript, Referenzbildern und Chat-Antworten.
+                        </p>
+                        {smartReelBriefSummary && (
+                          <div className="rounded-lg border border-border/50 bg-background/60 p-3">
+                            <p className="text-xs font-medium text-foreground">Zusammenfassung</p>
+                            <p className="text-xs text-muted-foreground mt-1">{smartReelBriefSummary}</p>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Optionalen Zusatzwunsch kannst du oben im Smart Reel Chat ergänzen. Mit dem Pfeil werden daraus Ideen erzeugt.
+                        </p>
                       </div>
                     ) : (
                       <Textarea
@@ -8814,7 +8812,7 @@ Beispiel einer korrekten Antwort:
                         }
                         value={storyAiAssistantInput}
                         onChange={(e) => setStoryAiAssistantInput(e.target.value)}
-                        className="min-h-[160px] resize-y"
+                        className="flex-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
