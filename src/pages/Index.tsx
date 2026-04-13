@@ -8887,7 +8887,7 @@ Beispiel einer korrekten Antwort:
                               });
                             }}
                             placeholder={`Person ${index + 1}`}
-                            className="w-full h-6 text-[10px] text-center px-1 py-0 border-border/50 rounded-none border-t-0"
+                            className="w-full h-6 text-[10px] text-center px-1 py-0 border-border/50 rounded-none border-t-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                           <Textarea
                             value={storyReferenceDescriptions[index] || ""}
@@ -8900,7 +8900,7 @@ Beispiel einer korrekten Antwort:
                               });
                             }}
                             placeholder="rote Jacke, Brille, lockige Haare"
-                            className="w-full min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none rounded-none rounded-b-lg border-t-0"
+                            className="w-full min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none rounded-none rounded-b-lg border-t-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                         </div>
                       ))}
