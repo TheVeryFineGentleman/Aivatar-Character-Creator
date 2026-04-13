@@ -8842,7 +8842,22 @@ Beispiel einer korrekten Antwort:
                   <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-foreground">Charaktere</p>
-                      <span className="text-[10px] text-muted-foreground">{storyReferenceImages.length}/{maxStoryReferenceImages}</span>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: maxStoryReferenceImages }, (_, idx) => {
+                          const isFilled = idx < storyReferenceImages.length;
+                          return (
+                            <span
+                              key={idx}
+                              className={cn(
+                                "h-2 w-2 rounded-full transition-all",
+                                isFilled
+                                  ? "bg-primary"
+                                  : "bg-border"
+                              )}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-4">
                       {storyReferenceImages.map((imageUrl, index) => (
