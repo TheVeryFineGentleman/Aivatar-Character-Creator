@@ -8322,7 +8322,13 @@ Beispiel einer korrekten Antwort:
               />
             )}
           <Card 
-            className={cn("mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in", authData.planCode !== "FULL" && "opacity-60 pointer-events-none")}
+            className={cn(
+              "mb-8 border-border/50 backdrop-blur-sm animate-fade-in transition-all duration-500",
+              authData.planCode !== "FULL" && "opacity-60 pointer-events-none",
+              storyCreatorMode === "reel"
+                ? "bg-gradient-to-br from-primary/10 via-card/60 to-primary/5 border-primary/30 shadow-lg shadow-primary/10"
+                : "bg-card/50"
+            )}
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
             <CardContent className="pt-6 space-y-6">
