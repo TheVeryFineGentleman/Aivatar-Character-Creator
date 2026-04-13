@@ -8695,7 +8695,7 @@ Beispiel einer korrekten Antwort:
                           });
                         }
                       }}
-                      className="min-h-[160px] h-full resize-y"
+                      className="min-h-[160px] flex-1 resize-y"
                     />
                     
                     {/* Generating overlay */}
@@ -8788,7 +8788,7 @@ Beispiel einer korrekten Antwort:
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
-                  <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 min-h-[160px]">
+                  <div className="flex-1 rounded-lg border border-border/50 bg-muted/30 p-3">
                     {smartReelModeEnabled && storyCreatorMode === "reel" ? (
                       <div className="h-full min-h-[140px] space-y-3 text-sm">
                         <p className="text-muted-foreground">
@@ -8812,7 +8812,7 @@ Beispiel einer korrekten Antwort:
                         }
                         value={storyAiAssistantInput}
                         onChange={(e) => setStoryAiAssistantInput(e.target.value)}
-                        className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
+                        className="flex-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
