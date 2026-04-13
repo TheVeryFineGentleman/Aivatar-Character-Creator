@@ -8788,9 +8788,9 @@ Beispiel einer korrekten Antwort:
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
-                  <div className="min-h-[160px] rounded-lg border border-border/50 bg-muted/30 p-3 overflow-auto">
+                  <div className="relative flex-1 flex flex-col min-h-[160px] resize-y overflow-hidden rounded-lg border border-border/50 bg-muted/30 p-3">
                     {smartReelModeEnabled && storyCreatorMode === "reel" ? (
-                      <div className="h-full min-h-[140px] space-y-3 text-sm">
+                      <div className="flex-1 space-y-3 text-sm">
                         <p className="text-muted-foreground">
                           Der Smart Reel Modus liefert das Briefing jetzt direkt aus Transcript, Referenzbildern und Chat-Antworten.
                         </p>
@@ -8812,7 +8812,7 @@ Beispiel einer korrekten Antwort:
                         }
                         value={storyAiAssistantInput}
                         onChange={(e) => setStoryAiAssistantInput(e.target.value)}
-                        className="flex-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
+                        className="flex-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-none bg-transparent border-0 p-0"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
