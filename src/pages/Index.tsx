@@ -8755,7 +8755,7 @@ Beispiel einer korrekten Antwort:
                 </div>
 
                 {/* Generate Button + Count Dropdown */}
-                <div className="flex flex-col items-center md:self-stretch md:items-end md:justify-end gap-3 pb-[2px]">
+                <div className="flex flex-col items-center md:self-stretch md:items-center md:justify-start md:pt-7 gap-3">
                   <Button
                     onClick={handleGenerateStoryIdea}
                     disabled={isGeneratingStoryAiIdea || (!storyAiAssistantInput.trim() && !storyIdea.trim() && !smartReelIdeaSeed.trim())}
@@ -9275,7 +9275,6 @@ Beispiel einer korrekten Antwort:
                       <Slider
                         value={[storyPointCount]}
                         onValueChange={(value) => {
-                          setReelSceneCountMode("manual");
                           setStoryPointCount(Math.round(value[0]));
                         }}
                         min={storyCreatorMode === "reel" ? 3 : 2}
