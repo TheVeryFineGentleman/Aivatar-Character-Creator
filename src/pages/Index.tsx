@@ -9224,7 +9224,7 @@ Beispiel einer korrekten Antwort:
                           : "z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."}
                         value={storyHook}
                         onChange={(e) => setStoryHook(e.target.value)}
-                        className="min-h-[50px] resize-y text-sm"
+                        className="min-h-[100px] resize-y text-sm"
                       />
                       {storyCreatorMode === "reel" && !storyHook.trim() && (
                         <p className="text-xs text-primary/80">
@@ -9238,7 +9238,7 @@ Beispiel einer korrekten Antwort:
                         placeholder="z.B. 'Immer warmes Abendlicht', 'Film-Noir Stil', 'Keine Nahaufnahmen'..."
                         value={storyCustomDetails}
                         onChange={(e) => setStoryCustomDetails(e.target.value)}
-                        className="min-h-[50px] resize-y text-sm"
+                        className="min-h-[100px] resize-y text-sm"
                       />
                     </div>
                   </div>
