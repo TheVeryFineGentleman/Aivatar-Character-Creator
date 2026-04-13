@@ -7548,7 +7548,7 @@ Beispiel einer korrekten Antwort:
             }
             setActiveMainTab(tab);
           }} className="w-full">
-            <TabsList className="w-fit bg-muted/50 backdrop-blur-sm">
+            <TabsList className="w-fit bg-muted/50">
               <TabsTrigger value="poses" className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 Avatar Shooting Studio
@@ -7571,7 +7571,7 @@ Beispiel einer korrekten Antwort:
           <>
         {/* Main Controls */}
         <Card 
-          className="mb-8 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in"
+          className="mb-8 border-border/50 bg-card/50 animate-fade-in"
           style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
         >
           <CardContent className="pt-6 space-y-6">
@@ -8323,7 +8323,7 @@ Beispiel einer korrekten Antwort:
             )}
           <Card 
             className={cn(
-              "mb-8 backdrop-blur-sm animate-fade-in relative overflow-hidden",
+              "mb-8 animate-fade-in relative overflow-hidden",
               "transition-[border-color,box-shadow,background-color] duration-700 ease-in-out",
               authData.planCode !== "FULL" && "opacity-60 pointer-events-none",
               storyCreatorMode === "reel"
@@ -10729,7 +10729,7 @@ Beispiel einer korrekten Antwort:
               rel="noopener noreferrer"
               className="block max-w-3xl mx-auto group cursor-pointer"
             >
-              <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-card/80 via-card/60 to-primary/10 backdrop-blur-md shadow-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02] hover:border-primary/50">
+              <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-card/80 via-card/60 to-primary/10 shadow-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02] hover:border-primary/50">
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500 -z-10" />
