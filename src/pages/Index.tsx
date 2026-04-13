@@ -8654,7 +8654,7 @@ Beispiel einer korrekten Antwort:
               <div className="flex flex-col md:flex-row md:items-start gap-4">
                 {/* Left: Generated Story Idea Display */}
                 <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 h-7">
                     <Label htmlFor="story-idea">{storyEnableSpeaker ? (storyGenerationDirection === "description-from-speaker" ? "Dein Dialog" : "Deine Story-Idee") : "Deine Story-Idee"}</Label>
                     <div className="flex items-center gap-0 rounded-md border border-border/50 bg-muted/20 px-0.5">
                       <Button
@@ -8782,7 +8782,7 @@ Beispiel einer korrekten Antwort:
 
                 {/* Right: AI Assistant - Idea Input + Count Dropdown */}
                 <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 h-7">
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-muted-foreground" />
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
