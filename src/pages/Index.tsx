@@ -8842,7 +8842,7 @@ Beispiel einer korrekten Antwort:
                   <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-foreground">Charaktere</p>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         {Array.from({ length: maxStoryReferenceImages }, (_, idx) => {
                           const isFilled = idx < storyReferenceImages.length;
                           return (
