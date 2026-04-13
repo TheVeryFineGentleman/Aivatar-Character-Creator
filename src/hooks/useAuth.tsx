@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { saveToLocalStorage, getFromLocalStorage, removeFromLocalStorage } from "@/lib/storage";
 import { getFunctionHeaders, getFunctionUrl, hasBackendConfig } from "@/lib/backend";
+import { getDisplayPlanName } from "@/lib/plans";
 
 const AUTH_STORAGE_KEY = "aivatar_auth";
 const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
@@ -33,7 +34,7 @@ interface ValidationResponse {
 const DEV_ACCOUNTS: Record<string, { password: string; planCode: string; planName: string }> = {
   "1": { password: "1", planCode: "BASIC", planName: "Basic" },
   "2": { password: "2", planCode: "PREMIUM", planName: "Pro" },
-  "3": { password: "3", planCode: "FULL", planName: "Full" },
+  "3": { password: "3", planCode: "FULL", planName: "Premium" },
 };
 
 const EMPTY_AUTH: AuthData = {
@@ -117,7 +118,7 @@ export const useAuth = () => {
         isAuthenticated: true,
         email: result.data.email || savedCredentials.email,
         planCode: result.data.planCode || "",
-        planName: result.data.planName || "",
+        planName: getDisplayPlanName(result.data.planCode, result.data.planName),
         status: result.data.status || "",
         expiresAt: result.data.expiresAt || null,
         productId: result.data.productId,
@@ -143,7 +144,7 @@ export const useAuth = () => {
         isAuthenticated: true,
         email: result.data.email || email,
         planCode: result.data.planCode || "",
-        planName: result.data.planName || "",
+        planName: getDisplayPlanName(result.data.planCode, result.data.planName),
         status: result.data.status || "",
         expiresAt: result.data.expiresAt || null,
         productId: result.data.productId,

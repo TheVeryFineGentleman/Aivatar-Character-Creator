@@ -18,6 +18,7 @@ import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
 import { getCookie, saveToLocalStorage, getFromLocalStorage, createManagedBlobUrl, revokeManagedBlobUrl, cleanupAllBlobUrls, getDetailedErrorMessage, checkBrowserCompatibility, getDeviceInfo, compressImageToFitSize } from "@/lib/storage";
 import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
+import { getDisplayPlanName } from "@/lib/plans";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -651,6 +652,7 @@ const Index = () => {
   // Helper: Check if user has Pro-level access (PREMIUM or FULL)
   const isPro = authData.planCode === "PREMIUM" || authData.planCode === "FULL";
   const isFullPlan = authData.planCode === "FULL";
+  const displayPlanName = getDisplayPlanName(authData.planCode, authData.planName);
   const { theme, setTheme } = useTheme();
   const [apiKey, setApiKey] = useState("");
   const canGenerate = !!apiKey;
@@ -7160,7 +7162,7 @@ Beispiel einer korrekten Antwort:
         {/* Version Indicator */}
         <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-1 z-20">
           <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
-            v1.4.8
+            v1.4.9
           </div>
         </div>
         <PromoBanner planCode={authData.planCode} />
@@ -7309,7 +7311,7 @@ Beispiel einer korrekten Antwort:
                             exportDatum: new Date().toISOString(),
                             account: {
                               email: authData.email,
-                              plan: authData.planName || authData.planCode,
+                              plan: displayPlanName || authData.planCode,
                               istAuthentifiziert: authData.isAuthenticated,
                             },
                             einstellungen: {
@@ -7389,9 +7391,9 @@ Beispiel einer korrekten Antwort:
                       <p className="text-sm text-muted-foreground">
                         Angemeldet als: {authData.email}
                       </p>
-                      {authData.planName && (
+                      {displayPlanName && (
                         <p className="text-sm text-muted-foreground">
-                          Plan: {authData.planName}
+                          Plan: {displayPlanName}
                         </p>
                       )}
                     </div>
@@ -7495,7 +7497,7 @@ Beispiel einer korrekten Antwort:
                 animation: "badge-appear 0.5s ease-out 0.8s both"
               }}
             >
-              {authData.planCode === "FULL" ? "Premium" : authData.planCode === "PREMIUM" ? "Pro" : "Starter"}
+              {displayPlanName || "Basic"}
             </span>
           </div>
           <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
