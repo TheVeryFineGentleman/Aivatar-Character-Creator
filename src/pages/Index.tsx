@@ -8323,14 +8323,23 @@ Beispiel einer korrekten Antwort:
             )}
           <Card 
             className={cn(
-              "mb-8 border-border/50 backdrop-blur-sm animate-fade-in transition-all duration-500",
+              "mb-8 backdrop-blur-sm animate-fade-in relative overflow-hidden",
+              "transition-[border-color,box-shadow,background-color] duration-700 ease-in-out",
               authData.planCode !== "FULL" && "opacity-60 pointer-events-none",
               storyCreatorMode === "reel"
                 ? "bg-gradient-to-br from-primary/10 via-card/60 to-primary/5 border-primary/30 shadow-lg shadow-primary/10"
-                : "bg-card/50"
+                : "bg-card/50 border-border/50"
             )}
             style={{ animationDelay: '150ms', animationDuration: '600ms', animationFillMode: 'both' }}
           >
+            {/* Reel mode glow overlay */}
+            <div 
+              className={cn(
+                "absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out rounded-[inherit]",
+                "bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.08),transparent_60%)]",
+                storyCreatorMode === "reel" ? "opacity-100" : "opacity-0"
+              )}
+            />
             <CardContent className="pt-6 space-y-6">
                {/* Mode Toggle: General vs Reel */}
                <div className="flex gap-2 p-1 rounded-lg bg-muted/30 border border-border/50 max-w-md">
