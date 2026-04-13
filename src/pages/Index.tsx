@@ -8900,7 +8900,7 @@ Beispiel einer korrekten Antwort:
                               });
                             }}
                             placeholder="rote Jacke, Brille, lockige Haare"
-                            className="w-full min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none rounded-none rounded-b-lg border-t-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="w-full min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none rounded-none border-t-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                         </div>
                       ))}
