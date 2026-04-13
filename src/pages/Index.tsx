@@ -8695,7 +8695,7 @@ Beispiel einer korrekten Antwort:
                           });
                         }
                       }}
-                      className="flex-1 resize-y"
+                      className="min-h-[160px] resize-y"
                     />
                     
                     {/* Generating overlay */}
