@@ -8840,9 +8840,9 @@ Beispiel einer korrekten Antwort:
                 <p className="text-[10px] text-muted-foreground/70 leading-tight">Mit Upload bestaetigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden fuer Sprecher-, Charakter- und Stil-Konsistenz in Story und Video verwendet.</p>
                 <div className={cn("grid gap-4", smartReelModeEnabled && storyCreatorMode === "reel" ? "lg:grid-cols-2" : "grid-cols-1")}>
                   <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-foreground">Charaktere</p>
-                      <span className="text-[11px] text-muted-foreground">{storyReferenceImages.length}/{maxStoryReferenceImages}</span>
+                      <span className="text-[10px] text-muted-foreground">{storyReferenceImages.length}/{maxStoryReferenceImages}</span>
                     </div>
                     <div className="flex flex-wrap gap-4">
                       {storyReferenceImages.map((imageUrl, index) => (
