@@ -9126,8 +9126,8 @@ Beispiel einer korrekten Antwort:
                   <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${!storySetupCollapsed ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-4">
-                  {/* Row 1: Dropdowns */}
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Row 1: Artstyle + Video-Stimmung + Sprecherstimme */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="space-y-1.5">
                       <Label className="text-sm">Artstyle</Label>
                       <Select value={storyArtStyle} onValueChange={setStoryArtStyle}>
@@ -9140,21 +9140,6 @@ Beispiel einer korrekten Antwort:
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-sm">Standard-Übergang</Label>
-                      <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {STORY_TRANSITION_TYPES.map(t => (
-                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Row 2: Video-Stimmung + Farbstimmung */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
                       <Label className="text-sm">Video-Stimmung</Label>
                       <Select value={storyVideoMood} onValueChange={setStoryVideoMood}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -9165,6 +9150,34 @@ Beispiel einer korrekten Antwort:
                           <SelectItem value="emotional">Emotional / Berührend</SelectItem>
                           <SelectItem value="mysterious">Mysteriös / Dunkel</SelectItem>
                           <SelectItem value="cheerful">Fröhlich / Leicht</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {storyEnableSpeaker && (
+                      <div className="space-y-1.5">
+                        <Label className="text-sm">Sprecherstimme</Label>
+                        <Select value={storySpeakerGender} onValueChange={(v) => setStorySpeakerGender(v as any)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Männlich</SelectItem>
+                            <SelectItem value="female">Weiblich</SelectItem>
+                            <SelectItem value="neutral">Neutral</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Row 2: Standard-Übergang + Farbstimmung + Pacing */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Standard-Übergang</Label>
+                      <Select value={storyTransitionType} onValueChange={setStoryTransitionType}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STORY_TRANSITION_TYPES.map(t => (
+                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -9182,23 +9195,6 @@ Beispiel einer korrekten Antwort:
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  {/* Row 3: Sprecherstimme (conditional) + Pacing */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {storyEnableSpeaker && (
-                      <div className="space-y-1.5">
-                        <Label className="text-sm">Sprecherstimme</Label>
-                        <Select value={storySpeakerGender} onValueChange={(v) => setStorySpeakerGender(v as any)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="male">Männlich</SelectItem>
-                            <SelectItem value="female">Weiblich</SelectItem>
-                            <SelectItem value="neutral">Neutral</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
                     {storyCreatorMode !== "reel" && (
                     <div className="space-y-1.5">
                       <Label className="text-sm">Pacing / Tempo</Label>
@@ -9215,36 +9211,36 @@ Beispiel einer korrekten Antwort:
                     )}
                   </div>
 
-                  {/* Row 4: Hook */}
-                  <div className={cn("space-y-1.5", storyCreatorMode === "reel" && "p-3 rounded-lg border border-primary/30 bg-primary/5")}>
-                    <Label className="text-sm flex items-center gap-2">
-                      Hook (Einstieg)
-                      {storyCreatorMode === "reel" && <span className="text-xs text-primary font-normal">Wichtig für Reels!</span>}
-                    </Label>
-                    <Textarea
-                      placeholder={storyCreatorMode === "reel" 
-                        ? "z.B. 'Starte mit dem schlimmsten Moment', 'Eine provokante Frage in Sekunde 1', 'Ein klarer Konflikt ohne Ablenkung'..."
-                        : "z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."}
-                      value={storyHook}
-                      onChange={(e) => setStoryHook(e.target.value)}
-                      className="min-h-[50px] resize-y text-sm"
-                    />
-                    {storyCreatorMode === "reel" && !storyHook.trim() && (
-                      <p className="text-xs text-primary/80">
-                        Wenn du das Feld leer laesst, setzt der Reel-Modus automatisch einen Hook-First-Start im Hintergrund.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Row 5: Custom Details */}
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Besondere Details / Anweisungen</Label>
-                    <Textarea
-                      placeholder="z.B. 'Immer warmes Abendlicht', 'Film-Noir Stil', 'Keine Nahaufnahmen'..."
-                      value={storyCustomDetails}
-                      onChange={(e) => setStoryCustomDetails(e.target.value)}
-                      className="min-h-[60px] resize-y text-sm"
-                    />
+                  {/* Row 3: Hook + Besondere Details nebeneinander */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className={cn("space-y-1.5", storyCreatorMode === "reel" && "p-3 rounded-lg border border-primary/30 bg-primary/5")}>
+                      <Label className="text-sm flex items-center gap-2">
+                        Hook (Einstieg)
+                        {storyCreatorMode === "reel" && <span className="text-xs text-primary font-normal">Wichtig für Reels!</span>}
+                      </Label>
+                      <Textarea
+                        placeholder={storyCreatorMode === "reel" 
+                          ? "z.B. 'Starte mit dem schlimmsten Moment', 'Eine provokante Frage in Sekunde 1', 'Ein klarer Konflikt ohne Ablenkung'..."
+                          : "z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."}
+                        value={storyHook}
+                        onChange={(e) => setStoryHook(e.target.value)}
+                        className="min-h-[50px] resize-y text-sm"
+                      />
+                      {storyCreatorMode === "reel" && !storyHook.trim() && (
+                        <p className="text-xs text-primary/80">
+                          Wenn du das Feld leer laesst, setzt der Reel-Modus automatisch einen Hook-First-Start im Hintergrund.
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Besondere Details / Anweisungen</Label>
+                      <Textarea
+                        placeholder="z.B. 'Immer warmes Abendlicht', 'Film-Noir Stil', 'Keine Nahaufnahmen'..."
+                        value={storyCustomDetails}
+                        onChange={(e) => setStoryCustomDetails(e.target.value)}
+                        className="min-h-[50px] resize-y text-sm"
+                      />
+                    </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
