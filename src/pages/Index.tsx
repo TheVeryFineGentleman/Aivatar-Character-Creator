@@ -8680,7 +8680,7 @@ Beispiel einer korrekten Antwort:
                       </Button>
                     </div>
                   </div>
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 flex flex-col">
                     <Textarea
                       id="story-idea"
                       placeholder=""
@@ -8695,7 +8695,7 @@ Beispiel einer korrekten Antwort:
                           });
                         }
                       }}
-                      className="min-h-[160px] flex-1 resize-y"
+                      className="flex-1 resize-y"
                     />
                     
                     {/* Generating overlay */}
