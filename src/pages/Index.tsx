@@ -9275,7 +9275,6 @@ Beispiel einer korrekten Antwort:
                       <Slider
                         value={[storyPointCount]}
                         onValueChange={(value) => {
-                          setReelSceneCountMode("manual");
                           setStoryPointCount(Math.round(value[0]));
                         }}
                         min={storyCreatorMode === "reel" ? 3 : 2}
