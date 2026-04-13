@@ -8861,12 +8861,12 @@ Beispiel einer korrekten Antwort:
                     </div>
                     <div className="flex flex-wrap gap-4">
                       {storyReferenceImages.map((imageUrl, index) => (
-                        <div key={`story-ref-${index}`} className="relative flex flex-col items-center gap-1">
-                          <div className="relative w-28 h-28">
+                        <div key={`story-ref-${index}`} className="relative w-28">
+                          <div className="relative w-full">
                             <img 
                               src={imageUrl} 
                               alt={`Referenz ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg"
+                              className="w-full h-28 object-cover rounded-t-lg"
                             />
                             <button
                               type="button"
@@ -8887,7 +8887,7 @@ Beispiel einer korrekten Antwort:
                               });
                             }}
                             placeholder={`Person ${index + 1}`}
-                            className="w-24 h-6 text-[10px] text-center px-1 py-0 border-border/50"
+                            className="w-full h-6 text-[10px] text-center px-1 py-0 border-border/50 rounded-none border-t-0"
                           />
                           <Textarea
                             value={storyReferenceDescriptions[index] || ""}
@@ -8900,7 +8900,7 @@ Beispiel einer korrekten Antwort:
                               });
                             }}
                             placeholder="rote Jacke, Brille, lockige Haare"
-                            className="w-24 min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none"
+                            className="w-full min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none rounded-none rounded-b-lg border-t-0"
                           />
                         </div>
                       ))}
