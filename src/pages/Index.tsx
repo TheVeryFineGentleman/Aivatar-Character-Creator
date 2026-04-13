@@ -9156,7 +9156,7 @@ Beispiel einer korrekten Antwort:
                   </Label>
                   <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${!storySetupCollapsed ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="pt-4 space-y-4">
+                <CollapsibleContent className="pt-4 space-y-4 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
                   {/* Row 1: Artstyle + Video-Stimmung + Sprecherstimme */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="space-y-1.5">
