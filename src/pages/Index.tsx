@@ -8651,7 +8651,7 @@ Beispiel einer korrekten Antwort:
               </div>
 
               {/* Story Idea and AI Assistant side by side */}
-              <div className="flex flex-col md:flex-row md:items-stretch gap-4">
+              <div className="flex flex-col md:flex-row md:items-start gap-4">
                 {/* Left: Generated Story Idea Display */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
@@ -8695,7 +8695,7 @@ Beispiel einer korrekten Antwort:
                           });
                         }
                       }}
-                      className="flex-1 resize-y"
+                      className="min-h-[160px] resize-y"
                     />
                     
                     {/* Generating overlay */}
@@ -8788,7 +8788,7 @@ Beispiel einer korrekten Antwort:
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
-                  <div className="flex-1 flex flex-col rounded-lg border border-border/50 bg-muted/30 p-3">
+                  <div className="min-h-[160px] rounded-lg border border-border/50 bg-muted/30 p-3 resize-y overflow-auto">
                     {smartReelModeEnabled && storyCreatorMode === "reel" ? (
                       <div className="h-full min-h-[140px] space-y-3 text-sm">
                         <p className="text-muted-foreground">
