@@ -239,6 +239,15 @@ type StoryCharacterProfile = {
   description: string;
 };
 
+type SmartReelChatMessage = {
+  role: "assistant" | "user";
+  text: string;
+};
+
+type SmartReelChatStep = "speech" | "platform" | "topic" | "goal" | "duration" | "done";
+
+const VEO_REFERENCE_IMAGE_LIMIT = 3;
+
 function normalizeCharacterIdentityToken(value: unknown): string {
   return sanitizeSceneField(value)
     .toLowerCase()
@@ -303,6 +312,11 @@ function buildStoryPointFromScene(scene: Record<string, unknown>) {
   const cameraAngle = normalizeSceneCameraAngle(scene.cameraAngle);
   const shotType = normalizeSceneShotType(scene.shotType);
   const participants = sanitizeSceneField(scene.participants);
+  const audienceEffect = sanitizeSceneField(scene.audienceEffect);
+  const composition = sanitizeSceneField(scene.composition);
+  const movement = sanitizeSceneField(scene.movement);
+  const negativePrompts = sanitizeSceneField(scene.negativePrompts);
+  const styleNotes = sanitizeSceneField(scene.styleNotes);
   const continuityNotes = sanitizeSceneField(scene.continuityNotes);
 
   return {
@@ -317,8 +331,135 @@ function buildStoryPointFromScene(scene: Record<string, unknown>) {
     cameraAngle,
     shotType,
     participants,
+    audienceEffect,
+    composition,
+    movement,
+    negativePrompts,
+    styleNotes,
     continuityNotes,
   };
+}
+
+const REEL_DEFAULT_HOOK_DIRECTIVE = "Open with the most surprising, emotionally intense, or highest-stakes visual beat in the first second.";
+
+function getEffectiveStoryHook(mode: "general" | "reel", hook: string): string {
+  const trimmed = hook.trim();
+  if (trimmed) return trimmed;
+  return mode === "reel" ? REEL_DEFAULT_HOOK_DIRECTIVE : "";
+}
+
+function getVideoPromptWordTarget(mode: "general" | "reel"): string {
+  return mode === "reel" ? "75-95" : "80-120";
+}
+
+function getStoryPacingInstruction(pacing: string, mode: "general" | "reel"): string {
+  switch (pacing) {
+    case "instant-action":
+      return mode === "reel"
+        ? "Immediate disruption in the first 0.5-1 second, no warm-up, no empty lead-in"
+        : "Action within first 2 seconds";
+    case "slow-build":
+      return mode === "reel"
+        ? "Only a micro build is allowed: the tension is visible instantly and pays off before the clip ends"
+        : "Slow build-up over 3-5 seconds";
+    case "fast-cuts":
+      return mode === "reel"
+        ? "Rapid contrast from clip to clip, but each clip still needs one clean focal action"
+        : "Fast rapid cuts throughout";
+    case "tension-arc":
+    default:
+      return mode === "reel"
+        ? "Immediate hook, rising tension every beat, then a payoff or cliffhanger before the clip ends"
+        : "Tension arc with dramatic payoff";
+  }
+}
+
+function getStoryMoodInstruction(mood: string): string {
+  switch (mood) {
+    case "action":
+      return "Dynamic and urgent, with kinetic energy and high momentum";
+    case "calm":
+      return "Controlled and serene, but still visually intentional";
+    case "emotional":
+      return "Intimate and emotionally exposed, with expressive reactions";
+    case "mysterious":
+      return "Shadowy, tense, and curiosity-driven";
+    case "cheerful":
+      return "Bright, upbeat, and highly watchable";
+    case "dramatic":
+    default:
+      return "High-stakes, suspenseful, and emotionally charged";
+  }
+}
+
+function getStoryColorInstruction(color: string, mode: "general" | "reel"): string {
+  switch (color) {
+    case "warm":
+      return "Warm golden-hour tones";
+    case "cold":
+      return "Cool blue tones";
+    case "dark":
+      return "Dark noir contrast";
+    case "bright":
+      return "Bright, high-clarity lighting with strong subject separation";
+    case "neon":
+      return "Bold, saturated neon contrast";
+    case "natural":
+    default:
+      return mode === "reel"
+        ? "High-contrast, mobile-readable colors with clear subject separation"
+        : "Natural realistic colors";
+  }
+}
+
+function getReelStoryboardDirective(effectiveHook: string): string {
+  return `
+REEL-MODUS - KRITISCHE ANWEISUNGEN (hoechste Prioritaet):
+Du erstellst ein Storyboard fuer ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
+Jede Szene wird zu einem kurzen Videoclip. Die exakte Gesamtdauer kommt aus dem Nutzerbriefing.
+
+VERWENDE DIESEN HOOK ALS LEITPLANKE:
+- "${effectiveHook}"
+
+REEL-DRAMATURGIE:
+- Szene 1 = DER HOOK: Muss innerhalb von 1 Sekunde visuell Aufmerksamkeit binden. Kein langsamer Aufbau.
+- Jede weitere Szene = ESKALATION ODER KLARER WECHSEL: Jede Szene zeigt einen neuen Beat, neue Information oder einen sichtbaren Spannungsanstieg.
+- Letzte Szene = PAYOFF ODER OFFENE FRAGE: Das Ende soll klar wirken und zum Weiterschauen motivieren.
+
+REEL-VISUELLE REGELN:
+- Genau EIN dominanter Fokus pro Szene: eine Person, eine Aktion, ein Konflikt. Keine geteilte Aufmerksamkeit.
+- Handy-lesbar: Die Szene muss auch auf einem kleinen Smartphone-Screen sofort klar sein.
+- Keine Filler-Shots, keine neutralen Establishing Shots, keine statischen Uebergaenge ohne Konflikt.
+- Starker Szenenkontrast: Winkel, Entfernung, Komposition oder Machtdynamik sollen sich deutlich von der vorherigen Szene unterscheiden.
+- Bewegung ist Pflicht: Kamera, Koerperhaltung, Blick oder Umwelt muessen spueren lassen, dass etwas passiert.
+- 9:16-Komposition: Gesichter, Haende und Kernaktion muessen in der vertikalen Safe Zone klar sichtbar bleiben.
+
+REEL-INHALTLICHE REGELN:
+- Denke in aufmerksamkeitsstarken Momenten, nicht in langsamer Exposition.
+- Bevorzuge klare Emotionen und klare Bildsignale statt subtiler Andeutungen.
+- Jede Szene muss ohne Ton verstaendlich sein.
+- Jede Szene soll visuell die Frage beantworten: Warum schaut man weiter?
+`;
+}
+
+function getReelVideoPromptDirective(effectiveHook: string): string {
+  return `
+REEL MODE - CRITICAL PRIORITY:
+This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
+Each scene is a short beat-sized clip. The exact total runtime is defined by the user brief.
+Use this hook directive as the north star: "${effectiveHook}"
+
+RULES FOR REEL PROMPTS:
+- The first 0.5-1 second must land on the strongest visual beat, not an intro
+- One focal subject, one focal action, one emotional read per clip
+- No slow establishing shots, no idle camera settle, no filler gestures
+- Movement must begin immediately but remain clean and readable
+- Vertical composition: keep the core action large, obvious, and mobile-readable
+- Protect subject clarity: background and props are secondary to the main beat
+- Build a pattern interrupt from the previous clip through scale, angle, motion, or power shift
+- End on a payoff frame or an unanswered question that pulls into the next clip
+- Strong contrast, strong silhouettes, strong facial readability, strong emotional intent
+`;
 }
 
 function sanitizeStoryPointsForSession(points: any[]): any[] {
@@ -586,6 +727,7 @@ const Index = () => {
   const [refImageSource, setRefImageSource] = useState<"poses" | "story" | null>(null);
 
   const [characterImages, setCharacterImages] = useState<string[]>([]);
+
   // Story Builder state
   const [storyIdea, setStoryIdea] = useState("");
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
@@ -625,6 +767,118 @@ const Index = () => {
         .map((profile) => `- ${profile.name} (Referenzbild ${profile.index + 1})${profile.description ? `: ${profile.description}` : ""}`)
         .join('\n')
     : "- Keine Referenzcharaktere vorhanden";
+  const [smartReelModeEnabled, setSmartReelModeEnabled] = useState(false);
+  const [smartReelTranscript, setSmartReelTranscript] = useState("");
+  const [smartReelStyleImages, setSmartReelStyleImages] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('smartReelStyleImages');
+    return saved || [];
+  });
+  const [smartReelStyleDescriptions, setSmartReelStyleDescriptions] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('smartReelStyleDescriptions');
+    return saved || [];
+  });
+  const [smartReelReferenceSummary, setSmartReelReferenceSummary] = useState("");
+  const [smartReelPlatform, setSmartReelPlatform] = useState<"" | "instagram" | "youtube" | "tiktok">("");
+  const [smartReelTopic, setSmartReelTopic] = useState("");
+  const [smartReelGoal, setSmartReelGoal] = useState("");
+  const [smartReelDuration, setSmartReelDuration] = useState<"" | "15-30" | "30-60" | "60+">("");
+  const [smartReelSpeechMode, setSmartReelSpeechMode] = useState<"" | "speaker" | "avatars">("");
+  const [smartReelChatMessages, setSmartReelChatMessages] = useState<SmartReelChatMessage[]>([]);
+  const [smartReelChatStep, setSmartReelChatStep] = useState<SmartReelChatStep>("speech");
+  const [smartReelChatInput, setSmartReelChatInput] = useState("");
+  const [isAnalyzingSmartReelReferences, setIsAnalyzingSmartReelReferences] = useState(false);
+  const smartReelStyleDescriptionsRef = useRef<string[]>(smartReelStyleDescriptions);
+  const smartReelReferenceSummaryRef = useRef(smartReelReferenceSummary);
+  const maxStoryReferenceImages = smartReelModeEnabled ? VEO_REFERENCE_IMAGE_LIMIT : 2;
+  const maxSmartReelStyleImages = 3;
+  const smartReelPlatformLabel = smartReelPlatform === "instagram"
+    ? "Instagram Reels"
+    : smartReelPlatform === "youtube"
+      ? "YouTube Shorts"
+      : smartReelPlatform === "tiktok"
+        ? "TikTok"
+        : "";
+  const smartReelDurationLabel = smartReelDuration === "15-30"
+    ? "15 bis 30 Sekunden"
+    : smartReelDuration === "30-60"
+      ? "30 bis 60 Sekunden"
+      : smartReelDuration === "60+"
+        ? "60+ Sekunden"
+        : "";
+  const smartReelSpeechLabel = smartReelSpeechMode === "speaker"
+    ? "Separater Sprecher"
+    : smartReelSpeechMode === "avatars"
+      ? "Avatare sprechen selbst"
+      : "";
+  const smartReelStyleBlockGerman = smartReelStyleDescriptions
+    .map((description, index) => sanitizeSceneField(description) ? `- Stilbild ${index + 1}: ${sanitizeSceneField(description)}` : "")
+    .filter(Boolean)
+    .join('\n');
+  const smartReelStyleBlockEnglish = smartReelStyleDescriptions
+    .map((description, index) => sanitizeSceneField(description) ? `- Style reference ${index + 1}: ${sanitizeSceneField(description)}` : "")
+    .filter(Boolean)
+    .join('\n');
+  const smartReelBriefSummary = [
+    smartReelPlatformLabel ? `Plattform: ${smartReelPlatformLabel}` : null,
+    smartReelSpeechLabel ? `Sprechmodus: ${smartReelSpeechLabel}` : null,
+    smartReelTopic.trim() ? `Thema: ${smartReelTopic.trim()}` : null,
+    smartReelGoal.trim() ? `Ziel: ${smartReelGoal.trim()}` : null,
+    smartReelDurationLabel ? `Länge: ${smartReelDurationLabel}` : null,
+  ].filter(Boolean).join(' | ');
+  const smartReelIdeaSeed = [
+    smartReelTopic.trim() ? `Thema: ${smartReelTopic.trim()}` : null,
+    smartReelGoal.trim() ? `Fokus: ${smartReelGoal.trim()}` : null,
+    smartReelPlatformLabel ? `Plattform: ${smartReelPlatformLabel}` : null,
+    smartReelSpeechLabel ? `Sprechmodus: ${smartReelSpeechLabel}` : null,
+    smartReelDurationLabel ? `Ziellänge: ${smartReelDurationLabel}` : null,
+    smartReelTranscript.trim() ? "Nutze das Referenz-Transcript nur als Vorbild für Hook, Rhythmus und Dramaturgie, nicht für 1:1-Kopie." : null,
+  ].filter(Boolean).join('\n');
+  const smartReelContextBlock = smartReelModeEnabled
+    ? [
+        "SMART-REEL-KONTEXT:",
+        smartReelPlatformLabel ? `- Zielplattform: ${smartReelPlatformLabel}` : null,
+        smartReelSpeechLabel ? `- Sprechmodus: ${smartReelSpeechLabel}` : null,
+        smartReelTopic.trim() ? `- Zielthema: ${smartReelTopic.trim()}` : null,
+        smartReelGoal.trim() ? `- Gewünschter Fokus / Outcome: ${smartReelGoal.trim()}` : null,
+        smartReelDurationLabel ? `- Gewünschte Länge: ${smartReelDurationLabel}` : null,
+        smartReelTranscript.trim() ? `- Referenz-Transcript:\n${smartReelTranscript.trim()}` : null,
+        storyCharacterProfiles.length > 0 ? `- Charakter-Referenzen:\n${storyCharacterProfilesGermanBlock}` : null,
+        smartReelStyleBlockGerman ? `- Stil-Referenzen:\n${smartReelStyleBlockGerman}` : null,
+        smartReelReferenceSummary.trim() ? `- Visuelle Gesamtanalyse: ${smartReelReferenceSummary.trim()}` : null,
+        "- Wichtig: Nutze das Referenzmaterial nur als Qualitäts-, Hook- und Stilvorbild. Nie Handlung, Formulierungen oder Aufbau 1:1 kopieren.",
+      ].filter(Boolean).join('\n')
+    : "";
+  const smartReelVisualLockEnglish = smartReelModeEnabled
+    ? [
+        smartReelReferenceSummary.trim() ? `OVERALL REFERENCE DIRECTION: ${smartReelReferenceSummary.trim()}` : null,
+        smartReelStyleBlockEnglish ? `STYLE REFERENCE LOCK:\n${smartReelStyleBlockEnglish}` : null,
+        smartReelPlatformLabel ? `TARGET PLATFORM: ${smartReelPlatformLabel}` : null,
+        smartReelTranscript.trim() ? "REFERENCE TRANSCRIPT: use only for pacing, hook mechanics, and clarity. Never copy wording or plot 1:1." : null,
+      ].filter(Boolean).join('\n')
+    : "";
+  const buildSmartReelStyleBlockGermanFromValues = (descriptions: string[]) =>
+    descriptions
+      .map((description, index) => sanitizeSceneField(description) ? `- Stilbild ${index + 1}: ${sanitizeSceneField(description)}` : "")
+      .filter(Boolean)
+      .join('\n');
+  const buildSmartReelStyleBlockEnglishFromValues = (descriptions: string[]) =>
+    descriptions
+      .map((description, index) => sanitizeSceneField(description) ? `- Style reference ${index + 1}: ${sanitizeSceneField(description)}` : "")
+      .filter(Boolean)
+      .join('\n');
+  const buildSmartReelVisualLockEnglishFromValues = (
+    descriptions: string[] = smartReelStyleDescriptionsRef.current,
+    overallDirection: string = smartReelReferenceSummaryRef.current
+  ) => {
+    if (!smartReelModeEnabled) return "";
+    const styleBlock = buildSmartReelStyleBlockEnglishFromValues(descriptions);
+    return [
+      sanitizeSceneField(overallDirection) ? `OVERALL REFERENCE DIRECTION: ${sanitizeSceneField(overallDirection)}` : null,
+      styleBlock ? `STYLE REFERENCE LOCK:\n${styleBlock}` : null,
+      smartReelPlatformLabel ? `TARGET PLATFORM: ${smartReelPlatformLabel}` : null,
+      smartReelTranscript.trim() ? "REFERENCE TRANSCRIPT: use only for pacing, hook mechanics, and clarity. Never copy wording or plot 1:1." : null,
+    ].filter(Boolean).join('\n');
+  };
   const findStoryCharacterProfile = (value: unknown): StoryCharacterProfile | null => {
     const normalized = normalizeCharacterIdentityToken(value);
     if (!normalized) return null;
@@ -829,6 +1083,7 @@ const Index = () => {
   const sceneAiUpdateText = sceneAiMode === "text" || sceneAiMode === "both";
   const sceneAiUpdateCamera = sceneAiMode === "camera" || sceneAiMode === "both";
   const sceneAiRegenerateImage = sceneAiMode === "image" || sceneAiMode === "both";
+  const effectiveStoryHook = getEffectiveStoryHook(storyCreatorMode, storyHook);
 
   // ============= SESSION PERSISTENCE =============
   // Save key state to sessionStorage so users can return to their work
@@ -850,18 +1105,43 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyHook', storyHook); } catch {} }, [storyHook]);
   useEffect(() => { try { sessionStorage.setItem('session_storyPacing', storyPacing); } catch {} }, [storyPacing]);
   useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
+  useEffect(() => { smartReelStyleDescriptionsRef.current = smartReelStyleDescriptions; }, [smartReelStyleDescriptions]);
+  useEffect(() => { smartReelReferenceSummaryRef.current = smartReelReferenceSummary; }, [smartReelReferenceSummary]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelModeEnabled', String(smartReelModeEnabled)); } catch {} }, [smartReelModeEnabled]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelTranscript', smartReelTranscript); } catch {} }, [smartReelTranscript]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelReferenceSummary', smartReelReferenceSummary); } catch {} }, [smartReelReferenceSummary]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelPlatform', smartReelPlatform); } catch {} }, [smartReelPlatform]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelTopic', smartReelTopic); } catch {} }, [smartReelTopic]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelGoal', smartReelGoal); } catch {} }, [smartReelGoal]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelDuration', smartReelDuration); } catch {} }, [smartReelDuration]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelSpeechMode', smartReelSpeechMode); } catch {} }, [smartReelSpeechMode]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_smartReelChatMessages', JSON.stringify(smartReelChatMessages));
+    } catch {}
+  }, [smartReelChatMessages]);
+  useEffect(() => { try { sessionStorage.setItem('session_smartReelChatStep', smartReelChatStep); } catch {} }, [smartReelChatStep]);
 
   const handleStoryCreatorModeChange = (mode: "general" | "reel") => {
     setStoryCreatorMode(mode);
     if (mode === "reel") {
       setStoryboardFormat("9:16");
-      setStoryPacing("fast-cuts");
-      setStoryVideoMood("action");
-      setStoryColorMood("neon");
+      setStoryPacing("instant-action");
+      setStoryVideoMood("dramatic");
+      setStoryColorMood("bright");
+      setStoryTransitionType("hard-cut");
       if (storyPointCount < 3) setStoryPointCount(3);
       if (storyPointCount > 6) setStoryPointCount(6);
+    } else {
+      setSmartReelModeEnabled(false);
     }
   };
+
+  useEffect(() => {
+    if (storyCreatorMode === "reel" && smartReelModeEnabled && smartReelChatMessages.length === 0) {
+      startSmartReelChat();
+    }
+  }, [storyCreatorMode, smartReelModeEnabled, smartReelChatMessages.length]);
 
   useEffect(() => {
     try {
@@ -1223,6 +1503,13 @@ Deine Aufgabe:
 - Wenn die Anweisung gezielt ist, aendere nur die betroffenen Felder.
 - Halte die Szene konsistent zur Story-Idee, zum Hauptort und zu den Nachbarszenen.
 - Du bearbeitest nur diese eine Szene, nicht das ganze Storyboard.
+${storyCreatorMode === "reel" ? `
+
+REEL-MODUS:
+- Optimiere auf Hook in Sekunde 1, sofortige Lesbarkeit auf dem Handy und genau einen dominanten Fokus.
+- Vermeide Filler, statische Einleitungen, unklare Mehrfachaktionen und visuelle Unentschlossenheit.
+- Wenn du summary, detailedDescription, composition, movement oder videoPrompt anfasst, priorisiere scroll-stopping Klarheit.
+- Jede Aenderung soll das Weiterschauen wahrscheinlicher machen.` : ""}
 
 STORY-KONTEXT:
 - Story-Idee: ${storyIdea || "nicht gesetzt"}
@@ -1433,11 +1720,17 @@ ${currentPoint.emotion ? `Emotion: ${currentPoint.emotion}` : ''}
 ${currentPoint.keyAction ? `Aktion: ${currentPoint.keyAction}` : ''}
 ${currentPoint.cameraAngle ? `Kamerawinkel: ${currentPoint.cameraAngle}` : ''}
 ${currentPoint.shotType ? `Shot-Typ: ${currentPoint.shotType}` : ''}
+${storyCreatorMode === "reel" ? `
+
+REEL-MODUS:
+- Halte den Prompt kurz, hart und visuell eindeutig.
+- Hook im ersten Beat, genau ein dominanter Fokus, keine langsame Einleitung.
+- Das Ergebnis muss auf einem Handy sofort lesbar und scroll-stopping sein.` : ""}
 
 NUTZERANWEISUNG:
 "${sceneAssistantInput.trim() || 'Optimiere den Video-Prompt für maximale visuelle Wirkung und Detailgrad.'}"
 
-Erstelle einen VERBESSERTEN Video-Prompt (ca. 200 Wörter, auf Englisch) basierend auf der Nutzeranweisung.
+Erstelle einen VERBESSERTEN Video-Prompt (${getVideoPromptWordTarget(storyCreatorMode)} Wörter, auf Englisch) basierend auf der Nutzeranweisung.
 Der Prompt soll präzise Kamerabewegungen, Charakter-Aktionen, Licht und Atmosphäre beschreiben.
 
 Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklärungen.`;
@@ -1476,6 +1769,283 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
       await regenerateSingleStoryScene(expandedStoryPointIndex);
     }
   };
+  const getSmartReelSceneCount = (duration: "" | "15-30" | "30-60" | "60+") => {
+    if (duration === "15-30") return 3;
+    if (duration === "30-60") return 5;
+    if (duration === "60+") return 6;
+    return 4;
+  };
+
+  const startSmartReelChat = (reset = false) => {
+    if (!reset && smartReelChatMessages.length > 0) return;
+    setSmartReelChatMessages([
+      {
+        role: "assistant",
+        text: "Ich stelle dir jetzt die wichtigsten Fragen fuer dein Reel. Danach kannst du wie gewohnt Ideen, Storyboard, Bilder und Videos generieren."
+      },
+      {
+        role: "assistant",
+        text: "Willst du einen separaten Sprecher oder sollen die Avatare selbst sprechen?"
+      }
+    ]);
+    setSmartReelChatStep("speech");
+    setSmartReelChatInput("");
+  };
+
+  const appendSmartReelAssistantQuestion = (step: SmartReelChatStep) => {
+    const question = step === "platform"
+      ? "Für welches Portal soll das Reel erstellt werden?"
+      : step === "topic"
+        ? "Worum geht es in deinem eigenen Video?"
+        : step === "goal"
+          ? "Was soll beim Zuschauer hängen bleiben oder passieren?"
+          : step === "duration"
+            ? "Wie lang soll das Reel ungefähr sein?"
+            : "Perfekt. Dein Smart Reel Briefing steht. Du kannst jetzt direkt Ideen generieren.";
+    setSmartReelChatMessages(prev => [...prev, { role: "assistant", text: question }]);
+    setSmartReelChatStep(step);
+  };
+
+  const handleSmartReelOptionAnswer = (value: string, label: string) => {
+    if (!smartReelModeEnabled) return;
+    setSmartReelChatMessages(prev => [...prev, { role: "user", text: label }]);
+
+    if (smartReelChatStep === "speech") {
+      const mode = value as "speaker" | "avatars";
+      setSmartReelSpeechMode(mode);
+      setStoryEnableSpeaker(true);
+      setStoryVoiceMode(mode === "avatars" ? "dialog" : "sprecher");
+      setStoryGenerationDirection("speaker-from-description");
+      appendSmartReelAssistantQuestion("platform");
+      return;
+    }
+
+    if (smartReelChatStep === "platform") {
+      const platform = value as "instagram" | "youtube" | "tiktok";
+      setSmartReelPlatform(platform);
+      setStoryCreatorMode("reel");
+      setStoryboardFormat("9:16");
+      setStoryPacing("instant-action");
+      appendSmartReelAssistantQuestion("topic");
+      return;
+    }
+
+    if (smartReelChatStep === "duration") {
+      const duration = value as "15-30" | "30-60" | "60+";
+      setSmartReelDuration(duration);
+      setStoryPointCount(getSmartReelSceneCount(duration));
+      setSmartReelChatStep("done");
+      setSmartReelChatMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Perfekt. Dein Briefing ist jetzt im Reel Creator hinterlegt. Wenn du Referenzbilder und Transcript ergänzt hast, kannst du direkt Ideen generieren."
+        }
+      ]);
+    }
+  };
+
+  const handleSmartReelTextSubmit = () => {
+    const text = smartReelChatInput.trim();
+    if (!text || !smartReelModeEnabled) return;
+
+    setSmartReelChatMessages(prev => [...prev, { role: "user", text }]);
+    setSmartReelChatInput("");
+
+    if (smartReelChatStep === "topic") {
+      setSmartReelTopic(text);
+      appendSmartReelAssistantQuestion("goal");
+      return;
+    }
+
+    if (smartReelChatStep === "goal") {
+      setSmartReelGoal(text);
+      appendSmartReelAssistantQuestion("duration");
+    }
+  };
+
+  const handleSmartReelStyleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const filesToProcess = Array.from(files).slice(0, maxSmartReelStyleImages - smartReelStyleImages.length);
+    if (filesToProcess.length === 0) {
+      e.target.value = "";
+      return;
+    }
+
+    const newImages: string[] = [];
+    for (const file of filesToProcess) {
+      try {
+        const base64 = await compressImageToFitSize(file);
+        newImages.push(base64);
+      } catch (error) {
+        console.error('Error compressing smart reel style image:', error);
+      }
+    }
+
+    if (newImages.length > 0) {
+      setSmartReelStyleImages(prev => {
+        const updated = [...prev, ...newImages].slice(0, maxSmartReelStyleImages);
+        saveToLocalStorage('smartReelStyleImages', updated);
+        return updated;
+      });
+      setSmartReelStyleDescriptions(prev => {
+        const updated = [...prev, ...newImages.map(() => "")].slice(0, maxSmartReelStyleImages);
+        saveToLocalStorage('smartReelStyleDescriptions', updated);
+        return updated;
+      });
+    }
+
+    e.target.value = "";
+  };
+
+  const removeSmartReelStyleImage = (index: number) => {
+    setSmartReelStyleImages(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('smartReelStyleImages', updated);
+      return updated;
+    });
+    setSmartReelStyleDescriptions(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('smartReelStyleDescriptions', updated);
+      return updated;
+    });
+  };
+
+  const ensureSmartReelTextReferencesReady = async () => {
+    const existingStyleDescriptions = smartReelStyleDescriptionsRef.current.map((value) => sanitizeSceneField(value)).filter(Boolean);
+    const existingOverallDirection = sanitizeSceneField(smartReelReferenceSummaryRef.current);
+    const needsStyleAnalysis = smartReelModeEnabled
+      && smartReelStyleImages.length > 0
+      && (existingStyleDescriptions.length < smartReelStyleImages.length || !existingOverallDirection);
+
+    if (needsStyleAnalysis) {
+      await analyzeSmartReelReferences();
+    }
+
+    const styleDescriptions = smartReelStyleDescriptionsRef.current.map((value) => sanitizeSceneField(value)).filter(Boolean);
+    const overallDirection = sanitizeSceneField(smartReelReferenceSummaryRef.current);
+
+    return {
+      styleDescriptions,
+      overallDirection,
+      styleBlockGerman: buildSmartReelStyleBlockGermanFromValues(styleDescriptions),
+      visualLockEnglish: buildSmartReelVisualLockEnglishFromValues(styleDescriptions, overallDirection),
+    };
+  };
+
+  const analyzeSmartReelReferences = async () => {
+    if (!apiKey || isAnalyzingSmartReelReferences) return;
+    if (!smartReelTranscript.trim() && storyReferenceImages.length === 0 && smartReelStyleImages.length === 0) return;
+
+    setIsAnalyzingSmartReelReferences(true);
+    try {
+      const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [{
+        text: `Du analysierst Referenzmaterial fuer einen Smart-Reel-Workflow.
+
+AUFGABE:
+- Beschreibe jede hochgeladene Charakter-Referenz so konkret, dass eine Video-KI Gesicht, Haare, Kleidung, Accessoires und Alterseindruck moeglichst konsistent nachbauen kann.
+- Beschreibe jede Stil-Referenz so konkret, dass Bildlook, Licht, Farbe, Kamera, Kontrast und Oberflaechen moeglichst genau nachgebaut werden koennen.
+- Nutze das Transcript nur fuer Hook, Rhythmus und Dramaturgie. Nicht fuer 1:1-Kopie.
+
+REFERENZ-TRANSCRIPT:
+${smartReelTranscript.trim() || "Kein Transcript vorhanden"}
+
+Gib NUR valides JSON zurueck:
+{
+  "characterDescriptions": [
+    { "index": 1, "name": "string", "description": "string" }
+  ],
+  "styleDescriptions": [
+    { "index": 1, "description": "string" }
+  ],
+  "overallDirection": "string"
+}`
+      }];
+
+      storyReferenceImages.forEach((imageUrl, index) => {
+        const { mimeType, base64 } = splitImageDataUrl(imageUrl);
+        parts.push({
+          text: `Charakterbild ${index + 1}${storyReferenceLabels[index]?.trim() ? ` mit Namenshinweis "${storyReferenceLabels[index].trim()}"` : ""}`
+        });
+        parts.push({ inlineData: { mimeType, data: base64 } });
+      });
+
+      smartReelStyleImages.forEach((imageUrl, index) => {
+        const { mimeType, base64 } = splitImageDataUrl(imageUrl);
+        parts.push({ text: `Stilbild ${index + 1}` });
+        parts.push({ inlineData: { mimeType, data: base64 } });
+      });
+
+      const resultText = await callGeminiOrFull(parts, {
+        model: "gemini-2.0-flash",
+        temperature: 0.3,
+        maxOutputTokens: 1600
+      });
+
+      if (!resultText) return;
+      const parsed = extractJsonFromAiResponse(resultText);
+      const normalizedStyleDescriptions = Array.isArray(parsed?.styleDescriptions)
+        ? parsed.styleDescriptions
+            .map((item: any) => sanitizeSceneField(item?.description))
+            .filter(Boolean)
+        : [];
+      const normalizedOverallDirection = sanitizeSceneField(parsed?.overallDirection);
+
+      if (Array.isArray(parsed?.characterDescriptions) && parsed.characterDescriptions.length > 0) {
+        setStoryReferenceLabels(prev => {
+          const updated = [...prev];
+          parsed.characterDescriptions.forEach((item: any) => {
+            const idx = Math.max(0, Number(item?.index || 1) - 1);
+            if (idx < maxStoryReferenceImages && sanitizeSceneField(item?.name) && !sanitizeSceneField(updated[idx])) {
+              updated[idx] = sanitizeSceneField(item.name);
+            }
+          });
+          saveToLocalStorage('storyReferenceLabels', updated);
+          return updated;
+        });
+        setStoryReferenceDescriptions(prev => {
+          const updated = [...prev];
+          parsed.characterDescriptions.forEach((item: any) => {
+            const idx = Math.max(0, Number(item?.index || 1) - 1);
+            if (idx < maxStoryReferenceImages && sanitizeSceneField(item?.description)) {
+              updated[idx] = sanitizeSceneField(item.description);
+            }
+          });
+          saveToLocalStorage('storyReferenceDescriptions', updated);
+          return updated;
+        });
+      }
+
+      if (Array.isArray(parsed?.styleDescriptions) && parsed.styleDescriptions.length > 0) {
+        setSmartReelStyleDescriptions(prev => {
+          const updated = [...prev];
+          parsed.styleDescriptions.forEach((item: any) => {
+            const idx = Math.max(0, Number(item?.index || 1) - 1);
+            if (idx < maxSmartReelStyleImages && sanitizeSceneField(item?.description)) {
+              updated[idx] = sanitizeSceneField(item.description);
+            }
+          });
+          saveToLocalStorage('smartReelStyleDescriptions', updated);
+          smartReelStyleDescriptionsRef.current = updated;
+          return updated;
+        });
+      }
+
+      setSmartReelReferenceSummary(normalizedOverallDirection);
+      smartReelReferenceSummaryRef.current = normalizedOverallDirection;
+
+      return {
+        styleDescriptions: normalizedStyleDescriptions,
+        overallDirection: normalizedOverallDirection,
+      };
+    } catch (error) {
+      console.error("Smart reel reference analysis error:", error);
+    } finally {
+      setIsAnalyzingSmartReelReferences(false);
+    }
+  };
 
   // Story Idea AI Assistant handler - generates multiple ideas
   const handleGenerateStoryIdea = async () => {
@@ -1484,39 +2054,47 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     const count = parseInt(ideaCount);
     const hasExistingIdea = storyIdea.trim().length > 0;
     const isModifyMode = hasExistingIdea;
+    const workflowInstruction = storyAiAssistantInput.trim();
+    const effectiveNewIdeaInstruction = workflowInstruction || (!isModifyMode ? smartReelIdeaSeed : "");
+    const plannerContextBlock = smartReelContextBlock ? `\n\n${smartReelContextBlock}` : "";
+    if (!effectiveNewIdeaInstruction && !isModifyMode) return;
     
     setIsGeneratingStoryAiIdea(true);
     try {
       const currentIdea = generatedIdeas[currentIdeaIndex] || storyIdea;
       
       const prompt = isModifyMode
-        ? `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten.
+        ? `Du bist ein Story-Autor fuer REALISTISCHE, lebensnahe Geschichten.
 
 AKTUELLE STORY-IDEE:
 "${currentIdea}"
 
-${storyAiAssistantInput.trim() ? `ÜNDERUNGSWUNSCH:\n"${storyAiAssistantInput.trim()}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
+${workflowInstruction ? `AENDERUNGSWUNSCH:\n"${workflowInstruction}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
+${plannerContextBlock}
 
-Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Ünderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
+Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewuenschten Aenderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
-- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausführliche, detaillierte Story-Idee (4-8 Sätze)
-- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
+- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausfuehrliche, detaillierte Story-Idee (4-8 Saetze)
+- NUR realistische, alltaegliche Szenarien! KEINE Fantasy, Magie, uebernatuerliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
+- Wenn eine Referenz vorhanden ist, adaptiere Hook, Figurenwirkung und Dramaturgie auf ein neues eigenes Video
 - Schreibe auf Deutsch
-${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
-        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
+${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklaerungen`
+        : `Du bist ein Story-Autor fuer REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
-"${storyAiAssistantInput.trim() || 'Erstelle realistische, detaillierte Story-Ideen'}"
+"${effectiveNewIdeaInstruction || 'Erstelle realistische, detaillierte Story-Ideen'}"
+${plannerContextBlock}
 
 WICHTIGE REGELN:
-- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausführliche Story-Idee ('} 6-10 Sätze)
-- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
+- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausfuehrliche Story-Idee ('} 6-10 Saetze)
+- NUR realistische, alltaegliche Szenarien! KEINE Fantasy, Magie, uebernatuerliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
-- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
+- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein fuer ein Storyboard
+- Wenn eine Referenz vorhanden ist, uebernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
 - Schreibe auf Deutsch
-${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
+${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklaerungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1568,6 +2146,7 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
           setStorySuggestions([]);
         }
       }
+
     } catch (error) {
       console.error("Story AI assistant error:", error);
     } finally {
@@ -1622,7 +2201,7 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const maxImages = 2; // Max 2 manuelle Uploads, 3. Bild kommt von letzter Szene
+      const maxImages = maxStoryReferenceImages;
       const allFiles = Array.from(files);
       const filesToProcess = allFiles.slice(0, maxImages - storyReferenceImages.length);
       
@@ -1644,17 +2223,17 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
       
       if (newImages.length > 0) {
         setStoryReferenceImages(prev => {
-          const updated = [...prev, ...newImages].slice(0, 2); // Max 2 manuelle Uploads
+          const updated = [...prev, ...newImages].slice(0, maxImages);
           saveToLocalStorage('storyReferenceImages', updated);
           return updated;
         });
         setStoryReferenceLabels(prev => {
-          const updated = [...prev, ...newImages.map(() => "")].slice(0, 2);
+          const updated = [...prev, ...newImages.map(() => "")].slice(0, maxImages);
           saveToLocalStorage('storyReferenceLabels', updated);
           return updated;
         });
         setStoryReferenceDescriptions(prev => {
-          const updated = [...prev, ...newImages.map(() => "")].slice(0, 2);
+          const updated = [...prev, ...newImages.map(() => "")].slice(0, maxImages);
           saveToLocalStorage('storyReferenceDescriptions', updated);
           return updated;
         });
@@ -1688,6 +2267,11 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
     setIsGeneratingStoryboard(true);
     
     try {
+      const storyboardGenerationConfig = {
+        temperature: storyCreatorMode === "reel" ? 0.55 : 0.8,
+        maxOutputTokens: storyCreatorMode === "reel" ? 3200 : 4000,
+        responseMimeType: "application/json" as const,
+      };
       const storyCharacterNames = storyCharacterProfiles.map((profile) => profile.name);
       const storyCharacterDialogueRule = storyCharacterNames.length > 0
         ? `  - falls voiceMode = "dialog": JEDER gesprochene Satz MUSS mit einem exakten Charakternamen aus dieser Liste beginnen: ${storyCharacterNames.map((name) => `"${name}"`).join(', ')}`
@@ -1711,31 +2295,12 @@ EINGABEN:
 - videoMood: "${storyVideoMood}"
 - colorMood: "${storyColorMood}"
 - pacing: "${storyPacing}"
-${storyHook.trim() ? `- hook: "${storyHook.trim()}"` : ''}
+${effectiveStoryHook ? `- hook: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
-${storyCreatorMode === "reel" ? `
-REEL-MODUS - KRITISCHE ANWEISUNGEN (höchste Priorität):
-Du erstellst ein Storyboard für ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
-Jede Szene wird zu einem 3-5 Sekunden Videoclip. Das gesamte Reel dauert 15-60 Sekunden.
-
-REEL-DRAMATURGIE:
-- Szene 1 = DER HOOK: Muss innerhalb von 1-2 Sekunden visuell schockieren, überraschen oder emotional packen. Kein langsamer Aufbau. Sofortige visuelle Spannung.
-- Jede weitere Szene = NEUER VISUELLER PUNCH: Jede Szene muss einen eigenen "Wow-Moment" haben - Perspektivwechsel, emotionaler Umschwung, überraschende Wendung.
-- Letzte Szene = PAYOFF/CLIFFHANGER: Entweder ein befriedigender Abschluss ODER ein offenes Ende das zum Kommentieren/Teilen anregt.
-
-REEL-VISUELLE REGELN:
-- KONTRASTREICHE Szenenübergänge: Jede Szene muss sich VISUELL STARK von der vorherigen unterscheiden (anderer Kamerawinkel, andere Entfernung, andere Bildkomposition)
-- Extreme Kamerawinkel bevorzugen: Close-Ups für Emotionen, Low-Angle für Macht, Dutch-Angle für Spannung
-- Dynamische Aktionen: Keine statischen Posen. Jede Szene zeigt BEWEGUNG oder einen emotionalen AUSBRUCH
-- Vertikales 9:16 Format: Komposition muss vertikal gedacht werden - Gesichter und Aktionen im oberen Drittel
-
-REEL-INHALTLICHE REGELN:
-- Geschichten die POLARISIEREN oder EMOTIONEN auslösen (Kontroversen, Dilemmas, unerwartete Wendungen)
-- Charaktere zeigen ÜBERTRIEBENE Emotionen - subtil funktioniert nicht auf Social Media
-- Jede Szene muss auch OHNE Ton visuell verständlich und fesselnd sein
-- Denke an "Scroll-Stopping Content": Was würde jemanden beim Scrollen stoppen lassen?
-` : ''}
+${smartReelStyleBlockGerman ? `STIL-REFERENZEN:\n${smartReelStyleBlockGerman}` : ''}
+${smartReelContextBlock ? `${smartReelContextBlock}\n` : ''}
+${storyCreatorMode === "reel" ? getReelStoryboardDirective(effectiveStoryHook) : ''}
 HARTE AUSGABEREGELN:
 - Antworte ausschlieÜlich mit einem einzigen validen JSON-Objekt.
 - Das erste Zeichen deiner Antwort muss { sein.
@@ -1760,10 +2325,14 @@ INHALTSREGELN:
 - Wenn Referenzcharaktere vorhanden sind, bleibt jeder Name fest an genau sein Referenzbild gebunden.
 - Frisur, Gesicht, Kleidung, Accessoires und markante Merkmale der benannten Charaktere bleiben über alle Szenen konsistent, sofern die Geschichte keine explizite Ünderung verlangt.
 - Verwende in participants und dialogText nur die exakten Charakternamen aus den Referenzcharakteren.
+- Die letzte Szene soll den staerksten Payoff, Twist oder Ausblick des neuen Videos liefern.
 
 ERLAUBTE WERTE:
 - cameraAngle: "eye-level" | "low-angle" | "high-angle" | "dutch-angle" | "over-shoulder" | "bird-eye" | "worm-eye"
 - shotType: "extreme-close-up" | "close-up" | "medium-close-up" | "medium-shot" | "medium-full-shot" | "full-shot" | "long-shot" | "extreme-long-shot"
+- audienceEffect: "spannung" | "empathie" | "freude" | "unbehagen" | "neugier" | "erleichterung" | "trauer" | "hoffnung"
+- composition: "zentriert" | "drittel-regel" | "symmetrisch" | "diagonal" | "rahmen-im-rahmen"
+- movement: "keine" | "dolly-in" | "dolly-out" | "truck" | "tilt" | "pan" | "crane" | "arc"
 
 JSON-SCHEMA:
 {
@@ -1777,6 +2346,9 @@ JSON-SCHEMA:
       "emotion": "string",
       "detailedDescription": "string",
       "dialogText": "string",
+      "audienceEffect": "one of allowed values",
+      "composition": "one of allowed values",
+      "movement": "one of allowed values",
       "continuityNotes": "string",
       "cameraAngle": "one of allowed values",
       "shotType": "one of allowed values"
@@ -1790,6 +2362,9 @@ FELDREGELN:
 - "specificArea": konkreter Bereich innerhalb des Hauptorts
 - "keyAction": genau eine zentrale sichtbare Aktion oder Gestik
 - "emotion": klar sichtbar und visuell darstellbar
+- "audienceEffect": welche Zuschauerreaktion oder Stimmung die Szene ausloesen soll
+- "composition": die Bildlogik fuer Fokus und Lesbarkeit
+- "movement": die dominante Kamerabewegung oder "keine"
 - "detailedDescription":
   - falls enableSceneDescription = true:
     - falls enableSpeaker = true und generationDirection = "description-from-speaker":
@@ -1818,12 +2393,49 @@ ${storyCharacterDialogueRule}
   - falls Referenzcharaktere vorhanden sind, erinnere an deren feste Identität
 - "cameraAngle": nur erlaubter Enum-Wert
 - "shotType": nur erlaubter Enum-Wert
+- "audienceEffect": nur erlaubter Enum-Wert
+- "composition": nur erlaubter Enum-Wert
+- "movement": nur erlaubter Enum-Wert
 
 WICHTIG:
 - Wenn enableSpeaker = false, darf "dialogText" nicht im JSON vorkommen.
 - Die Anzahl der Szenen muss exakt sceneCount entsprechen.
 - Verwende nur Strings, Arrays und Objekte, die in validem JSON erlaubt sind.
 - Gib jetzt nur das JSON zurück.`;
+
+      let primaryText: string | null = null;
+      let storyboardApplied = false;
+      const applyParsedStoryboard = (parsed: any, minimumCount = 1) => {
+        const scenes = Array.isArray(parsed?.scenes) ? parsed.scenes.filter(Boolean) : [];
+        if (scenes.length < minimumCount) return false;
+
+        setStoryboardMainLocation(parsed?.mainLocation || "");
+        setFlippedCards(new Set());
+        setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
+        setStoryboardAnimationKey(prev => prev + 1);
+        storyboardApplied = true;
+        return true;
+      };
+
+      const requestStoryboardText = async (promptText: string) => {
+        const storyboardResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: promptText }]
+              }],
+              generationConfig: storyboardGenerationConfig
+            }),
+          }
+        );
+
+        if (!storyboardResponse.ok) return null;
+        const storyboardData = await storyboardResponse.json();
+        return storyboardData.candidates?.[0]?.content?.parts?.[0]?.text || null;
+      };
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1834,18 +2446,15 @@ WICHTIG:
             contents: [{
               parts: [{ text: storyPromptText }]
             }],
-            generationConfig: {
-              temperature: 0.8,
-              maxOutputTokens: 4000,
-              responseMimeType: "application/json"
-            }
+            generationConfig: storyboardGenerationConfig
           }),
         }
       );
 
       if (response.ok) {
         const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        primaryText = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+        const text = primaryText;
         if (text) {
           try {
             const parsed = extractJsonFromAiResponse(text);
@@ -1857,6 +2466,7 @@ WICHTIG:
               setFlippedCards(new Set());
               setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
               setStoryboardAnimationKey(prev => prev + 1);
+              storyboardApplied = true;
             } else {
               // AI returned fewer scenes than requested - retry once
               console.warn(`⚠️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
@@ -1873,11 +2483,7 @@ WICHTIG:
                         text: `${storyPromptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
                       }]
                     }],
-                    generationConfig: {
-                      temperature: 0.8,
-                      maxOutputTokens: 4000,
-                      responseMimeType: "application/json"
-                    }
+                    generationConfig: storyboardGenerationConfig
                   }),
                 }
               );
@@ -1892,6 +2498,7 @@ WICHTIG:
                     setFlippedCards(new Set());
                     setStoryPoints(retryScenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
                     setStoryboardAnimationKey(prev => prev + 1);
+                    storyboardApplied = true;
                   }
                 }
               }
@@ -1919,6 +2526,61 @@ WICHTIG:
               detailedDescription: point
             })));
             setStoryboardAnimationKey(prev => prev + 1);
+            storyboardApplied = points.length > 0;
+          }
+        }
+      }
+
+      if (!storyboardApplied && storyCreatorMode === "reel") {
+        console.warn("Reel storyboard primary prompt returned no usable scenes, trying simplified fallback...");
+
+        const simplifiedReelPrompt = `Du bist ein Storyboard-Autor fuer kurze vertikale Reels.
+
+AUFGABE:
+Antworte nur mit validem JSON.
+Erstelle genau ${storyPointCount} kurze Szenen fuer ein 9:16 Reel.
+
+EINGABEN:
+- Story-Idee: "${storyIdea}"
+- Hook: "${effectiveStoryHook}"
+- Stil: "${storyArtStyle}"
+
+REGELN:
+- Szene 1 startet direkt mit dem staerksten Moment
+- Jede Szene zeigt genau einen klaren Fokus und eine klare Aktion
+- Keine Filler-Shots
+- Jede Szene muss auf dem Handy sofort lesbar sein
+- Die Geschichte bleibt realistisch
+
+ERLAUBTE cameraAngle Werte:
+"eye-level", "low-angle", "high-angle", "dutch-angle", "over-shoulder", "bird-eye", "worm-eye"
+
+ERLAUBTE shotType Werte:
+"extreme-close-up", "close-up", "medium-close-up", "medium-shot", "medium-full-shot", "full-shot", "long-shot", "extreme-long-shot"
+
+JSON:
+{
+  "mainLocation": "string",
+  "scenes": [
+    {
+      "summary": "string",
+      "specificArea": "string",
+      "keyAction": "string",
+      "emotion": "string",
+      "detailedDescription": "string",
+      "cameraAngle": "allowed value",
+      "shotType": "allowed value"
+    }
+  ]
+}`;
+
+        const fallbackText = await requestStoryboardText(simplifiedReelPrompt);
+        if (fallbackText) {
+          try {
+            const fallbackParsed = extractJsonFromAiResponse(fallbackText);
+            applyParsedStoryboard(fallbackParsed, 1);
+          } catch (fallbackError) {
+            console.error("Reel fallback storyboard parse failed:", fallbackError);
           }
         }
       }
@@ -2498,6 +3160,7 @@ ${cameraInstruction || "Standard eye-level, medium shot framing."}
 SCENE SETTING:
 Location: ${globalMainLocation}, specifically ${sceneSpecificArea}.
 ${storyText}
+${buildSmartReelVisualLockEnglishFromValues() ? `\n${buildSmartReelVisualLockEnglishFromValues()}\n` : ""}
 
 ${imageCharacterIdentityBlock}
 
@@ -2568,7 +3231,7 @@ CONTENT COMPLIANCE:
 ${storyCreatorMode === "reel" ? `
 REEL MODE - CRITICAL PRIORITY:
 This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
-Each scene = 3-5 second clip. Total reel = 15-60 seconds.
+Each scene is a short beat-sized clip. Total runtime follows the user brief.
 RULES FOR REEL PROMPTS:
 - FIRST FRAME must be visually explosive - no slow intros, no establishing shots
 - Every second counts: Pack maximum visual information into minimum time
@@ -2579,26 +3242,28 @@ RULES FOR REEL PROMPTS:
 - Exaggerated emotions and dramatic lighting over subtle, realistic aesthetics
 - Colors should POP: High saturation, strong contrast, cinematic color grading
 ` : ''}
+${storyCreatorMode === "reel" ? getReelVideoPromptDirective(effectiveStoryHook) : ''}
 FULL STORY ARC (${currentStoryPoints.length} scenes):
 ${storySynopsis}
 
 CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${dialogInfo}
 
 ${buildEnglishCharacterIdentityBlock(scenePoint)}
+${buildSmartReelVisualLockEnglishFromValues() ? `\n${buildSmartReelVisualLockEnglishFromValues()}\n` : ""}
 
 NARRATIVE CONTEXT:
 - Previous: ${prevText ? `"${prevText}" - end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
 - Next: ${nextText ? `"${nextText}" - this scene must set up a logical visual transition` : "None (this is the final scene - end with impact)"}
 
-Write a punchy video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words, English):
+Write a punchy video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic - fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed - smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful - high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching - intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark - shadows, intrigue' : 'Cheerful/Light - bright, upbeat'}
-- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
-${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+- PACING: ${getStoryPacingInstruction(storyPacing, storyCreatorMode)}
+- MOOD: ${getStoryMoodInstruction(storyVideoMood)}
+- COLOR PALETTE: ${getStoryColorInstruction(storyColorMood, storyCreatorMode)}
+${effectiveStoryHook ? `- HOOK DIRECTIVE: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
@@ -2714,6 +3379,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     try {
       // Get character reference images from STORY reference images (URLs) as data URLs
       const characterBase64Images: string[] = [];
+      const styleBase64Images: string[] = [];
       console.log(`- Loading ${storyReferenceImages.length} story reference images...`);
       
       for (const imageUrl of storyReferenceImages) {
@@ -2741,6 +3407,20 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         return;
       }
       
+      await ensureSmartReelTextReferencesReady();
+
+      for (const imageUrl of smartReelStyleImages) {
+        try {
+          const response = await fetch(imageUrl);
+          if (!response.ok) continue;
+          const blob = await response.blob();
+          const dataUrl = await blobToDataUrl(blob);
+          styleBase64Images.push(dataUrl);
+        } catch (error) {
+          console.error('Error converting smart reel style image to base64:', error);
+        }
+      }
+      
       let successCount = 0;
       const RETRIES_PER_CYCLE = 3;
       const MAX_CYCLES = 4;
@@ -2752,7 +3432,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
         setGeneratingStoryImageIndex(sceneIndex);
         
         // Jede Szene verwendet nur die Story-Referenzbilder.
-        const sceneReferenceImages = [...characterBase64Images];
+        const sceneReferenceImages = [...characterBase64Images, ...styleBase64Images];
         console.log(`Szene ${sceneIndex + 1}: Verwende ${sceneReferenceImages.length} Original-Referenzbilder`);
         
         let result: any = null;
@@ -2862,6 +3542,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     
     incrementGeneration();
     setIsGeneratingVideoPrompts(true);
+    await ensureSmartReelTextReferencesReady();
     
     for (let i = 0; i < storyPoints.length; i++) {
       const point = storyPoints[i];
@@ -2912,7 +3593,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
 ${storyCreatorMode === "reel" ? `
 REEL MODE - CRITICAL PRIORITY:
 This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
-Each scene = 3-5 second clip. Total reel = 15-60 seconds.
+Each scene is a short beat-sized clip. Total runtime follows the user brief.
 RULES FOR REEL PROMPTS:
 - FIRST FRAME must be visually explosive - no slow intros
 - Every second counts: Maximum visual density in minimum time
@@ -2922,12 +3603,14 @@ RULES FOR REEL PROMPTS:
 - "Scroll-stopping" visuals: Exaggerated emotions, dramatic lighting, high saturation
 - Colors must POP with strong contrast and cinematic grading
 ` : ''}
+${storyCreatorMode === "reel" ? getReelVideoPromptDirective(effectiveStoryHook) : ''}
 FULL STORY ARC (${storyPoints.length} scenes):
 ${storySynopsis}
 
 CURRENT SCENE (${i + 1}/${storyPoints.length}): "${sceneText}"${dialogLine}
 
 ${characterIdentityBlock}
+${buildSmartReelVisualLockEnglishFromValues() ? `\n${buildSmartReelVisualLockEnglishFromValues()}\n` : ""}
 
 SCENE METADATA:
 ${metadataLines.length > 0 ? metadataLines.join('\n') : 'No specific settings'}
@@ -2937,98 +3620,59 @@ NARRATIVE CONTEXT:
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
 - Next: ${nextSceneText ? `"${nextSceneText}" - this scene must set up a logical visual transition to the next` : "None (this is the final scene - end with maximum impact)"}
 
-Write a punchy video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words, English):
+Write a punchy video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic - fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed - smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful - high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching - intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark - shadows, intrigue' : 'Cheerful/Light - bright, upbeat'}
-- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
-${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+- PACING: ${getStoryPacingInstruction(storyPacing, storyCreatorMode)}
+- MOOD: ${getStoryMoodInstruction(storyVideoMood)}
+- COLOR PALETTE: ${getStoryColorInstruction(storyColorMood, storyCreatorMode)}
+${effectiveStoryHook ? `- HOOK DIRECTIVE: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 ${VEO_PROMPT_WRITER_COMPLIANCE_BLOCK}
 
 Respond ONLY with JSON:
 {
-  "videoPrompt": "The complete English video prompt (${storyCreatorMode === "reel" ? "80-100" : "80-120"} words)",
+  "videoPrompt": "The complete English video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words)",
   "cameraMovement": "descriptive camera movement id",
   "startState": "Start frame description (1 sentence)",
   "motion": "Motion description (1 sentence)",
   "endState": "End frame description (1 sentence)"
 }`;
 
-      // Collect reference images for visual context
+      // Collect a maximum of 3 image references for the Veo-adjacent prompt writer.
+      // Style images are translated to text beforehand and are NOT attached as images here.
       const videoReferenceImages: string[] = [];
-      
-      // Add global story reference images
-      for (const imageUrl of storyReferenceImages) {
+      const loadImageAsDataUrl = async (imageUrl?: string) => {
+        if (!imageUrl || videoReferenceImages.length >= VEO_REFERENCE_IMAGE_LIMIT) return;
         try {
-          const imgResponse = await fetch(imageUrl);
-          const blob = await imgResponse.blob();
-          const base64 = await new Promise<string>((resolve) => {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const dataUrl = await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
             reader.readAsDataURL(blob);
           });
-          videoReferenceImages.push(base64);
+          videoReferenceImages.push(dataUrl);
         } catch (e) {
-          console.warn("Could not load story reference image for video prompt:", e);
+          console.warn("Could not load image reference for video prompt:", e);
         }
+      };
+
+      await loadImageAsDataUrl(point.generatedImage);
+      for (const imageUrl of storyReferenceImages.slice(0, VEO_REFERENCE_IMAGE_LIMIT)) {
+        if (videoReferenceImages.length >= VEO_REFERENCE_IMAGE_LIMIT) break;
+        await loadImageAsDataUrl(imageUrl);
       }
-      
-      // Add previous scene's generated image as reference (i-1)
-      if (i > 0 && storyPoints[i - 1]?.generatedImage) {
-        try {
-          const prevImgResponse = await fetch(storyPoints[i - 1].generatedImage!);
-          const prevBlob = await prevImgResponse.blob();
-          const prevBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(prevBlob);
-          });
-          videoReferenceImages.push(prevBase64);
-        } catch (e) {
-          console.warn("Could not load previous scene image for video prompt:", e);
-        }
+      if (videoReferenceImages.length < VEO_REFERENCE_IMAGE_LIMIT) {
+        await loadImageAsDataUrl(storyPoints[i - 1]?.generatedImage);
       }
-      
-      // Add current scene's generated image as START-FRAME reference (i)
-      if (point.generatedImage) {
-        try {
-          const currentImgResponse = await fetch(point.generatedImage);
-          const currentBlob = await currentImgResponse.blob();
-          const currentBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(currentBlob);
-          });
-          videoReferenceImages.push(currentBase64);
-        } catch (e) {
-          console.warn("Could not load current scene image for video prompt:", e);
-        }
+      if (videoReferenceImages.length < VEO_REFERENCE_IMAGE_LIMIT) {
+        await loadImageAsDataUrl(storyPoints[i + 1]?.generatedImage);
       }
-      
-      // Add next scene's generated image as END-FRAME reference (i+1)
-      if (storyPoints[i + 1]?.generatedImage) {
-        try {
-          const nextImgResponse = await fetch(storyPoints[i + 1].generatedImage!);
-          const nextBlob = await nextImgResponse.blob();
-          const nextBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(nextBlob);
-          });
-          videoReferenceImages.push(nextBase64);
-        } catch (e) {
-          console.warn("Could not load next scene image for video prompt:", e);
-        }
-      }
-      
-      const prevCount = (i > 0 && storyPoints[i - 1]?.generatedImage) ? 1 : 0;
-      const currentCount = point.generatedImage ? 1 : 0;
-      const nextCount = storyPoints[i + 1]?.generatedImage ? 1 : 0;
-      console.log(`- Szene ${i + 1}: ${videoReferenceImages.length} Referenzbilder für Video-Prompt (${storyReferenceImages.length} global + ${prevCount} vorherige + ${currentCount} aktuelle + ${nextCount} nächste Szene)`);
+
+      console.log(`- Szene ${i + 1}: ${videoReferenceImages.length}/${VEO_REFERENCE_IMAGE_LIMIT} Bildreferenzen fuer den Video-Prompt`);
 
       try {
         // Build parts: text + optional reference images
@@ -3545,6 +4189,7 @@ Respond ONLY with JSON:
     setIsGeneratingVideos(true);
     
     let freshPoint = storyPointsRef.current[sceneIndex];
+    await ensureSmartReelTextReferencesReady();
     
     // Regenerate video prompt with latest dialogText and scene data
     try {
@@ -3567,6 +4212,7 @@ Respond ONLY with JSON:
       const characterIdentityBlock = buildEnglishCharacterIdentityBlock(freshPoint);
       
       const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
+${storyCreatorMode === "reel" ? getReelVideoPromptDirective(effectiveStoryHook) : ""}
 
 FULL STORY ARC (${currentStoryPoints.length} scenes):
 ${storySynopsis}
@@ -3574,20 +4220,21 @@ ${storySynopsis}
 CURRENT SCENE (${sceneIndex + 1}/${currentStoryPoints.length}): "${storyText}"${dialogInfo}
 
 ${characterIdentityBlock}
+${buildSmartReelVisualLockEnglishFromValues() ? `\n${buildSmartReelVisualLockEnglishFromValues()}\n` : ""}
 
 NARRATIVE CONTEXT:
 - Previous: ${prevText ? `"${prevText}" - end state: "${previousEndState || 'N/A'}"` : "None (this is the first scene)"}
 - Purpose: What emotional/narrative beat does this scene deliver in the overall arc?
 - Next: ${nextText ? `"${nextText}" - this scene must set up a logical visual transition` : "None (this is the final scene - end with impact)"}
 
-Write a punchy video prompt (80-120 words, English):
+Write a punchy video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words, English):
 - HOOK: Opening frame must grab attention instantly
 - ACTION: Core movement and emotion that drives the story forward
 - CONTINUITY: Visual elements must logically connect to previous/next scene
-- PACING: ${storyPacing === 'instant-action' ? 'Action within first 2 seconds' : storyPacing === 'slow-build' ? 'Slow build-up over 3-5 seconds' : storyPacing === 'tension-arc' ? 'Tension arc with dramatic payoff' : 'Fast rapid cuts throughout'}
-- MOOD: ${storyVideoMood === 'action' ? 'Action/Dynamic - fast cuts, intense energy' : storyVideoMood === 'calm' ? 'Calm/Relaxed - smooth movements, serene' : storyVideoMood === 'dramatic' ? 'Dramatic/Suspenseful - high stakes, tension' : storyVideoMood === 'emotional' ? 'Emotional/Touching - intimate, heartfelt' : storyVideoMood === 'mysterious' ? 'Mysterious/Dark - shadows, intrigue' : 'Cheerful/Light - bright, upbeat'}
-- COLOR PALETTE: ${storyColorMood === 'warm' ? 'Warm golden hour tones' : storyColorMood === 'cold' ? 'Cool blue tones' : storyColorMood === 'dark' ? 'Dark noir aesthetic' : storyColorMood === 'bright' ? 'Bright friendly lighting' : storyColorMood === 'neon' ? 'Neon cyberpunk palette' : 'Natural realistic colors'}
-${storyHook.trim() ? `- HOOK DIRECTIVE: "${storyHook.trim()}"` : ''}
+- PACING: ${getStoryPacingInstruction(storyPacing, storyCreatorMode)}
+- MOOD: ${getStoryMoodInstruction(storyVideoMood)}
+- COLOR PALETTE: ${getStoryColorInstruction(storyColorMood, storyCreatorMode)}
+${effectiveStoryHook ? `- HOOK DIRECTIVE: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
@@ -3758,9 +4405,16 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     const sceneCharacterProfiles = resolveSceneCharacterProfiles(point);
     
     lines.push(`Scene ${sceneIndex + 1} of ${storyPoints.length}`);
+    if (storyCreatorMode === "reel") {
+      lines.push("Delivery Format: vertical 9:16 social media reel");
+      lines.push(`Hook Priority: ${effectiveStoryHook}`);
+      lines.push("Reel Constraint: one dominant focal subject and one instantly readable action");
+      lines.push("Visual Goal: mobile-readable frame, no filler, strong emotional clarity");
+    }
     
     const styleDesc = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "";
     if (styleDesc) lines.push(`Art Style: ${styleDesc}`);
+    if (buildSmartReelVisualLockEnglishFromValues()) lines.push(buildSmartReelVisualLockEnglishFromValues());
     
     const shotType = point.shotType ? (shotTypeToEnglish[point.shotType] || point.shotType) : "medium shot";
     lines.push(`Shot Type: ${shotType}`);
@@ -3851,6 +4505,9 @@ Rules:
 - The character must have a NEW pose matching the scene action.
 - Do NOT copy the visual style or medium of reference images.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
 - Each scene must reflect its UNIQUE settings. Do NOT default to generic descriptions.
+${storyCreatorMode === "reel" ? `- REEL MODE: This image is a keyframe for a vertical reel, so it must communicate the hook instantly on a phone screen.
+- REEL MODE: Keep ONE dominant focal subject/action, with strong silhouette, strong contrast, and zero visual clutter.
+- REEL MODE: Avoid slow establishing-shot energy, passive posing, and weak emotional reads.` : ""}
 - CONTENT COMPLIANCE: All content is purely fictional and artistic. Reference images are digitally created artwork. All characters are clearly adults (18+).
 - Output ONLY the image prompt text, nothing else. No explanations, no markdown, no quotes.
 
@@ -4261,9 +4918,10 @@ ${sceneContext}`;
 - REEL-OPTIMIERT: Denke an viralen TikTok-Content mit Millionen Views
 - Übertriebene Emotionen: Subtilität funktioniert NICHT auf Social Media
 - Jeder Satz muss "scroll-stopping" sein - warum sollte jemand weiterschauen?
+- Genau ein dominanter Konflikt oder Fokus pro Beat
 - Polarisierend oder emotional schockierend` : '';
         const expandPrompt = isDialogMode
-          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog - optimiert für ein kurzes Social-Media-Video (TikTok/Reels/Shorts, 15-60 Sekunden).
+          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog - optimiert für ein Social-Media-Video (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Laenge.
 
 REGELN:
 - 4-8 Sätze gesprochener Dialog, filmisch und emotional
@@ -4275,7 +4933,7 @@ REGELN:
 Zusammenfassung: "${suggestion}"
 
 Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
-          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung - optimiert für kurze Social-Media-Videos (TikTok/Reels/Shorts, 15-60 Sekunden).
+          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung - optimiert für Social-Media-Videos (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Laenge.
 
 REGELN:
 - 3-6 Sätze, visuell und atmosphärisch
@@ -4344,6 +5002,7 @@ REEL-FOKUS: Die Dialoge müssen SOFORT polarisieren oder emotional schocken. Den
 - Konfrontationen, Geständnisse, überraschende Enthüllungen
 - Emotionale Ausbrüche, dramatische Wendungen
 - Der erste Satz muss zum Weiterschauen zwingen
+- Eine klare Konfliktlinie, kein verwaschener Smalltalk
 ` : ''}
 Die Dialoge sollen emotional, direkt und sofort fesselnd sein. Denke an Hook-First: Der erste Satz muss Aufmerksamkeit grabben.
 
@@ -4362,6 +5021,7 @@ REEL-FOKUS: Die Geschichten müssen VIRAL-POTENZIAL haben. Denke an Content der 
 - Relateable Situationen mit unerwartetem Ausgang
 - "Was würdest DU tun?" Szenarien
 - Polarisierende oder kontroverse Alltagssituationen
+- Ein klarer visueller Fokus statt zu vieler Ideen auf einmal
 ` : ''}
 WICHTIG: Die Geschichten müssen sofort fesseln (Hook-First), emotional intensiv sein und sich für schnelle, dynamische Video-Szenen eignen. Realistische UND dramatische Themen.
 
@@ -4401,7 +5061,7 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
   };
 
   // Generate suggestions when API key becomes available (preload for story tab)
-  const currentSuggestionMode = storyEnableSpeaker && storyGenerationDirection === "description-from-speaker" ? "dialog" : "story";
+  const currentSuggestionMode = `${storyCreatorMode}-${storyEnableSpeaker && storyGenerationDirection === "description-from-speaker" ? "dialog" : "story"}`;
   
   useEffect(() => {
     let cancelled = false;
@@ -4511,6 +5171,18 @@ Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerieru
       if (si('session_storyHook')) setStoryHook(si('session_storyHook')!);
       if (si('session_storyPacing')) setStoryPacing(si('session_storyPacing')!);
       if (si('session_storyCreatorMode')) setStoryCreatorMode(si('session_storyCreatorMode') as any);
+      if (si('session_smartReelModeEnabled')) setSmartReelModeEnabled(si('session_smartReelModeEnabled') === 'true');
+      if (si('session_smartReelTranscript')) setSmartReelTranscript(si('session_smartReelTranscript')!);
+      if (si('session_smartReelReferenceSummary')) setSmartReelReferenceSummary(si('session_smartReelReferenceSummary')!);
+      if (si('session_smartReelPlatform')) setSmartReelPlatform(si('session_smartReelPlatform') as any);
+      if (si('session_smartReelTopic')) setSmartReelTopic(si('session_smartReelTopic')!);
+      if (si('session_smartReelGoal')) setSmartReelGoal(si('session_smartReelGoal')!);
+      if (si('session_smartReelDuration')) setSmartReelDuration(si('session_smartReelDuration') as any);
+      if (si('session_smartReelSpeechMode')) setSmartReelSpeechMode(si('session_smartReelSpeechMode') as any);
+      if (si('session_smartReelChatStep')) setSmartReelChatStep(si('session_smartReelChatStep') as SmartReelChatStep);
+      if (si('session_smartReelChatMessages')) {
+        try { setSmartReelChatMessages(JSON.parse(si('session_smartReelChatMessages')!)); } catch {}
+      }
       
       const savedStoryPoints = si('session_storyPoints');
       if (savedStoryPoints) {
@@ -7693,12 +8365,224 @@ Beispiel einer korrekten Antwort:
                    Reel
                  </button>
                </div>
-               <p className="text-xs text-muted-foreground -mt-4">
-                 {storyCreatorMode === "general" 
-                   ? "Volle Kontrolle über alle Parameter" 
-                   : "Optimiert für TikTok, Instagram Reels & Shorts"}
-               </p>
+                <p className="text-xs text-muted-foreground -mt-4">
+                  {storyCreatorMode === "general" 
+                    ? "Volle Kontrolle über alle Parameter" 
+                    : "Optimiert für TikTok, Instagram Reels & Shorts: Hook in Sekunde 1, klarer Fokus, mobile Lesbarkeit"}
+                </p>
 
+              {storyCreatorMode === "reel" && (
+                <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-background p-4 md:p-5 space-y-5 shadow-sm">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                          Smart Reel
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          Briefing, Referenzen und Reel-Logik an einem Ort
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-base">Smart Reel Modus</Label>
+                        <p className="text-xs text-muted-foreground max-w-2xl leading-5">
+                          Gib ein Transcript ein, lade Referenzbilder hoch und lass dir das Briefing ueber einen einfachen Chat zusammenbauen. Danach geht es direkt im normalen Reel Creator weiter.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/80 px-3 py-2 lg:min-w-[180px]">
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-medium text-foreground">Status</p>
+                        <p className="text-[11px] text-muted-foreground">{smartReelModeEnabled ? "Smart Reel aktiv" : "Smart Reel inaktiv"}</p>
+                      </div>
+                      <Switch
+                        checked={smartReelModeEnabled}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleStoryCreatorModeChange("reel");
+                            setSmartReelModeEnabled(true);
+                            startSmartReelChat();
+                          } else {
+                            setSmartReelModeEnabled(false);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {smartReelModeEnabled && (
+                    <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-border/50 bg-background/80 p-4 md:p-5 space-y-3 shadow-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <Label htmlFor="smart-reel-transcript" className="text-sm">Referenz-Transcript</Label>
+                              <p className="text-xs text-muted-foreground">
+                                Vorlage fuer Hook, Tempo und Dramaturgie. Kein 1:1-Kopieren.
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
+                              Schritt 1
+                            </span>
+                          </div>
+                          <Textarea
+                            id="smart-reel-transcript"
+                            placeholder="Fuege hier das Transcript oder die wichtigsten Textstellen des Vorbildvideos ein..."
+                            value={smartReelTranscript}
+                            onChange={(e) => setSmartReelTranscript(e.target.value)}
+                            className="min-h-[180px] resize-y text-sm bg-background"
+                          />
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="rounded-xl border border-border/50 bg-background/70 p-4 space-y-2">
+                            <p className="text-xs font-medium text-foreground">Was der Smart-Modus uebernimmt</p>
+                            <div className="flex flex-wrap gap-2">
+                              {["Reel-Fokus", "Idee", "Sprechmodus", "Plattform", "Laenge"].map((item) => (
+                                <span
+                                  key={item}
+                                  className="rounded-full border border-border/50 bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-background/70 p-4 space-y-2">
+                            <p className="text-xs font-medium text-foreground">Aktueller Stand</p>
+                            <p className="text-xs text-muted-foreground leading-5">
+                              {smartReelBriefSummary || "Noch kein vollständiges Briefing. Beantworte die Fragen im Chat rechts."}
+                            </p>
+                          </div>
+                        </div>
+
+                        {smartReelReferenceSummary.trim() && (
+                          <div className="rounded-2xl border border-border/50 bg-background/80 p-4 md:p-5 shadow-sm">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium text-foreground">Visuelle Kurzbeschreibung</p>
+                                <p className="text-xs text-muted-foreground">Automatisch aus Transcript und Referenzen verdichtet</p>
+                              </div>
+                              <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
+                                Analyse
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-6 mt-3">{smartReelReferenceSummary}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="rounded-2xl border border-border/50 bg-background/85 p-4 md:p-5 space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                              <MessageSquare className="w-4 h-4" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <Label className="text-sm">Smart Reel Chat</Label>
+                              <p className="text-[11px] text-muted-foreground">Schritt fuer Schritt zum fertigen Briefing</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => startSmartReelChat(true)}>
+                            Neu starten
+                          </Button>
+                        </div>
+
+                        <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                            {smartReelChatMessages.map((message, index) => (
+                              <div
+                                key={`smart-reel-msg-${index}`}
+                                className={cn(
+                                  "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 shadow-sm",
+                                  message.role === "assistant"
+                                    ? "bg-background text-foreground border border-border/50"
+                                    : "ml-auto bg-primary text-primary-foreground"
+                                )}
+                              >
+                                {message.text}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          {smartReelChatStep === "speech" && (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("speaker", "Separater Sprecher")}>
+                                Separater Sprecher
+                              </Button>
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("avatars", "Avatare sprechen selbst")}>
+                                Avatare sprechen selbst
+                              </Button>
+                            </div>
+                          )}
+
+                          {smartReelChatStep === "platform" && (
+                            <div className="grid gap-2 sm:grid-cols-3">
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("instagram", "Instagram Reels")}>
+                                Instagram
+                              </Button>
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("youtube", "YouTube Shorts")}>
+                                YouTube
+                              </Button>
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("tiktok", "TikTok")}>
+                                TikTok
+                              </Button>
+                            </div>
+                          )}
+
+                          {(smartReelChatStep === "topic" || smartReelChatStep === "goal") && (
+                            <div className="flex gap-2">
+                              <Input
+                                value={smartReelChatInput}
+                                onChange={(e) => setSmartReelChatInput(e.target.value)}
+                                placeholder={smartReelChatStep === "topic" ? "z.B. Low Carb, gesunde Snacks, Fitness..." : "z.B. Zuschauer sollen speichern, folgen oder neugierig werden..."}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleSmartReelTextSubmit();
+                                  }
+                                }}
+                                className="h-11"
+                              />
+                              <Button size="icon" className="h-11 w-11 shrink-0" onClick={handleSmartReelTextSubmit}>
+                                <Send className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+
+                          {smartReelChatStep === "duration" && (
+                            <div className="grid gap-2 sm:grid-cols-3">
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("15-30", "15 bis 30 Sekunden")}>
+                                15-30 Sek
+                              </Button>
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("30-60", "30 bis 60 Sekunden")}>
+                                30-60 Sek
+                              </Button>
+                              <Button variant="outline" className="justify-start h-10" onClick={() => handleSmartReelOptionAnswer("60+", "60+ Sekunden")}>
+                                60+ Sek
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-2">
+                          <Label className="text-xs text-muted-foreground">Optionaler Zusatzwunsch</Label>
+                          <Textarea
+                            placeholder="Optional: weiterer Wunsch fuer Idee, Hook oder Zielgruppe..."
+                            value={storyAiAssistantInput}
+                            onChange={(e) => setStoryAiAssistantInput(e.target.value)}
+                            className="min-h-[84px] resize-y text-sm bg-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!(smartReelModeEnabled && storyCreatorMode === "reel") && (
+                <>
                {/* Speaker Toggle + Direction - above story idea */}
                 <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/20 max-w-xl">
@@ -7884,7 +8768,7 @@ Beispiel einer korrekten Antwort:
                 <div className="flex flex-col items-center md:self-stretch md:items-end md:justify-end gap-3 pb-[2px]">
                   <Button
                     onClick={handleGenerateStoryIdea}
-                    disabled={isGeneratingStoryAiIdea || !storyAiAssistantInput.trim()}
+                    disabled={isGeneratingStoryAiIdea || (!storyAiAssistantInput.trim() && !storyIdea.trim() && !smartReelIdeaSeed.trim())}
                     className="w-full md:w-10 h-10 md:h-auto md:min-h-[160px] md:flex-1 rounded-lg"
                     title={storyIdea.trim() ? "Idee anpassen" : "Ideen generieren"}
                   >
@@ -7911,126 +8795,336 @@ Beispiel einer korrekten Antwort:
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-muted-foreground" />
-                      <Label className="text-muted-foreground">KI-Assistent</Label>
+                      <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
                   <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
-                    <Textarea
-                      placeholder={generatedIdeas.length > 0 
-                        ? "Beschreibe die gewünschte Ünderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
-                        : "Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
-                      }
-                      value={storyAiAssistantInput}
-                      onChange={(e) => setStoryAiAssistantInput(e.target.value)}
-                      className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleGenerateStoryIdea();
+                    {smartReelModeEnabled && storyCreatorMode === "reel" ? (
+                      <div className="h-full min-h-[140px] space-y-3 text-sm">
+                        <p className="text-muted-foreground">
+                          Der Smart Reel Modus liefert das Briefing jetzt direkt aus Transcript, Referenzbildern und Chat-Antworten.
+                        </p>
+                        {smartReelBriefSummary && (
+                          <div className="rounded-lg border border-border/50 bg-background/60 p-3">
+                            <p className="text-xs font-medium text-foreground">Zusammenfassung</p>
+                            <p className="text-xs text-muted-foreground mt-1">{smartReelBriefSummary}</p>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Optionalen Zusatzwunsch kannst du oben im Smart Reel Chat ergänzen. Mit dem Pfeil werden daraus Ideen erzeugt.
+                        </p>
+                      </div>
+                    ) : (
+                      <Textarea
+                        placeholder={generatedIdeas.length > 0 
+                          ? "Beschreibe die gewuenschte Aenderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
+                          : "Beschreibe was fuer eine Story du moechtest, z.B. 'Eine romantische Geschichte in Paris'..."
                         }
-                      }}
-                    />
+                        value={storyAiAssistantInput}
+                        onChange={(e) => setStoryAiAssistantInput(e.target.value)}
+                        className="h-full min-h-[140px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 resize-y bg-transparent border-0 p-0"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleGenerateStoryIdea();
+                          }
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
+                </>
+              )}
 
               {/* Character Reference Image Upload */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  Charakter Referenzbild
-                  <span className="flex items-center gap-2 ml-1">
-                    {[1, 2].map((num) => {
+              <div className="space-y-3 rounded-2xl border border-border/50 bg-card/40 p-4 md:p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1">
+                    <Label className="flex items-center gap-2">
+                  {smartReelModeEnabled && storyCreatorMode === "reel" ? "Referenzbilder" : "Charakter Referenzbild"}
+                    </Label>
+                    <p className="text-xs text-muted-foreground leading-5">Lade Figuren und optional den visuellen Look hoch, damit Bild- und Video-Prompts konsistent bleiben.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: maxStoryReferenceImages }, (_, idx) => idx + 1).map((num) => {
                       const isFilled = num <= storyReferenceImages.length;
-                      
                       return (
                         <span
                           key={num}
-                          className="relative flex items-center justify-center w-4 h-4"
+                          className={cn(
+                            "flex h-7 min-w-[28px] items-center justify-center rounded-full border px-2 text-[11px] font-medium transition-all",
+                            isFilled
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border/50 bg-background text-muted-foreground"
+                          )}
                         >
-                          <span
-                            className={`block w-3 h-3 rounded-full transition-all ${
-                              isFilled
-                                ? "bg-primary"
-                                : "bg-muted-foreground/20 border border-muted-foreground/40"
-                            }`}
-                          />
+                          {num}
                         </span>
                       );
                     })}
-                  </span>
-                </Label>
-                <p className="text-[9px] text-muted-foreground/60 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden für Sprecher- und Charakter-Konsistenz in Story und Video verwendet.</p>
-                <div className="flex flex-wrap gap-4">
-                  {storyReferenceImages.map((imageUrl, index) => (
-                    <div key={`story-ref-${index}`} className="relative flex flex-col items-center gap-1">
-                      <div className="relative w-24 h-24">
-                        <img 
-                          src={imageUrl} 
-                          alt={`Referenz ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeStoryImage(index)}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <Input
-                        value={storyReferenceLabels[index] || ""}
-                        onChange={(e) => {
-                          setStoryReferenceLabels(prev => {
-                            const updated = [...prev];
-                            updated[index] = e.target.value;
-                            saveToLocalStorage('storyReferenceLabels', updated);
-                            return updated;
-                          });
-                        }}
-                        placeholder={`Person ${index + 1}`}
-                        className="w-24 h-6 text-[10px] text-center px-1 py-0 border-border/50"
-                      />
-                      <Textarea
-                        value={storyReferenceDescriptions[index] || ""}
-                        onChange={(e) => {
-                          setStoryReferenceDescriptions(prev => {
-                            const updated = [...prev];
-                            updated[index] = e.target.value;
-                            saveToLocalStorage('storyReferenceDescriptions', updated);
-                            return updated;
-                          });
-                        }}
-                        placeholder="rote Jacke, Brille, lockige Haare"
-                        className="w-24 min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none"
-                      />
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground/70 leading-tight">Mit Upload bestaetigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden fuer Sprecher-, Charakter- und Stil-Konsistenz in Story und Video verwendet.</p>
+                <div className={cn("grid gap-4", smartReelModeEnabled && storyCreatorMode === "reel" ? "lg:grid-cols-2" : "grid-cols-1")}>
+                  <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-foreground">Charaktere</p>
+                      <span className="text-[11px] text-muted-foreground">{storyReferenceImages.length}/{maxStoryReferenceImages}</span>
                     </div>
-                  ))}
-                  {storyReferenceImages.length < 2 && (
-                    <ImageDropZone
-                      onFiles={(files) => {
-                        const fakeEvent = { target: { files } } as React.ChangeEvent<HTMLInputElement>;
-                        handleStoryImageUpload(fakeEvent);
-                      }}
-                    >
-                      <Upload className="w-6 h-6 text-muted-foreground" />
-                    </ImageDropZone>
-                  )}
-                  {storyReferenceImages.length === 0 && (
-                    <button
-                      onClick={() => {
-                        setRefImageSource("story");
-                        setActiveMainTab("character");
-                      }}
-                      className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
-                      title="Character Creator öffnen"
-                    >
-                      <User className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
-                    </button>
+                    <div className="flex flex-wrap gap-4">
+                      {storyReferenceImages.map((imageUrl, index) => (
+                        <div key={`story-ref-${index}`} className="relative flex flex-col items-center gap-1">
+                          <div className="relative w-28 h-28">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Referenz ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeStoryImage(index)}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <Input
+                            value={storyReferenceLabels[index] || ""}
+                            onChange={(e) => {
+                              setStoryReferenceLabels(prev => {
+                                const updated = [...prev];
+                                updated[index] = e.target.value;
+                                saveToLocalStorage('storyReferenceLabels', updated);
+                                return updated;
+                              });
+                            }}
+                            placeholder={`Person ${index + 1}`}
+                            className="w-24 h-6 text-[10px] text-center px-1 py-0 border-border/50"
+                          />
+                          <Textarea
+                            value={storyReferenceDescriptions[index] || ""}
+                            onChange={(e) => {
+                              setStoryReferenceDescriptions(prev => {
+                                const updated = [...prev];
+                                updated[index] = e.target.value;
+                                saveToLocalStorage('storyReferenceDescriptions', updated);
+                                return updated;
+                              });
+                            }}
+                            placeholder="rote Jacke, Brille, lockige Haare"
+                            className="w-24 min-h-[44px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none"
+                          />
+                        </div>
+                      ))}
+                      {storyReferenceImages.length < maxStoryReferenceImages && (
+                        <ImageDropZone
+                          onFiles={(files) => {
+                            const fakeEvent = { target: { files } } as React.ChangeEvent<HTMLInputElement>;
+                            handleStoryImageUpload(fakeEvent);
+                          }}
+                        >
+                          <Upload className="w-6 h-6 text-muted-foreground" />
+                        </ImageDropZone>
+                      )}
+                      {storyReferenceImages.length === 0 && (
+                        <button
+                          onClick={() => {
+                            setRefImageSource("story");
+                            setActiveMainTab("character");
+                          }}
+                          className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200 border-border hover:border-primary hover:bg-primary/5 gap-1"
+                          title="Character Creator öffnen"
+                        >
+                          <User className="w-5 h-5 text-muted-foreground" />
+                          <span className="text-[9px] text-muted-foreground leading-tight text-center">Character<br/>erstellen</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {smartReelModeEnabled && storyCreatorMode === "reel" && (
+                    <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-foreground">Stilbilder</p>
+                        <span className="text-[11px] text-muted-foreground">{smartReelStyleImages.length}/{maxSmartReelStyleImages}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-4">
+                        {smartReelStyleImages.map((imageUrl, index) => (
+                          <div key={`smart-style-${index}`} className="relative flex flex-col items-center gap-1">
+                            <div className="relative w-28 h-28">
+                              <img 
+                                src={imageUrl} 
+                                alt={`Stilbild ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeSmartReelStyleImage(index)}
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <Textarea
+                              value={smartReelStyleDescriptions[index] || ""}
+                              onChange={(e) => {
+                                setSmartReelStyleDescriptions(prev => {
+                                  const updated = [...prev];
+                                  updated[index] = e.target.value;
+                                  saveToLocalStorage('smartReelStyleDescriptions', updated);
+                                  return updated;
+                                });
+                              }}
+                              placeholder="filmisch, warmes Licht, starke Kontraste"
+                              className="w-24 min-h-[64px] text-[9px] leading-tight px-1 py-1 border-border/50 resize-none"
+                            />
+                          </div>
+                        ))}
+                        {smartReelStyleImages.length < maxSmartReelStyleImages && (
+                          <ImageDropZone
+                            onFiles={(files) => {
+                              const fakeEvent = { target: { files } } as React.ChangeEvent<HTMLInputElement>;
+                              handleSmartReelStyleUpload(fakeEvent);
+                            }}
+                          >
+                            <Upload className="w-6 h-6 text-muted-foreground" />
+                          </ImageDropZone>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
+                {smartReelModeEnabled && storyCreatorMode === "reel" && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border/50 bg-background/70 p-4">
+                    <p className="text-sm text-muted-foreground leading-6">
+                      Analysiere Transcript, Charaktere und Stilbilder, damit die Beschreibungen möglichst präzise für die Video-KI gefüllt werden.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="sm:min-w-[210px]"
+                      onClick={analyzeSmartReelReferences}
+                      disabled={isAnalyzingSmartReelReferences || (!smartReelTranscript.trim() && storyReferenceImages.length === 0 && smartReelStyleImages.length === 0)}
+                    >
+                      {isAnalyzingSmartReelReferences ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Analysiere...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Referenzen analysieren
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
+              {smartReelModeEnabled && storyCreatorMode === "reel" && (
+                <div className="space-y-4 rounded-2xl border border-border/50 bg-card/40 p-4 md:p-5 shadow-sm">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="space-y-1">
+                      <Label className="text-sm">Smart Reel Idee</Label>
+                      <p className="text-xs text-muted-foreground leading-5">
+                        Die Idee wird direkt aus Smart-Modus, Transcript und Referenzen erzeugt. Es gibt hier kein separates Ideen- oder Settings-Formular mehr.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <select
+                        value={ideaCount}
+                        onChange={(e) => setIdeaCount(e.target.value)}
+                        className="h-10 text-sm text-center rounded-lg border border-border bg-background text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring px-3"
+                        title="Anzahl Ideen"
+                      >
+                        {[1,2,3,4,5].map(n => (
+                          <option key={n} value={String(n)}>{n} Idee{n > 1 ? "n" : ""}</option>
+                        ))}
+                      </select>
+                      <Button
+                        className="sm:min-w-[190px]"
+                        onClick={handleGenerateStoryIdea}
+                        disabled={isGeneratingStoryAiIdea || (!storyAiAssistantInput.trim() && !storyIdea.trim() && !smartReelIdeaSeed.trim())}
+                      >
+                        {isGeneratingStoryAiIdea ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generiere...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            {storyIdea.trim() ? "Idee aktualisieren" : "Ideen generieren"}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
+                  <div className="grid gap-4 xl:grid-cols-[0.34fr_0.66fr]">
+                    <div className="rounded-xl border border-border/50 bg-background/70 p-4 space-y-3">
+                      <p className="text-sm font-medium text-foreground">Smart Briefing</p>
+                      <div className="space-y-2 text-xs text-muted-foreground">
+                        <div className="rounded-lg border border-border/50 bg-muted/20 p-3 leading-5">
+                          {smartReelBriefSummary || "Das Briefing wird aus dem Chat aufgebaut."}
+                        </div>
+                        <div className="rounded-lg border border-border/50 bg-muted/20 p-3 leading-5">
+                          {smartReelReferenceSummary.trim() || "Nach der Analyse erscheint hier die visuelle Kurzbeschreibung."}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Aktuelle Ausgabe</Label>
+                      {generatedIdeas.length > 0 && (
+                        <div className="flex items-center gap-0 rounded-md border border-border/50 bg-background/60 px-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            disabled={currentIdeaIndex === 0}
+                            onClick={() => navigateIdea("prev")}
+                          >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                          </Button>
+                          <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[2.5rem] text-center">
+                            {`${currentIdeaIndex + 1}/${generatedIdeas.length}`}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            disabled={currentIdeaIndex === generatedIdeas.length - 1}
+                            onClick={() => navigateIdea("next")}
+                          >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {(isExpandingSuggestion || isGeneratingStoryAiIdea) ? (
+                      <div className="min-h-[140px] rounded-lg border border-primary/20 bg-background/80 backdrop-blur-sm flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        <span className="text-sm font-medium text-primary">Ideen werden generiert...</span>
+                      </div>
+                    ) : storyIdea.trim() ? (
+                      <div className="min-h-[140px] rounded-lg border border-border/50 bg-background/70 p-4 text-sm leading-6 whitespace-pre-wrap">
+                        {storyIdea}
+                      </div>
+                    ) : (
+                      <div className="min-h-[140px] rounded-lg border border-dashed border-border/50 bg-background/40 p-4 text-sm text-muted-foreground flex items-center">
+                        Noch keine Idee generiert. Nutze oben den Button, dann erstellt der Smart-Modus die Reel-Idee aus deinem Briefing.
+                      </div>
+                    )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!(smartReelModeEnabled && storyCreatorMode === "reel") && (
+                <>
               {/* Setup Options Panel */}
               <Collapsible 
                 open={!storySetupCollapsed} 
@@ -8142,12 +9236,17 @@ Beispiel einer korrekten Antwort:
                     </Label>
                     <Textarea
                       placeholder={storyCreatorMode === "reel" 
-                        ? "z.B. 'Schockierender Moment direkt am Anfang', 'Provokante Frage', 'Unerwarteter Twist'..."
+                        ? "z.B. 'Starte mit dem schlimmsten Moment', 'Eine provokante Frage in Sekunde 1', 'Ein klarer Konflikt ohne Ablenkung'..."
                         : "z.B. 'Starte mit einer Explosion', 'Beginne mit einer Frage an den Zuschauer'..."}
                       value={storyHook}
                       onChange={(e) => setStoryHook(e.target.value)}
                       className="min-h-[50px] resize-y text-sm"
                     />
+                    {storyCreatorMode === "reel" && !storyHook.trim() && (
+                      <p className="text-xs text-primary/80">
+                        Wenn du das Feld leer laesst, setzt der Reel-Modus automatisch einen Hook-First-Start im Hintergrund.
+                      </p>
+                    )}
                   </div>
 
                   {/* Row 5: Custom Details */}
@@ -8162,22 +9261,40 @@ Beispiel einer korrekten Antwort:
                   </div>
                 </CollapsibleContent>
               </Collapsible>
+                </>
+              )}
 
               {/* Storyboard Generator */}
               <div className="space-y-4 pt-4 border-t border-border/50">
-                <div className="flex items-center justify-between">
-                  <Label>Storyboard generieren</Label>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">{storyPointCount} Szenen</span>
-                    <Slider
-                      value={[storyPointCount]}
-                      onValueChange={(value) => setStoryPointCount(Math.round(value[0]))}
-                      min={storyCreatorMode === "reel" ? 3 : 2}
-                      max={storyCreatorMode === "reel" ? 6 : 8}
-                      step={1}
-                      className="w-32"
-                    />
+                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                  <div className="space-y-1">
+                    <Label>Storyboard generieren</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {smartReelModeEnabled && storyCreatorMode === "reel"
+                        ? "Das Storyboard übernimmt die Smart-Reel-Idee, die Referenzen und die Reel-Logik automatisch."
+                        : "Erstelle jetzt die Szenenstruktur für Bilder und Video-Prompts."}
+                    </p>
                   </div>
+                  {smartReelModeEnabled && storyCreatorMode === "reel" ? (
+                    <div className="rounded-xl border border-border/50 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                      {storyPointCount} Szenen aus Smart Reel Briefing
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">{storyPointCount} Szenen</span>
+                      <Slider
+                        value={[storyPointCount]}
+                        onValueChange={(value) => {
+                          setReelSceneCountMode("manual");
+                          setStoryPointCount(Math.round(value[0]));
+                        }}
+                        min={storyCreatorMode === "reel" ? 3 : 2}
+                        max={storyCreatorMode === "reel" ? 6 : 8}
+                        step={1}
+                        className="w-32"
+                      />
+                    </div>
+                  )}
                 </div>
                 {storyPoints.length === 0 ? (
                   <Button
@@ -9632,3 +10749,4 @@ Beispiel einer korrekten Antwort:
 };
 
 export default Index;
+
