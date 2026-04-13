@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { saveToLocalStorage, getFromLocalStorage, removeFromLocalStorage } from "@/lib/storage";
+import { getFunctionHeaders, getFunctionUrl, hasBackendConfig } from "@/lib/backend";
 
 const AUTH_STORAGE_KEY = "aivatar_auth";
 const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface AuthData {
   isAuthenticated: boolean;
@@ -47,12 +46,6 @@ const EMPTY_AUTH: AuthData = {
   productId: undefined,
 };
 
-const FUNCTION_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-  apikey: SUPABASE_PUBLISHABLE_KEY,
-};
-
 export const useAuth = () => {
   const [authData, setAuthData] = useState<AuthData>(EMPTY_AUTH);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,14 +68,14 @@ export const useAuth = () => {
         };
       }
 
-      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-        return { success: false, message: "Supabase-Konfiguration fehlt" };
+      if (!hasBackendConfig()) {
+        return { success: false, message: "Backend-Konfiguration fehlt" };
       }
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/license-check`, {
+        const response = await fetch(getFunctionUrl("license-check"), {
           method: "POST",
-          headers: FUNCTION_HEADERS,
+          headers: getFunctionHeaders(),
           body: JSON.stringify({ email, licenseKey }),
         });
 

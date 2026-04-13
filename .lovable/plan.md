@@ -1,47 +1,27 @@
 
 
-# Story Generator: Generell vs. Reel Modus
+# Fix: Alle verbleibenden direkten `import.meta.env` Zugriffe durch Backend-Helper ersetzen
 
-## Übersicht
+## Diagnose
 
-Oben im Story-Tab wird ein Modus-Umschalter eingefügt (Pill-Buttons oder Tabs), der zwischen **Generell** und **Reel** umschaltet. Der Generell-Modus bleibt wie bisher. Der Reel-Modus setzt automatisch optimale Presets für Social-Media-Reels und bietet eine vereinfachte, fokussierte Oberfläche.
+Die Login-Dateien (useAuth, useCredits, LoginDialog) sind bereits korrekt mit Fallback-Werten gefixt. `hasBackendConfig()` gibt mit den Fallbacks immer `true` zurück.
 
-## Reel-Modus Unterschiede
+Der Fehler "Supabase-Konfiguration fehlt" existiert nicht mehr im Code. Falls du den Fehler trotzdem siehst, könnte es sein, dass dein Browser einen alten Build cached hat (Hard-Refresh mit Ctrl+Shift+R).
 
-| Eigenschaft | Generell | Reel |
-|---|---|---|
-| Format | Frei wählbar | Fest 9:16 |
-| Pacing | Frei wählbar | Schnelle Schnitte (default) |
-| Szenenanzahl | 2-8 | 3-6 (Reel-typisch) |
-| Farbstimmung | Frei | Kontrastreiche Optionen bevorzugt |
-| Hook | Optional | Prominenter, mit Vorschlägen |
-| Produktions-Einstellungen | Vollständig sichtbar | Vereinfacht / teils automatisch |
-| Video-Stimmung | Frei | Reel-optimierte Defaults (Action/Dynamisch) |
-| Prompt-Anpassung | KI generiert generisch | KI-Prompts enthalten Reel-spezifische Anweisungen (Hook-First, schnelle Schnitte, Aufmerksamkeits-Grabber) |
+Es gibt aber noch **5 Dateien**, die `import.meta.env.VITE_SUPABASE_URL` und `VITE_SUPABASE_PUBLISHABLE_KEY` direkt ohne Fallback verwenden. Diese werden bei der Bildgenerierung und Character-Features verwendet und können dort zu `undefined`-URLs führen:
 
-## Technische Umsetzung
+1. **`src/pages/Index.tsx`** — 4 Stellen mit `generate-image` Fetch-Calls
+2. **`src/components/character/ChatModeCreator.tsx`** — `character-chat` Fetch
+3. **`src/components/character/PoseGridGenerator.tsx`** — Modul-Level-Konstante + `character-poses` Fetch
+4. **`src/components/character/CharacterViewsGenerator.tsx`** — Modul-Level-Konstante + `character-views` Fetch
+5. **`src/components/character/CharacterViewsDialog.tsx`** — Modul-Level-Konstante + `character-views` Fetch
 
-### 1. Neuer State in `Index.tsx`
-- `storyCreatorMode: "general" | "reel"` — steuert den aktiven Modus
-- Session-Storage-Persistenz wie bei anderen States
+## Lösung
 
-### 2. Modus-Umschalter UI
-- Direkt oben im Story-Tab-Content (vor den Referenzbildern), als zwei Pill-Buttons:
-  - **Generell** — Filmklappe-Icon, "Volle Kontrolle über alle Parameter"
-  - **Reel** — Smartphone/Play-Icon, "Optimiert für TikTok, Instagram Reels & Shorts"
+Alle 5 Dateien auf `getFunctionUrl()` und `getFunctionHeaders()` aus `@/lib/backend` umstellen — identisch zum bereits funktionierenden Pattern in useAuth/useCredits/LoginDialog.
 
-### 3. Reel-Modus Logik
-- Beim Wechsel zu "Reel": Automatische Presets setzen (9:16, schnelle Schnitte, Action-Stimmung, kontrastreiche Farben)
-- Produktions-Einstellungen werden im Reel-Modus vereinfacht: Format und Pacing sind fixiert/ausgeblendet, Hook-Feld ist prominenter
-- Szenen-Slider: Range auf 3-6 begrenzt im Reel-Modus
+## Änderungen
 
-### 4. Prompt-Anpassung
-- Im Reel-Modus wird der KI-Prompt für Storyboard-Generierung um Reel-spezifische Anweisungen ergänzt:
-  - "Hook in den ersten 1-2 Sekunden"
-  - "Schnelle Schnitte, hoher visueller Kontrast"
-  - "Social-Media-optimiert, vertikales Format"
-  - "Jede Szene muss visuell eigenständig auffallen"
-
-### 5. Dateien die geändert werden
-- **`src/pages/Index.tsx`** — Neuer State, Modus-Umschalter UI, bedingte Presets, Prompt-Modifikation im Reel-Modus, angepasste UI-Sichtbarkeit
-
+Für jede Datei:
+- Import `{ getFunctionUrl, getFunctionHeaders }` aus `@/lib/backend` hinzufügen
+- Mo

@@ -17,6 +17,7 @@ import sceneryBg from "@/assets/scenery-background.jpg";
 import aivatarPromoImg from "@/assets/aivatar-academy-promo.jpg";
 import JSZip from "jszip";
 import { getCookie, saveToLocalStorage, getFromLocalStorage, createManagedBlobUrl, revokeManagedBlobUrl, cleanupAllBlobUrls, getDetailedErrorMessage, checkBrowserCompatibility, getDeviceInfo, compressImageToFitSize } from "@/lib/storage";
+import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeVariant } from "@/hooks/useTheme";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -671,6 +672,7 @@ const Index = () => {
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const [shakingElement, setShakingElement] = useState<string | null>(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [upgradePopupType, setUpgradePopupType] = useState<"pro" | "premium">("pro");
   const [switchSnapping, setSwitchSnapping] = useState(false);
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
@@ -3189,14 +3191,10 @@ CONTENT COMPLIANCE:
         
         // 1) Start image generation (don't await yet)
         const imagePromise = fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+          getFunctionUrl("generate-image"),
           {
             method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-            },
+            headers: getFunctionHeaders(),
             signal: controller.signal,
             body: JSON.stringify({
               prompt: imagePromptText,
@@ -4105,14 +4103,10 @@ Respond ONLY with JSON:
         }
         
         const imageResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+          getFunctionUrl("generate-image"),
           {
             method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-            },
+            headers: getFunctionHeaders(),
             signal: controller.signal,
             body: JSON.stringify({
               prompt: imagePromptText,
@@ -4608,14 +4602,10 @@ ${sceneContext}`;
       
       // Call edge function for image generation
       const imageResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        getFunctionUrl("generate-image"),
         {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-          },
+          headers: getFunctionHeaders(),
           signal: controller.signal,
           body: JSON.stringify({
             prompt: imagePromptText,
@@ -4791,14 +4781,10 @@ ${sceneContext}`;
 
       // Call edge function for image generation (same as regenerateSingleStoryScene)
       const imageResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        getFunctionUrl("generate-image"),
         {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-          },
+          headers: getFunctionHeaders(),
           signal: controller.signal,
           body: JSON.stringify({
             prompt: imagePromptText,
@@ -7174,7 +7160,7 @@ Beispiel einer korrekten Antwort:
         {/* Version Indicator */}
         <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-1 z-20">
           <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
-            v1.4.7
+            v1.4.8
           </div>
         </div>
         <PromoBanner planCode={authData.planCode} />
@@ -7522,14 +7508,15 @@ Beispiel einer korrekten Antwort:
           <HomeScreen
             planCode={authData.planCode}
             onSelectFeature={(feature) => {
-              if (feature === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+              if (feature === "story" && authData.planCode !== "FULL") {
+                setUpgradePopupType("premium");
                 setShowUpgradePopup(true);
                 return;
               }
               setActiveMainTab(feature);
               setActiveView("tools");
             }}
-            onShowUpgrade={() => setShowUpgradePopup(true)}
+            onShowUpgrade={() => { setUpgradePopupType("premium"); setShowUpgradePopup(true); }}
           />
         )}
 
@@ -7552,7 +7539,8 @@ Beispiel einer korrekten Antwort:
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms', animationDuration: '600ms', animationFillMode: 'both' }}>
           <Tabs value={activeMainTab} onValueChange={(v) => {
             const tab = v as "poses" | "story" | "character";
-            if (tab === "story" && authData.planCode !== "PREMIUM" && authData.planCode !== "FULL") {
+            if (tab === "story" && authData.planCode !== "FULL") {
+              setUpgradePopupType("premium");
               setShowUpgradePopup(true);
               return;
             }
@@ -7563,10 +7551,10 @@ Beispiel einer korrekten Antwort:
                 <Sparkles className="w-4 h-4" />
                 Avatar Shooting Studio
               </TabsTrigger>
-              <TabsTrigger value="story" className={cn("flex items-center gap-2", authData.planCode !== "PREMIUM" && authData.planCode !== "FULL" && "opacity-50")}>
+              <TabsTrigger value="story" className={cn("flex items-center gap-2", authData.planCode !== "FULL" && "opacity-50")}>
                 <BookOpen className="w-4 h-4" />
                 Reel/Story Videocreator
-                {authData.planCode !== "PREMIUM" && authData.planCode !== "FULL" && <Lock className="w-3 h-3 ml-1" />}
+                {authData.planCode !== "FULL" && <Lock className="w-3 h-3 ml-1" />}
               </TabsTrigger>
               <TabsTrigger value="character" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
@@ -8352,18 +8340,18 @@ Beispiel einer korrekten Antwort:
                    Generell
                  </button>
                  <button
-                   type="button"
-                   onClick={() => handleStoryCreatorModeChange("reel")}
-                   className={cn(
-                     "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
-                     storyCreatorMode === "reel"
-                       ? "bg-background text-foreground shadow-sm border border-border/50"
-                       : "text-muted-foreground hover:text-foreground"
-                   )}
-                 >
-                   <Smartphone className="w-4 h-4" />
-                   Reel
-                 </button>
+                    type="button"
+                    onClick={() => handleStoryCreatorModeChange("reel")}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                      storyCreatorMode === "reel"
+                        ? "bg-background text-foreground shadow-sm border border-border/50"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    Reel
+                  </button>
                </div>
                 <p className="text-xs text-muted-foreground -mt-4">
                   {storyCreatorMode === "general" 
@@ -10620,19 +10608,35 @@ Beispiel einer korrekten Antwort:
                   <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
                     <Lock className="w-8 h-8 text-red-500" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground">Pro Version erforderlich</h3>
+                  <h3 className="text-xl font-bold text-foreground">
+                    {upgradePopupType === "premium" ? "Premium Version erforderlich" : "Pro Version erforderlich"}
+                  </h3>
                   <p className="text-muted-foreground">
-                    Um dieses Feature zu nutzen, benötigst du die Pro Version von AvatarCreatorStudio.
+                    {upgradePopupType === "premium"
+                      ? "Um den Reel/Story Videocreator zu nutzen, benötigst du die Premium Version. Trag dich jetzt auf die Warteliste ein!"
+                      : "Dieses Feature ist in der Pro Version verfügbar. Upgrade jetzt für erweiterte Funktionen!"}
                   </p>
-                  <Button
-                    onClick={() => {
-                      window.open("https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal", "_blank");
-                      setShowUpgradePopup(false);
-                    }}
-                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
-                  >
-                    Jetzt Pro Version kaufen
-                  </Button>
+                  {upgradePopupType === "premium" ? (
+                    <Button
+                      onClick={() => {
+                        window.open("https://www.aivataracademy.com/acspremium_warteliste/", "_blank");
+                        setShowUpgradePopup(false);
+                      }}
+                      className="w-full bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold hover:from-purple-600 hover:to-violet-700"
+                    >
+                      Auf die Premium Warteliste
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        window.open("https://www.digistore24.com/product/644591", "_blank");
+                        setShowUpgradePopup(false);
+                      }}
+                      className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-semibold hover:from-amber-600 hover:to-yellow-500"
+                    >
+                      Jetzt upgraden
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

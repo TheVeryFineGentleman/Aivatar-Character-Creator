@@ -1,15 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { getFromLocalStorage } from "@/lib/storage";
+import { getFunctionHeaders, getFunctionUrl, hasBackendConfig } from "@/lib/backend";
 
 const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-const FUNCTION_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-  apikey: SUPABASE_PUBLISHABLE_KEY,
-};
 
 interface CreditsState {
   balance: number | null;
@@ -39,7 +32,10 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
       setCredits({ balance: 999, isLoading: false, error: null });
       return;
     }
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return;
+    if (!hasBackendConfig()) {
+      setCredits({ balance: null, isLoading: false, error: "Backend-Konfiguration fehlt" });
+      return;
+    }
 
     const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
     if (!savedCredentials?.email || !savedCredentials?.licenseKey) return;
@@ -47,9 +43,9 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
     setCredits((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/credits-balance`, {
+      const response = await fetch(getFunctionUrl("credits-balance"), {
         method: "POST",
-        headers: FUNCTION_HEADERS,
+        headers: getFunctionHeaders(),
         body: JSON.stringify({
           email: savedCredentials.email,
           licenseKey: savedCredentials.licenseKey,
@@ -73,8 +69,8 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
     async (amount: number = 1): Promise<{ success: boolean; newBalance?: number; error?: string }> => {
       if (!isFullPlan) return { success: true };
       if (isDevAccount()) return { success: true, newBalance: 999 };
-      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-        return { success: false, error: "Supabase-Konfiguration fehlt" };
+      if (!hasBackendConfig()) {
+        return { success: false, error: "Backend-Konfiguration fehlt" };
       }
 
       const savedCredentials = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
@@ -89,9 +85,9 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
       try {
         const idempotencyKey = `consume-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/credits-consume`, {
+        const response = await fetch(getFunctionUrl("credits-consume"), {
           method: "POST",
-          headers: FUNCTION_HEADERS,
+          headers: getFunctionHeaders(),
           body: JSON.stringify({
             email: savedCredentials.email,
             licenseKey: savedCredentials.licenseKey,

@@ -5,13 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Loader2, Download, Sparkles } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const FUNCTION_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-  apikey: SUPABASE_PUBLISHABLE_KEY,
-};
+import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
 
 interface CharacterViewsDialogProps {
   open: boolean;
@@ -55,10 +49,10 @@ export const CharacterViewsDialog: React.FC<CharacterViewsDialogProps> = ({ open
       setCurrentAngle(i);
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-views`,
+          getFunctionUrl("character-views"),
           {
             method: "POST",
-            headers: FUNCTION_HEADERS,
+            headers: getFunctionHeaders(),
             body: JSON.stringify({
               referenceImage,
               angle: ANGLES[i].id,
