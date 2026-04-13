@@ -8782,7 +8782,7 @@ Beispiel einer korrekten Antwort:
 
                 {/* Right: AI Assistant - Idea Input + Count Dropdown */}
                 <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 h-7">
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-muted-foreground" />
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
