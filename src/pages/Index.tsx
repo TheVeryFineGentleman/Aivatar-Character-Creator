@@ -8340,18 +8340,22 @@ Beispiel einer korrekten Antwort:
                 storyCreatorMode === "reel" ? "opacity-100" : "opacity-0"
               )}
             />
-            <CardContent key={storyCreatorMode} className="pt-6 space-y-6 [&>*]:animate-fade-in [&>*]:opacity-0 [&>*]:[animation-fill-mode:forwards]" style={{ '--stagger-base': '60ms' } as React.CSSProperties}>
+            <CardContent key={storyCreatorMode} className="pt-6 space-y-6 stagger-fade-children">
               <style>{`
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(1) { animation-delay: 0ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(2) { animation-delay: 60ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(3) { animation-delay: 120ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(4) { animation-delay: 180ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(5) { animation-delay: 240ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(6) { animation-delay: 300ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(7) { animation-delay: 360ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(8) { animation-delay: 420ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(9) { animation-delay: 480ms; }
-                [class*="[&>*]:animate-fade-in"] > *:nth-child(10) { animation-delay: 540ms; }
+                .stagger-fade-children > * {
+                  opacity: 0;
+                  animation: fade-in 0.35s ease-out forwards;
+                }
+                .stagger-fade-children > *:nth-child(1) { animation-delay: 0ms; }
+                .stagger-fade-children > *:nth-child(2) { animation-delay: 60ms; }
+                .stagger-fade-children > *:nth-child(3) { animation-delay: 120ms; }
+                .stagger-fade-children > *:nth-child(4) { animation-delay: 180ms; }
+                .stagger-fade-children > *:nth-child(5) { animation-delay: 240ms; }
+                .stagger-fade-children > *:nth-child(6) { animation-delay: 300ms; }
+                .stagger-fade-children > *:nth-child(7) { animation-delay: 360ms; }
+                .stagger-fade-children > *:nth-child(8) { animation-delay: 420ms; }
+                .stagger-fade-children > *:nth-child(9) { animation-delay: 480ms; }
+                .stagger-fade-children > *:nth-child(10) { animation-delay: 540ms; }
               `}</style>
                {/* Mode Toggle: General vs Reel */}
                <div className="flex gap-2 p-1 rounded-lg bg-muted/30 border border-border/50 max-w-md">
