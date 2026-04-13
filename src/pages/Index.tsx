@@ -8340,7 +8340,7 @@ Beispiel einer korrekten Antwort:
                 storyCreatorMode === "reel" ? "opacity-100" : "opacity-0"
               )}
             />
-            <CardContent className="pt-6 space-y-6">
+            <CardContent key={storyCreatorMode} className="pt-6 space-y-6 animate-fade-in" style={{ animationDuration: '400ms' }}>
                {/* Mode Toggle: General vs Reel */}
                <div className="flex gap-2 p-1 rounded-lg bg-muted/30 border border-border/50 max-w-md">
                  <button
