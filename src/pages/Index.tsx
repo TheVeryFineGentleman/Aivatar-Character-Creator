@@ -8680,7 +8680,7 @@ Beispiel einer korrekten Antwort:
                       </Button>
                     </div>
                   </div>
-                   <div className="relative flex-1 flex flex-col min-h-[160px] resize-y overflow-hidden">
+                   <div className="relative flex flex-col min-h-[160px] h-[160px] resize-y overflow-auto">
                     <Textarea
                       id="story-idea"
                       placeholder=""
@@ -8788,7 +8788,7 @@ Beispiel einer korrekten Antwort:
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
-                  <div className="relative flex-1 flex flex-col min-h-[160px] resize-y overflow-hidden rounded-lg border border-border/50 bg-muted/30 p-3">
+                  <div className="relative flex flex-col min-h-[160px] h-[160px] resize-y overflow-auto rounded-lg border border-border/50 bg-muted/30 p-3">
                     {smartReelModeEnabled && storyCreatorMode === "reel" ? (
                       <div className="flex-1 space-y-3 text-sm">
                         <p className="text-muted-foreground">
