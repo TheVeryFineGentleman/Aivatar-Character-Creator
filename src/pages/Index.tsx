@@ -8695,7 +8695,7 @@ Beispiel einer korrekten Antwort:
                           });
                         }
                       }}
-                      className="min-h-[160px] resize-y"
+                      className="min-h-[160px] h-full resize-y"
                     />
                     
                     {/* Generating overlay */}
@@ -8788,7 +8788,7 @@ Beispiel einer korrekten Antwort:
                       <Label className="text-muted-foreground">{smartReelModeEnabled && storyCreatorMode === "reel" ? "Smart Briefing" : "KI-Assistent"}</Label>
                     </div>
                   </div>
-                  <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30">
+                  <div className="flex-1 p-3 rounded-lg border border-border/50 bg-muted/30 min-h-[160px]">
                     {smartReelModeEnabled && storyCreatorMode === "reel" ? (
                       <div className="h-full min-h-[140px] space-y-3 text-sm">
                         <p className="text-muted-foreground">
