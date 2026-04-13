@@ -8597,7 +8597,7 @@ Beispiel einer korrekten Antwort:
                             : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
                         )}
                       >
-                        - Sprecher
+                        Sprecher
                       </button>
                       <button
                         type="button"
