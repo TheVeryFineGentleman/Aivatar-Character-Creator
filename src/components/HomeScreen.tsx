@@ -39,11 +39,8 @@ const features = [
 ];
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ planCode, onSelectFeature, onShowUpgrade }) => {
-  const isLocked = (minPlan: string) => {
-    if (minPlan === "BASIC") return false;
-    if (minPlan === "PRO") return planCode !== "PREMIUM" && planCode !== "FULL";
-    if (minPlan === "FULL") return planCode !== "FULL";
-    return false;
+  const isLocked = (featureId: "poses" | "story" | "character") => {
+    return featureId === "story" && planCode !== "FULL";
   };
 
   return (
@@ -59,18 +56,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ planCode, onSelectFeatur
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
         {features.map((feature, index) => {
-          const locked = isLocked(feature.minPlan);
+          const locked = isLocked(feature.id);
           const Icon = feature.icon;
 
           return (
             <button
               key={feature.id}
               onClick={() => {
-                if (locked) {
+                if (feature.id === "story" && locked) {
                   onShowUpgrade();
-                } else {
-                  onSelectFeature(feature.id);
+                  return;
                 }
+
+                onSelectFeature(feature.id);
               }}
               className={cn(
                 "group relative flex flex-col items-center text-center p-8 rounded-2xl border transition-all duration-300 animate-fade-in",
