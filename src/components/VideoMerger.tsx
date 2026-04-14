@@ -526,7 +526,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
           downloadedTotalBytes += fileData.length;
           if (downloadedTotalBytes > MAX_TOTAL_VIDEO_BYTES) {
             throw new Error(
-              `Die Gesamtgroesse der heruntergeladenen Videos liegt bei ${formatBytes(downloadedTotalBytes)} und ueberschreitet die Grenze von ${formatBytes(MAX_TOTAL_VIDEO_BYTES)} fuer Browser-Merging.`
+              `Die Gesamtgröße der heruntergeladenen Videos liegt bei ${formatBytes(downloadedTotalBytes)} und überschreitet die Grenze von ${formatBytes(MAX_TOTAL_VIDEO_BYTES)} für Browser-Merging.`
             );
           }
 
@@ -534,7 +534,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
           await ffmpeg.writeFile(fileName, fileData);
         } catch (fetchErr) {
           console.error(`Failed to fetch video ${i + 1}:`, fetchErr);
-          if (fetchErr instanceof Error && /zu gross|Gesamtgroesse/i.test(fetchErr.message)) {
+          if (fetchErr instanceof Error && /zu groß|Gesamtgröße/i.test(fetchErr.message)) {
             throw fetchErr;
           }
           if (url.startsWith("blob:")) {
@@ -591,7 +591,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
         } catch (normErr) {
           console.error(`Normalization failed for video ${i + 1}:`, normErr);
           throw new Error(
-            `Video ${videos[i].index + 1} konnte nicht normalisiert werden. Das Format wird moeglicherweise nicht unterstuetzt.`
+            `Video ${videos[i].index + 1} konnte nicht normalisiert werden. Das Format wird möglicherweise nicht unterstützt.`
           );
         }
       }
@@ -769,7 +769,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
               <div className="flex items-center gap-2">
                 <Button size="sm" onClick={mergeVideos}>
                   <Play className="w-4 h-4 mr-1.5" />
-                  Videos zusammenfuegen ({videos.length} Szenen)
+                  Videos zusammenfügen ({videos.length} Szenen)
                 </Button>
                 <Button size="sm" variant="outline" onClick={downloadAsZip} disabled={isZipping}>
                   <Archive className="w-4 h-4 mr-1.5" />
@@ -840,7 +840,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
           <div className="text-center py-6 text-muted-foreground">
             <Film className="w-10 h-10 mx-auto mb-2 opacity-30" />
             <p className="text-xs">
-              Klicke auf "Videos zusammenfuegen", um alle {videos.length} Szenen-Videos zu einem Gesamtvideo zu kombinieren.
+              Klicke auf "Videos zusammenfügen", um alle {videos.length} Szenen-Videos zu einem Gesamtvideo zu kombinieren.
             </p>
             <p className="text-xs mt-1 text-muted-foreground/70">
               Die Verarbeitung erfolgt lokal in deinem Browser (Re-Encoding auf 720p). Alternativ als ZIP herunterladen.

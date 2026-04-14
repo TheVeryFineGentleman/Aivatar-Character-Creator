@@ -1949,7 +1949,7 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
         text: `Du analysierst Referenzmaterial für einen Smart-Reel-Workflow.
 
 AUFGABE:
-- Beschreibe jede hochgeladene Charakter-Referenz so konkret, dass eine Video-KI Gesicht, Haare, Kleidung, Accessoires und Alterseindruck moeglichst konsistent nachbauen kann.
+- Beschreibe jede hochgeladene Charakter-Referenz so konkret, dass eine Video-KI Gesicht, Haare, Kleidung, Accessoires und Alterseindruck möglichst konsistent nachbauen kann.
 - Beschreibe jede Stil-Referenz so konkret, dass Bildlook, Licht, Farbe, Kamera, Kontrast und Oberflächen möglichst genau nachgebaut werden können.
 - Nutze das Transcript nur für Hook, Rhythmus und Dramaturgie. Nicht für 1:1-Kopie.
 
@@ -8407,7 +8407,7 @@ Beispiel einer korrekten Antwort:
                       <div className="space-y-1">
                         <Label className="text-base">Smart Reel Modus</Label>
                         <p className="text-xs text-muted-foreground max-w-2xl leading-5">
-                          Gib ein Transcript ein, lade Referenzbilder hoch und lass dir das Briefing ueber einen einfachen Chat zusammenbauen. Danach geht es direkt im normalen Reel Creator weiter.
+                          Gib ein Transcript ein, lade Referenzbilder hoch und lass dir das Briefing über einen einfachen Chat zusammenbauen. Danach geht es direkt im normalen Reel Creator weiter.
                         </p>
                       </div>
                     </div>
@@ -8439,7 +8439,7 @@ Beispiel einer korrekten Antwort:
                             <div className="space-y-1">
                               <Label htmlFor="smart-reel-transcript" className="text-sm">Referenz-Transcript</Label>
                               <p className="text-xs text-muted-foreground">
-                                Vorlage fuer Hook, Tempo und Dramaturgie. Kein 1:1-Kopieren.
+                                Vorlage für Hook, Tempo und Dramaturgie. Kein 1:1-Kopieren.
                               </p>
                             </div>
                             <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
@@ -8457,7 +8457,7 @@ Beispiel einer korrekten Antwort:
 
                         <div className="grid gap-3 md:grid-cols-2">
                           <div className="rounded-xl border border-border/50 bg-background/70 p-4 space-y-2">
-                            <p className="text-xs font-medium text-foreground">Was der Smart-Modus uebernimmt</p>
+                            <p className="text-xs font-medium text-foreground">Was der Smart-Modus übernimmt</p>
                             <div className="flex flex-wrap gap-2">
                               {["Reel-Fokus", "Idee", "Sprechmodus", "Plattform", "Laenge"].map((item) => (
                                 <span
@@ -8501,7 +8501,7 @@ Beispiel einer korrekten Antwort:
                             </div>
                             <div className="space-y-0.5">
                               <Label className="text-sm">Smart Reel Chat</Label>
-                              <p className="text-[11px] text-muted-foreground">Schritt fuer Schritt zum fertigen Briefing</p>
+                              <p className="text-[11px] text-muted-foreground">Schritt für Schritt zum fertigen Briefing</p>
                             </div>
                           </div>
                           <Button variant="ghost" size="sm" onClick={() => startSmartReelChat(true)}>
@@ -8591,7 +8591,7 @@ Beispiel einer korrekten Antwort:
                         <div className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-2">
                           <Label className="text-xs text-muted-foreground">Optionaler Zusatzwunsch</Label>
                           <Textarea
-                            placeholder="Optional: weiterer Wunsch fuer Idee, Hook oder Zielgruppe..."
+                            placeholder="Optional: weiterer Wunsch für Idee, Hook oder Zielgruppe..."
                             value={storyAiAssistantInput}
                             onChange={(e) => setStoryAiAssistantInput(e.target.value)}
                             className="min-h-[84px] resize-y text-sm bg-transparent"
@@ -8839,7 +8839,7 @@ Beispiel einer korrekten Antwort:
                       <Textarea
                         placeholder={generatedIdeas.length > 0 
                           ? "Beschreibe die gewuenschte Aenderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
-                          : "Beschreibe was fuer eine Story du moechtest, z.B. 'Eine romantische Geschichte in Paris'..."
+                          : "Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
                         }
                         value={storyAiAssistantInput}
                         onChange={(e) => setStoryAiAssistantInput(e.target.value)}
@@ -8868,7 +8868,7 @@ Beispiel einer korrekten Antwort:
                     <p className="text-xs text-muted-foreground leading-5">Lade Figuren und optional den visuellen Look hoch, damit Bild- und Video-Prompts konsistent bleiben.</p>
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground/70 leading-tight">Mit Upload bestaetigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden fuer Sprecher-, Charakter- und Stil-Konsistenz in Story und Video verwendet.</p>
+                <p className="text-[10px] text-muted-foreground/70 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden für Sprecher-, Charakter- und Stil-Konsistenz in Story und Video verwendet.</p>
                 <div className={cn("grid gap-4", smartReelModeEnabled && storyCreatorMode === "reel" ? "lg:grid-cols-2" : "grid-cols-1")}>
                   <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
                     <div className="flex items-center gap-2">
