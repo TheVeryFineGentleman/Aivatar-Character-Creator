@@ -8724,7 +8724,11 @@ Beispiel einer korrekten Antwort:
                         <ChevronLeft className="w-3.5 h-3.5" />
                       </Button>
                       <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[2.5rem] text-center">
-                        {generatedIdeas.length > 0 ? `${currentIdeaIndex + 1}/${generatedIdeas.length}` : "1/1"}
+                        {generatedIdeas.length > 0 
+                          ? `${currentIdeaIndex + 1}/${generatedIdeas.length}` 
+                          : (isGeneratingStoryAiIdea || isExpandingSuggestion) 
+                            ? `1/${ideaCount}` 
+                            : "1/1"}
                       </span>
                       <Button
                         variant="ghost"
