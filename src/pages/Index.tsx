@@ -2145,6 +2145,7 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
         const finalIdeas = ideas.length > 0 ? ideas : [generatedText];
 
         if (isModifyMode) {
+          // Add new ideas after current position, keep existing
           setGeneratedIdeas(prev => {
             const base = prev.length === 0 && storyIdea.trim() ? [storyIdea.trim()] : [...prev];
             const insertIndex = prev.length === 0 ? 1 : currentIdeaIndex + 1;
@@ -2158,6 +2159,7 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
           setStoryIdea(finalIdeas[0]);
           setStoryAiAssistantInput("");
         } else {
+          // New generation: set all ideas, keep first as active
           setGeneratedIdeas(finalIdeas);
           setCurrentIdeaIndex(0);
           setStoryIdea(finalIdeas[0]);
