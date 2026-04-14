@@ -416,8 +416,8 @@ function getStoryColorInstruction(color: string, mode: "general" | "reel"): stri
 
 function getReelStoryboardDirective(effectiveHook: string): string {
   return `
-REEL-MODUS - KRITISCHE ANWEISUNGEN (hoechste Prioritaet):
-Du erstellst ein Storyboard fuer ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
+REEL-MODUS - KRITISCHE ANWEISUNGEN (höchste Priorität):
+Du erstellst ein Storyboard für ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
 Jede Szene wird zu einem kurzen Videoclip. Die exakte Gesamtdauer kommt aus dem Nutzerbriefing.
 
 VERWENDE DIESEN HOOK ALS LEITPLANKE:
@@ -431,10 +431,10 @@ REEL-DRAMATURGIE:
 REEL-VISUELLE REGELN:
 - Genau EIN dominanter Fokus pro Szene: eine Person, eine Aktion, ein Konflikt. Keine geteilte Aufmerksamkeit.
 - Handy-lesbar: Die Szene muss auch auf einem kleinen Smartphone-Screen sofort klar sein.
-- Keine Filler-Shots, keine neutralen Establishing Shots, keine statischen Uebergaenge ohne Konflikt.
+- Keine Filler-Shots, keine neutralen Establishing Shots, keine statischen Übergänge ohne Konflikt.
 - Starker Szenenkontrast: Winkel, Entfernung, Komposition oder Machtdynamik sollen sich deutlich von der vorherigen Szene unterscheiden.
-- Bewegung ist Pflicht: Kamera, Koerperhaltung, Blick oder Umwelt muessen spueren lassen, dass etwas passiert.
-- 9:16-Komposition: Gesichter, Haende und Kernaktion muessen in der vertikalen Safe Zone klar sichtbar bleiben.
+- Bewegung ist Pflicht: Kamera, Körperhaltung, Blick oder Umwelt müssen spüren lassen, dass etwas passiert.
+- 9:16-Komposition: Gesichter, Hände und Kernaktion müssen in der vertikalen Safe Zone klar sichtbar bleiben.
 
 REEL-INHALTLICHE REGELN:
 - Denke in aufmerksamkeitsstarken Momenten, nicht in langsamer Exposition.
@@ -1493,7 +1493,7 @@ const Index = () => {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Du bist ein Storyboard-Regieassistent fuer genau eine Szene.
+                text: `Du bist ein Storyboard-Regieassistent für genau eine Szene.
 
 Du bekommst die aktuelle Szene eines Storyboards und eine freie Nutzeranweisung wie:
 - "Mach die Geschichte cooler"
@@ -1503,8 +1503,8 @@ Du bekommst die aktuelle Szene eines Storyboards und eine freie Nutzeranweisung 
 
 Deine Aufgabe:
 - Interpretiere breite kreative Anweisungen ganzheitlich.
-- Wenn die Anweisung allgemein ist, passe mehrere zusammenhaengende Felder dieser Szene an.
-- Wenn die Anweisung gezielt ist, aendere nur die betroffenen Felder.
+- Wenn die Anweisung allgemein ist, passe mehrere zusammenhängende Felder dieser Szene an.
+- Wenn die Anweisung gezielt ist, ändere nur die betroffenen Felder.
 - Halte die Szene konsistent zur Story-Idee, zum Hauptort und zu den Nachbarszenen.
 - Du bearbeitest nur diese eine Szene, nicht das ganze Storyboard.
 ${storyCreatorMode === "reel" ? `

@@ -41,7 +41,7 @@ function formatBytes(bytes: number): string {
 function getDataUrlSize(dataUrl: string): number {
   const commaIndex = dataUrl.indexOf(",");
   if (commaIndex === -1) {
-    throw new Error("Ungueltige Data-URL");
+    throw new Error("Ungültige Data-URL");
   }
 
   const metadata = dataUrl.slice(0, commaIndex);
@@ -58,7 +58,7 @@ function getDataUrlSize(dataUrl: string): number {
 function dataUrlToUint8Array(dataUrl: string): Uint8Array {
   const commaIndex = dataUrl.indexOf(",");
   if (commaIndex === -1) {
-    throw new Error("Ungueltige Data-URL");
+    throw new Error("Ungültige Data-URL");
   }
 
   const metadata = dataUrl.slice(0, commaIndex);
@@ -320,13 +320,13 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     if (!online) {
       diagnosticLines.push("Netzwerk: Browser meldet Offline-Modus");
       setDiagnosticDetails(diagnosticLines);
-      throw new Error("Browser ist offline. Bitte Verbindung pruefen.");
+      throw new Error("Browser ist offline. Bitte Verbindung prüfen.");
     }
 
     if (!browserCheck.compatible) {
       diagnosticLines.push(...browserCheck.issues.map((issue) => `Browser: ${issue}`));
       setDiagnosticDetails(diagnosticLines);
-      throw new Error("Browser unterstuetzt den Video-Merger nicht vollstaendig.");
+      throw new Error("Browser unterstützt den Video-Merger nicht vollständig.");
     }
 
     if (typeof Worker === "undefined") {
@@ -342,8 +342,8 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     }
 
     if (isFirefox) {
-      diagnosticLines.push("Browser: Firefox erkannt - FFmpeg/WASM braucht hier oft deutlich laenger");
-      setProgressMessage("FFmpeg wird in Firefox geladen (~30 MB, erster Start kann laenger dauern)...");
+      diagnosticLines.push("Browser: Firefox erkannt - FFmpeg/WASM braucht hier oft deutlich länger");
+      setProgressMessage("FFmpeg wird in Firefox geladen (~30 MB, erster Start kann länger dauern)...");
     } else {
       setProgressMessage("FFmpeg wird geladen (~30 MB, kann kurz dauern)...");
     }
@@ -439,13 +439,13 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
 
           if (blockerSuspected) {
             throw new Error(
-              "FFmpeg wurde wahrscheinlich durch Adblocker, VPN, Firewall oder Browser-Schutz blockiert. Bitte diese Blocker fuer jsDelivr/unpkg testweise deaktivieren oder den ZIP-Download nutzen."
+              "FFmpeg wurde wahrscheinlich durch Adblocker, VPN, Firewall oder Browser-Schutz blockiert. Bitte diese Blocker für jsDelivr/unpkg testweise deaktivieren oder den ZIP-Download nutzen."
             );
           }
 
           if (isFirefox) {
             throw new Error(
-              "Firefox hat FFmpeg/WASM nicht rechtzeitig initialisiert. Das ist kein CDN-Problem. Bitte erneut versuchen, Firefox ohne strenge Schutz-Add-ons testen oder fuer das Zusammenfuegen Chrome/Edge verwenden."
+              "Firefox hat FFmpeg/WASM nicht rechtzeitig initialisiert. Das ist kein CDN-Problem. Bitte erneut versuchen, Firefox ohne strenge Schutz-Add-ons testen oder für das Zusammenfügen Chrome/Edge verwenden."
             );
           }
 
@@ -476,7 +476,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     const normalizedFiles: string[] = [];
 
     try {
-      setProgressMessage("Pruefe Video-Groessen...");
+      setProgressMessage("Prüfe Video-Größen...");
       const estimatedSizes = await Promise.all(
         videos.map(async ({ index, url }) => ({
           index,
@@ -489,14 +489,14 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
       );
       if (oversizedVideo?.bytes) {
         throw new Error(
-          `Video ${oversizedVideo.index + 1} ist mit ${formatBytes(oversizedVideo.bytes)} zu gross fuer Browser-Merging. Grenze: ${formatBytes(MAX_SINGLE_VIDEO_BYTES)} pro Video. Bitte ZIP nutzen oder dieses Video kleiner neu generieren.`
+          `Video ${oversizedVideo.index + 1} ist mit ${formatBytes(oversizedVideo.bytes)} zu groß für Browser-Merging. Grenze: ${formatBytes(MAX_SINGLE_VIDEO_BYTES)} pro Video. Bitte ZIP nutzen oder dieses Video kleiner neu generieren.`
         );
       }
 
       const knownTotalBytes = estimatedSizes.reduce((sum, video) => sum + (video.bytes ?? 0), 0);
       if (knownTotalBytes > MAX_TOTAL_VIDEO_BYTES) {
         throw new Error(
-          `Die bekannte Gesamtgroesse liegt bei ${formatBytes(knownTotalBytes)}. Browser-Merging ist auf ${formatBytes(MAX_TOTAL_VIDEO_BYTES)} Gesamtgroesse begrenzt. Bitte ZIP nutzen oder weniger/kleinere Videos zusammenfuegen.`
+          `Die bekannte Gesamtgröße liegt bei ${formatBytes(knownTotalBytes)}. Browser-Merging ist auf ${formatBytes(MAX_TOTAL_VIDEO_BYTES)} Gesamtgröße begrenzt. Bitte ZIP nutzen oder weniger/kleinere Videos zusammenfügen.`
         );
       }
 
@@ -519,7 +519,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
           }
           if (fileData.length > MAX_SINGLE_VIDEO_BYTES) {
             throw new Error(
-              `Video ${videos[i].index + 1} ist mit ${formatBytes(fileData.length)} zu gross fuer Browser-Merging. Grenze: ${formatBytes(MAX_SINGLE_VIDEO_BYTES)} pro Video.`
+              `Video ${videos[i].index + 1} ist mit ${formatBytes(fileData.length)} zu groß für Browser-Merging. Grenze: ${formatBytes(MAX_SINGLE_VIDEO_BYTES)} pro Video.`
             );
           }
 
@@ -539,7 +539,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
           }
           if (url.startsWith("blob:")) {
             throw new Error(
-              `Video ${videos[i].index + 1} ist nur als temporaerer Blob-Link vorhanden. Bitte dieses Video neu generieren und erneut zusammenfuegen.`
+              `Video ${videos[i].index + 1} ist nur als temporaerer Blob-Link vorhanden. Bitte dieses Video neu generieren und erneut zusammenfügen.`
             );
           }
           throw new Error(

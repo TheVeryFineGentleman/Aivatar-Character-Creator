@@ -57,7 +57,7 @@ export const useCredits = (planCode: string, isAuthenticated: boolean) => {
       if (data.valid) {
         setCredits({ balance: data.balance, isLoading: false, error: null });
       } else {
-        setCredits({ balance: null, isLoading: false, error: data.reason || "Credits nicht verfuegbar" });
+        setCredits({ balance: null, isLoading: false, error: data.reason || "Credits nicht verfügbar" });
       }
     } catch (error) {
       console.error("Credits fetch error:", error);

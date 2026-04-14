@@ -73,7 +73,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
             errorText = "Kein Benutzer mit dieser E-Mail-Adresse gefunden.";
             break;
           case "ACTIVE_LICENSE_NOT_FOUND":
-            errorText = "Keine aktive Lizenz fuer diese E-Mail-Adresse gefunden.";
+            errorText = "Keine aktive Lizenz für diese E-Mail-Adresse gefunden.";
             break;
           case "INVALID_TOOL_API_KEY":
             errorText = "Technischer Fehler. Bitte kontaktieren Sie den Support.";
@@ -96,7 +96,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     setLoginError(null);
 
     if (!email || !licenseKey) {
-      setLoginError("Bitte fuellen Sie alle Felder aus.");
+      setLoginError("Bitte füllen Sie alle Felder aus.");
       return;
     }
 
@@ -105,7 +105,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
     setIsLoading(false);
 
     if (!result.success) {
-      setLoginError(result.message || "Bitte ueberpruefen Sie Ihre Zugangsdaten.");
+      setLoginError(result.message || "Bitte überprüfen Sie Ihre Zugangsdaten.");
     }
   };
 
@@ -146,7 +146,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Wird ueberprueft...
+                  Wird überprüft...
                 </>
               ) : (
                 "Anmelden"
