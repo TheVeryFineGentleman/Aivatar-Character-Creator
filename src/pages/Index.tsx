@@ -2121,12 +2121,27 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       
       if (generatedText) {
-        // Parse ideas (split by --- if multiple)
-        const ideas = count > 1
-          ? generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15)
-          : [generatedText];
+        // Parse ideas - try multiple splitting strategies
+        let ideas: string[];
+        if (count > 1) {
+          // Strategy 1: Split by --- or ___ separators
+          let split = generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n|\n\s*\*{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          
+          // Strategy 2: Split by numbered patterns like "1.", "2.", "Idee 1:", etc.
+          if (split.length < count) {
+            split = generatedText.split(/\n\s*(?:\d+[\.\)]\s|Idee\s*\d+|Variante\s*\d+)/i).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          }
+          
+          // Strategy 3: Split by double newlines
+          if (split.length < count) {
+            split = generatedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          }
+          
+          ideas = split.length >= 2 ? split : [generatedText];
+        } else {
+          ideas = [generatedText];
+        }
         
-        // Fallback: if splitting didn't produce enough ideas, keep as single
         const finalIdeas = ideas.length > 0 ? ideas : [generatedText];
 
         if (isModifyMode) {
