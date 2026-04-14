@@ -4890,7 +4890,9 @@ ${sceneContext}`;
     setSelectedSuggestionIndex(index);
     setIsAnimatingSuggestion(true);
     
-    // After animation completes, expand the short summary into full text
+    const expandCount = parseInt(ideaCount) || 1;
+    
+    // After animation completes, expand the short summary into full text(s)
     setTimeout(async () => {
       setIsAnimatingSuggestion(false);
       setSelectedSuggestionIndex(null);
@@ -4908,8 +4910,13 @@ ${sceneContext}`;
 - Jeder Satz muss "scroll-stopping" sein - warum sollte jemand weiterschauen?
 - Genau ein dominanter Konflikt oder Fokus pro Beat
 - Polarisierend oder emotional schockierend` : '';
+        
+        const multiPrefix = expandCount > 1 
+          ? `Erstelle genau ${expandCount} verschiedene Varianten. Jede soll einen anderen Ansatz, Ton oder Fokus haben. Trenne die Varianten mit "---" auf einer eigenen Zeile.\n\n` 
+          : '';
+        
         const expandPrompt = isDialogMode
-          ? `Erweitere diese Dialog-Zusammenfassung zu einem packenden, emotionalen Dialog - optimiert für ein Social-Media-Video (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Laenge.
+          ? `${multiPrefix}Erweitere diese Dialog-Zusammenfassung zu ${expandCount > 1 ? `${expandCount} packenden, emotionalen Dialogen` : 'einem packenden, emotionalen Dialog'} - optimiert für ein Social-Media-Video (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Länge.
 
 REGELN:
 - 4-8 Sätze gesprochener Dialog, filmisch und emotional
@@ -4920,8 +4927,8 @@ REGELN:
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit dem fertigen Dialog-Text, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
-          : `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung - optimiert für Social-Media-Videos (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Laenge.
+Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Dialog-Texten, getrennt durch "---"` : 'dem fertigen Dialog-Text'}, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
+          : `${multiPrefix}Erweitere diese kurze Story-Zusammenfassung zu ${expandCount > 1 ? `${expandCount} visuell packenden Szenenbeschreibungen` : 'einer visuell packenden Szenenbeschreibung'} - optimiert für Social-Media-Videos (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Länge.
 
 REGELN:
 - 3-6 Sätze, visuell und atmosphärisch
@@ -4932,7 +4939,7 @@ REGELN:
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
+Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Beschreibungen, getrennt durch "---"` : 'der fertigen Beschreibung'}, ohne Erklärungen. Auf Deutsch.`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -4940,26 +4947,44 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: expandPrompt }] }]
+              contents: [{ parts: [{ text: expandPrompt }] }],
+              generationConfig: {
+                temperature: 0.9,
+                maxOutputTokens: Math.max(expandCount * 800, 2000)
+              }
             }),
           }
         );
 
-        let finalText = suggestion;
+        let expandedIdeas: string[] = [suggestion];
         if (response.ok) {
           const data = await response.json();
           const expandedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (expandedText) finalText = expandedText;
+          if (expandedText) {
+            if (expandCount > 1) {
+              const split = expandedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+              expandedIdeas = split.length > 0 ? split : [expandedText];
+            } else {
+              expandedIdeas = [expandedText];
+            }
+          }
         }
         
-        // Fast word-by-word animation
+        // Set first idea with word-by-word animation
         setIsExpandingSuggestion(false);
-        const words = finalText.split(/\s+/);
+        const firstIdea = expandedIdeas[0];
+        const words = firstIdea.split(/\s+/);
         let accumulated = "";
         for (let w = 0; w < words.length; w++) {
           accumulated += (w > 0 ? " " : "") + words[w];
           setStoryIdea(accumulated);
           await new Promise(r => setTimeout(r, 12));
+        }
+        
+        // If multiple ideas, populate the idea navigation
+        if (expandedIdeas.length > 1) {
+          setGeneratedIdeas(expandedIdeas);
+          setCurrentIdeaIndex(0);
         }
       } catch (error) {
         console.error("Failed to expand suggestion:", error);
