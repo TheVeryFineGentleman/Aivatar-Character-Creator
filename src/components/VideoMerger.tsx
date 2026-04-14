@@ -539,11 +539,11 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
           }
           if (url.startsWith("blob:")) {
             throw new Error(
-              `Video ${videos[i].index + 1} ist nur als temporaerer Blob-Link vorhanden. Bitte dieses Video neu generieren und erneut zusammenfügen.`
+              `Video ${videos[i].index + 1} ist nur als temporärer Blob-Link vorhanden. Bitte dieses Video neu generieren und erneut zusammenfügen.`
             );
           }
           throw new Error(
-            `Video ${videos[i].index + 1} konnte nicht geladen werden. Moeglicherweise ist der Link abgelaufen.`
+            `Video ${videos[i].index + 1} konnte nicht geladen werden. Möglicherweise ist der Link abgelaufen.`
           );
         }
       }

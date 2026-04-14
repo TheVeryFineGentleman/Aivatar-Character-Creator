@@ -86,8 +86,8 @@ export const CookieConsent: React.FC = () => {
         </div>
 
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Wir verwenden Cookies und aehnliche Technologien, um die Funktionalitaet unserer Website zu gewaehrleisten und
-          dein Nutzererlebnis zu verbessern. Mit "Nur notwendige" bleiben nur technisch notwendige Daten aktiv.
+          Wir verwenden Cookies und ähnliche Technologien, um die Funktionalität unserer Website zu gewährleisten und
+          dein Nutzererlebnis zu verbessern. Mit „Nur notwendige" bleiben nur technisch notwendige Daten aktiv.
         </p>
 
         <button
@@ -111,7 +111,7 @@ export const CookieConsent: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Diese Cookies sind fuer die Grundfunktionen der Website erforderlich (Authentifizierung, Sicherheit,
+                Diese Cookies sind für die Grundfunktionen der Website erforderlich (Authentifizierung, Sicherheit,
                 Session-Management).
               </p>
             </div>
@@ -122,7 +122,7 @@ export const CookieConsent: React.FC = () => {
                 <span className="font-medium text-foreground">Funktionale Cookies</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Ermoeglichen erweiterte Funktionalitaet und Personalisierung (Spracheinstellungen, Praeferenzen).
+                Ermöglichen erweiterte Funktionalität und Personalisierung (Spracheinstellungen, Präferenzen).
               </p>
             </div>
 
