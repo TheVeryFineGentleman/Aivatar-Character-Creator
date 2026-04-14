@@ -5015,7 +5015,7 @@ Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Beschreibungen
   const generateStorySuggestions = async (key: string) => {
     if (!key || isLoadingStorySuggestions) return;
     
-    const suggestCount = parseInt(ideaCount) || 3;
+    const suggestCount = 3;
     setIsLoadingStorySuggestions(true);
     try {
       const response = await fetch(
