@@ -1513,7 +1513,7 @@ REEL-MODUS:
 - Optimiere auf Hook in Sekunde 1, sofortige Lesbarkeit auf dem Handy und genau einen dominanten Fokus.
 - Vermeide Filler, statische Einleitungen, unklare Mehrfachaktionen und visuelle Unentschlossenheit.
 - Wenn du summary, detailedDescription, composition, movement oder videoPrompt anfasst, priorisiere scroll-stopping Klarheit.
-- Jede Aenderung soll das Weiterschauen wahrscheinlicher machen.` : ""}
+- Jede Änderung soll das Weiterschauen wahrscheinlicher machen.` : ""}
 
 STORY-KONTEXT:
 - Story-Idee: ${storyIdea || "nicht gesetzt"}
@@ -1551,9 +1551,9 @@ FELDER, DIE DU FUER DIESE SZENE ANPASSEN DARFST:
 - continuityNotes
 
 ENUM-REGELN:
-- Verwende fuer Enum-Felder nur die unten aufgefuehrten values.
+- Verwende für Enum-Felder nur die unten aufgeführten values.
 - Wenn du das Feld absichtlich wieder auf "von KI waehlen lassen" setzen willst, verwende "_auto_".
-- Wenn ein Feld unveraendert bleiben soll, setze es auf null.
+- Wenn ein Feld unverändert bleiben soll, setze es auf null.
 
 GUELTIGE VALUES:
 cameraAngle:
@@ -1589,7 +1589,7 @@ WICHTIGE REGELN:
 6. Wenn die Nutzeranweisung breit ist, denke wie eine Regie-Notiz und aktualisiere mehrere passende Felder gemeinsam.
 7. Aendere nichts ausserhalb dieser Szene.
 8. Gib keine leeren Strings aus. Nur sinnvoller Text oder null.
-9. Wenn Referenzcharaktere vorhanden sind, erfinde keine neuen Namen und aendere keine feste Zuordnung zwischen Name und Referenzfigur.
+9. Wenn Referenzcharaktere vorhanden sind, erfinde keine neuen Namen und ändere keine feste Zuordnung zwischen Name und Referenzfigur.
 
 Antworte NUR mit einem validen JSON-Objekt in genau dieser Form:
 {
@@ -1785,7 +1785,7 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     setSmartReelChatMessages([
       {
         role: "assistant",
-        text: "Ich stelle dir jetzt die wichtigsten Fragen fuer dein Reel. Danach kannst du wie gewohnt Ideen, Storyboard, Bilder und Videos generieren."
+        text: "Ich stelle dir jetzt die wichtigsten Fragen für dein Reel. Danach kannst du wie gewohnt Ideen, Storyboard, Bilder und Videos generieren."
       },
       {
         role: "assistant",
@@ -1946,17 +1946,17 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     setIsAnalyzingSmartReelReferences(true);
     try {
       const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [{
-        text: `Du analysierst Referenzmaterial fuer einen Smart-Reel-Workflow.
+        text: `Du analysierst Referenzmaterial für einen Smart-Reel-Workflow.
 
 AUFGABE:
 - Beschreibe jede hochgeladene Charakter-Referenz so konkret, dass eine Video-KI Gesicht, Haare, Kleidung, Accessoires und Alterseindruck moeglichst konsistent nachbauen kann.
-- Beschreibe jede Stil-Referenz so konkret, dass Bildlook, Licht, Farbe, Kamera, Kontrast und Oberflaechen moeglichst genau nachgebaut werden koennen.
-- Nutze das Transcript nur fuer Hook, Rhythmus und Dramaturgie. Nicht fuer 1:1-Kopie.
+- Beschreibe jede Stil-Referenz so konkret, dass Bildlook, Licht, Farbe, Kamera, Kontrast und Oberflächen möglichst genau nachgebaut werden können.
+- Nutze das Transcript nur für Hook, Rhythmus und Dramaturgie. Nicht für 1:1-Kopie.
 
 REFERENZ-TRANSCRIPT:
 ${smartReelTranscript.trim() || "Kein Transcript vorhanden"}
 
-Gib NUR valides JSON zurueck:
+Gib NUR valides JSON zurück:
 {
   "characterDescriptions": [
     { "index": 1, "name": "string", "description": "string" }
@@ -2068,7 +2068,7 @@ Gib NUR valides JSON zurueck:
       const currentIdea = generatedIdeas[currentIdeaIndex] || storyIdea;
       
       const prompt = isModifyMode
-        ? `Du bist ein Story-Autor fuer REALISTISCHE, lebensnahe Geschichten.
+        ? `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten.
 
 AKTUELLE STORY-IDEE:
 "${currentIdea}"
@@ -2076,16 +2076,16 @@ AKTUELLE STORY-IDEE:
 ${workflowInstruction ? `AENDERUNGSWUNSCH:\n"${workflowInstruction}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
 ${plannerContextBlock}
 
-Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewuenschten Aenderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
+Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Änderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
 - Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausfuehrliche, detaillierte Story-Idee (4-8 Saetze)
-- NUR realistische, alltaegliche Szenarien! KEINE Fantasy, Magie, uebernatuerliche Elemente, Sci-Fi
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Wenn eine Referenz vorhanden ist, adaptiere Hook, Figurenwirkung und Dramaturgie auf ein neues eigenes Video
 - Schreibe auf Deutsch
 ${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklaerungen`
-        : `Du bist ein Story-Autor fuer REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
+        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
 "${effectiveNewIdeaInstruction || 'Erstelle realistische, detaillierte Story-Ideen'}"
@@ -2093,10 +2093,10 @@ ${plannerContextBlock}
 
 WICHTIGE REGELN:
 - Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausfuehrliche Story-Idee ('} 6-10 Saetze)
-- NUR realistische, alltaegliche Szenarien! KEINE Fantasy, Magie, uebernatuerliche Elemente, Sci-Fi
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
-- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein fuer ein Storyboard
-- Wenn eine Referenz vorhanden ist, uebernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
+- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
+- Wenn eine Referenz vorhanden ist, übernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
 - Schreibe auf Deutsch
 ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklaerungen`;
 
@@ -2367,7 +2367,7 @@ FELDREGELN:
 - "keyAction": genau eine zentrale sichtbare Aktion oder Gestik
 - "emotion": klar sichtbar und visuell darstellbar
 - "audienceEffect": welche Zuschauerreaktion oder Stimmung die Szene ausloesen soll
-- "composition": die Bildlogik fuer Fokus und Lesbarkeit
+- "composition": die Bildlogik für Fokus und Lesbarkeit
 - "movement": die dominante Kamerabewegung oder "keine"
 - "detailedDescription":
   - falls enableSceneDescription = true:
@@ -2538,11 +2538,11 @@ WICHTIG:
       if (!storyboardApplied && storyCreatorMode === "reel") {
         console.warn("Reel storyboard primary prompt returned no usable scenes, trying simplified fallback...");
 
-        const simplifiedReelPrompt = `Du bist ein Storyboard-Autor fuer kurze vertikale Reels.
+        const simplifiedReelPrompt = `Du bist ein Storyboard-Autor für kurze vertikale Reels.
 
 AUFGABE:
 Antworte nur mit validem JSON.
-Erstelle genau ${storyPointCount} kurze Szenen fuer ein 9:16 Reel.
+Erstelle genau ${storyPointCount} kurze Szenen für ein 9:16 Reel.
 
 EINGABEN:
 - Story-Idee: "${storyIdea}"
@@ -3672,7 +3672,7 @@ Respond ONLY with JSON:
         await loadImageAsDataUrl(storyPoints[i + 1]?.generatedImage);
       }
 
-      console.log(`- Szene ${i + 1}: ${videoReferenceImages.length}/${VEO_REFERENCE_IMAGE_LIMIT} Bildreferenzen fuer den Video-Prompt`);
+      console.log(`- Szene ${i + 1}: ${videoReferenceImages.length}/${VEO_REFERENCE_IMAGE_LIMIT} Bildreferenzen für den Video-Prompt`);
 
       try {
         // Build parts: text + optional reference images
