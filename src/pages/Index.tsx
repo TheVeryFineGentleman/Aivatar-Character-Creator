@@ -416,8 +416,8 @@ function getStoryColorInstruction(color: string, mode: "general" | "reel"): stri
 
 function getReelStoryboardDirective(effectiveHook: string): string {
   return `
-REEL-MODUS - KRITISCHE ANWEISUNGEN (hoechste Prioritaet):
-Du erstellst ein Storyboard fuer ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
+REEL-MODUS - KRITISCHE ANWEISUNGEN (höchste Priorität):
+Du erstellst ein Storyboard für ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
 Jede Szene wird zu einem kurzen Videoclip. Die exakte Gesamtdauer kommt aus dem Nutzerbriefing.
 
 VERWENDE DIESEN HOOK ALS LEITPLANKE:
@@ -431,10 +431,10 @@ REEL-DRAMATURGIE:
 REEL-VISUELLE REGELN:
 - Genau EIN dominanter Fokus pro Szene: eine Person, eine Aktion, ein Konflikt. Keine geteilte Aufmerksamkeit.
 - Handy-lesbar: Die Szene muss auch auf einem kleinen Smartphone-Screen sofort klar sein.
-- Keine Filler-Shots, keine neutralen Establishing Shots, keine statischen Uebergaenge ohne Konflikt.
+- Keine Filler-Shots, keine neutralen Establishing Shots, keine statischen Übergänge ohne Konflikt.
 - Starker Szenenkontrast: Winkel, Entfernung, Komposition oder Machtdynamik sollen sich deutlich von der vorherigen Szene unterscheiden.
-- Bewegung ist Pflicht: Kamera, Koerperhaltung, Blick oder Umwelt muessen spueren lassen, dass etwas passiert.
-- 9:16-Komposition: Gesichter, Haende und Kernaktion muessen in der vertikalen Safe Zone klar sichtbar bleiben.
+- Bewegung ist Pflicht: Kamera, Körperhaltung, Blick oder Umwelt müssen spüren lassen, dass etwas passiert.
+- 9:16-Komposition: Gesichter, Hände und Kernaktion müssen in der vertikalen Safe Zone klar sichtbar bleiben.
 
 REEL-INHALTLICHE REGELN:
 - Denke in aufmerksamkeitsstarken Momenten, nicht in langsamer Exposition.
@@ -1310,7 +1310,7 @@ const Index = () => {
       { value: "seitlich", label: "Seitlich", aliases: ["profil"] },
       { value: "von-oben", label: "Von oben", aliases: ["high-angle"] },
       { value: "von-unten", label: "Von unten", aliases: ["low-angle"] },
-      { value: "ueber-schulter", label: "Ueber die Schulter", aliases: ["over-the-shoulder", "shoulder"] },
+      { value: "ueber-schulter", label: "Über die Schulter", aliases: ["over-the-shoulder", "shoulder"] },
       { value: "dutch-angle", label: "Dutch Angle", aliases: ["dutch", "canted-angle"] },
       { value: "vogelperspektive", label: "Vogelperspektive", aliases: ["birds-eye-view", "birds-eye", "bird-eye-view"] },
       { value: "froschperspektive", label: "Froschperspektive", aliases: ["worms-eye-view", "worms-eye", "worm-eye-view"] },
@@ -1335,28 +1335,28 @@ const Index = () => {
       { value: "rennt", label: "Rennt" },
       { value: "wartet", label: "Wartet" },
       { value: "greift", label: "Greift" },
-      { value: "haelt", label: "Haelt" },
+      { value: "haelt", label: "Hält" },
       { value: "zeigt", label: "Zeigt" },
       { value: "wendet-sich", label: "Wendet sich", aliases: ["dreht-sich-um"] },
     ],
     specificArea: [
       { value: "innenraum", label: "Innenraum" },
-      { value: "aussenbereich", label: "Aussenbereich" },
-      { value: "strasse", label: "Strasse" },
+      { value: "aussenbereich", label: "Außenbereich" },
+      { value: "strasse", label: "Straße" },
       { value: "natur", label: "Natur" },
       { value: "arbeitsplatz", label: "Arbeitsplatz" },
       { value: "zuhause", label: "Zuhause" },
       { value: "fahrzeug", label: "Fahrzeug" },
-      { value: "oeffentlicher-ort", label: "Oeffentlicher Ort", aliases: ["oeffentlicher-platz", "public-place"] },
+      { value: "oeffentlicher-ort", label: "Öffentlicher Ort", aliases: ["oeffentlicher-platz", "public-place"] },
     ],
     emotion: [
-      { value: "gluecklich", label: "Gluecklich" },
+      { value: "gluecklich", label: "Glücklich" },
       { value: "traurig", label: "Traurig" },
       { value: "nachdenklich", label: "Nachdenklich" },
       { value: "aufgeregt", label: "Aufgeregt" },
-      { value: "aengstlich", label: "Aengstlich" },
-      { value: "wuetend", label: "Wuetend", aliases: ["zornig"] },
-      { value: "ueberrascht", label: "Ueberrascht" },
+      { value: "aengstlich", label: "Ängstlich" },
+      { value: "wuetend", label: "Wütend", aliases: ["zornig"] },
+      { value: "ueberrascht", label: "Überrascht" },
       { value: "verliebt", label: "Verliebt" },
       { value: "verzweifelt", label: "Verzweifelt" },
       { value: "hoffnungsvoll", label: "Hoffnungsvoll" },
@@ -1493,7 +1493,7 @@ const Index = () => {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Du bist ein Storyboard-Regieassistent fuer genau eine Szene.
+                text: `Du bist ein Storyboard-Regieassistent für genau eine Szene.
 
 Du bekommst die aktuelle Szene eines Storyboards und eine freie Nutzeranweisung wie:
 - "Mach die Geschichte cooler"
@@ -1503,8 +1503,8 @@ Du bekommst die aktuelle Szene eines Storyboards und eine freie Nutzeranweisung 
 
 Deine Aufgabe:
 - Interpretiere breite kreative Anweisungen ganzheitlich.
-- Wenn die Anweisung allgemein ist, passe mehrere zusammenhaengende Felder dieser Szene an.
-- Wenn die Anweisung gezielt ist, aendere nur die betroffenen Felder.
+- Wenn die Anweisung allgemein ist, passe mehrere zusammenhängende Felder dieser Szene an.
+- Wenn die Anweisung gezielt ist, ändere nur die betroffenen Felder.
 - Halte die Szene konsistent zur Story-Idee, zum Hauptort und zu den Nachbarszenen.
 - Du bearbeitest nur diese eine Szene, nicht das ganze Storyboard.
 ${storyCreatorMode === "reel" ? `
@@ -1513,7 +1513,7 @@ REEL-MODUS:
 - Optimiere auf Hook in Sekunde 1, sofortige Lesbarkeit auf dem Handy und genau einen dominanten Fokus.
 - Vermeide Filler, statische Einleitungen, unklare Mehrfachaktionen und visuelle Unentschlossenheit.
 - Wenn du summary, detailedDescription, composition, movement oder videoPrompt anfasst, priorisiere scroll-stopping Klarheit.
-- Jede Aenderung soll das Weiterschauen wahrscheinlicher machen.` : ""}
+- Jede Änderung soll das Weiterschauen wahrscheinlicher machen.` : ""}
 
 STORY-KONTEXT:
 - Story-Idee: ${storyIdea || "nicht gesetzt"}
@@ -1551,9 +1551,9 @@ FELDER, DIE DU FUER DIESE SZENE ANPASSEN DARFST:
 - continuityNotes
 
 ENUM-REGELN:
-- Verwende fuer Enum-Felder nur die unten aufgefuehrten values.
+- Verwende für Enum-Felder nur die unten aufgeführten values.
 - Wenn du das Feld absichtlich wieder auf "von KI waehlen lassen" setzen willst, verwende "_auto_".
-- Wenn ein Feld unveraendert bleiben soll, setze es auf null.
+- Wenn ein Feld unverändert bleiben soll, setze es auf null.
 
 GUELTIGE VALUES:
 cameraAngle:
@@ -1589,7 +1589,7 @@ WICHTIGE REGELN:
 6. Wenn die Nutzeranweisung breit ist, denke wie eine Regie-Notiz und aktualisiere mehrere passende Felder gemeinsam.
 7. Aendere nichts ausserhalb dieser Szene.
 8. Gib keine leeren Strings aus. Nur sinnvoller Text oder null.
-9. Wenn Referenzcharaktere vorhanden sind, erfinde keine neuen Namen und aendere keine feste Zuordnung zwischen Name und Referenzfigur.
+9. Wenn Referenzcharaktere vorhanden sind, erfinde keine neuen Namen und ändere keine feste Zuordnung zwischen Name und Referenzfigur.
 
 Antworte NUR mit einem validen JSON-Objekt in genau dieser Form:
 {
@@ -1785,7 +1785,7 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     setSmartReelChatMessages([
       {
         role: "assistant",
-        text: "Ich stelle dir jetzt die wichtigsten Fragen fuer dein Reel. Danach kannst du wie gewohnt Ideen, Storyboard, Bilder und Videos generieren."
+        text: "Ich stelle dir jetzt die wichtigsten Fragen für dein Reel. Danach kannst du wie gewohnt Ideen, Storyboard, Bilder und Videos generieren."
       },
       {
         role: "assistant",
@@ -1946,17 +1946,17 @@ Antworte NUR mit dem reinen Video-Prompt-Text, keine JSON-Struktur, keine Erklä
     setIsAnalyzingSmartReelReferences(true);
     try {
       const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [{
-        text: `Du analysierst Referenzmaterial fuer einen Smart-Reel-Workflow.
+        text: `Du analysierst Referenzmaterial für einen Smart-Reel-Workflow.
 
 AUFGABE:
-- Beschreibe jede hochgeladene Charakter-Referenz so konkret, dass eine Video-KI Gesicht, Haare, Kleidung, Accessoires und Alterseindruck moeglichst konsistent nachbauen kann.
-- Beschreibe jede Stil-Referenz so konkret, dass Bildlook, Licht, Farbe, Kamera, Kontrast und Oberflaechen moeglichst genau nachgebaut werden koennen.
-- Nutze das Transcript nur fuer Hook, Rhythmus und Dramaturgie. Nicht fuer 1:1-Kopie.
+- Beschreibe jede hochgeladene Charakter-Referenz so konkret, dass eine Video-KI Gesicht, Haare, Kleidung, Accessoires und Alterseindruck möglichst konsistent nachbauen kann.
+- Beschreibe jede Stil-Referenz so konkret, dass Bildlook, Licht, Farbe, Kamera, Kontrast und Oberflächen möglichst genau nachgebaut werden können.
+- Nutze das Transcript nur für Hook, Rhythmus und Dramaturgie. Nicht für 1:1-Kopie.
 
 REFERENZ-TRANSCRIPT:
 ${smartReelTranscript.trim() || "Kein Transcript vorhanden"}
 
-Gib NUR valides JSON zurueck:
+Gib NUR valides JSON zurück:
 {
   "characterDescriptions": [
     { "index": 1, "name": "string", "description": "string" }
@@ -2068,7 +2068,7 @@ Gib NUR valides JSON zurueck:
       const currentIdea = generatedIdeas[currentIdeaIndex] || storyIdea;
       
       const prompt = isModifyMode
-        ? `Du bist ein Story-Autor fuer REALISTISCHE, lebensnahe Geschichten.
+        ? `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten.
 
 AKTUELLE STORY-IDEE:
 "${currentIdea}"
@@ -2076,16 +2076,16 @@ AKTUELLE STORY-IDEE:
 ${workflowInstruction ? `AENDERUNGSWUNSCH:\n"${workflowInstruction}"` : 'Verbessere und erweitere diese Story-Idee. Mache sie detaillierter, fesselnder und emotional packender.'}
 ${plannerContextBlock}
 
-Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewuenschten Aenderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
+Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Änderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
 - Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausfuehrliche, detaillierte Story-Idee (4-8 Saetze)
-- NUR realistische, alltaegliche Szenarien! KEINE Fantasy, Magie, uebernatuerliche Elemente, Sci-Fi
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Wenn eine Referenz vorhanden ist, adaptiere Hook, Figurenwirkung und Dramaturgie auf ein neues eigenes Video
 - Schreibe auf Deutsch
 ${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklaerungen`
-        : `Du bist ein Story-Autor fuer REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
+        : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
 "${effectiveNewIdeaInstruction || 'Erstelle realistische, detaillierte Story-Ideen'}"
@@ -2093,10 +2093,10 @@ ${plannerContextBlock}
 
 WICHTIGE REGELN:
 - Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausfuehrliche Story-Idee ('} 6-10 Saetze)
-- NUR realistische, alltaegliche Szenarien! KEINE Fantasy, Magie, uebernatuerliche Elemente, Sci-Fi
+- NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
-- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein fuer ein Storyboard
-- Wenn eine Referenz vorhanden ist, uebernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
+- Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
+- Wenn eine Referenz vorhanden ist, übernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
 - Schreibe auf Deutsch
 ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklaerungen`;
 
@@ -2367,7 +2367,7 @@ FELDREGELN:
 - "keyAction": genau eine zentrale sichtbare Aktion oder Gestik
 - "emotion": klar sichtbar und visuell darstellbar
 - "audienceEffect": welche Zuschauerreaktion oder Stimmung die Szene ausloesen soll
-- "composition": die Bildlogik fuer Fokus und Lesbarkeit
+- "composition": die Bildlogik für Fokus und Lesbarkeit
 - "movement": die dominante Kamerabewegung oder "keine"
 - "detailedDescription":
   - falls enableSceneDescription = true:
@@ -2538,11 +2538,11 @@ WICHTIG:
       if (!storyboardApplied && storyCreatorMode === "reel") {
         console.warn("Reel storyboard primary prompt returned no usable scenes, trying simplified fallback...");
 
-        const simplifiedReelPrompt = `Du bist ein Storyboard-Autor fuer kurze vertikale Reels.
+        const simplifiedReelPrompt = `Du bist ein Storyboard-Autor für kurze vertikale Reels.
 
 AUFGABE:
 Antworte nur mit validem JSON.
-Erstelle genau ${storyPointCount} kurze Szenen fuer ein 9:16 Reel.
+Erstelle genau ${storyPointCount} kurze Szenen für ein 9:16 Reel.
 
 EINGABEN:
 - Story-Idee: "${storyIdea}"
@@ -3672,7 +3672,7 @@ Respond ONLY with JSON:
         await loadImageAsDataUrl(storyPoints[i + 1]?.generatedImage);
       }
 
-      console.log(`- Szene ${i + 1}: ${videoReferenceImages.length}/${VEO_REFERENCE_IMAGE_LIMIT} Bildreferenzen fuer den Video-Prompt`);
+      console.log(`- Szene ${i + 1}: ${videoReferenceImages.length}/${VEO_REFERENCE_IMAGE_LIMIT} Bildreferenzen für den Video-Prompt`);
 
       try {
         // Build parts: text + optional reference images
@@ -8407,7 +8407,7 @@ Beispiel einer korrekten Antwort:
                       <div className="space-y-1">
                         <Label className="text-base">Smart Reel Modus</Label>
                         <p className="text-xs text-muted-foreground max-w-2xl leading-5">
-                          Gib ein Transcript ein, lade Referenzbilder hoch und lass dir das Briefing ueber einen einfachen Chat zusammenbauen. Danach geht es direkt im normalen Reel Creator weiter.
+                          Gib ein Transcript ein, lade Referenzbilder hoch und lass dir das Briefing über einen einfachen Chat zusammenbauen. Danach geht es direkt im normalen Reel Creator weiter.
                         </p>
                       </div>
                     </div>
@@ -8439,7 +8439,7 @@ Beispiel einer korrekten Antwort:
                             <div className="space-y-1">
                               <Label htmlFor="smart-reel-transcript" className="text-sm">Referenz-Transcript</Label>
                               <p className="text-xs text-muted-foreground">
-                                Vorlage fuer Hook, Tempo und Dramaturgie. Kein 1:1-Kopieren.
+                                Vorlage für Hook, Tempo und Dramaturgie. Kein 1:1-Kopieren.
                               </p>
                             </div>
                             <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
@@ -8457,7 +8457,7 @@ Beispiel einer korrekten Antwort:
 
                         <div className="grid gap-3 md:grid-cols-2">
                           <div className="rounded-xl border border-border/50 bg-background/70 p-4 space-y-2">
-                            <p className="text-xs font-medium text-foreground">Was der Smart-Modus uebernimmt</p>
+                            <p className="text-xs font-medium text-foreground">Was der Smart-Modus übernimmt</p>
                             <div className="flex flex-wrap gap-2">
                               {["Reel-Fokus", "Idee", "Sprechmodus", "Plattform", "Laenge"].map((item) => (
                                 <span
@@ -8501,7 +8501,7 @@ Beispiel einer korrekten Antwort:
                             </div>
                             <div className="space-y-0.5">
                               <Label className="text-sm">Smart Reel Chat</Label>
-                              <p className="text-[11px] text-muted-foreground">Schritt fuer Schritt zum fertigen Briefing</p>
+                              <p className="text-[11px] text-muted-foreground">Schritt für Schritt zum fertigen Briefing</p>
                             </div>
                           </div>
                           <Button variant="ghost" size="sm" onClick={() => startSmartReelChat(true)}>
@@ -8591,7 +8591,7 @@ Beispiel einer korrekten Antwort:
                         <div className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-2">
                           <Label className="text-xs text-muted-foreground">Optionaler Zusatzwunsch</Label>
                           <Textarea
-                            placeholder="Optional: weiterer Wunsch fuer Idee, Hook oder Zielgruppe..."
+                            placeholder="Optional: weiterer Wunsch für Idee, Hook oder Zielgruppe..."
                             value={storyAiAssistantInput}
                             onChange={(e) => setStoryAiAssistantInput(e.target.value)}
                             className="min-h-[84px] resize-y text-sm bg-transparent"
@@ -8839,7 +8839,7 @@ Beispiel einer korrekten Antwort:
                       <Textarea
                         placeholder={generatedIdeas.length > 0 
                           ? "Beschreibe die gewuenschte Aenderung, z.B. 'Mach es dramatischer' oder 'Verlege es ans Meer'..."
-                          : "Beschreibe was fuer eine Story du moechtest, z.B. 'Eine romantische Geschichte in Paris'..."
+                          : "Beschreibe was für eine Story du möchtest, z.B. 'Eine romantische Geschichte in Paris'..."
                         }
                         value={storyAiAssistantInput}
                         onChange={(e) => setStoryAiAssistantInput(e.target.value)}
@@ -8868,7 +8868,7 @@ Beispiel einer korrekten Antwort:
                     <p className="text-xs text-muted-foreground leading-5">Lade Figuren und optional den visuellen Look hoch, damit Bild- und Video-Prompts konsistent bleiben.</p>
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground/70 leading-tight">Mit Upload bestaetigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden fuer Sprecher-, Charakter- und Stil-Konsistenz in Story und Video verwendet.</p>
+                <p className="text-[10px] text-muted-foreground/70 leading-tight">Mit Upload bestätigst du, dass du die Rechte besitzt. Name und Kurzbeschreibung werden für Sprecher-, Charakter- und Stil-Konsistenz in Story und Video verwendet.</p>
                 <div className={cn("grid gap-4", smartReelModeEnabled && storyCreatorMode === "reel" ? "lg:grid-cols-2" : "grid-cols-1")}>
                   <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
                     <div className="flex items-center gap-2">

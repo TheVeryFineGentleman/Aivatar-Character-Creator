@@ -87,7 +87,7 @@ export const useAuth = () => {
         }
 
         const data: ValidationResponse = await response.json();
-        return { success: data.valid, data, message: data.valid ? undefined : "Lizenz ungueltig" };
+        return { success: data.valid, data, message: data.valid ? undefined : "Lizenz ungültig" };
       } catch (error) {
         console.error("Validation error:", error);
         return { success: false, message: "Verbindungsfehler" };
@@ -157,7 +157,7 @@ export const useAuth = () => {
       return { success: true };
     }
 
-    return { success: false, message: result.message || "Ungueltige E-Mail oder License Key." };
+    return { success: false, message: result.message || "Ungültige E-Mail oder License Key." };
   };
 
   const logout = useCallback(() => {
