@@ -1426,7 +1426,7 @@ const Index = () => {
     if (text === null) return undefined;
 
     const normalized = normalizeSceneAssistantToken(text);
-    if (["_auto_", "auto", "random", "zufaellig", "zufallig", "von-ki-waehlen-lassen", "ki-waehlen-lassen"].includes(normalized)) {
+    if (["_auto_", "auto", "random", "zufällig", "zufallig", "zufaellig", "von-ki-wählen-lassen", "ki-wählen-lassen", "von-ki-waehlen-lassen", "ki-waehlen-lassen"].includes(normalized)) {
       return "";
     }
 
@@ -1477,7 +1477,7 @@ const Index = () => {
         `- Shot-Typ: ${point.shotType || "nicht gesetzt"}`,
         `- Bildaufbau: ${point.composition || "nicht gesetzt"}`,
         `- Bewegung: ${point.movement || "nicht gesetzt"}`,
-        `- Kontinuitaet: ${point.continuityNotes || "nicht gesetzt"}`,
+        `- Kontinuität: ${point.continuityNotes || "nicht gesetzt"}`,
       ].filter(Boolean);
 
       return lines.join("\n");
@@ -1528,12 +1528,12 @@ ${formatSceneContext("Aktuelle Szene", currentPoint, idx)}
 - Negative Prompts: ${currentPoint.negativePrompts || "nicht gesetzt"}
 - Stil-Hinweise: ${currentPoint.styleNotes || "nicht gesetzt"}
 
-${formatSceneContext("Naechste Szene", nextPoint, idx + 1)}
+${formatSceneContext("Nächste Szene", nextPoint, idx + 1)}
 
 NUTZERANWEISUNG:
 "${userInstruction}"
 
-FELDER, DIE DU FUER DIESE SZENE ANPASSEN DARFST:
+FELDER, DIE DU FÜR DIESE SZENE ANPASSEN DARFST:
 - summary
 - detailedDescription
 - dialogText
@@ -1552,10 +1552,10 @@ FELDER, DIE DU FUER DIESE SZENE ANPASSEN DARFST:
 
 ENUM-REGELN:
 - Verwende für Enum-Felder nur die unten aufgeführten values.
-- Wenn du das Feld absichtlich wieder auf "von KI waehlen lassen" setzen willst, verwende "_auto_".
+- Wenn du das Feld absichtlich wieder auf "von KI wählen lassen" setzen willst, verwende "_auto_".
 - Wenn ein Feld unverändert bleiben soll, setze es auf null.
 
-GUELTIGE VALUES:
+GÜLTIGE VALUES:
 cameraAngle:
 ${formatSceneAssistantEnumOptions("cameraAngle")}
 
@@ -1585,9 +1585,9 @@ WICHTIGE REGELN:
 2. dialogText ist nur gesprochener Text der Szene und ebenfalls auf Deutsch.
 3. Wenn Dialog deaktiviert ist, muss dialogText null sein.
 4. videoPrompt ist auf Englisch.
-5. continuityNotes beschreibt nur Kontinuitaet zu anderen Szenen, Requisiten, Kleidung, Blickrichtung, Pose oder Raumlogik.
+5. continuityNotes beschreibt nur Kontinuität zu anderen Szenen, Requisiten, Kleidung, Blickrichtung, Pose oder Raumlogik.
 6. Wenn die Nutzeranweisung breit ist, denke wie eine Regie-Notiz und aktualisiere mehrere passende Felder gemeinsam.
-7. Aendere nichts ausserhalb dieser Szene.
+7. Ändere nichts außerhalb dieser Szene.
 8. Gib keine leeren Strings aus. Nur sinnvoller Text oder null.
 9. Wenn Referenzcharaktere vorhanden sind, erfinde keine neuen Namen und ändere keine feste Zuordnung zwischen Name und Referenzfigur.
 
