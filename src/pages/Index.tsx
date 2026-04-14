@@ -2079,12 +2079,12 @@ ${plannerContextBlock}
 Erstelle genau ${count} verschiedene Variante${count > 1 ? 'n' : ''} der angepassten Story-Idee. Behalte den Kern der Geschichte bei, aber integriere die gewünschten Änderungen.${count > 1 ? ' Jede Variante soll einen anderen Ansatz oder Fokus haben.' : ''}
 
 WICHTIGE REGELN:
-- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausfuehrliche, detaillierte Story-Idee (4-8 Saetze)
+- Erstelle ${count > 1 ? `genau ${count} Varianten, jeweils` : 'eine'} ausführliche, detaillierte Story-Idee (4-8 Sätze)
 - NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Wenn eine Referenz vorhanden ist, adaptiere Hook, Figurenwirkung und Dramaturgie auf ein neues eigenes Video
 - Schreibe auf Deutsch
-${count > 1 ? '- Trenne die Varianten mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklaerungen`
+${count > 1 ? '- WICHTIG: Trenne jede Variante mit genau "---" auf einer eigenen Zeile dazwischen. Keine andere Trennung verwenden!\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
         : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
@@ -2092,13 +2092,13 @@ NUTZERANFRAGE:
 ${plannerContextBlock}
 
 WICHTIGE REGELN:
-- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausfuehrliche Story-Idee ('} 6-10 Saetze)
+- Erstelle genau ${count} ${count > 1 ? 'verschiedene Story-Ideen (jeweils' : 'ausführliche Story-Idee ('} 6-10 Sätze)
 - NUR realistische, alltägliche Szenarien! KEINE Fantasy, Magie, übernatürliche Elemente, Sci-Fi
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
 - Wenn eine Referenz vorhanden ist, übernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
 - Schreibe auf Deutsch
-${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklaerungen`;
+${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zeile dazwischen. Keine andere Trennung verwenden!\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -2145,6 +2145,7 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
         const finalIdeas = ideas.length > 0 ? ideas : [generatedText];
 
         if (isModifyMode) {
+          // Add new ideas after current position, keep existing
           setGeneratedIdeas(prev => {
             const base = prev.length === 0 && storyIdea.trim() ? [storyIdea.trim()] : [...prev];
             const insertIndex = prev.length === 0 ? 1 : currentIdeaIndex + 1;
@@ -2158,6 +2159,7 @@ ${count > 1 ? '- Trenne die Ideen mit "---" auf einer eigenen Zeile\n' : ''}- An
           setStoryIdea(finalIdeas[0]);
           setStoryAiAssistantInput("");
         } else {
+          // New generation: set all ideas, keep first as active
           setGeneratedIdeas(finalIdeas);
           setCurrentIdeaIndex(0);
           setStoryIdea(finalIdeas[0]);
