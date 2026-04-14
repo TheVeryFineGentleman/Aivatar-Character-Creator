@@ -4984,7 +4984,7 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
             contents: [{
               parts: [{
                 text: storyEnableSpeaker && storyGenerationDirection === "description-from-speaker"
-                  ? `Generiere genau 3 sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+                  ? `Generiere genau ${suggestCount} sehr kurze DIALOG-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema eines möglichen Dialogs - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 ${storyCreatorMode === "reel" ? `
 REEL-FOKUS: Die Dialoge müssen SOFORT polarisieren oder emotional schocken. Denke an virale TikTok-Dialoge:
 - Konfrontationen, Geständnisse, überraschende Enthüllungen
@@ -5001,8 +5001,8 @@ ${storyCreatorMode === "reel" ? `- Freundin erwischt bei Lüge
 - Liebesgeständnis im Regen
 - Letzte Nachricht vor dem Abflug`}
 
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
-                  : `Generiere genau 3 sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
+Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+                  : `Generiere genau ${suggestCount} sehr kurze STORY-ZUSAMMENFASSUNGEN (maximal 4-6 Wörter pro Zusammenfassung). Jede beschreibt knapp das Thema einer möglichen Geschichte - optimiert für kurze, packende Social-Media-Videos (TikTok, Reels, Shorts).
 ${storyCreatorMode === "reel" ? `
 REEL-FOKUS: Die Geschichten müssen VIRAL-POTENZIAL haben. Denke an Content der auf TikTok Millionen Views bekommt:
 - Schockierende Wendungen, emotionale Achterbahnen
@@ -5020,7 +5020,7 @@ ${storyCreatorMode === "reel" ? `- Taxifahrer erkennt vermisste Tochter
 - Traumjob-Absage verändert alles
 - Zufälliges Wiedersehen nach Jahren`}
 
-Antworte NUR mit den 3 kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
+Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, ohne Nummerierung oder Aufzählungszeichen. Auf Deutsch.`
               }]
             }]
           }),
