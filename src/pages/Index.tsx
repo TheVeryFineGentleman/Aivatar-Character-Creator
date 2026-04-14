@@ -4973,6 +4973,7 @@ Antworte NUR mit der fertigen Beschreibung, ohne Erklärungen. Auf Deutsch.`;
   const generateStorySuggestions = async (key: string) => {
     if (!key || isLoadingStorySuggestions) return;
     
+    const suggestCount = parseInt(ideaCount) || 3;
     setIsLoadingStorySuggestions(true);
     try {
       const response = await fetch(
@@ -5034,9 +5035,9 @@ Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, o
           const ideas = text.split('\n')
             .map((line: string) => line.trim())
             .filter((line: string) => line.length > 10)
-            .slice(0, 3);
+            .slice(0, suggestCount);
           
-          if (ideas.length === 3) {
+          if (ideas.length >= 1) {
             setStorySuggestions(ideas);
           }
         }
