@@ -5020,8 +5020,32 @@ Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertig
           const expandedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (expandedText) {
             if (expandCount > 1) {
-              const split = expandedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
-              expandedIdeas = split.length > 0 ? split : [expandedText];
+              // Strategy 0: Try JSON array parsing
+              let parsed: string[] | null = null;
+              try {
+                const jsonMatch = expandedText.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                  const arr = JSON.parse(jsonMatch[0]);
+                  if (Array.isArray(arr) && arr.length >= 2 && arr.every((i: unknown) => typeof i === 'string')) {
+                    parsed = arr.map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+                  }
+                }
+              } catch { /* fallback */ }
+              
+              if (parsed && parsed.length >= 2) {
+                expandedIdeas = parsed;
+              } else {
+                // Fallback: split by --- or double newlines
+                let split = expandedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+                if (split.length < expandCount) {
+                  split = expandedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+                }
+                expandedIdeas = split.length > 0 ? split : [expandedText];
+              }
+              
+              if (expandedIdeas.length < expandCount) {
+                console.warn(`Requested ${expandCount} expansions but only parsed ${expandedIdeas.length}`);
+              }
             } else {
               expandedIdeas = [expandedText];
             }
