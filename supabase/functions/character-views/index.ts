@@ -79,7 +79,7 @@ serve(async (req) => {
       clearTimeout(timeoutId);
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         return new Response(
-          JSON.stringify({ success: false, error: "Zeitüberschreitung" }),
+          JSON.stringify({ success: false, error: "Timeout: Google konnte deine Anfrage nicht rechtzeitig bearbeiten." }),
           { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -90,9 +90,9 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Error:", response.status, errorText);
-      let errorMessage = `API error: ${response.status}`;
-      if (response.status === 429) errorMessage = "Rate limit erreicht. Bitte warte einen Moment.";
-      else if (response.status === 401) errorMessage = "API-Key ungültig";
+      let errorMessage = `Google-Fehler: ${response.status}`;
+      if (response.status === 429) errorMessage = "Google-Server ueberlastet - bitte warte einen Moment.";
+      else if (response.status === 401) errorMessage = "Dein API-Key wurde von Google abgelehnt.";
       return new Response(
         JSON.stringify({ success: false, error: errorMessage }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -104,7 +104,7 @@ serve(async (req) => {
 
     if (candidates[0]?.finishReason === "IMAGE_OTHER" || candidates[0]?.finishReason === "SAFETY") {
       return new Response(
-        JSON.stringify({ success: false, error: `Bild blockiert (${candidates[0]?.finishReason})` }),
+        JSON.stringify({ success: false, error: `Google hat dein Bild aus Sicherheitsgruenden abgelehnt. Bitte aendere deinen Prompt oder dein Referenzbild.` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -114,7 +114,7 @@ serve(async (req) => {
 
     if (!imagePart) {
       return new Response(
-        JSON.stringify({ success: false, error: "Kein Bild generiert" }),
+        JSON.stringify({ success: false, error: "Google hat kein Bild generiert - bitte versuche es erneut." }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -127,7 +127,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ success: false, error: `Google-Fehler: ${error instanceof Error ? error.message : "Unbekannt"}` }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
