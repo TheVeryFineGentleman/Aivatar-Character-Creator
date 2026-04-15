@@ -4970,7 +4970,7 @@ ${sceneContext}`;
 - Polarisierend oder emotional schockierend` : '';
         
         const multiPrefix = expandCount > 1 
-          ? `Erstelle genau ${expandCount} verschiedene Varianten. Jede soll einen anderen Ansatz, Ton oder Fokus haben. Trenne die Varianten mit "---" auf einer eigenen Zeile.\n\n` 
+          ? `Erstelle genau ${expandCount} verschiedene Varianten. Jede soll einen anderen Ansatz, Ton oder Fokus haben.\nAUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${expandCount} Strings. Beispiel: ["Text 1...", "Text 2..."]. Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n\n` 
           : '';
         
         const expandPrompt = isDialogMode
@@ -4985,7 +4985,7 @@ REGELN:
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Dialog-Texten, getrennt durch "---"` : 'dem fertigen Dialog-Text'}, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
+Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertigen Dialog-Texten` : 'dem fertigen Dialog-Text'}, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
           : `${multiPrefix}Erweitere diese kurze Story-Zusammenfassung zu ${expandCount > 1 ? `${expandCount} visuell packenden Szenenbeschreibungen` : 'einer visuell packenden Szenenbeschreibung'} - optimiert für Social-Media-Videos (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Länge.
 
 REGELN:
@@ -4997,7 +4997,7 @@ REGELN:
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Beschreibungen, getrennt durch "---"` : 'der fertigen Beschreibung'}, ohne Erklärungen. Auf Deutsch.`;
+Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertigen Beschreibungen` : 'der fertigen Beschreibung'}, ohne Erklärungen. Auf Deutsch.`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
