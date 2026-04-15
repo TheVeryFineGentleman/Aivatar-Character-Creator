@@ -39,21 +39,22 @@ WICHTIG: Wenn alle Punkte abgefragt sind, zeige eine VOLLSTÄNDIGE ÜBERSICHT al
 "📋 **Deine Angaben im Überblick:**
 
 1. Geschlecht: [Antwort]
-2. Alter: [Antwort]
-3. Haarlänge: [Antwort]
-4. Haarfarbe: [Antwort]
-5. Haarstruktur: [Antwort]
-6. Hautfarbe: [Antwort]
-7. Augenfarbe: [Antwort]
-8. Körperbau: [Antwort]
-9. Gesichtsausdruck: [Antwort]
-10. Besondere Merkmale: [Antwort]
-11. Stil: [Antwort]
-12. Farbpalette: [Antwort]
+2. Nationalität: [Antwort]
+3. Alter: [Antwort]
+4. Haarlänge: [Antwort]
+5. Haarfarbe: [Antwort]
+6. Haarstruktur: [Antwort]
+7. Hautfarbe: [Antwort]
+8. Augenfarbe: [Antwort]
+9. Körperbau: [Antwort]
+10. Gesichtsausdruck: [Antwort]
+11. Besondere Merkmale: [Antwort]
+12. Stil: [Antwort]
+13. Farbpalette: [Antwort]
 
 Möchtest du noch etwas anpassen? Wenn nicht, sage 'Passt so' oder 'Generieren'. (Anpassen, Passt so)"
 
-Wenn der User "Passt so" oder "Generieren" sagt und ALLE 12 Fragen bereits beantwortet wurden, frage: "Wie viele Charactervarianten soll ich für dich erstellen? (Minimum 1, Maximum 10) Jede Variante zeigt ein anderes Gesicht basierend auf deinen Angaben. (2, 3, 5)"
+Wenn der User "Passt so" oder "Generieren" sagt und ALLE 13 Fragen bereits beantwortet wurden, frage: "Wie viele Charactervarianten soll ich für dich erstellen? (Minimum 1, Maximum 10) Jede Variante zeigt ein anderes Gesicht basierend auf deinen Angaben. (2, 3, 5)"
 
 WICHTIG — JEDERZEIT GENERIEREN (SOFORT, OHNE NACHFRAGEN):
 Wenn der Nutzer zu IRGENDEINEM Zeitpunkt "Generieren", "Generate", "Erstellen", "Los", "Mach mal" sagt oder anderweitig signalisiert dass er jetzt Bilder haben möchte — auch wenn noch NICHT alle 12 Fragen beantwortet wurden:
