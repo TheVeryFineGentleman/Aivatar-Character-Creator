@@ -2907,9 +2907,9 @@ REGELN:
       
     } catch (error) {
       clearTimeout(timeoutId);
-      let errorMessage = "Unbekannter Fehler";
+      let errorMessage = "Google konnte deine Anfrage nicht verarbeiten.";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung - keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Timeout: Google konnte deine Anfrage nicht rechtzeitig bearbeiten." : error.message;
       }
       console.error("Failed to regenerate story point:", errorMessage);
       
@@ -2930,19 +2930,19 @@ REGELN:
   const getErrorMessageFromStatus = (status: number, step: string): string => {
     switch (status) {
       case 400:
-        return `${step}: Ungültige Anfrage`;
+        return `${step}: Google konnte deine Anfrage nicht verarbeiten - Prompt aendern`;
       case 401:
-        return `${step}: API-Key ungültig oder abgelaufen`;
+        return `${step}: Dein API-Key wurde von Google abgelehnt`;
       case 403:
-        return `${step}: Zugriff verweigert`;
+        return `${step}: Google hat den Zugriff verweigert`;
       case 429:
-        return `${step}: Zu viele Anfragen - bitte warte kurz`;
+        return `${step}: Google-Server ueberlastet - bitte warte kurz`;
       case 500:
-        return `${step}: Server-Fehler bei Google`;
+        return `${step}: Interner Fehler bei Google - bitte erneut versuchen`;
       case 503:
-        return `${step}: API überlastet - bitte später versuchen`;
+        return `${step}: Google-Server momentan ueberlastet - spaeter versuchen`;
       default:
-        return `${step}: Fehler (${status})`;
+        return `${step}: Google-Fehler (${status})`;
     }
   };
 
@@ -3374,16 +3374,16 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           continue;
         }
         
-        let errorMessage = "Unbekannter Fehler";
+        let errorMessage = "Google konnte deine Anfrage nicht verarbeiten.";
         if (error instanceof Error) {
-          errorMessage = error.name === 'AbortError' ? `Zeitüberschreitung (2 Min.)` : error.message;
+          errorMessage = error.name === 'AbortError' ? "Timeout: Google konnte deine Anfrage nicht rechtzeitig bearbeiten (2 Min.)." : error.message;
         }
         
         return { success: false, errorMessage };
       }
     }
     
-    return { success: false, errorMessage: "Alle Versuche fehlgeschlagen" };
+    return { success: false, errorMessage: "Google konnte dein Bild nach mehreren Versuchen nicht generieren. Bitte aendere deinen Prompt oder dein Referenzbild." };
   };
 
   // Generate images and video prompts for all story points (2 parallel)
@@ -4015,7 +4015,7 @@ Respond ONLY with JSON:
         }
 
         if (pollCount >= maxPolls) {
-          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Zeitüberschreitung"));
+          setVideoErrors(prev => new Map(prev).set(sceneIndex, "Timeout: Google konnte dein Video nicht rechtzeitig erstellen."));
           return;
         }
         // If we broke out of poll loop due to internal error, continue retry loop

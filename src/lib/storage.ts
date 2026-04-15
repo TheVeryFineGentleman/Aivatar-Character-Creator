@@ -261,51 +261,56 @@ export const getDeviceInfo = (): string => {
 
 // ============= DETAILED ERROR MESSAGE HELPER =============
 export const getDetailedErrorMessage = (error: any): string => {
-  if (!error) return "Unbekannter Fehler";
+  if (!error) return "Google konnte deine Anfrage nicht verarbeiten. Bitte versuche es erneut.";
   
   const errorName = error?.name || "";
   const errorMessage = error?.message || String(error);
   
   // Timeout errors
   if (errorName === 'AbortError' || errorMessage.includes('timed out') || errorMessage.includes('timeout')) {
-    return "Zeitüberschreitung (2 Min.)";
+    return "Timeout: Google konnte deine Anfrage nicht rechtzeitig bearbeiten. Bitte versuche es erneut.";
   }
   
   // Network errors
   if (errorMessage.includes('Failed to fetch') || errorMessage.includes('network') || errorMessage.includes('Network')) {
-    return "Netzwerkfehler - Verbindung prüfen";
+    return "Verbindung zu Google unterbrochen - bitte pruefe deine Internetverbindung.";
   }
   
   // Memory errors
   if (errorMessage.includes('memory') || errorMessage.includes('Memory') || errorMessage.includes('RAM')) {
-    return "Speicherfehler - zu wenig RAM";
+    return "Speicherfehler auf deinem Geraet - bitte schliesse andere Tabs.";
   }
   
   // Quota errors
   if (errorName === 'QuotaExceededError' || errorMessage.includes('quota')) {
-    return "Speicher voll - Cache leeren";
+    return "Lokaler Speicher voll - bitte Cache leeren.";
+  }
+  
+  // Safety / content filter errors
+  if (errorMessage.includes('SAFETY') || errorMessage.includes('safety') || errorMessage.includes('blockiert') || errorMessage.includes('IMAGE_OTHER')) {
+    return "Google hat deinen Inhalt aus Sicherheitsgruenden abgelehnt. Bitte aendere deinen Prompt oder dein Referenzbild.";
   }
   
   // API status errors
   if (errorMessage.includes('429') || errorMessage.includes('Too Many') || errorMessage.includes('rate limit')) {
-    return "API überlastet - bitte warte kurz";
+    return "Google-Server ueberlastet - bitte warte einen Moment und versuche es erneut.";
   }
   if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('Unauthorized')) {
-    return "API-Key ungültig";
+    return "Dein API-Key wurde von Google abgelehnt - bitte pruefe ihn.";
   }
   if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
-    return "Zugriff verweigert";
+    return "Google hat den Zugriff verweigert - pruefe deinen API-Key.";
   }
   if (errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('Service Unavailable')) {
-    return "API überlastet - später versuchen";
+    return "Google-Server momentan ueberlastet - bitte spaeter erneut versuchen.";
   }
   if (errorMessage.includes('500') || errorMessage.includes('Internal Server')) {
-    return "Server-Fehler bei Google";
+    return "Interner Fehler bei Google - bitte versuche es erneut.";
   }
   if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
-    return "Ungültige Anfrage - Prompt prüfen";
+    return "Google konnte deine Anfrage nicht verarbeiten - versuche deinen Prompt zu aendern.";
   }
   
-  // Generic - return full message (no truncation)
-  return errorMessage;
+  // Generic
+  return `Google konnte deine Anfrage nicht verarbeiten: ${errorMessage}`;
 };
