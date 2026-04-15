@@ -5672,6 +5672,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         });
       }, 250);
 
+      // Stuck detection: if still loading after 130s, force error
+      const stuckTimeout = setTimeout(() => {
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          if (index < updated.length && updated[index]?.status === "loading") {
+            updated[index] = { status: "error", progress: 0, errorMessage: "Timeout: Google konnte dein Bild nicht rechtzeitig generieren. Bitte versuche es erneut." };
+          }
+          return updated;
+        });
+        // Abort the request if still pending
+        const ctrl = abortControllersRef.current.get(index);
+        if (ctrl) ctrl.abort();
+      }, 130_000);
+
       try {
         let imageUrl = await generateSingleImage(
           index, apiKey, base64Images, background, totalCount,
