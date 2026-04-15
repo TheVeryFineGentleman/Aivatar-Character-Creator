@@ -2266,6 +2266,11 @@ ${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zei
           saveToLocalStorage('storyReferenceDescriptions', updated);
           return updated;
         });
+        setStoryReferenceGenders(prev => {
+          const updated = [...prev, ...newImages.map(() => "")].slice(0, maxImages);
+          saveToLocalStorage('storyReferenceGenders', updated);
+          return updated;
+        });
       }
     }
     e.target.value = "";
@@ -2285,6 +2290,11 @@ ${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zei
     setStoryReferenceDescriptions(prev => {
       const updated = prev.filter((_, i) => i !== index);
       saveToLocalStorage('storyReferenceDescriptions', updated);
+      return updated;
+    });
+    setStoryReferenceGenders(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('storyReferenceGenders', updated);
       return updated;
     });
   };
