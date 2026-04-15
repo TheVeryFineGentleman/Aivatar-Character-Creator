@@ -2095,7 +2095,7 @@ WICHTIGE REGELN:
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Wenn eine Referenz vorhanden ist, adaptiere Hook, Figurenwirkung und Dramaturgie auf ein neues eigenes Video
 - Schreibe auf Deutsch
-${count > 1 ? '- WICHTIG: Trenne jede Variante mit genau "---" auf einer eigenen Zeile dazwischen. Keine andere Trennung verwenden!\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
+${count > 1 ? `- AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${count} Strings. Beispiel: ["Variante 1 Text...", "Variante 2 Text..."]\n- Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n` : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
         : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
@@ -2109,7 +2109,7 @@ WICHTIGE REGELN:
 - Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
 - Wenn eine Referenz vorhanden ist, übernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
 - Schreibe auf Deutsch
-${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zeile dazwischen. Keine andere Trennung verwenden!\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
+${count > 1 ? `- AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${count} Strings. Beispiel: ["Idee 1 Text...", "Idee 2 Text..."]\n- Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n` : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
