@@ -2135,20 +2135,40 @@ ${count > 1 ? `- AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mi
         // Parse ideas - try multiple splitting strategies
         let ideas: string[];
         if (count > 1) {
-          // Strategy 1: Split by --- or ___ separators
-          let split = generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n|\n\s*\*{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          // Strategy 0: Try JSON array parsing first
+          let parsed: string[] | null = null;
+          try {
+            const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+              const arr = JSON.parse(jsonMatch[0]);
+              if (Array.isArray(arr) && arr.length >= 2 && arr.every((i: unknown) => typeof i === 'string')) {
+                parsed = arr.map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+              }
+            }
+          } catch { /* JSON parse failed, try other strategies */ }
           
-          // Strategy 2: Split by numbered patterns like "1.", "2.", "Idee 1:", etc.
-          if (split.length < count) {
-            split = generatedText.split(/\n\s*(?:\d+[\.\)]\s|Idee\s*\d+|Variante\s*\d+)/i).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          if (parsed && parsed.length >= 2) {
+            ideas = parsed;
+          } else {
+            // Strategy 1: Split by --- or ___ separators
+            let split = generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n|\n\s*\*{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+            
+            // Strategy 2: Split by numbered patterns
+            if (split.length < count) {
+              split = generatedText.split(/\n\s*(?:\d+[\.\)]\s|Idee\s*\d+|Variante\s*\d+)/i).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+            }
+            
+            // Strategy 3: Split by double newlines
+            if (split.length < count) {
+              split = generatedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+            }
+            
+            ideas = split.length >= 2 ? split : [generatedText];
           }
           
-          // Strategy 3: Split by double newlines
-          if (split.length < count) {
-            split = generatedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          if (ideas.length < count) {
+            console.warn(`Requested ${count} ideas but only parsed ${ideas.length}`);
           }
-          
-          ideas = split.length >= 2 ? split : [generatedText];
         } else {
           ideas = [generatedText];
         }
