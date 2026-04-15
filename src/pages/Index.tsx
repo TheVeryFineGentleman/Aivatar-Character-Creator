@@ -923,7 +923,10 @@ const Index = () => {
 
     const lines = [
       "CHARACTER REFERENCE LOCK:",
-      ...profiles.map((profile) => `- Reference image ${profile.index + 1} = "${profile.name}"${profile.description ? ` (${profile.description})` : ""}`),
+      ...profiles.map((profile) => {
+        const genderEn = profile.gender === "maennlich" ? "male" : profile.gender === "weiblich" ? "female" : profile.gender === "divers" ? "non-binary" : "";
+        return `- Reference image ${profile.index + 1} = "${profile.name}"${genderEn ? ` (${genderEn})` : ""}${profile.description ? ` - ${profile.description}` : ""}`;
+      }),
       point?.participants
         ? `- Scene participants: ${point.participants}. Only these named characters should appear in this scene.`
         : `- Scene participants: ${profiles.map((profile) => `"${profile.name}"`).join(", ")}.`,
