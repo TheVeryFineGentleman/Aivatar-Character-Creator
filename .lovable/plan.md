@@ -1,30 +1,28 @@
 
 
-# Plan: Robustere Varianten-Generierung im Story Generator
+# Plan: Szenenanzahl immer exakt einhalten
 
 ## Problem
-Wenn der Nutzer z.B. 3 oder 5 Varianten auswählt, wird oft nur 1 generiert. Das liegt an zwei Ursachen:
-1. Die KI liefert die Varianten nicht immer mit `---` Trennzeichen, und die Fallback-Splitting-Strategien greifen nicht zuverlässig
-2. Bei der Suggestion-Expansion (Klick auf Vorschlag) wird ebenfalls nicht zuverlässig in die gewünschte Anzahl aufgeteilt
+Wenn der Nutzer z.B. 3 Szenen auswählt, liefert die KI manchmal nur 2. Der Code akzeptiert das nach dem Retry (`retryScenes.length > 0` statt `>= storyPointCount`) und zeigt weniger Szenen als gewählt.
 
 ## Lösung
 
 ### Änderungen in `src/pages/Index.tsx`
 
-**1. JSON-basiertes Ausgabeformat statt Freitext-Trennung**
-- Prompts ändern: Statt `"Trenne mit ---"` wird die KI angewiesen, ein JSON-Array zurückzugeben: `["Idee 1...", "Idee 2...", "Idee 3..."]`
-- Betrifft: `handleGenerateStoryIdea` (Zeile ~2082-2112) und `handleSuggestionClick` (Zeile ~4952-4980)
+**1. Padding-Funktion für fehlende Szenen**
+- Nach jedem erfolgreichen Parsing (Zeilen ~2526-2565, ~2596-2650, ~2470-2480): Falls `scenes.length < storyPointCount`, werden leere Platzhalter-Szenen angehängt bis die gewünschte Anzahl erreicht ist
+- Platzhalter haben einen Titel wie "Szene X (bitte manuell ausfüllen)" und leere Felder
 
-**2. Robusteres Parsing mit Retry**
-- Zuerst JSON-Parsing versuchen (`extractJsonFromAiResponse` oder direktes `JSON.parse`)
-- Fallback: `---`-Split wie bisher
-- Fallback 2: Doppelte Newlines
-- Wenn immer noch zu wenig Ergebnisse: automatisch den gleichen Request nochmal senden mit expliziterem Prompt
+**2. Retry-Bedingung verschärfen**
+- Zeile 2558: `retryScenes.length > 0` ändern zu: nach dem Retry trotzdem Padding anwenden statt nur zu akzeptieren was kommt
 
-**3. Validierung der Ergebnis-Anzahl**
-- Nach dem Parsing prüfen ob `ideas.length >= count`
-- Falls zu wenig: Warnung loggen, aber alle vorhandenen Ideas trotzdem anzeigen (kein stilles Verschlucken)
+**3. Zentrale Hilfsfunktion**
+- `padScenesToCount(scenes, targetCount)` — füllt fehlende Szenen mit sinnvollen Defaults auf
+- Wird an allen Stellen aufgerufen wo `setStoryPoints` gesetzt wird (ca. 4-5 Stellen)
+
+**4. Nutzer-Hinweis**
+- Toast-Warnung wenn gepaddet wurde: "Google hat nur X von Y Szenen generiert. Fehlende Szenen wurden als Platzhalter hinzugefügt."
 
 ## Betroffene Dateien
-- `src/pages/Index.tsx` — Prompt-Anpassungen und Parsing-Logik in `handleGenerateStoryIdea` und `handleSuggestionClick`
+- `src/pages/Index.tsx` — Padding-Logik, verschärfte Validierung, Toast-Warnung
 
