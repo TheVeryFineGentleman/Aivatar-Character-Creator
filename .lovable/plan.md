@@ -1,39 +1,30 @@
 
 
-# Plan: Robustere Bild-Generierung mit Prompt-Sanitierung und Nutzer-Warnungen
+# Plan: Robustere Varianten-Generierung im Story Generator
 
 ## Problem
-Bilder werden durch KI-Sicherheitsfilter blockiert (SAFETY, IMAGE_OTHER, RECITATION). Ursachen: problematische Prompts oder Referenzbilder. Aktuell werden Fehler erst **nach** dem fehlgeschlagenen Versuch angezeigt — es gibt keine Prävention.
+Wenn der Nutzer z.B. 3 oder 5 Varianten auswählt, wird oft nur 1 generiert. Das liegt an zwei Ursachen:
+1. Die KI liefert die Varianten nicht immer mit `---` Trennzeichen, und die Fallback-Splitting-Strategien greifen nicht zuverlässig
+2. Bei der Suggestion-Expansion (Klick auf Vorschlag) wird ebenfalls nicht zuverlässig in die gewünschte Anzahl aufgeteilt
 
-## Lösung: Dreistufiger Schutz
+## Lösung
 
-### 1. Compliance-Prefix für ALLE Bildgenerierungen
-Aktuell haben nur Video-Prompts einen Compliance-Prefix. Bildgenerierungen (generate-image, character-poses, character-views) bekommen keinen automatischen Schutz.
+### Änderungen in `src/pages/Index.tsx`
 
-**Änderungen in `supabase/functions/generate-image/index.ts`, `character-poses/index.ts`, `character-views/index.ts`:**
-- Jeden Bild-Prompt automatisch mit einem Compliance-Prefix versehen:
-  `"SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences."`
-- Negative Prompt-Anweisungen ergänzen: `"Do NOT generate violent, explicit, or suggestive content."`
+**1. JSON-basiertes Ausgabeformat statt Freitext-Trennung**
+- Prompts ändern: Statt `"Trenne mit ---"` wird die KI angewiesen, ein JSON-Array zurückzugeben: `["Idee 1...", "Idee 2...", "Idee 3..."]`
+- Betrifft: `handleGenerateStoryIdea` (Zeile ~2082-2112) und `handleSuggestionClick` (Zeile ~4952-4980)
 
-### 2. Automatischer Retry mit Prompt-Bereinigung
-Wenn die API `SAFETY` oder `IMAGE_OTHER` zurückgibt, wird ein zweiter Versuch mit einem "sichereren" Prompt gestartet.
+**2. Robusteres Parsing mit Retry**
+- Zuerst JSON-Parsing versuchen (`extractJsonFromAiResponse` oder direktes `JSON.parse`)
+- Fallback: `---`-Split wie bisher
+- Fallback 2: Doppelte Newlines
+- Wenn immer noch zu wenig Ergebnisse: automatisch den gleichen Request nochmal senden mit expliziterem Prompt
 
-**Änderungen in `src/pages/Index.tsx` (Bildgenerierung):**
-- Bei SAFETY/IMAGE_OTHER-Fehler: automatischer Retry mit vereinfachtem Prompt (Entfernung potenziell problematischer Wörter, stärkerer Compliance-Block)
-- Max. 1 automatischer Retry, danach Fehlermeldung an Nutzer
-
-### 3. Nutzer-Warnung vor der Generierung
-Proaktive Hinweise im UI, wenn risikoreiche Inhalte erkannt werden.
-
-**Änderungen in `src/pages/Index.tsx` (UI):**
-- Vor dem Generieren: einfache Keyword-Prüfung des Nutzer-Prompts auf problematische Begriffe (Gewalt, explizite Inhalte, etc.)
-- Bei Erkennung: gelber Warnhinweis-Toast mit Vorschlag zur Umformulierung
-- Generierung wird trotzdem gestartet (keine Blockierung), aber der Nutzer ist vorgewarnt
+**3. Validierung der Ergebnis-Anzahl**
+- Nach dem Parsing prüfen ob `ideas.length >= count`
+- Falls zu wenig: Warnung loggen, aber alle vorhandenen Ideas trotzdem anzeigen (kein stilles Verschlucken)
 
 ## Betroffene Dateien
-- `supabase/functions/generate-image/index.ts` — Compliance-Prefix für Bild-Prompts
-- `supabase/functions/character-poses/index.ts` — Compliance-Prefix
-- `supabase/functions/character-views/index.ts` — Compliance-Prefix
-- `supabase/functions/generate-full/index.ts` — Compliance-Prefix
-- `src/pages/Index.tsx` — Retry-Logik + Nutzer-Warnung vor Generierung
+- `src/pages/Index.tsx` — Prompt-Anpassungen und Parsing-Logik in `handleGenerateStoryIdea` und `handleSuggestionClick`
 
