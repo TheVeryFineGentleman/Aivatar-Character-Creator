@@ -5535,10 +5535,18 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const finishReason = candidates[0]?.finishReason;
       if (finishReason === "IMAGE_OTHER") {
         console.warn("⚠️ IMAGE_OTHER detected - Model couldn't generate with reference image");
+        if (retryCount === 0) {
+          console.log("🔄 Auto-retry with simplified prompt...");
+          return null; // Signal retry to processSlot
+        }
         throw new Error("⚠️ Das Modell konnte kein Bild aus deinem Referenzbild generieren. Bitte verwende ein anderes, klareres Referenzbild.");
       }
       if (finishReason === "SAFETY") {
         console.warn("⚠️ SAFETY filter triggered");
+        if (retryCount === 0) {
+          console.log("🔄 Auto-retry with simplified prompt...");
+          return null; // Signal retry to processSlot
+        }
         throw new Error("⚠️ Sicherheitsfilter ausgelöst. Bitte passe deinen Prompt an oder verwende ein anderes Referenzbild.");
       }
       if (finishReason === "MAX_TOKENS") {
