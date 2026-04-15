@@ -10345,7 +10345,7 @@ Beispiel einer korrekten Antwort:
         )}
 
         {/* Merged Video Result */}
-        {storyPoints.some(p => p.generatedVideo) && (
+        {activeMainTab === "story" && storyPoints.some(p => p.generatedVideo) && (
           <VideoMerger
             videos={storyPoints
               .map((p, i) => p.generatedVideo ? { index: i, url: p.generatedVideo } : null)
