@@ -240,6 +240,7 @@ type StoryCharacterProfile = {
   imageUrl?: string;
   name: string;
   description: string;
+  gender: string;
 };
 
 type SmartReelChatMessage = {
