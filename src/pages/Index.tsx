@@ -5458,7 +5458,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       
       // ===== Gemini Image Generation =====
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 40_000); // 40 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120_000); // 120 Sekunden Timeout
 
       // If external signal is already aborted, abort immediately
       if (externalSignal?.aborted) {
@@ -5489,7 +5489,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         );
       } catch (err: any) {
         if (err?.name === "AbortError") {
-          throw new Error(externalSignal?.aborted ? "Generierung abgebrochen" : "Zeitüberschreitung - keine Antwort nach 20s");
+          throw new Error(externalSignal?.aborted ? "Generierung abgebrochen" : "Timeout: Google konnte dein Bild nicht rechtzeitig generieren. Bitte versuche es erneut.");
         }
         throw err;
       } finally {
@@ -5506,25 +5506,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         let userFriendlyError = "";
         switch (response.status) {
           case 400:
-            userFriendlyError = "Ungültige Anfrage - Prompt prüfen";
+            userFriendlyError = "Google konnte deine Anfrage nicht verarbeiten - Prompt aendern";
             break;
           case 401:
-            userFriendlyError = "API-Key ungültig oder abgelaufen";
+            userFriendlyError = "Dein API-Key wurde von Google abgelehnt";
             break;
           case 403:
-            userFriendlyError = "Zugriff verweigert";
+            userFriendlyError = "Google hat den Zugriff verweigert";
             break;
           case 429:
-            userFriendlyError = "API überlastet - bitte warte kurz";
+            userFriendlyError = "Google-Server ueberlastet - bitte warte kurz";
             break;
           case 500:
-            userFriendlyError = "Server-Fehler bei Google";
+            userFriendlyError = "Interner Fehler bei Google - bitte erneut versuchen";
             break;
           case 503:
-            userFriendlyError = "API überlastet - später versuchen";
+            userFriendlyError = "Google-Server momentan ueberlastet - spaeter versuchen";
             break;
           default:
-            userFriendlyError = `API-Fehler (${response.status})`;
+            userFriendlyError = `Google-Fehler (${response.status})`;
         }
         throw new Error(userFriendlyError);
       }
@@ -5617,10 +5617,10 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       console.error(`❌ Error generating image ${index}:`, error);
       // Re-throw with user-friendly message so processQueue catches it
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        throw new Error("Netzwerkfehler - prüfe deine Internetverbindung");
+        throw new Error("Verbindung zu Google unterbrochen - bitte pruefe deine Internetverbindung");
       }
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error("Zeitüberschreitung - keine Antwort nach 20s");
+        throw new Error("Timeout: Google konnte dein Bild nicht rechtzeitig generieren.");
       }
       // Re-throw original error if it already has a message
       throw error;
@@ -5671,6 +5671,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           return updated;
         });
       }, 250);
+
+      // Stuck detection: if still loading after 130s, force error
+      const stuckTimeout = setTimeout(() => {
+        setImageSlots((prev) => {
+          const updated = [...prev];
+          if (index < updated.length && updated[index]?.status === "loading") {
+            updated[index] = { status: "error", progress: 0, errorMessage: "Timeout: Google konnte dein Bild nicht rechtzeitig generieren. Bitte versuche es erneut." };
+          }
+          return updated;
+        });
+        // Abort the request if still pending
+        const ctrl = abortControllersRef.current.get(index);
+        if (ctrl) ctrl.abort();
+      }, 130_000);
 
       try {
         let imageUrl = await generateSingleImage(
@@ -5731,6 +5745,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         });
       } finally {
         clearInterval(progressInterval);
+        clearTimeout(stuckTimeout);
         abortControllersRef.current.delete(index);
       }
     };
