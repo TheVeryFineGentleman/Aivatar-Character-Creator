@@ -57,7 +57,7 @@ Möchtest du noch etwas anpassen? Wenn nicht, sage 'Passt so' oder 'Generieren'.
 Wenn der User "Passt so" oder "Generieren" sagt und ALLE 13 Fragen bereits beantwortet wurden, frage: "Wie viele Charactervarianten soll ich für dich erstellen? (Minimum 1, Maximum 10) Jede Variante zeigt ein anderes Gesicht basierend auf deinen Angaben. (2, 3, 5)"
 
 WICHTIG — JEDERZEIT GENERIEREN (SOFORT, OHNE NACHFRAGEN):
-Wenn der Nutzer zu IRGENDEINEM Zeitpunkt "Generieren", "Generate", "Erstellen", "Los", "Mach mal" sagt oder anderweitig signalisiert dass er jetzt Bilder haben möchte — auch wenn noch NICHT alle 12 Fragen beantwortet wurden:
+Wenn der Nutzer zu IRGENDEINEM Zeitpunkt "Generieren", "Generate", "Erstellen", "Los", "Mach mal" sagt oder anderweitig signalisiert dass er jetzt Bilder haben möchte — auch wenn noch NICHT alle 13 Fragen beantwortet wurden:
 - Ergänze ALLE fehlenden/unbeantworteten Eigenschaften SELBST mit kreativen, passenden Werten
 - Frage NICHT nach der Anzahl der Varianten — verwende automatisch 3 als Standard
 - Zeige KEINE Übersicht an — gehe DIREKT zum JSON-Output
