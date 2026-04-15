@@ -240,6 +240,7 @@ type StoryCharacterProfile = {
   imageUrl?: string;
   name: string;
   description: string;
+  gender: string;
 };
 
 type SmartReelChatMessage = {
@@ -756,20 +757,26 @@ const Index = () => {
     const saved = getFromLocalStorage('storyReferenceDescriptions');
     return saved || [];
   });
+  const [storyReferenceGenders, setStoryReferenceGenders] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('storyReferenceGenders');
+    return saved || [];
+  });
   const storyCharacterProfiles: StoryCharacterProfile[] = storyReferenceImages.map((imageUrl, index) => {
     const fallbackName = `Person ${index + 1}`;
     const name = sanitizeSceneField(storyReferenceLabels[index]) || fallbackName;
     const description = sanitizeSceneField(storyReferenceDescriptions[index]);
+    const gender = storyReferenceGenders[index] || "";
     return {
       index,
       imageUrl,
       name,
       description,
+      gender,
     };
   });
   const storyCharacterProfilesGermanBlock = storyCharacterProfiles.length > 0
     ? storyCharacterProfiles
-        .map((profile) => `- ${profile.name} (Referenzbild ${profile.index + 1})${profile.description ? `: ${profile.description}` : ""}`)
+        .map((profile) => `- ${profile.name} (Referenzbild ${profile.index + 1}${profile.gender ? `, ${profile.gender}` : ""})${profile.description ? `: ${profile.description}` : ""}`)
         .join('\n')
     : "- Keine Referenzcharaktere vorhanden";
   const [smartReelModeEnabled, setSmartReelModeEnabled] = useState(false);
@@ -916,7 +923,10 @@ const Index = () => {
 
     const lines = [
       "CHARACTER REFERENCE LOCK:",
-      ...profiles.map((profile) => `- Reference image ${profile.index + 1} = "${profile.name}"${profile.description ? ` (${profile.description})` : ""}`),
+      ...profiles.map((profile) => {
+        const genderEn = profile.gender === "maennlich" ? "male" : profile.gender === "weiblich" ? "female" : profile.gender === "divers" ? "non-binary" : "";
+        return `- Reference image ${profile.index + 1} = "${profile.name}"${genderEn ? ` (${genderEn})` : ""}${profile.description ? ` - ${profile.description}` : ""}`;
+      }),
       point?.participants
         ? `- Scene participants: ${point.participants}. Only these named characters should appear in this scene.`
         : `- Scene participants: ${profiles.map((profile) => `"${profile.name}"`).join(", ")}.`,
@@ -2259,6 +2269,11 @@ ${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zei
           saveToLocalStorage('storyReferenceDescriptions', updated);
           return updated;
         });
+        setStoryReferenceGenders(prev => {
+          const updated = [...prev, ...newImages.map(() => "")].slice(0, maxImages);
+          saveToLocalStorage('storyReferenceGenders', updated);
+          return updated;
+        });
       }
     }
     e.target.value = "";
@@ -2278,6 +2293,11 @@ ${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zei
     setStoryReferenceDescriptions(prev => {
       const updated = prev.filter((_, i) => i !== index);
       saveToLocalStorage('storyReferenceDescriptions', updated);
+      return updated;
+    });
+    setStoryReferenceGenders(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      saveToLocalStorage('storyReferenceGenders', updated);
       return updated;
     });
   };
@@ -8995,6 +9015,29 @@ Beispiel einer korrekten Antwort:
                             placeholder={`Person ${index + 1}`}
                             className="w-full h-6 text-[10px] text-center px-1 py-0 border-border/50 rounded-none border-t-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
+                          <div className="flex w-full border-border/50 border-t-0">
+                            {["maennlich", "weiblich", "divers"].map((g) => (
+                              <button
+                                key={g}
+                                type="button"
+                                onClick={() => {
+                                  setStoryReferenceGenders(prev => {
+                                    const updated = [...prev];
+                                    updated[index] = prev[index] === g ? "" : g;
+                                    saveToLocalStorage('storyReferenceGenders', updated);
+                                    return updated;
+                                  });
+                                }}
+                                className={`flex-1 text-[8px] py-0.5 border border-border/50 border-t-0 transition-colors ${
+                                  storyReferenceGenders[index] === g
+                                    ? "bg-primary/20 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50"
+                                } ${g === "maennlich" ? "rounded-none" : ""} ${g === "divers" ? "rounded-none" : ""}`}
+                              >
+                                {g === "maennlich" ? "M" : g === "weiblich" ? "W" : "D"}
+                              </button>
+                            ))}
+                          </div>
                           <Textarea
                             value={storyReferenceDescriptions[index] || ""}
                             onChange={(e) => {
