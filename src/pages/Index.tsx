@@ -2095,7 +2095,7 @@ WICHTIGE REGELN:
 - Fokussiere auf echte menschliche Emotionen, Beziehungen, Konflikte, Entscheidungen
 - Wenn eine Referenz vorhanden ist, adaptiere Hook, Figurenwirkung und Dramaturgie auf ein neues eigenes Video
 - Schreibe auf Deutsch
-${count > 1 ? '- WICHTIG: Trenne jede Variante mit genau "---" auf einer eigenen Zeile dazwischen. Keine andere Trennung verwenden!\n' : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
+${count > 1 ? `- AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${count} Strings. Beispiel: ["Variante 1 Text...", "Variante 2 Text..."]\n- Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n` : ''}- Antworte NUR mit der angepassten Story-Idee, keine Einleitungen oder Erklärungen`
         : `Du bist ein Story-Autor für REALISTISCHE, lebensnahe Geschichten. Erstelle genau ${count} verschiedene, fesselnde Story-Idee${count > 1 ? 'n' : ''}.
 
 NUTZERANFRAGE:
@@ -2109,7 +2109,7 @@ WICHTIGE REGELN:
 - Die Idee${count > 1 ? 'n' : ''} sollte${count > 1 ? 'n' : ''} visuell umsetzbar sein für ein Storyboard
 - Wenn eine Referenz vorhanden ist, übernimm Struktur und Hook-Mechanik, aber nie den Inhalt oder Wortlaut 1:1
 - Schreibe auf Deutsch
-${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zeile dazwischen. Keine andere Trennung verwenden!\n' : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
+${count > 1 ? `- AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${count} Strings. Beispiel: ["Idee 1 Text...", "Idee 2 Text..."]\n- Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n` : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -2135,20 +2135,40 @@ ${count > 1 ? '- WICHTIG: Trenne jede Idee mit genau "---" auf einer eigenen Zei
         // Parse ideas - try multiple splitting strategies
         let ideas: string[];
         if (count > 1) {
-          // Strategy 1: Split by --- or ___ separators
-          let split = generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n|\n\s*\*{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          // Strategy 0: Try JSON array parsing first
+          let parsed: string[] | null = null;
+          try {
+            const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+              const arr = JSON.parse(jsonMatch[0]);
+              if (Array.isArray(arr) && arr.length >= 2 && arr.every((i: unknown) => typeof i === 'string')) {
+                parsed = arr.map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+              }
+            }
+          } catch { /* JSON parse failed, try other strategies */ }
           
-          // Strategy 2: Split by numbered patterns like "1.", "2.", "Idee 1:", etc.
-          if (split.length < count) {
-            split = generatedText.split(/\n\s*(?:\d+[\.\)]\s|Idee\s*\d+|Variante\s*\d+)/i).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          if (parsed && parsed.length >= 2) {
+            ideas = parsed;
+          } else {
+            // Strategy 1: Split by --- or ___ separators
+            let split = generatedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n|\n\s*\*{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+            
+            // Strategy 2: Split by numbered patterns
+            if (split.length < count) {
+              split = generatedText.split(/\n\s*(?:\d+[\.\)]\s|Idee\s*\d+|Variante\s*\d+)/i).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+            }
+            
+            // Strategy 3: Split by double newlines
+            if (split.length < count) {
+              split = generatedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+            }
+            
+            ideas = split.length >= 2 ? split : [generatedText];
           }
           
-          // Strategy 3: Split by double newlines
-          if (split.length < count) {
-            split = generatedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+          if (ideas.length < count) {
+            console.warn(`Requested ${count} ideas but only parsed ${ideas.length}`);
           }
-          
-          ideas = split.length >= 2 ? split : [generatedText];
         } else {
           ideas = [generatedText];
         }
@@ -4950,7 +4970,7 @@ ${sceneContext}`;
 - Polarisierend oder emotional schockierend` : '';
         
         const multiPrefix = expandCount > 1 
-          ? `Erstelle genau ${expandCount} verschiedene Varianten. Jede soll einen anderen Ansatz, Ton oder Fokus haben. Trenne die Varianten mit "---" auf einer eigenen Zeile.\n\n` 
+          ? `Erstelle genau ${expandCount} verschiedene Varianten. Jede soll einen anderen Ansatz, Ton oder Fokus haben.\nAUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${expandCount} Strings. Beispiel: ["Text 1...", "Text 2..."]. Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n\n` 
           : '';
         
         const expandPrompt = isDialogMode
@@ -4965,7 +4985,7 @@ REGELN:
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Dialog-Texten, getrennt durch "---"` : 'dem fertigen Dialog-Text'}, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
+Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertigen Dialog-Texten` : 'dem fertigen Dialog-Text'}, ohne Erklärungen oder Anführungszeichen drumherum. Auf Deutsch.`
           : `${multiPrefix}Erweitere diese kurze Story-Zusammenfassung zu ${expandCount > 1 ? `${expandCount} visuell packenden Szenenbeschreibungen` : 'einer visuell packenden Szenenbeschreibung'} - optimiert für Social-Media-Videos (TikTok/Reels/Shorts) mit der vom Nutzer vorgegebenen Länge.
 
 REGELN:
@@ -4977,7 +4997,7 @@ REGELN:
 
 Zusammenfassung: "${suggestion}"
 
-Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Beschreibungen, getrennt durch "---"` : 'der fertigen Beschreibung'}, ohne Erklärungen. Auf Deutsch.`;
+Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertigen Beschreibungen` : 'der fertigen Beschreibung'}, ohne Erklärungen. Auf Deutsch.`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -5000,8 +5020,32 @@ Antworte NUR mit ${expandCount > 1 ? `den ${expandCount} fertigen Beschreibungen
           const expandedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (expandedText) {
             if (expandCount > 1) {
-              const split = expandedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
-              expandedIdeas = split.length > 0 ? split : [expandedText];
+              // Strategy 0: Try JSON array parsing
+              let parsed: string[] | null = null;
+              try {
+                const jsonMatch = expandedText.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                  const arr = JSON.parse(jsonMatch[0]);
+                  if (Array.isArray(arr) && arr.length >= 2 && arr.every((i: unknown) => typeof i === 'string')) {
+                    parsed = arr.map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+                  }
+                }
+              } catch { /* fallback */ }
+              
+              if (parsed && parsed.length >= 2) {
+                expandedIdeas = parsed;
+              } else {
+                // Fallback: split by --- or double newlines
+                let split = expandedText.split(/\n\s*-{3,}\s*\n|\n\s*_{3,}\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+                if (split.length < expandCount) {
+                  split = expandedText.split(/\n\s*\n/).map((s: string) => s.trim()).filter((s: string) => s.length > 15);
+                }
+                expandedIdeas = split.length > 0 ? split : [expandedText];
+              }
+              
+              if (expandedIdeas.length < expandCount) {
+                console.warn(`Requested ${expandCount} expansions but only parsed ${expandedIdeas.length}`);
+              }
             } else {
               expandedIdeas = [expandedText];
             }
