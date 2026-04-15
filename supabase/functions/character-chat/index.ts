@@ -78,6 +78,7 @@ REGELN FÜR DIE PROMPTS:
 - Die Anzahl der Prompts entspricht EXAKT der vom Nutzer gewählten Zahl
 - KRITISCH: Jeder Prompt MUSS eine DEUTLICH UNTERSCHIEDLICHE Person beschreiben!
 - Die vom Nutzer definierten Merkmale werden beibehalten
+- Die Nationalität/Herkunft MUSS die Gesichtszüge, Hautton und typische Merkmale im Prompt beeinflussen (z.B. "Japanese woman with East Asian facial features" oder "Nigerian man with West African features")
 - ABER: Für NICHT explizit definierte Merkmale MUSST du bei jedem Prompt KOMPLETT ANDERE Werte verwenden
 - Jeder Charakter soll auf den ERSTEN BLICK als komplett andere Person erkennbar sein
 
