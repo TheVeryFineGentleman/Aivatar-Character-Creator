@@ -5,6 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const SAFETY_COMPLIANCE_PREFIX = "SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\n";
+
 const IMAGE_DATA_URL_RE = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/i;
 
 function normalizeReferenceImage(input: unknown): { mimeType: string; data: string } | null {
@@ -111,7 +113,7 @@ serve(async (req) => {
     console.log("🖼️ Using direct Gemini API for image generation");
     
     // Build parts array: text FIRST, then reference images
-    const enhancedPrompt = `${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
+    const enhancedPrompt = `${SAFETY_COMPLIANCE_PREFIX}${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
     const parts: any[] = [{ text: enhancedPrompt }];
 
     if (referenceImages && referenceImages.length > 0) {

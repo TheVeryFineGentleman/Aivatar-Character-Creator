@@ -7,6 +7,8 @@ const corsHeaders = {
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
+const SAFETY_COMPLIANCE_PREFIX = "SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\n";
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -78,7 +80,7 @@ serve(async (req) => {
       console.log("🖼️ Reference images:", referenceImages?.length || 0);
 
       const model = "gemini-3.1-flash-image-preview";
-      const enhancedPrompt = `${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
+      const enhancedPrompt = `${SAFETY_COMPLIANCE_PREFIX}${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
       const parts: any[] = [{ text: enhancedPrompt }];
 
       if (referenceImages && referenceImages.length > 0) {
