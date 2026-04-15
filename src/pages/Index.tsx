@@ -9012,6 +9012,29 @@ Beispiel einer korrekten Antwort:
                             placeholder={`Person ${index + 1}`}
                             className="w-full h-6 text-[10px] text-center px-1 py-0 border-border/50 rounded-none border-t-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
+                          <div className="flex w-full border-border/50 border-t-0">
+                            {["maennlich", "weiblich", "divers"].map((g) => (
+                              <button
+                                key={g}
+                                type="button"
+                                onClick={() => {
+                                  setStoryReferenceGenders(prev => {
+                                    const updated = [...prev];
+                                    updated[index] = prev[index] === g ? "" : g;
+                                    saveToLocalStorage('storyReferenceGenders', updated);
+                                    return updated;
+                                  });
+                                }}
+                                className={`flex-1 text-[8px] py-0.5 border border-border/50 border-t-0 transition-colors ${
+                                  storyReferenceGenders[index] === g
+                                    ? "bg-primary/20 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50"
+                                } ${g === "maennlich" ? "rounded-none" : ""} ${g === "divers" ? "rounded-none" : ""}`}
+                              >
+                                {g === "maennlich" ? "M" : g === "weiblich" ? "W" : "D"}
+                              </button>
+                            ))}
+                          </div>
                           <Textarea
                             value={storyReferenceDescriptions[index] || ""}
                             onChange={(e) => {
