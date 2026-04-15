@@ -5745,6 +5745,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
         });
       } finally {
         clearInterval(progressInterval);
+        clearTimeout(stuckTimeout);
         abortControllersRef.current.delete(index);
       }
     };
