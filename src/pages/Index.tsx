@@ -2491,7 +2491,12 @@ WICHTIG:
 
         setStoryboardMainLocation(parsed?.mainLocation || "");
         setFlippedCards(new Set());
-        setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
+        const mappedScenes = scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene));
+        const paddedScenes = padScenesToCount(mappedScenes, storyPointCount);
+        if (mappedScenes.length < storyPointCount) {
+          toast.warning(`KI hat nur ${mappedScenes.length} von ${storyPointCount} Szenen generiert. Fehlende Szenen wurden als Platzhalter hinzugefuegt.`);
+        }
+        setStoryPoints(paddedScenes);
         setStoryboardAnimationKey(prev => prev + 1);
         storyboardApplied = true;
         return true;
