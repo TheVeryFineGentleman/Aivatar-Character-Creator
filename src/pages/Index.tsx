@@ -344,6 +344,24 @@ function buildStoryPointFromScene(scene: Record<string, unknown>) {
   };
 }
 
+// Pad scenes array to target count with placeholder scenes
+function padScenesToCount(scenes: any[], targetCount: number): any[] {
+  if (scenes.length >= targetCount) return scenes.slice(0, targetCount);
+  const padded = [...scenes];
+  while (padded.length < targetCount) {
+    const idx = padded.length + 1;
+    padded.push({
+      versions: [`Szene ${idx} - bitte manuell ausfuellen`],
+      currentVersion: 0,
+      summary: `Szene ${idx} (Platzhalter)`,
+      detailedDescription: "",
+      cameraAngle: "eye-level",
+      shotType: "medium-shot",
+    });
+  }
+  return padded;
+}
+
 const REEL_DEFAULT_HOOK_DIRECTIVE = "Open with the most surprising, emotionally intense, or highest-stakes visual beat in the first second.";
 
 function getEffectiveStoryHook(mode: "general" | "reel", hook: string): string {
@@ -2473,7 +2491,12 @@ WICHTIG:
 
         setStoryboardMainLocation(parsed?.mainLocation || "");
         setFlippedCards(new Set());
-        setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
+        const mappedScenes = scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene));
+        const paddedScenes = padScenesToCount(mappedScenes, storyPointCount);
+        if (mappedScenes.length < storyPointCount) {
+          toast.warning(`KI hat nur ${mappedScenes.length} von ${storyPointCount} Szenen generiert. Fehlende Szenen wurden als Platzhalter hinzugefuegt.`);
+        }
+        setStoryPoints(paddedScenes);
         setStoryboardAnimationKey(prev => prev + 1);
         storyboardApplied = true;
         return true;
@@ -2529,10 +2552,50 @@ WICHTIG:
               setStoryPoints(scenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
               setStoryboardAnimationKey(prev => prev + 1);
               storyboardApplied = true;
-            } else {
+            } else if (Array.isArray(scenes) && scenes.length > 0) {
               // AI returned fewer scenes than requested - retry once
               console.warn(`⚠️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
-              // Recursive retry (single attempt)
+              const retryResponse = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{
+                      role: "user",
+                      parts: [{
+                        text: `${storyPromptText}\n\nKRITISCH: Du MUSST EXAKT ${storyPointCount} Szenen generieren. Nicht mehr, nicht weniger. Genau ${storyPointCount} Einträge im "scenes" Array.`
+                      }]
+                    }],
+                    generationConfig: storyboardGenerationConfig
+                  }),
+                }
+              );
+              let bestScenes = scenes;
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                const retryText = retryData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (retryText) {
+                  const retryParsed = extractJsonFromAiResponse(retryText);
+                  const retryScenes = retryParsed.scenes || [];
+                  if (Array.isArray(retryScenes) && retryScenes.length > bestScenes.length) {
+                    bestScenes = retryScenes;
+                    setStoryboardMainLocation(retryParsed.mainLocation || mainLocation);
+                  }
+                }
+              }
+              const mappedScenes = bestScenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene));
+              const paddedScenes = padScenesToCount(mappedScenes, storyPointCount);
+              if (mappedScenes.length < storyPointCount) {
+                toast.warning(`KI hat nur ${mappedScenes.length} von ${storyPointCount} Szenen generiert. Fehlende Szenen wurden als Platzhalter hinzugefuegt.`);
+              }
+              setFlippedCards(new Set());
+              setStoryPoints(paddedScenes);
+              setStoryboardAnimationKey(prev => prev + 1);
+              storyboardApplied = true;
+            } else {
+              // No scenes at all - retry
+              console.warn(`⚠️ AI returned 0 scenes, retrying...`);
               const retryResponse = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
                 {
@@ -2556,9 +2619,14 @@ WICHTIG:
                   const retryParsed = extractJsonFromAiResponse(retryText);
                   const retryScenes = retryParsed.scenes || [];
                   if (Array.isArray(retryScenes) && retryScenes.length > 0) {
+                    const mappedRetry = retryScenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene));
+                    const paddedRetry = padScenesToCount(mappedRetry, storyPointCount);
+                    if (mappedRetry.length < storyPointCount) {
+                      toast.warning(`KI hat nur ${mappedRetry.length} von ${storyPointCount} Szenen generiert. Fehlende Szenen wurden als Platzhalter hinzugefuegt.`);
+                    }
                     setStoryboardMainLocation(retryParsed.mainLocation || "");
                     setFlippedCards(new Set());
-                    setStoryPoints(retryScenes.slice(0, storyPointCount).map((scene: any) => buildStoryPointFromScene(scene)));
+                    setStoryPoints(paddedRetry);
                     setStoryboardAnimationKey(prev => prev + 1);
                     storyboardApplied = true;
                   }
@@ -2574,21 +2642,25 @@ WICHTIG:
                 if (/^[\{\}\[\],]$/.test(line)) return false;
                 if (/^["']?\w+["']?\s*:\s*/.test(line)) return false;
                 if (line.startsWith('{') || line.startsWith('[') || line.startsWith('}') || line.startsWith(']')) return false;
-                // Must contain at least 2 spaces (real sentence, not a key-value pair)
                 const spaceCount = (line.match(/ /g) || []).length;
                 return spaceCount >= 2;
               })
               .slice(0, storyPointCount);
             
-            setFlippedCards(new Set());
-            setStoryPoints(points.map((point: string) => ({
+            const lineBasedScenes = points.map((point: string) => ({
               versions: [point],
               currentVersion: 0,
               summary: point.length > 80 ? point.substring(0, 80) + "..." : point,
               detailedDescription: point
-            })));
+            }));
+            const paddedLineScenes = padScenesToCount(lineBasedScenes, storyPointCount);
+            if (lineBasedScenes.length < storyPointCount) {
+              toast.warning(`KI hat nur ${lineBasedScenes.length} von ${storyPointCount} Szenen generiert. Fehlende Szenen wurden als Platzhalter hinzugefuegt.`);
+            }
+            setFlippedCards(new Set());
+            setStoryPoints(paddedLineScenes);
             setStoryboardAnimationKey(prev => prev + 1);
-            storyboardApplied = points.length > 0;
+            storyboardApplied = lineBasedScenes.length > 0;
           }
         }
       }
