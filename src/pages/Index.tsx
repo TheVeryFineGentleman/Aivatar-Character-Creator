@@ -3479,7 +3479,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
             break;
           }
 
-          finalErrorMessage = result?.errorMessage || "Unbekannter Fehler";
+          finalErrorMessage = result?.errorMessage || "Google konnte deine Anfrage nicht verarbeiten.";
           const retryClass = classifyRetryableSceneError(finalErrorMessage);
           if (retryClass === "non_retryable") {
             console.warn(`- Szene ${sceneIndex + 1}: Nicht-retrybarer Fehler erkannt -> Stoppe weitere Versuche`);
@@ -3496,7 +3496,7 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
 
         const finalImageUrl = result.generatedImageUrl;
         if (!finalImageUrl) {
-          const sceneError = "Kein Bild generiert";
+          const sceneError = "Google hat kein Bild generiert - bitte Prompt oder Referenzbild aendern.";
           setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: sceneError } : p));
           continue;
         }
@@ -4183,9 +4183,9 @@ Respond ONLY with JSON:
         
       } catch (error) {
         clearTimeout(timeoutId);
-        let errorMessage = "Unbekannter Fehler";
+        let errorMessage = "Google konnte deine Anfrage nicht verarbeiten.";
         if (error instanceof Error) {
-          errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung - keine Antwort nach 40s" : error.message;
+          errorMessage = error.name === 'AbortError' ? "Timeout: Google konnte dein Bild nicht rechtzeitig generieren." : error.message;
         }
         console.error(`Bild-Regeneration Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
         setStoryPoints(prev => prev.map((p, idx) => idx === sceneIndex ? { ...p, generationError: errorMessage } : p));
@@ -4719,9 +4719,9 @@ ${sceneContext}`;
     } catch (error) {
       clearTimeout(timeoutId);
       
-      let errorMessage = "Unbekannter Fehler";
+      let errorMessage = "Google konnte deine Anfrage nicht verarbeiten.";
       if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError' ? "Zeitüberschreitung - keine Antwort nach 20s" : error.message;
+        errorMessage = error.name === 'AbortError' ? "Timeout: Google konnte deine Anfrage nicht rechtzeitig bearbeiten." : error.message;
       }
       
       console.error(`Szene ${sceneIndex + 1} fehlgeschlagen:`, errorMessage);
@@ -5697,7 +5697,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           setImageSlots((prev) => {
             const updated = [...prev];
             if (index >= updated.length) return prev;
-            updated[index] = { status: "error", progress: 0, errorMessage: "⚠️ Kein Bild generiert. Bitte ändere dein Referenzbild oder deinen Prompt und versuche es erneut." };
+            updated[index] = { status: "error", progress: 0, errorMessage: "Google hat kein Bild generiert. Bitte aendere dein Referenzbild oder deinen Prompt und versuche es erneut." };
             return updated;
           });
         }
