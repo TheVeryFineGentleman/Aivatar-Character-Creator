@@ -5418,12 +5418,14 @@ ${skinText}
 Ultra high resolution, maintain style consistency with reference image(s).`;
       }
 
+      const SAFETY_PREFIX = "SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\n";
+      
+      const finalPromptText = customPrompt.trim() 
+        ? `${SAFETY_PREFIX}${basePrompt}\n\nCRITICAL: The following custom instructions have HIGHEST PRIORITY and must be followed above all else:\n${customPrompt}`
+        : `${SAFETY_PREFIX}${basePrompt}`;
+
       const parts = [
-        {
-          text: customPrompt.trim() 
-            ? `${basePrompt}\n\nCRITICAL: The following custom instructions have HIGHEST PRIORITY and must be followed above all else:\n${customPrompt}`
-            : basePrompt,
-        },
+        { text: finalPromptText },
         // Add ALL reference images as inline data
         ...normalizedReferenceImages.map(({ mimeType, base64 }) => ({
           inlineData: {
@@ -5642,11 +5644,20 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       }, 250);
 
       try {
-        const imageUrl = await generateSingleImage(
+        let imageUrl = await generateSingleImage(
           index, apiKey, base64Images, background, totalCount,
           selectedFormat, selectedShot, customPromptText,
           undefined, 0, false, slotController.signal
         );
+
+        // Auto-retry once with simplified prompt on SAFETY/IMAGE_OTHER
+        if (!imageUrl) {
+          imageUrl = await generateSingleImage(
+            index, apiKey, base64Images, background, totalCount,
+            selectedFormat, selectedShot, undefined,
+            undefined, 1, true, slotController.signal
+          );
+        }
 
         setImageSlots((prev) => {
           const updated = [...prev];
@@ -5736,6 +5747,14 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
     if (referenceImages.length === 0) {
       console.log("❌ Fehler: Keine Reference Images");
       return;
+    }
+
+    // Proactive keyword warning
+    const promptToCheck = (useCustomPrompt ? customPrompt : "").toLowerCase();
+    const warningKeywords = ["nackt", "nude", "naked", "sex", "gewalt", "violence", "blut", "blood", "waffe", "weapon", "gun", "kill", "töten", "mord", "murder", "kind", "child", "minor", "unterwäsche", "underwear", "lingerie", "bikini", "explicit", "nsfw", "drugs", "droge"];
+    const foundWarnings = warningKeywords.filter(kw => promptToCheck.includes(kw));
+    if (foundWarnings.length > 0) {
+      toast.warning("⚠️ Dein Prompt enthält möglicherweise problematische Begriffe, die den Sicherheitsfilter auslösen könnten. Erwäge eine Umformulierung für bessere Ergebnisse.", { duration: 6000 });
     }
 
     console.log("- Validierung erfolgreich, starte Generierung...");
