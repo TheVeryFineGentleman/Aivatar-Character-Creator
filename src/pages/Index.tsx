@@ -344,6 +344,24 @@ function buildStoryPointFromScene(scene: Record<string, unknown>) {
   };
 }
 
+// Pad scenes array to target count with placeholder scenes
+function padScenesToCount(scenes: any[], targetCount: number): any[] {
+  if (scenes.length >= targetCount) return scenes.slice(0, targetCount);
+  const padded = [...scenes];
+  while (padded.length < targetCount) {
+    const idx = padded.length + 1;
+    padded.push({
+      versions: [`Szene ${idx} - bitte manuell ausfuellen`],
+      currentVersion: 0,
+      summary: `Szene ${idx} (Platzhalter)`,
+      detailedDescription: "",
+      cameraAngle: "eye-level",
+      shotType: "medium-shot",
+    });
+  }
+  return padded;
+}
+
 const REEL_DEFAULT_HOOK_DIRECTIVE = "Open with the most surprising, emotionally intense, or highest-stakes visual beat in the first second.";
 
 function getEffectiveStoryHook(mode: "general" | "reel", hook: string): string {
