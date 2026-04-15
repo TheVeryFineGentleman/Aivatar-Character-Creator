@@ -46,7 +46,7 @@ serve(async (req) => {
     const anglePrompt = anglePrompts[angle] || anglePrompts.front;
     const stylePrompt = stylePrompts[style] || stylePrompts.realistic;
 
-    const prompt = `${anglePrompt}\n\nART STYLE: ${stylePrompt}\n\nCRITICAL RULES:\n- Reproduce the EXACT same character from the reference image: same face, hair color, hairstyle, skin tone, facial features, eye color.\n- MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no environment.\n- Professional studio lighting, soft and even.\n- Show only the character, no props, no other people.\n- This is a fictional digital character illustration for an art project.`;
+    const prompt = `SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\n${anglePrompt}\n\nART STYLE: ${stylePrompt}\n\nCRITICAL RULES:\n- Reproduce the EXACT same character from the reference image: same face, hair color, hairstyle, skin tone, facial features, eye color.\n- MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no environment.\n- Professional studio lighting, soft and even.\n- Show only the character, no props, no other people.\n- This is a fictional digital character illustration for an art project.`;
 
     const cleanBase64 = referenceImage.replace(/^data:image\/[a-z]+;base64,/, '');
 

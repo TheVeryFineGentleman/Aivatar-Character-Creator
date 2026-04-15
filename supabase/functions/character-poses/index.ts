@@ -74,7 +74,7 @@ serve(async (req) => {
       locationInstruction = `\nSETTING: The scene takes place in/at ${location}.`;
     }
 
-    const prompt = `Full body portrait of the EXACT same character from the reference image. Reproduce their face, hair, skin tone, and all physical features precisely.\n\nPOSE: ${pose}${outfitInstruction}${locationInstruction}\nBACKGROUND: ${bgInstruction}\n\nCRITICAL: Same character identity as reference. Professional lighting, high quality. Full body visible head to toe. This is a fictional digital character for an art project.`;
+    const prompt = `SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\nFull body portrait of the EXACT same character from the reference image. Reproduce their face, hair, skin tone, and all physical features precisely.\n\nPOSE: ${pose}${outfitInstruction}${locationInstruction}\nBACKGROUND: ${bgInstruction}\n\nCRITICAL: Same character identity as reference. Professional lighting, high quality. Full body visible head to toe. This is a fictional digital character for an art project.`;
 
     const cleanBase64 = referenceImage.replace(/^data:image\/[a-z]+;base64,/, '');
 
