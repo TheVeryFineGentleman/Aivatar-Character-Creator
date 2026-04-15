@@ -757,20 +757,26 @@ const Index = () => {
     const saved = getFromLocalStorage('storyReferenceDescriptions');
     return saved || [];
   });
+  const [storyReferenceGenders, setStoryReferenceGenders] = useState<string[]>(() => {
+    const saved = getFromLocalStorage('storyReferenceGenders');
+    return saved || [];
+  });
   const storyCharacterProfiles: StoryCharacterProfile[] = storyReferenceImages.map((imageUrl, index) => {
     const fallbackName = `Person ${index + 1}`;
     const name = sanitizeSceneField(storyReferenceLabels[index]) || fallbackName;
     const description = sanitizeSceneField(storyReferenceDescriptions[index]);
+    const gender = storyReferenceGenders[index] || "";
     return {
       index,
       imageUrl,
       name,
       description,
+      gender,
     };
   });
   const storyCharacterProfilesGermanBlock = storyCharacterProfiles.length > 0
     ? storyCharacterProfiles
-        .map((profile) => `- ${profile.name} (Referenzbild ${profile.index + 1})${profile.description ? `: ${profile.description}` : ""}`)
+        .map((profile) => `- ${profile.name} (Referenzbild ${profile.index + 1}${profile.gender ? `, ${profile.gender}` : ""})${profile.description ? `: ${profile.description}` : ""}`)
         .join('\n')
     : "- Keine Referenzcharaktere vorhanden";
   const [smartReelModeEnabled, setSmartReelModeEnabled] = useState(false);
