@@ -13,21 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const toolApiKey = Deno.env.get("KIE_API_KEY") || Deno.env.get("TOOL_API_KEY");
+    const toolApiKey = Deno.env.get("KEY_MANAGER_API_KEY");
     if (!toolApiKey) {
-      console.error("license-check: No API key found in env");
+      console.error("license-check: KEY_MANAGER_API_KEY not found in env");
       return new Response(
-        JSON.stringify({ valid: false, error: "TOOL_API_KEY nicht konfiguriert" }),
+        JSON.stringify({ valid: false, error: "KEY_MANAGER_API_KEY nicht konfiguriert" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    console.log("license-check: API key metadata", {
-      length: toolApiKey.length,
-      prefix: toolApiKey.substring(0, 4),
-      suffix: toolApiKey.substring(toolApiKey.length - 4),
-      source: Deno.env.get("KIE_API_KEY") ? "KIE_API_KEY" : "TOOL_API_KEY",
-    });
 
     const body = await req.json();
     const email = typeof body?.email === "string" ? body.email.trim() : "";
