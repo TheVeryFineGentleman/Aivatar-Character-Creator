@@ -16,7 +16,7 @@ serve(async (req) => {
     const toolApiKey = Deno.env.get("KEY_MANAGER_API_KEY");
     if (!toolApiKey) {
       return new Response(
-        JSON.stringify({ sent: false, reason: "TOOL_API_KEY nicht konfiguriert" }),
+        JSON.stringify({ sent: false, reason: "KEY_MANAGER_API_KEY nicht konfiguriert" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
