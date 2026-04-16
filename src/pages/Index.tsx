@@ -2907,7 +2907,7 @@ Viel Spaß beim Erstellen deines Videos!
     }));
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout for text
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout for text
     
     try {
       const point = storyPoints[index];
@@ -4216,7 +4216,7 @@ Respond ONLY with JSON:
       
       const previousSceneImage = sceneIndex > 0 ? storyPointsRef.current[sceneIndex - 1]?.generatedImage : null;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 40000);
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
       
       try {
         const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
@@ -4886,7 +4886,7 @@ ${sceneContext}`;
     
     const controller = new AbortController();
     activeRegenerationController.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
@@ -6138,7 +6138,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 40000); // 40 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 Sekunden Timeout
 
       // Call Google Gemini API with ALL reference images
       const response = await fetch(
