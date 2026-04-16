@@ -16,10 +16,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.license-check]
-verify_jwt = true
+verify_jwt = false
 
 [functions.license-remind]
-verify_jwt = true
+verify_jwt = false
 
 [functions.character-views]
 verify_jwt = true
