@@ -1163,8 +1163,7 @@ const Index = () => {
       setStoryVideoMood("dramatic");
       setStoryColorMood("bright");
       setStoryTransitionType("hard-cut");
-      if (storyPointCount < 3) setStoryPointCount(3);
-      if (storyPointCount > 6) setStoryPointCount(6);
+      setStoryPointCount(Math.max(3, Math.min(6, storyPointCount)));
     } else {
       setSmartReelModeEnabled(false);
     }
