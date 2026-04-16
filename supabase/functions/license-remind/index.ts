@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const toolApiKey = Deno.env.get("TOOL_API_KEY");
+    const toolApiKey = Deno.env.get("KIE_API_KEY") || Deno.env.get("TOOL_API_KEY");
     if (!toolApiKey) {
       return new Response(
         JSON.stringify({ sent: false, reason: "TOOL_API_KEY nicht konfiguriert" }),
