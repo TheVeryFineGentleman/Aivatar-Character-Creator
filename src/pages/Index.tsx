@@ -1087,6 +1087,8 @@ const Index = () => {
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
   // "sprecher" = Erzähler/Voiceover, "dialog" = Gespräch zwischen Charakteren
   const [storyVoiceMode, setStoryVoiceMode] = useState<"sprecher" | "dialog">("sprecher");
+  // "smart" = KI entscheidet pro Szene ob Dialog passt (manche Szenen ohne Dialog), "forced" = jede Szene MUSS Dialog haben
+  const [storyDialogMode, setStoryDialogMode] = useState<"smart" | "forced">("smart");
   // "speaker-from-description" = KI generiert Sprechertext aus Szenenbeschreibung
   // "description-from-speaker" = KI generiert Szenenbeschreibung aus Sprechertext
   const [storyGenerationDirection, setStoryGenerationDirection] = useState<"speaker-from-description" | "description-from-speaker">("speaker-from-description");
@@ -1255,6 +1257,12 @@ const Index = () => {
       sessionStorage.setItem('session_storyVoiceMode', storyVoiceMode);
     } catch {}
   }, [storyVoiceMode]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('session_storyDialogMode', storyDialogMode);
+    } catch {}
+  }, [storyDialogMode]);
 
   useEffect(() => {
     try {
@@ -2371,6 +2379,7 @@ EINGABEN:
 - enableSceneDescription: ${storyEnableSceneDescription}
 - enableSpeaker: ${storyEnableSpeaker}
 - voiceMode: "${storyVoiceMode}"
+${storyVoiceMode === "dialog" && storyEnableSpeaker ? `- dialogMode: "${storyDialogMode}" (${storyDialogMode === "smart" ? "SMART: KI entscheidet pro Szene ob Dialog passt - manche Szenen können bewusst OHNE Dialog/dialogText sein wenn die Szene visuell stärker wirkt (dann dialogText leer lassen)" : "FORCED: JEDE Szene MUSS einen dialogText enthalten - kein leerer Dialog erlaubt"})` : ''}
 - generationDirection: "${storyGenerationDirection}"
 - numberOfCharacters: ${storyReferenceImages.length}
 - videoMood: "${storyVideoMood}"
@@ -5333,6 +5342,7 @@ Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, o
       if (si('session_storyboardMainLocation')) setStoryboardMainLocation(si('session_storyboardMainLocation')!);
       if (si('session_storyEnableSpeaker')) setStoryEnableSpeaker(si('session_storyEnableSpeaker') === 'true');
       if (si('session_storyVoiceMode')) setStoryVoiceMode(si('session_storyVoiceMode') as any);
+      if (si('session_storyDialogMode')) setStoryDialogMode(si('session_storyDialogMode') as any);
       if (si('session_storyGenerationDirection')) setStoryGenerationDirection(si('session_storyGenerationDirection') as any);
       if (si('session_storyboardFormat')) setStoryboardFormat(si('session_storyboardFormat')!);
       if (si('session_storySpeakerGender')) setStorySpeakerGender(si('session_storySpeakerGender') as any);
@@ -8873,6 +8883,47 @@ Beispiel einer korrekten Antwort:
                     </div>
                   )}
                 </div>
+
+                {storyEnableSpeaker && storyVoiceMode === "dialog" && (
+                  <div className="px-1">
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 bg-muted/20 max-w-xl">
+                      <div className="space-y-0.5 mr-auto">
+                        <Label className="text-xs">Dialog-Modus</Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          {storyDialogMode === "smart"
+                            ? "KI entscheidet pro Szene ob Dialog passt"
+                            : "Jede Szene MUSS Dialog enthalten"}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setStoryDialogMode("smart")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-200",
+                            storyDialogMode === "smart"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          Smart
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStoryDialogMode("forced")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-200",
+                            storyDialogMode === "forced"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          Erzwungen
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {storyEnableSpeaker && (
                   <div className="px-1">
