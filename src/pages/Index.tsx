@@ -1102,6 +1102,7 @@ const Index = () => {
   const [storyColorMood, setStoryColorMood] = useState<string>("natural");
   const [storyHook, setStoryHook] = useState("");
   const [storyPacing, setStoryPacing] = useState<string>("tension-arc");
+  const [storyLanguage, setStoryLanguage] = useState<string>("de");
   
   // Scene Edit Popup - Tab-based UI state
   const [sceneEditTab, setSceneEditTab] = useState<"content" | "image" | "video">("content");
@@ -1137,6 +1138,7 @@ const Index = () => {
   useEffect(() => { try { sessionStorage.setItem('session_storyColorMood', storyColorMood); } catch {} }, [storyColorMood]);
   useEffect(() => { try { sessionStorage.setItem('session_storyHook', storyHook); } catch {} }, [storyHook]);
   useEffect(() => { try { sessionStorage.setItem('session_storyPacing', storyPacing); } catch {} }, [storyPacing]);
+  useEffect(() => { try { sessionStorage.setItem('session_storyLanguage', storyLanguage); } catch {} }, [storyLanguage]);
   useEffect(() => { try { sessionStorage.setItem('session_storyCreatorMode', storyCreatorMode); } catch {} }, [storyCreatorMode]);
   useEffect(() => { smartReelStyleDescriptionsRef.current = smartReelStyleDescriptions; }, [smartReelStyleDescriptions]);
   useEffect(() => { smartReelReferenceSummaryRef.current = smartReelReferenceSummary; }, [smartReelReferenceSummary]);
@@ -2374,6 +2376,7 @@ EINGABEN:
 - videoMood: "${storyVideoMood}"
 - colorMood: "${storyColorMood}"
 - pacing: "${storyPacing}"
+- outputLanguage: "${storyLanguage}" (ALLE Texte wie sceneDescription, speakerText, dialogText, title MÜSSEN in dieser Sprache geschrieben werden)
 ${effectiveStoryHook ? `- hook: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
@@ -5337,6 +5340,7 @@ Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, o
       if (si('session_storyColorMood')) setStoryColorMood(si('session_storyColorMood')!);
       if (si('session_storyHook')) setStoryHook(si('session_storyHook')!);
       if (si('session_storyPacing')) setStoryPacing(si('session_storyPacing')!);
+      if (si('session_storyLanguage')) setStoryLanguage(si('session_storyLanguage')!);
       if (si('session_storyCreatorMode')) setStoryCreatorMode(si('session_storyCreatorMode') as any);
       if (si('session_smartReelModeEnabled')) setSmartReelModeEnabled(si('session_smartReelModeEnabled') === 'true');
       if (si('session_smartReelTranscript')) setSmartReelTranscript(si('session_smartReelTranscript')!);
@@ -9488,6 +9492,27 @@ Beispiel einer korrekten Antwort:
                       </Select>
                     </div>
                     )}
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Sprache</Label>
+                      <Select value={storyLanguage} onValueChange={setStoryLanguage}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                          <SelectItem value="en">Englisch</SelectItem>
+                          <SelectItem value="es">Spanisch</SelectItem>
+                          <SelectItem value="fr">Französisch</SelectItem>
+                          <SelectItem value="it">Italienisch</SelectItem>
+                          <SelectItem value="pt">Portugiesisch</SelectItem>
+                          <SelectItem value="nl">Niederländisch</SelectItem>
+                          <SelectItem value="pl">Polnisch</SelectItem>
+                          <SelectItem value="tr">Türkisch</SelectItem>
+                          <SelectItem value="ru">Russisch</SelectItem>
+                          <SelectItem value="ja">Japanisch</SelectItem>
+                          <SelectItem value="zh">Chinesisch</SelectItem>
+                          <SelectItem value="ar">Arabisch</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   {/* Row 3: Hook + Besondere Details nebeneinander */}
