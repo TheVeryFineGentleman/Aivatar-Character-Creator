@@ -2376,6 +2376,7 @@ EINGABEN:
 - videoMood: "${storyVideoMood}"
 - colorMood: "${storyColorMood}"
 - pacing: "${storyPacing}"
+- outputLanguage: "${storyLanguage}" (ALLE Texte wie sceneDescription, speakerText, dialogText, title MÜSSEN in dieser Sprache geschrieben werden)
 ${effectiveStoryHook ? `- hook: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- speakerGender: "${storySpeakerGender}"` : ''}
 ${storyCharacterProfiles.length > 0 ? `CHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}` : ''}
