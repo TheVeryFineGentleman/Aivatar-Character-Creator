@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getFunctionHeaders, getFunctionUrl, hasBackendConfig } from "@/lib/backend";
@@ -27,6 +27,7 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
   const [isReminding, setIsReminding] = useState(false);
   const [remindMessage, setRemindMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [showLicenseKey, setShowLicenseKey] = useState(false);
 
   const handleRemindSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,14 +133,26 @@ export const LoginDialog = ({ onLogin }: LoginDialogProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="licenseKey">License Key</Label>
-              <Input
-                id="licenseKey"
-                type="text"
-                placeholder="Ihr License Key"
-                value={licenseKey}
-                onChange={(e) => setLicenseKey(e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input
+                  id="licenseKey"
+                  type={showLicenseKey ? "text" : "password"}
+                  placeholder="Ihr License Key"
+                  value={licenseKey}
+                  onChange={(e) => setLicenseKey(e.target.value)}
+                  disabled={isLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLicenseKey((v) => !v)}
+                  disabled={isLoading}
+                  aria-label={showLicenseKey ? "License Key verbergen" : "License Key anzeigen"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  {showLicenseKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             {loginError && <p className="text-sm text-destructive">{loginError}</p>}
             <Button type="submit" className="w-full" disabled={isLoading}>
