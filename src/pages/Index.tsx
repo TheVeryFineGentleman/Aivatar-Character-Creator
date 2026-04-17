@@ -1260,6 +1260,12 @@ const Index = () => {
 
   useEffect(() => {
     try {
+      sessionStorage.setItem('session_storyDialogMode', storyDialogMode);
+    } catch {}
+  }, [storyDialogMode]);
+
+  useEffect(() => {
+    try {
       sessionStorage.setItem('session_storyGenerationDirection', storyGenerationDirection);
     } catch {}
   }, [storyGenerationDirection]);
