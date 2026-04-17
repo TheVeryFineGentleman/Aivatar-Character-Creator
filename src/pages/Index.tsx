@@ -1087,6 +1087,8 @@ const Index = () => {
   const [storyEnableSceneDescription, setStoryEnableSceneDescription] = useState(true);
   // "sprecher" = Erzähler/Voiceover, "dialog" = Gespräch zwischen Charakteren
   const [storyVoiceMode, setStoryVoiceMode] = useState<"sprecher" | "dialog">("sprecher");
+  // "smart" = KI entscheidet pro Szene ob Dialog passt (manche Szenen ohne Dialog), "forced" = jede Szene MUSS Dialog haben
+  const [storyDialogMode, setStoryDialogMode] = useState<"smart" | "forced">("smart");
   // "speaker-from-description" = KI generiert Sprechertext aus Szenenbeschreibung
   // "description-from-speaker" = KI generiert Szenenbeschreibung aus Sprechertext
   const [storyGenerationDirection, setStoryGenerationDirection] = useState<"speaker-from-description" | "description-from-speaker">("speaker-from-description");
