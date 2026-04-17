@@ -8884,6 +8884,47 @@ Beispiel einer korrekten Antwort:
                   )}
                 </div>
 
+                {storyEnableSpeaker && storyVoiceMode === "dialog" && (
+                  <div className="px-1">
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 bg-muted/20 max-w-xl">
+                      <div className="space-y-0.5 mr-auto">
+                        <Label className="text-xs">Dialog-Modus</Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          {storyDialogMode === "smart"
+                            ? "KI entscheidet pro Szene ob Dialog passt"
+                            : "Jede Szene MUSS Dialog enthalten"}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setStoryDialogMode("smart")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-200",
+                            storyDialogMode === "smart"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          Smart
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStoryDialogMode("forced")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-200",
+                            storyDialogMode === "forced"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border/50 bg-muted/20 text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          Erzwungen
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {storyEnableSpeaker && (
                   <div className="px-1">
                     <div className="flex items-center gap-3">
