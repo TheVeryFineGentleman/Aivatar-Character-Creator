@@ -5341,6 +5341,7 @@ Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, o
       if (si('session_storyboardMainLocation')) setStoryboardMainLocation(si('session_storyboardMainLocation')!);
       if (si('session_storyEnableSpeaker')) setStoryEnableSpeaker(si('session_storyEnableSpeaker') === 'true');
       if (si('session_storyVoiceMode')) setStoryVoiceMode(si('session_storyVoiceMode') as any);
+      if (si('session_storyDialogMode')) setStoryDialogMode(si('session_storyDialogMode') as any);
       if (si('session_storyGenerationDirection')) setStoryGenerationDirection(si('session_storyGenerationDirection') as any);
       if (si('session_storyboardFormat')) setStoryboardFormat(si('session_storyboardFormat')!);
       if (si('session_storySpeakerGender')) setStorySpeakerGender(si('session_storySpeakerGender') as any);
