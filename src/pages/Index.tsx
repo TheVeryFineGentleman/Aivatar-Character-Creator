@@ -2379,6 +2379,7 @@ EINGABEN:
 - enableSceneDescription: ${storyEnableSceneDescription}
 - enableSpeaker: ${storyEnableSpeaker}
 - voiceMode: "${storyVoiceMode}"
+${storyVoiceMode === "dialog" && storyEnableSpeaker ? `- dialogMode: "${storyDialogMode}" (${storyDialogMode === "smart" ? "SMART: KI entscheidet pro Szene ob Dialog passt - manche Szenen können bewusst OHNE Dialog/dialogText sein wenn die Szene visuell stärker wirkt (dann dialogText leer lassen)" : "FORCED: JEDE Szene MUSS einen dialogText enthalten - kein leerer Dialog erlaubt"})` : ''}
 - generationDirection: "${storyGenerationDirection}"
 - numberOfCharacters: ${storyReferenceImages.length}
 - videoMood: "${storyVideoMood}"
