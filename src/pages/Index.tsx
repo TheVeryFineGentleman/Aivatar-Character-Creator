@@ -27,6 +27,7 @@ import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import PromoBanner from "@/components/PromoBanner";
+import { AdminPanel, isAdminEmail } from "@/components/AdminPanel";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { LegalDialog } from "@/components/LegalDialog"; // kept for backward compat if needed
@@ -7618,6 +7619,10 @@ Beispiel einer korrekten Antwort:
                     </div>
                   </div>
                 </div>
+
+                {isAdminEmail(authData.email) && (
+                  <AdminPanel requesterEmail={authData.email} />
+                )}
 
                 <div className="pt-6 border-t border-border">
                   <div className="space-y-4">
