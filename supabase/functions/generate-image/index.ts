@@ -37,7 +37,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, referenceImages, aspectRatio = "1:1", mode = "image", apiKey } = await req.json();
+    const { prompt, referenceImages, referenceImageContexts, aspectRatio = "1:1", mode = "image", apiKey } = await req.json();
     
     console.log("📤 Generate request received");
     console.log("🎯 Mode:", mode);
@@ -61,9 +61,14 @@ serve(async (req) => {
       const textParts: any[] = [{ text: prompt }];
       
       if (referenceImages && referenceImages.length > 0) {
-        for (const referenceImage of referenceImages) {
+        for (let index = 0; index < referenceImages.length; index++) {
+          const referenceImage = referenceImages[index];
           const normalized = normalizeReferenceImage(referenceImage);
           if (!normalized) continue;
+          const contextText = typeof referenceImageContexts?.[index] === "string" ? referenceImageContexts[index].trim() : "";
+          if (contextText) {
+            textParts.push({ text: contextText });
+          }
           textParts.push({
             inlineData: {
               mimeType: normalized.mimeType,
@@ -117,9 +122,14 @@ serve(async (req) => {
     const parts: any[] = [{ text: enhancedPrompt }];
 
     if (referenceImages && referenceImages.length > 0) {
-      for (const referenceImage of referenceImages) {
+      for (let index = 0; index < referenceImages.length; index++) {
+        const referenceImage = referenceImages[index];
         const normalized = normalizeReferenceImage(referenceImage);
         if (!normalized) continue;
+        const contextText = typeof referenceImageContexts?.[index] === "string" ? referenceImageContexts[index].trim() : "";
+        if (contextText) {
+          parts.push({ text: contextText });
+        }
         parts.push({
           inlineData: {
             mimeType: normalized.mimeType,

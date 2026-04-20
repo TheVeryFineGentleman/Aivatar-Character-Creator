@@ -238,10 +238,19 @@ function normalizeSceneShotType(value: unknown): string {
 
 type StoryCharacterProfile = {
   index: number;
+  id: string;
   imageUrl?: string;
   name: string;
   description: string;
   gender: string;
+  aliases: string[];
+  canonicalVisualLock: string;
+};
+
+type StoryDialogLine = {
+  speakerId: string | null;
+  speakerName: string;
+  text: string;
 };
 
 type SmartReelChatMessage = {
@@ -252,6 +261,14 @@ type SmartReelChatMessage = {
 type SmartReelChatStep = "speech" | "platform" | "topic" | "goal" | "duration" | "done";
 
 const VEO_REFERENCE_IMAGE_LIMIT = 3;
+
+function buildStoryCharacterId(index: number): string {
+  return `char_ref_${index + 1}`;
+}
+
+function stripWrappingQuotes(value: string): string {
+  return value.replace(/^[\"'“”„`]+|[\"'“”„`]+$/g, "").trim();
+}
 
 function normalizeCharacterIdentityToken(value: unknown): string {
   return sanitizeSceneField(value)
@@ -307,6 +324,13 @@ function extractSpeakerNamesFromDialogText(value: unknown): string[] {
   return dedupeCharacterNames(speakerNames);
 }
 
+function deriveParticipantsString(participantsValue: unknown, dialogTextValue?: unknown): string {
+  return dedupeCharacterNames([
+    ...splitParticipantNames(participantsValue),
+    ...extractSpeakerNamesFromDialogText(dialogTextValue),
+  ]).join(", ");
+}
+
 function buildStoryPointFromScene(scene: Record<string, unknown>) {
   const summary = sanitizeSceneField(scene.summary);
   const detailedDescription = sanitizeSceneField(scene.detailedDescription);
@@ -316,7 +340,7 @@ function buildStoryPointFromScene(scene: Record<string, unknown>) {
   const emotion = sanitizeSceneField(scene.emotion);
   const cameraAngle = normalizeSceneCameraAngle(scene.cameraAngle);
   const shotType = normalizeSceneShotType(scene.shotType);
-  const participants = sanitizeSceneField(scene.participants);
+  const participants = deriveParticipantsString(scene.participants, dialogText);
   const audienceEffect = sanitizeSceneField(scene.audienceEffect);
   const composition = sanitizeSceneField(scene.composition);
   const movement = sanitizeSceneField(scene.movement);
@@ -488,6 +512,9 @@ RULES FOR REEL PROMPTS:
 function sanitizeStoryPointsForSession(points: any[]): any[] {
   return points.map((point) => {
     const safePoint = { ...point };
+    if (!sanitizeSceneField(safePoint.participants) && sanitizeSceneField(safePoint.dialogText)) {
+      safePoint.participants = deriveParticipantsString("", safePoint.dialogText);
+    }
 
     if (typeof safePoint.generatedImage === "string" && /^blob:|^data:/i.test(safePoint.generatedImage)) {
       delete safePoint.generatedImage;
@@ -780,22 +807,49 @@ const Index = () => {
     const saved = getFromLocalStorage('storyReferenceGenders');
     return saved || [];
   });
+  const buildCharacterVoiceLockEnglish = (profile: Pick<StoryCharacterProfile, "gender" | "name">) => {
+    if (profile.gender === "maennlich") return `adult male voice identity tied only to "${profile.name}"`;
+    if (profile.gender === "weiblich") return `adult female voice identity tied only to "${profile.name}"`;
+    if (profile.gender === "divers") return `adult androgynous/non-binary voice identity tied only to "${profile.name}"`;
+    return `adult voice identity tied only to "${profile.name}"`;
+  };
+  const buildCharacterVoiceLockGerman = (profile: Pick<StoryCharacterProfile, "gender" | "name">) => {
+    if (profile.gender === "maennlich") return `gleiche erwachsene maennliche Stimmidentitaet, immer nur "${profile.name}" zugeordnet`;
+    if (profile.gender === "weiblich") return `gleiche erwachsene weibliche Stimmidentitaet, immer nur "${profile.name}" zugeordnet`;
+    if (profile.gender === "divers") return `gleiche erwachsene diverse/androgyne Stimmidentitaet, immer nur "${profile.name}" zugeordnet`;
+    return `gleiche erwachsene Stimmidentitaet, immer nur "${profile.name}" zugeordnet`;
+  };
   const storyCharacterProfiles: StoryCharacterProfile[] = storyReferenceImages.map((imageUrl, index) => {
     const fallbackName = `Person ${index + 1}`;
     const name = sanitizeSceneField(storyReferenceLabels[index]) || fallbackName;
     const description = sanitizeSceneField(storyReferenceDescriptions[index]);
     const gender = storyReferenceGenders[index] || "";
+    const aliases = dedupeCharacterNames([
+      name,
+      fallbackName,
+      `Charakter ${index + 1}`,
+      `Character ${index + 1}`,
+      `Referenzbild ${index + 1}`,
+      `Reference image ${index + 1}`,
+    ]);
     return {
       index,
+      id: buildStoryCharacterId(index),
       imageUrl,
       name,
       description,
       gender,
+      aliases,
+      canonicalVisualLock: description || `same exact face, hair, body type, outfit, accessories, and distinctive traits as uploaded character reference ${index + 1}`,
     };
   });
   const storyCharacterProfilesGermanBlock = storyCharacterProfiles.length > 0
     ? storyCharacterProfiles
-        .map((profile) => `- ${profile.name} (Referenzbild ${profile.index + 1}${profile.gender ? `, ${profile.gender}` : ""})${profile.description ? `: ${profile.description}` : ""}`)
+        .map((profile) => [
+          `- ${profile.id} = "${profile.name}" (Referenzbild ${profile.index + 1}${profile.gender ? `, ${profile.gender}` : ""})`,
+          `  visueller Lock: ${profile.canonicalVisualLock}`,
+          `  Sprecher-/Stimm-Lock: ${buildCharacterVoiceLockGerman(profile)}`,
+        ].join('\n'))
         .join('\n')
     : "- Keine Referenzcharaktere vorhanden";
   const [smartReelModeEnabled, setSmartReelModeEnabled] = useState(false);
@@ -913,63 +967,207 @@ const Index = () => {
   const findStoryCharacterProfile = (value: unknown): StoryCharacterProfile | null => {
     const normalized = normalizeCharacterIdentityToken(value);
     if (!normalized) return null;
-    return storyCharacterProfiles.find((profile) => normalizeCharacterIdentityToken(profile.name) === normalized) || null;
+    return storyCharacterProfiles.find((profile) =>
+      normalizeCharacterIdentityToken(profile.id) === normalized
+      || normalizeCharacterIdentityToken(profile.name) === normalized
+      || profile.aliases.some((alias) => normalizeCharacterIdentityToken(alias) === normalized)
+    ) || null;
   };
-  const resolveSceneCharacterProfiles = (point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null): StoryCharacterProfile[] => {
-    if (storyCharacterProfiles.length === 0) return [];
+  const parseSceneDialogLines = (
+    dialogText?: string,
+    preferredProfiles: StoryCharacterProfile[] = []
+  ): StoryDialogLine[] => {
+    const raw = sanitizeSceneField(dialogText);
+    if (!raw) return [];
 
-    const matchedProfiles: StoryCharacterProfile[] = [];
-    const matchedIndexes = new Set<number>();
-    const addProfileByName = (name: string) => {
-      const profile = findStoryCharacterProfile(name);
-      if (!profile || matchedIndexes.has(profile.index)) return;
-      matchedIndexes.add(profile.index);
-      matchedProfiles.push(profile);
+    const lines = raw
+      .split(/\r?\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const fallbackProfiles = preferredProfiles.length > 0 ? preferredProfiles : storyCharacterProfiles;
+    const singleFallback = fallbackProfiles.length === 1 ? fallbackProfiles[0] : null;
+
+    return lines.map((line) => {
+      const labeledMatch = line.match(/^([^:]{1,80}):\s*(.+)$/);
+      if (labeledMatch) {
+        const speakerRaw = sanitizeSceneField(labeledMatch[1]);
+        const text = stripWrappingQuotes(sanitizeSceneField(labeledMatch[2]));
+        const profile = findStoryCharacterProfile(speakerRaw) || singleFallback;
+        return {
+          speakerId: profile?.id || null,
+          speakerName: profile?.name || speakerRaw,
+          text,
+        };
+      }
+
+      const text = stripWrappingQuotes(line);
+      return {
+        speakerId: singleFallback?.id || null,
+        speakerName: singleFallback?.name || "",
+        text,
+      };
+    }).filter((line) => line.text);
+  };
+  const resolveSceneIdentity = (point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null) => {
+    const participantProfiles: StoryCharacterProfile[] = [];
+    const participantIndexes = new Set<number>();
+    const addProfile = (profile: StoryCharacterProfile | null) => {
+      if (!profile || participantIndexes.has(profile.index)) return;
+      participantIndexes.add(profile.index);
+      participantProfiles.push(profile);
     };
 
     if (point) {
-      splitParticipantNames(point.participants).forEach(addProfileByName);
-      extractSpeakerNamesFromDialogText(point.dialogText).forEach(addProfileByName);
+      splitParticipantNames(point.participants).forEach((name) => addProfile(findStoryCharacterProfile(name)));
     }
 
-    if (matchedProfiles.length > 0) return matchedProfiles;
-    if (storyCharacterProfiles.length === 1) return [storyCharacterProfiles[0]];
-    return storyCharacterProfiles;
+    const dialogLines = parseSceneDialogLines(point?.dialogText, participantProfiles);
+    const speakerProfiles: StoryCharacterProfile[] = [];
+    const speakerIndexes = new Set<number>();
+    dialogLines.forEach((line) => {
+      const profile = line.speakerId ? findStoryCharacterProfile(line.speakerId) : findStoryCharacterProfile(line.speakerName);
+      if (!profile || speakerIndexes.has(profile.index)) return;
+      speakerIndexes.add(profile.index);
+      speakerProfiles.push(profile);
+      addProfile(profile);
+    });
+
+    if (participantProfiles.length === 0 && storyCharacterProfiles.length === 1) {
+      addProfile(storyCharacterProfiles[0]);
+    }
+
+    return {
+      participantProfiles,
+      participantIds: participantProfiles.map((profile) => profile.id),
+      dialogLines,
+      speakerProfiles,
+      speakerIds: speakerProfiles.map((profile) => profile.id),
+      primarySpeakerProfile: speakerProfiles[0] || (participantProfiles.length === 1 ? participantProfiles[0] : null),
+    };
+  };
+  const resolveSceneCharacterProfiles = (point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null): StoryCharacterProfile[] =>
+    resolveSceneIdentity(point).participantProfiles;
+  const buildGermanSceneIdentityBlock = (point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null) => {
+    const sceneIdentity = resolveSceneIdentity(point);
+    const hasExplicitProfiles = sceneIdentity.participantProfiles.length > 0;
+    const profiles = hasExplicitProfiles
+      ? sceneIdentity.participantProfiles
+      : storyCharacterProfiles.length === 1
+        ? [storyCharacterProfiles[0]]
+        : storyCharacterProfiles;
+    if (profiles.length === 0) return "";
+
+    const lines = [
+      "CHARAKTER- UND SPRECHER-LOCK:",
+      ...profiles.map((profile) => `- ${profile.id} = "${profile.name}" (Referenzbild ${profile.index + 1}) -> ${profile.canonicalVisualLock}`),
+      hasExplicitProfiles
+        ? `- In dieser Szene duerfen nur diese Character-IDs erscheinen: ${profiles.map((profile) => `${profile.id} ("${profile.name}")`).join(", ")}`
+        : "- Keine expliziten Szenen-Teilnehmer erkannt. Nutze nur diese gelockten Character-IDs als moegliche Kandidaten und vermische niemals ihre Identitaeten.",
+      sceneIdentity.speakerProfiles.length > 0
+        ? `- Aktive Sprecher in dieser Szene: ${sceneIdentity.speakerProfiles.map((profile) => `${profile.id} ("${profile.name}")`).join(", ")}`
+        : null,
+      ...sceneIdentity.dialogLines
+        .filter((line) => line.speakerId)
+        .map((line) => `- Dialogzeile bleibt fest bei ${line.speakerId} ("${line.speakerName}"): "${line.text}"`),
+      "- Niemals Gesichter, Kleidung, Haare, Accessoires oder Stimmen zwischen Character-IDs vertauschen.",
+      point?.continuityNotes ? `- Kontinuitaet: ${point.continuityNotes}` : null,
+    ].filter(Boolean);
+
+    return lines.join('\n');
   };
   const buildEnglishCharacterIdentityBlock = (point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null) => {
-    const profiles = resolveSceneCharacterProfiles(point);
+    const sceneIdentity = resolveSceneIdentity(point);
+    const hasExplicitProfiles = sceneIdentity.participantProfiles.length > 0;
+    const profiles = hasExplicitProfiles
+      ? sceneIdentity.participantProfiles
+      : storyCharacterProfiles.length === 1
+        ? [storyCharacterProfiles[0]]
+        : storyCharacterProfiles;
     if (profiles.length === 0) return "";
 
     const lines = [
       "CHARACTER REFERENCE LOCK:",
       ...profiles.map((profile) => {
         const genderEn = profile.gender === "maennlich" ? "male" : profile.gender === "weiblich" ? "female" : profile.gender === "divers" ? "non-binary" : "";
-        return `- Reference image ${profile.index + 1} = "${profile.name}"${genderEn ? ` (${genderEn})` : ""}${profile.description ? ` - ${profile.description}` : ""}`;
+        return `- ${profile.id} = "${profile.name}"${genderEn ? ` (${genderEn})` : ""}, uploaded character reference ${profile.index + 1}. Visual lock: ${profile.canonicalVisualLock}. Voice lock: ${buildCharacterVoiceLockEnglish(profile)}.`;
       }),
-      point?.participants
-        ? `- Scene participants: ${point.participants}. Only these named characters should appear in this scene.`
-        : `- Scene participants: ${profiles.map((profile) => `"${profile.name}"`).join(", ")}.`,
-      "- Never swap identities, faces, outfits, or accessories between names or reference images.",
-      "- Keep each named character's face, hair, body type, clothing, accessories, and distinctive traits tied to the same reference image in every scene.",
+      hasExplicitProfiles
+        ? `- Scene participants: ${profiles.map((profile) => `${profile.id} ("${profile.name}")`).join(", ")}. Only these locked characters may appear in this scene.`
+        : `- No explicit scene participants were resolved. Use only these locked character IDs as possible candidates. Never merge or average them.`,
+      sceneIdentity.speakerProfiles.length > 0
+        ? `- Active speaker lock: ${sceneIdentity.speakerProfiles.map((profile) => `${profile.id} ("${profile.name}")`).join(", ")}.`
+        : null,
+      ...sceneIdentity.dialogLines
+        .filter((line) => line.speakerId)
+        .map((line) => `- Dialogue ownership: ${line.speakerId} ("${line.speakerName}") must deliver exactly "${line.text}".`),
+      "- Never swap identities, faces, hairstyles, outfits, accessories, body traits, or voices between character IDs.",
+      "- Never let one character lip-sync or speak a line that belongs to another character ID.",
       point?.continuityNotes ? `- Continuity notes: ${point.continuityNotes}` : null,
     ].filter(Boolean);
 
     return lines.join('\n');
   };
-  const buildDialogIdentityInstruction = (dialogText?: string) => {
-    const cleanDialog = sanitizeSceneField(dialogText);
+  const buildDialogIdentityInstruction = (point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null) => {
+    const cleanDialog = sanitizeSceneField(point?.dialogText);
     if (!cleanDialog) {
       return storyEnableSpeaker
         ? ""
-        : '\nIMPORTANT: NO dialogue or speech ? the character does NOT speak in this scene. No lip movement, no voiceover. The scene is completely silent with no spoken words.';
+        : '\nIMPORTANT: NO dialogue or speech. No lip movement, no voiceover. The scene is completely silent with no spoken words.';
     }
 
-    const speakerNames = extractSpeakerNamesFromDialogText(cleanDialog);
-    if (speakerNames.length > 0) {
-      return `\nDIALOG: Preserve the exact speaker labels and spoken words in the original language. The matching named character must speak each labeled line exactly as written. Speakers in this scene: ${speakerNames.map((name) => `"${name}"`).join(", ")}. Do NOT translate or rewrite: "${cleanDialog}"`;
+    if (storyVoiceMode === "sprecher") {
+      return `\nNARRATION LOCK: This text is off-screen narration / voiceover, not character dialogue. Keep the narration exact in the original language. No character should lip-sync these words unless the scene explicitly shows that narrator on screen. Exact narration: "${cleanDialog}"`;
     }
 
-    return `\nDIALOG: The character must visibly speak these EXACT words (original language, do NOT translate): "${cleanDialog}"`;
+    const sceneIdentity = resolveSceneIdentity(point);
+    if (sceneIdentity.dialogLines.length > 0) {
+      return `\nDIALOGUE LOCK: Preserve the exact speaker-to-line ownership in the original language. Never reassign lines between character IDs. ${sceneIdentity.dialogLines.map((line) =>
+        line.speakerId
+          ? `${line.speakerId} ("${line.speakerName}") says exactly: "${line.text}".`
+          : `One visible participant says exactly: "${line.text}".`
+      ).join(' ')}`;
+    }
+
+    return `\nDIALOG: One visible participant must speak these EXACT words in the original language. Do NOT translate or rewrite: "${cleanDialog}"`;
+  };
+  const buildReferenceImagePayload = (
+    point?: { participants?: string; dialogText?: string; continuityNotes?: string } | null,
+    characterReferenceImages: string[] = [],
+    extraReferences: Array<{ dataUrl: string; context: string }> = []
+  ) => {
+    const sceneIdentity = resolveSceneIdentity(point);
+    const selectedProfiles = sceneIdentity.participantProfiles.length > 0
+      ? sceneIdentity.participantProfiles
+      : storyCharacterProfiles.length === 1
+        ? [storyCharacterProfiles[0]]
+        : storyCharacterProfiles;
+    const referenceImages: string[] = [];
+    const referenceImageContexts: string[] = [];
+    const seenIndexes = new Set<number>();
+
+    for (const profile of selectedProfiles) {
+      const referenceImage = characterReferenceImages[profile.index];
+      if (!referenceImage || seenIndexes.has(profile.index)) continue;
+      seenIndexes.add(profile.index);
+      referenceImages.push(referenceImage.trim());
+      referenceImageContexts.push(
+        `ATTACHED CHARACTER REFERENCE SLOT ${referenceImages.length}: ${profile.id} = "${profile.name}". Uploaded character reference ${profile.index + 1}. Visual lock: ${profile.canonicalVisualLock}. Voice lock: ${buildCharacterVoiceLockEnglish(profile)}. Use this image only for this specific character ID. Never transfer face, hair, outfit, accessories, or speaking identity to another character.`
+      );
+    }
+
+    for (const extraReference of extraReferences) {
+      const dataUrl = extraReference.dataUrl?.trim();
+      if (!dataUrl) continue;
+      referenceImages.push(dataUrl);
+      referenceImageContexts.push(extraReference.context);
+    }
+
+    return {
+      referenceImages,
+      referenceImageContexts,
+      selectedProfiles,
+      sceneIdentity,
+    };
   };
   
   // Storyboard state
@@ -1067,7 +1265,7 @@ const Index = () => {
   const [videoTaskIds, setVideoTaskIds] = useState<Map<number, string>>(new Map());
   const [videoResults, setVideoResults] = useState<Map<number, string>>(new Map());
   const [videoErrors, setVideoErrors] = useState<Map<number, string>>(new Map());
-  const [videoGenerationPhase, setVideoGenerationPhase] = useState<"idle" | "uploading" | "generating" | "polling">("idle");
+  const [videoGenerationPhase, setVideoGenerationPhase] = useState<"idle" | "prompting" | "uploading" | "generating" | "polling">("idle");
   
   // AI Scene Assistant state
   const [sceneAssistantInput, setSceneAssistantInput] = useState("");
@@ -1559,6 +1757,7 @@ STORY-KONTEXT:
 - Hauptort: ${storyboardMainLocation || "nicht gesetzt"}
 - Dialog aktiviert: ${storyEnableSpeaker ? "ja" : "nein"}
 ${storyCharacterProfiles.length > 0 ? `- Referenzcharaktere:\n${storyCharacterProfilesGermanBlock}` : ""}
+${buildGermanSceneIdentityBlock(currentPoint) ? `- Aktuelle Figurenzuordnung dieser Szene:\n${buildGermanSceneIdentityBlock(currentPoint)}` : ""}
 
 ${formatSceneContext("Vorherige Szene", previousPoint, idx - 1)}
 
@@ -1629,6 +1828,8 @@ WICHTIGE REGELN:
 7. Ändere nichts außerhalb dieser Szene.
 8. Gib keine leeren Strings aus. Nur sinnvoller Text oder null.
 9. Wenn Referenzcharaktere vorhanden sind, erfinde keine neuen Namen und ändere keine feste Zuordnung zwischen Name und Referenzfigur.
+10. Wenn mehrere Referenzcharaktere existieren und dialogText gesetzt ist, muss jede Dialogzeile mit dem exakten Charakternamen beginnen.
+11. Vertausche niemals Sprecherzeilen zwischen Character-IDs, Namen oder Referenzbildern.
 
 Antworte NUR mit einem validen JSON-Objekt in genau dieser Form:
 {
@@ -1721,6 +1922,15 @@ Antworte NUR mit einem validen JSON-Objekt in genau dieser Form:
           const value = sanitizeSceneAssistantText(parsed[field]);
           if (value !== null && value !== (p[field] || "")) {
             updates[field] = value;
+          }
+        }
+
+        if (storyCharacterProfiles.length > 0) {
+          const nextDialogText = updates.dialogText ?? p.dialogText ?? "";
+          const nextParticipants = p.participants || "";
+          const derivedParticipants = deriveParticipantsString(nextParticipants, nextDialogText);
+          if (!nextParticipants && derivedParticipants) {
+            updates.participants = derivedParticipants;
           }
         }
 
@@ -2415,8 +2625,11 @@ INHALTSREGELN:
 - Die Szenen bauen logisch aufeinander auf.
 - Emotionen müssen visuell erkennbar sein.
 - Wenn Referenzcharaktere vorhanden sind, bleibt jeder Name fest an genau sein Referenzbild gebunden.
+- Jede Referenzfigur hat intern eine feste Character-ID laut CHARAKTER-REFERENZEN. Diese Zuordnung darf niemals wechseln.
 - Frisur, Gesicht, Kleidung, Accessoires und markante Merkmale der benannten Charaktere bleiben über alle Szenen konsistent, sofern die Geschichte keine explizite Ünderung verlangt.
 - Verwende in participants und dialogText nur die exakten Charakternamen aus den Referenzcharakteren.
+- Wenn dieselbe Figur in mehreren Szenen spricht, bleibt Sprechername = dieselbe Character-ID = dieselbe Person.
+- Erfinde niemals neue Sprecher, Platzhalternamen oder Rollenbezeichnungen wie "Mann", "Frau" oder "Person", wenn Referenzcharaktere vorhanden sind.
 - Die letzte Szene soll den staerksten Payoff, Twist oder Ausblick des neuen Videos liefern.
 
 ERLAUBTE WERTE:
@@ -2472,6 +2685,7 @@ FELDREGELN:
 ${storyCharacterDialogueRule}
     - Verwende niemals erfundene neue Namen.
     - Verteile die Dialoge logisch auf die Charaktere basierend auf der Szene
+    - Jede Dialogzeile bleibt fest bei genau derselben Figur; niemals Sprecher zwischen Namen vertauschen.
   - falls generationDirection = "speaker-from-description":
       Text passend zur Szenenbeschreibung, 1-3 Sätze
   - falls generationDirection = "description-from-speaker":
@@ -2480,6 +2694,7 @@ ${storyCharacterDialogueRule}
   - nur die exakten Namen der in dieser Szene sichtbaren Referenzcharaktere, kommasepariert
   - wenn nur ein Referenzcharakter sichtbar ist, nenne nur diesen einen Namen
   - wenn kein Referenzcharakter vorhanden ist, kann das Feld leer bleiben
+  - wenn dialogText Sprecherzeilen mit Referenznamen enthält, müssen diese Sprecher auch in participants enthalten sein
 - "continuityNotes":
   - kurze Kontinuitätsnotiz zu Kleidung, Haaren, Accessoires, Requisiten oder Sprecherzuordnung
   - falls Referenzcharaktere vorhanden sind, erinnere an deren feste Identität
@@ -2943,6 +3158,7 @@ Viel Spaß beim Erstellen deines Videos!
 STORY-IDEE: "${storyIdea}"
 HAUPTORT: "${storyboardMainLocation}"
 ${storyCharacterProfiles.length > 0 ? `\nCHARAKTER-REFERENZEN:\n${storyCharacterProfilesGermanBlock}\n- Die Namen bleiben fest an ihr Referenzbild gebunden.\n- Kleidung, Haare und markante Merkmale bleiben gleich.` : ''}
+${buildGermanSceneIdentityBlock(point) ? `\nAKTUELLE FIGURENZUORDNUNG DER BISHERIGEN SZENE:\n${buildGermanSceneIdentityBlock(point)}` : ''}
 
 Generiere eine KOMPLETT NEUE Alternative für Szene ${index + 1} von ${storyPoints.length}.
 
@@ -2971,7 +3187,9 @@ REGELN:
 - NUR realistische Szenarien
 - Wenn Referenzcharaktere vorhanden sind, verwende nur deren exakte Namen: ${sceneCharacterNames.length > 0 ? sceneCharacterNames.map((name) => `"${name}"`).join(', ') : 'keine'}
 - Wenn Dialog verwendet wird und Referenzcharaktere vorhanden sind, muss jede Dialogzeile mit dem exakten Sprechernamen beginnen
+- Vertausche niemals Sprecherzeilen zwischen Charakteren oder Referenzbildern
 - participants darf nur Charaktere enthalten, die in dieser Szene wirklich sichtbar sind
+- Wenn dialogText Sprecherzeilen mit Referenznamen enthält, müssen diese Sprecher auch in participants auftauchen
 - Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen`
               }]
             }],
@@ -3006,7 +3224,7 @@ REGELN:
         versions: [...point.versions, sanitizeSceneField(parsed.detailedDescription) || sanitizeSceneField(parsed.summary) || ""],
         currentVersion: point.versions.length,
         summary: sanitizeSceneField(parsed.summary),
-        participants: sanitizeSceneField(parsed.participants),
+        participants: deriveParticipantsString(parsed.participants, parsed.dialogText),
         detailedDescription: sanitizeSceneField(parsed.detailedDescription),
         specificArea: sanitizeSceneField(parsed.specificArea),
         keyAction: sanitizeSceneField(parsed.keyAction),
@@ -3094,7 +3312,8 @@ REGELN:
       continuityNotes?: string;
     },
     characterBase64Images: string[],
-    maxRetries: number = 3
+    maxRetries: number = 3,
+    extraReferences: Array<{ dataUrl: string; context: string }> = []
   ): Promise<{ success: boolean; generatedImageUrl?: string; detailedImagePrompt?: string; videoPrompt?: string; sceneTitle?: string; sceneDescription?: string; errorMessage?: string; veo3CameraMovement?: string; veo3StartState?: string; veo3Motion?: string; veo3EndState?: string }> => {
     const storyText = point.versions[point.currentVersion];
     
@@ -3264,7 +3483,8 @@ REGELN:
         const sceneEmotion = scenePoint?.emotion || "neutral";
         const sceneSpecificArea = scenePoint?.specificArea || subLocation;
         const globalMainLocation = storyboardMainLocation || mainLocation;
-        const sceneCharacterProfiles = resolveSceneCharacterProfiles(scenePoint);
+        const sceneIdentity = resolveSceneIdentity(scenePoint);
+        const sceneCharacterProfiles = sceneIdentity.participantProfiles;
         const sceneCharacterCount = sceneCharacterProfiles.length;
         const sceneCharacterNamesText = sceneCharacterProfiles.map((profile) => `"${profile.name}"`).join(", ");
         const sceneParticipantsText = scenePoint?.participants || sceneCharacterProfiles.map((profile) => profile.name).join(", ");
@@ -3287,9 +3507,9 @@ REGELN:
           ? sceneCharacterCount === 1
             ? `Exactly ONE person in the image: ${sceneCharacterNamesText}`
             : `Exactly ${sceneCharacterCount} people in the image: ${sceneCharacterNamesText}`
-          : storyReferenceImages.length >= 2
-            ? `Exactly TWO people in the image ("${storyReferenceLabels[0] || 'Person 1'}" and "${storyReferenceLabels[1] || 'Person 2'}")`
-            : 'Exactly ONE person in the image';
+          : storyReferenceImages.length === 1
+            ? `Exactly ONE person in the image: "${storyReferenceLabels[0] || 'Person 1'}"`
+            : 'Show only the minimum number of locked reference characters justified by the scene. Never merge or average multiple reference identities into one person.';
         
         // Build the new structured image prompt
         const selectedArtStyle = ART_STYLE_ENGLISH[storyArtStyle] || storyArtStyle || "comic illustration";
@@ -3313,6 +3533,7 @@ ${imageCharacterIdentityBlock}
 CHARACTER POSE (create a NEW pose for this scene - do NOT copy the body position from reference):
 Action: ${sceneKeyAction}
 Expression: ${sceneEmotion}
+${sceneIdentity.primarySpeakerProfile && storyVoiceMode === "dialog" ? `Speaking character lock: ${sceneIdentity.primarySpeakerProfile.id} ("${sceneIdentity.primarySpeakerProfile.name}") is the primary visible speaker for this scene.` : ""}
 ${sceneCharacterCount > 1 ? `All named characters in participants (${sceneParticipantsText}) must wear the SAME clothing/accessories as in their own reference images, but in NEW body positions fitting this scene.` : 'The person must wear the SAME clothing/accessories as in the reference, but in a NEW body position fitting this scene.'}
 
 TECHNICAL REQUIREMENTS:
@@ -3331,7 +3552,11 @@ CONTENT COMPLIANCE:
         console.log(`Scene ${sceneIndex + 1} attempt ${attempt}: Structured prompt with keyAction="${sceneKeyAction}", emotion="${sceneEmotion}", location="${globalMainLocation}/${sceneSpecificArea}"`);
 
         // === PARALLEL: Image + Video Prompt generation simultaneously ===
-        const referenceImagesPayload = characterBase64Images.map((img) => img.trim()).filter(Boolean);
+        const { referenceImages: referenceImagesPayload, referenceImageContexts } = buildReferenceImagePayload(
+          scenePoint,
+          characterBase64Images,
+          extraReferences
+        );
         
         // 1) Start image generation (don't await yet)
         const imagePromise = fetch(
@@ -3343,6 +3568,7 @@ CONTENT COMPLIANCE:
             body: JSON.stringify({
               prompt: imagePromptText,
               referenceImages: referenceImagesPayload,
+              referenceImageContexts,
               aspectRatio: storyboardFormat,
               mode: "image",
               apiKey: apiKey
@@ -3367,7 +3593,7 @@ CONTENT COMPLIANCE:
             const nextScene = sceneIndex < currentStoryPoints.length - 1 ? currentStoryPoints[sceneIndex + 1] : null;
             const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
             
-            const dialogInfo = buildDialogIdentityInstruction(scenePoint?.dialogText);
+            const dialogInfo = buildDialogIdentityInstruction(scenePoint);
             
             const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
 ${storyCreatorMode === "reel" ? `
@@ -3573,9 +3799,11 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
 
         setGeneratingStoryImageIndex(sceneIndex);
         
-        // Jede Szene verwendet nur die Story-Referenzbilder.
-        const sceneReferenceImages = [...characterBase64Images, ...styleBase64Images];
-        console.log(`Szene ${sceneIndex + 1}: Verwende ${sceneReferenceImages.length} Original-Referenzbilder`);
+        const styleReferenceEntries = styleBase64Images.map((dataUrl, styleIndex) => ({
+          dataUrl,
+          context: `ATTACHED STYLE REFERENCE ${styleIndex + 1}: use only for lighting, color, camera feel, and surface style. Never change character identity, face, outfit, accessories, or speaker ownership because of this style image.`
+        }));
+        console.log(`Szene ${sceneIndex + 1}: Verwende ${characterBase64Images.length} Charakter-Referenzen und ${styleReferenceEntries.length} Stil-Referenzen`);
         
         let result: any = null;
         let totalAttempts = 0;
@@ -3592,8 +3820,9 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           result = await generateSingleStoryScene(
             sceneIndex,
             storyPointsRef.current[sceneIndex] || point,
-            sceneReferenceImages,
-            RETRIES_PER_CYCLE
+            characterBase64Images,
+            RETRIES_PER_CYCLE,
+            styleReferenceEntries
           );
           
           totalAttempts += RETRIES_PER_CYCLE;
@@ -3678,32 +3907,50 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     }
   };
 
-  // Generate detailed ~200-word video prompts for all scenes
-  const generateVideoPrompts = async () => {
-    if (!apiKey || storyPoints.length === 0 || isGeneratingVideoPrompts || generationLimitReached) return;
-    
-    incrementGeneration();
+  // Generate detailed ~200-word video prompts for story scenes.
+  const generateVideoPrompts = async (
+    options: { onlyMissing?: boolean; manageGeneration?: boolean } = {}
+  ) => {
+    const { onlyMissing = false, manageGeneration = true } = options;
+    if (
+      !apiKey ||
+      storyPointsRef.current.length === 0 ||
+      isGeneratingVideoPrompts ||
+      (manageGeneration && isGeneratingVideos) ||
+      generationLimitReached
+    ) return;
+
+    if (manageGeneration) incrementGeneration();
     setIsGeneratingVideoPrompts(true);
-    await ensureSmartReelTextReferencesReady();
-    
-    for (let i = 0; i < storyPoints.length; i++) {
-      const point = storyPoints[i];
+    setVideoGenerationPhase("prompting");
+
+    try {
+      await ensureSmartReelTextReferencesReady();
+
+      for (let i = 0; i < storyPointsRef.current.length; i++) {
+        const point = storyPointsRef.current[i];
+        if (onlyMissing && point.videoPrompt?.trim()) continue;
       if (!point.generatedImage) continue;
       
-      setGeneratingVideoPromptIndex(i);
+        setGeneratingVideoPromptIndex(i);
+
+        const liveStoryPoints = storyPointsRef.current;
       
       // Gather all scene metadata
       const sceneText = point.detailedDescription || point.versions[point.currentVersion] || "";
-      const previousEndState = i > 0 ? storyPoints[i - 1]?.veo3EndState : null;
-      const usedMovements = storyPoints.slice(0, i).map(p => p.veo3CameraMovement).filter(Boolean);
+        const previousEndState = i > 0 ? liveStoryPoints[i - 1]?.veo3EndState : null;
+        const usedMovements = liveStoryPoints.slice(0, i).map(p => p.veo3CameraMovement).filter(Boolean);
       const availableMovements = VEO3_CAMERA_MOVEMENTS.filter(m => !usedMovements.includes(m.id));
       
       // Build metadata context
       const metadataLines: string[] = [];
+      const sceneIdentity = resolveSceneIdentity(point);
       if (point.emotion) metadataLines.push(`Emotion: ${emotionToEnglish[point.emotion] || point.emotion}`);
       if (point.keyAction) metadataLines.push(`Pose/Aktion: ${actionToEnglish[point.keyAction] || point.keyAction}`);
       if (point.specificArea) metadataLines.push(`Bereich: ${areaToEnglish[point.specificArea] || point.specificArea}`);
       if (point.participants) metadataLines.push(`Teilnehmende Charaktere: ${point.participants}`);
+      if (sceneIdentity.participantProfiles.length > 0) metadataLines.push(`Character IDs: ${sceneIdentity.participantProfiles.map((profile) => `${profile.id} (${profile.name})`).join(", ")}`);
+      if (sceneIdentity.speakerProfiles.length > 0) metadataLines.push(`Aktive Sprecher: ${sceneIdentity.speakerProfiles.map((profile) => `${profile.id} (${profile.name})`).join(", ")}`);
       if (point.cameraAngle) metadataLines.push(`Kamerawinkel: ${cameraAngleToEnglish[point.cameraAngle] || point.cameraAngle}`);
       if (point.shotType) metadataLines.push(`Shot-Typ: ${shotTypeToEnglish[point.shotType] || point.shotType}`);
       if (point.composition) metadataLines.push(`Komposition: ${compositionToEnglish[point.composition] || point.composition}`);
@@ -3712,23 +3959,23 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       if (storyboardMainLocation) metadataLines.push(`Hauptort: ${storyboardMainLocation}`);
       if (point.styleNotes) metadataLines.push(`Stil-Hinweise: ${point.styleNotes}`);
       if (point.continuityNotes) metadataLines.push(`Kontinuitäts-Hinweise: ${point.continuityNotes}`);
-      if (point.dialogText) metadataLines.push(`Dialog/Sprache: "${point.dialogText}" - Integriere diesen gesprochenen Dialog WÜRTLICH in der Originalsprache in den Video-Prompt, sodass der Charakter genau diese Worte sichtbar spricht. Der Dialog darf NICHT ins Englische übersetzt werden.`);
+      if (sceneIdentity.dialogLines.length > 0) metadataLines.push(`Dialog-Zuordnung: ${sceneIdentity.dialogLines.map((line) => line.speakerId ? `${line.speakerId} (${line.speakerName}): "${line.text}"` : `"${line.text}"`).join(" | ")} - Integriere diese gesprochenen Zeilen WORTGETREU in der Originalsprache und halte die Sprecherzuordnung strikt ein.`);
       
-      const isLastScene = i === storyPoints.length - 1;
-      const nextScene = !isLastScene ? storyPoints[i + 1] : null;
+        const isLastScene = i === liveStoryPoints.length - 1;
+        const nextScene = !isLastScene ? liveStoryPoints[i + 1] : null;
       const nextSceneText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "") : "";
       
       // Build story synopsis for full narrative context
-      const storySynopsis = storyPoints.map((sp, idx) => {
+        const storySynopsis = liveStoryPoints.map((sp, idx) => {
         const spText = (sp.detailedDescription || sp.versions[sp.currentVersion] || "").slice(0, 120);
         const marker = idx === i ? " • YOU ARE HERE" : "";
         return `${idx + 1}. "${spText}"${marker}`;
       }).join('\n');
       
-      const prevScene = i > 0 ? storyPoints[i - 1] : null;
+        const prevScene = i > 0 ? liveStoryPoints[i - 1] : null;
       const prevText = prevScene ? (prevScene.detailedDescription || prevScene.versions[prevScene.currentVersion] || "").slice(0, 80) : "";
       
-      const dialogLine = buildDialogIdentityInstruction(point.dialogText);
+      const dialogLine = buildDialogIdentityInstruction(point);
       const characterIdentityBlock = buildEnglishCharacterIdentityBlock(point);
 
       const videoPromptRequest = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
@@ -3746,10 +3993,10 @@ RULES FOR REEL PROMPTS:
 - Colors must POP with strong contrast and cinematic grading
 ` : ''}
 ${storyCreatorMode === "reel" ? getReelVideoPromptDirective(effectiveStoryHook) : ''}
-FULL STORY ARC (${storyPoints.length} scenes):
+FULL STORY ARC (${liveStoryPoints.length} scenes):
 ${storySynopsis}
 
-CURRENT SCENE (${i + 1}/${storyPoints.length}): "${sceneText}"${dialogLine}
+CURRENT SCENE (${i + 1}/${liveStoryPoints.length}): "${sceneText}"${dialogLine}
 
 ${characterIdentityBlock}
 ${buildSmartReelVisualLockEnglishFromValues() ? `\n${buildSmartReelVisualLockEnglishFromValues()}\n` : ""}
@@ -3808,10 +4055,10 @@ Respond ONLY with JSON:
         await loadImageAsDataUrl(imageUrl);
       }
       if (videoReferenceImages.length < VEO_REFERENCE_IMAGE_LIMIT) {
-        await loadImageAsDataUrl(storyPoints[i - 1]?.generatedImage);
+          await loadImageAsDataUrl(liveStoryPoints[i - 1]?.generatedImage);
       }
       if (videoReferenceImages.length < VEO_REFERENCE_IMAGE_LIMIT) {
-        await loadImageAsDataUrl(storyPoints[i + 1]?.generatedImage);
+          await loadImageAsDataUrl(liveStoryPoints[i + 1]?.generatedImage);
       }
 
       console.log(`- Szene ${i + 1}: ${videoReferenceImages.length}/${VEO_REFERENCE_IMAGE_LIMIT} Bildreferenzen für den Video-Prompt`);
@@ -3843,11 +4090,26 @@ Respond ONLY with JSON:
                 veo3EndState: parsed.endState || p.veo3EndState || "",
               };
             }));
+            storyPointsRef.current = storyPointsRef.current.map((p, idx) => {
+              if (idx !== i) return p;
+              return {
+                ...p,
+                videoPrompt: parsed.videoPrompt || parsed.fullPrompt || text,
+                veo3CameraMovement: parsed.cameraMovement || p.veo3CameraMovement || "",
+                veo3StartState: parsed.startState || p.veo3StartState || "",
+                veo3Motion: parsed.motion || p.veo3Motion || "",
+                veo3EndState: parsed.endState || p.veo3EndState || "",
+              };
+            });
           } catch (e) {
             setStoryPoints(prev => prev.map((p, idx) => {
               if (idx !== i) return p;
               return { ...p, videoPrompt: text };
             }));
+            storyPointsRef.current = storyPointsRef.current.map((p, idx) => {
+              if (idx !== i) return p;
+              return { ...p, videoPrompt: text };
+            });
           }
         }
       } catch (error) {
@@ -3855,14 +4117,18 @@ Respond ONLY with JSON:
       }
       
       // Small delay between requests to avoid rate limiting
-      if (i < storyPoints.length - 1) {
+      if (i < storyPointsRef.current.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
-    
-    setGeneratingVideoPromptIndex(null);
-    setIsGeneratingVideoPrompts(false);
-    decrementGeneration();
+    } finally {
+      setGeneratingVideoPromptIndex(null);
+      setIsGeneratingVideoPrompts(false);
+      if (manageGeneration) {
+        setVideoGenerationPhase("idle");
+        decrementGeneration();
+      }
+    }
   };
 
   // Session-level cache for working Veo payload format and model
@@ -4093,13 +4359,14 @@ Respond ONLY with JSON:
         }
 
         setGeneratingVideoIndex(sceneIndex);
-        setVideoGenerationPhase("generating");
+        setVideoGenerationPhase("uploading");
         // Clear previous error for this scene on new attempt
         setVideoErrors(prev => { const n = new Map(prev); n.delete(sceneIndex); return n; });
 
         const startBase64 = await imageToBase64(point.generatedImage!);
         const endBase64 = nextImage ? await imageToBase64(nextImage) : undefined;
 
+        setVideoGenerationPhase("generating");
         const operationName = await startGeminiVideoGeneration(point.videoPrompt!, startBase64, endBase64, storyboardFormat);
         console.log(`- Szene ${sceneIndex + 1}: Video-Operation gestartet: ${operationName}`);
         setVideoTaskIds(prev => new Map(prev).set(sceneIndex, operationName));
@@ -4122,6 +4389,9 @@ Respond ONLY with JSON:
               setStoryPoints(prev => prev.map((p, i) =>
                 i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
               ));
+              storyPointsRef.current = storyPointsRef.current.map((p, i) =>
+                i === sceneIndex ? { ...p, generatedVideo: result.videoUrl } : p
+              );
               return; // Success - exit retry loop
             } else if (result.status === "failed") {
               const isInternalError = result.error?.toLowerCase().includes('internal') || 
@@ -4161,26 +4431,47 @@ Respond ONLY with JSON:
 
   // Generate videos via Gemini Veo API - sequential, one at a time
   const generateVideos = async () => {
-    if (storyPoints.length === 0 || isGeneratingVideos || !apiKey || generationLimitReached) return;
-    
+    if (storyPointsRef.current.length === 0 || isGeneratingVideos || isGeneratingVideoPrompts || !apiKey || generationLimitReached) return;
+
     incrementGeneration();
     setIsGeneratingVideos(true);
     setVideoErrors(new Map());
     setVideoResults(new Map());
     setVideoTaskIds(new Map());
-    
-    for (let i = 0; i < storyPoints.length; i++) {
-      const point = storyPoints[i];
-      if (!point.generatedImage || !point.videoPrompt) continue;
-      
-      const nextImage = storyPoints[i + 1]?.generatedImage;
-      await generateAndPollSingleVideo(i, point, nextImage);
+
+    try {
+      const needsMissingPrompts = storyPointsRef.current.some((point) => point.generatedImage && !point.videoPrompt?.trim());
+      if (needsMissingPrompts) {
+        await generateVideoPrompts({ onlyMissing: true, manageGeneration: false });
+      }
+
+      for (let i = 0; i < storyPointsRef.current.length; i++) {
+        let point = storyPointsRef.current[i];
+        if (!point.generatedImage) continue;
+
+        if (!point.videoPrompt?.trim()) {
+          const fallbackPrompt = buildFallbackVideoPrompt(point, i);
+          const fallbackUpdates = { videoPrompt: fallbackPrompt };
+          setStoryPoints(prev => prev.map((p, idx) => idx === i ? { ...p, ...fallbackUpdates } : p));
+          storyPointsRef.current = storyPointsRef.current.map((p, idx) => idx === i ? { ...p, ...fallbackUpdates } : p);
+          point = storyPointsRef.current[i];
+          console.warn(`Fallback video prompt used for scene ${i + 1}`);
+        }
+
+        if (!point.videoPrompt?.trim()) {
+          setVideoErrors(prev => new Map(prev).set(i, "Kein Video-Prompt verfuegbar. Bitte Szene pruefen und erneut versuchen."));
+          continue;
+        }
+
+        const nextImage = storyPointsRef.current[i + 1]?.generatedImage;
+        await generateAndPollSingleVideo(i, point, nextImage);
+      }
+    } finally {
+      setVideoGenerationPhase("idle");
+      setIsGeneratingVideos(false);
+      decrementGeneration();
+      setGeneratingVideoIndex(null);
     }
-    
-    setVideoGenerationPhase("idle");
-    setIsGeneratingVideos(false);
-    decrementGeneration();
-    setGeneratingVideoIndex(null);
   };
 
   // Check if image-affecting fields changed since last generation
@@ -4233,18 +4524,25 @@ Respond ONLY with JSON:
       
       try {
         const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
-        const allReferenceImages: string[] = [...characterBase64Images];
-        
+        const extraReferences: Array<{ dataUrl: string; context: string }> = [];
         if (previousSceneImage) {
           try {
             const response = await fetch(previousSceneImage);
             const blob = await response.blob();
             const prevDataUrl = await blobToDataUrl(blob);
-            allReferenceImages.push(prevDataUrl);
+            extraReferences.push({
+              dataUrl: prevDataUrl,
+              context: "ATTACHED CONTINUITY FRAME: previous scene image for pose, framing, and environment continuity only. Do NOT let this override locked character IDs, faces, outfits, accessories, or dialogue ownership."
+            });
           } catch (error) {
             console.error('Error converting previous scene image:', error);
           }
         }
+        const { referenceImages: allReferenceImages, referenceImageContexts } = buildReferenceImagePayload(
+          point,
+          characterBase64Images,
+          extraReferences
+        );
         
         const imageResponse = await fetch(
           getFunctionUrl("generate-image"),
@@ -4255,6 +4553,7 @@ Respond ONLY with JSON:
             body: JSON.stringify({
               prompt: imagePromptText,
               referenceImages: allReferenceImages,
+              referenceImageContexts,
               aspectRatio: storyboardFormat,
               mode: "image",
               apiKey: apiKey
@@ -4346,7 +4645,7 @@ Respond ONLY with JSON:
       const nextScene = sceneIndex < currentStoryPoints.length - 1 ? currentStoryPoints[sceneIndex + 1] : null;
       const nextText = nextScene ? (nextScene.detailedDescription || nextScene.versions[nextScene.currentVersion] || "").slice(0, 80) : "";
       
-      const dialogInfo = buildDialogIdentityInstruction(freshPoint.dialogText);
+      const dialogInfo = buildDialogIdentityInstruction(freshPoint);
       const characterIdentityBlock = buildEnglishCharacterIdentityBlock(freshPoint);
       
       const videoPromptText = `You are a short-form video prompt writer for AI video generators (Veo3/Kling).
@@ -4540,7 +4839,8 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     sceneIndex: number
   ): string => {
     const lines: string[] = [];
-    const sceneCharacterProfiles = resolveSceneCharacterProfiles(point);
+    const sceneIdentity = resolveSceneIdentity(point);
+    const sceneCharacterProfiles = sceneIdentity.participantProfiles;
     
     lines.push(`Scene ${sceneIndex + 1} of ${storyPoints.length}`);
     if (storyCreatorMode === "reel") {
@@ -4571,8 +4871,16 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     const sceneText = point.detailedDescription || point.versions[point.currentVersion] || "";
     if (sceneText) lines.push(`Scene Description: ${sceneText}`);
     if (sceneCharacterProfiles.length > 0) {
-      lines.push(`Character References: ${sceneCharacterProfiles.map((profile) => `${profile.name}${profile.description ? ` (${profile.description})` : ""}`).join(" | ")}`);
-      lines.push(`Identity Lock: Keep each named character tied to the same reference image, face, hair, outfit, accessories, and distinctive traits.`);
+      lines.push(`Character References: ${sceneCharacterProfiles.map((profile) => `${profile.id} = ${profile.name}${profile.description ? ` (${profile.description})` : ""}`).join(" | ")}`);
+      lines.push(`Identity Lock: Keep each character ID tied to the same reference image, face, hair, outfit, accessories, voice identity, and distinctive traits.`);
+    }
+    if (sceneIdentity.speakerProfiles.length > 0) {
+      lines.push(`Active Speakers: ${sceneIdentity.speakerProfiles.map((profile) => `${profile.id} (${profile.name})`).join(", ")}`);
+    }
+    if (sceneIdentity.dialogLines.length > 0) {
+      lines.push(`Dialogue Ownership: ${sceneIdentity.dialogLines.map((line) =>
+        line.speakerId ? `${line.speakerId} (${line.speakerName}): "${line.text}"` : `"${line.text}"`
+      ).join(" | ")}`);
     }
     
     if (point.keyAction) lines.push(`Action: ${actionToEnglish[point.keyAction] || point.keyAction}`);
@@ -4605,6 +4913,44 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     return lines.join("\n");
   };
 
+  const buildFallbackVideoPrompt = (
+    point: typeof storyPoints[0],
+    sceneIndex: number
+  ): string => {
+    const sceneIdentity = resolveSceneIdentity(point);
+    const sceneText = point.detailedDescription || point.versions[point.currentVersion] || `Scene ${sceneIndex + 1}`;
+    const shotType = point.shotType ? (shotTypeToEnglish[point.shotType] || point.shotType) : "medium shot";
+    const cameraAngle = point.cameraAngle && point.cameraAngle !== "random"
+      ? (cameraAngleToEnglish[point.cameraAngle] || point.cameraAngle)
+      : "";
+    const cameraMovement = point.movement && point.movement !== "keine"
+      ? (movementToEnglish[point.movement] || point.movement)
+      : "subtle cinematic push-in";
+    const dialogLock = buildDialogIdentityInstruction(point).replace(/\s+/g, " ").trim();
+    const identityLock = buildEnglishCharacterIdentityBlock(point).replace(/\s+/g, " ").trim();
+
+    return [
+      `Cinematic short video scene ${sceneIndex + 1}.`,
+      sceneText,
+      point.keyAction ? `Main action: ${actionToEnglish[point.keyAction] || point.keyAction}.` : "",
+      point.emotion ? `Emotion: ${emotionToEnglish[point.emotion] || point.emotion}.` : "",
+      point.participants ? `Visible participants: ${point.participants}.` : "",
+      sceneIdentity.speakerProfiles.length > 0
+        ? `Active speaker lock: ${sceneIdentity.speakerProfiles.map((profile) => `${profile.id} (${profile.name})`).join(", ")}.`
+        : "",
+      `Shot type: ${shotType}.`,
+      cameraAngle ? `Camera angle: ${cameraAngle}.` : "",
+      `Camera movement: ${cameraMovement}.`,
+      storyboardMainLocation ? `Location: ${storyboardMainLocation}.` : "",
+      point.styleNotes ? `Style notes: ${point.styleNotes}.` : "",
+      point.continuityNotes ? `Continuity: ${point.continuityNotes}.` : "",
+      point.negativePrompts ? `Avoid: ${point.negativePrompts}.` : "",
+      dialogLock,
+      identityLock,
+      "Keep the same locked face, hair, outfit, accessories, body traits, and voice identity throughout the shot.",
+    ].filter(Boolean).join(" ");
+  };
+
   // ===== GENERATE IMAGE PROMPT VIA TEXT-AI (Step 1: AI writes the prompt) =====
   const generateImagePromptViaAI = async (
     point: typeof storyPoints[0],
@@ -4620,9 +4966,10 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
     const systemInstruction = `You are an expert image prompt writer. You MUST faithfully include ALL scene details below. Do NOT omit, simplify, or generalize any of them.
 ${styleBlock}
 PRIORITY HIERARCHY (strictly follow this order):
-1. User-defined scene settings (HIGHEST - always override defaults)
-2. Scene uniqueness (each scene must look distinct)
-3. Visual consistency with other scenes (LOWEST - only for character identity)
+    1. Character identity lock and speaker ownership (HIGHEST - never break this)
+    2. User-defined scene settings
+    3. Scene uniqueness (each scene must look distinct)
+    4. Visual consistency with other scenes
 
 REQUIRED FIELDS - you MUST explicitly include EACH of these in your prompt:
 - Art Style/Medium: ${styleDesc ? `"${styleDesc}" (MANDATORY - describe the visual medium, textures, rendering technique)` : "describe the visual style"}
@@ -4638,8 +4985,9 @@ REQUIRED FIELDS - you MUST explicitly include EACH of these in your prompt:
 
 Rules:
 - Write a single descriptive paragraph (max 250 words).${styleDesc ? `\n- START the prompt by describing the art style/medium (e.g. "A ${styleDesc} depicting..."). This is critical.` : ""}
-- Reference images are ONLY for character identity (face, body, clothing) - do NOT copy pose, style, or scene from them.
-- If named character references are provided, never swap identities between those names.
+- Reference images are ONLY for locked character identity (face, body, clothing, voice ownership) - do NOT copy pose, style, or scene from them.
+- If named character references are provided, never swap identities or dialogue ownership between those character IDs.
+- If a dialogue owner / active speaker is specified, the visible speaking character must be that exact locked character ID.
 - The character must have a NEW pose matching the scene action.
 - Do NOT copy the visual style or medium of reference images.${styleDesc ? `\n- The visual style MUST be "${styleDesc}", NOT photorealistic, NOT a photograph.` : ""}
 - Each scene must reflect its UNIQUE settings. Do NOT default to generic descriptions.
@@ -4729,20 +5077,27 @@ ${sceneContext}`;
       
       console.log(`- Step 2: Sending AI-generated prompt to image AI for scene ${sceneIndex + 1}:`, imagePromptText.substring(0, 200) + '...');
       
-      // Build image parts - collect all reference images as base64
-      const allReferenceImages: string[] = [...characterBase64Images];
-      
+      const extraReferences: Array<{ dataUrl: string; context: string }> = [];
+
       // Add previous scene's image for visual continuity (NOT the current scene's old image)
       if (previousSceneImage) {
         try {
           const response = await fetch(previousSceneImage);
           const blob = await response.blob();
           const prevDataUrl = await blobToDataUrl(blob);
-          allReferenceImages.push(prevDataUrl);
+          extraReferences.push({
+            dataUrl: prevDataUrl,
+            context: "ATTACHED CONTINUITY FRAME: previous scene image for scene flow continuity only. Never let this override locked character IDs, faces, outfits, accessories, or speaker ownership."
+          });
         } catch (e) {
           console.warn("Could not add previous scene as reference:", e);
         }
       }
+      const { referenceImages: allReferenceImages, referenceImageContexts } = buildReferenceImagePayload(
+        point,
+        characterBase64Images,
+        extraReferences
+      );
       
       // Call edge function for image generation
       const imageResponse = await fetch(
@@ -4754,6 +5109,7 @@ ${sceneContext}`;
           body: JSON.stringify({
             prompt: imagePromptText,
             referenceImages: allReferenceImages,
+            referenceImageContexts,
             aspectRatio: storyboardFormat,
             mode: "image",
             apiKey: apiKey
@@ -4905,20 +5261,27 @@ ${sceneContext}`;
       // Step 1: Let Text-AI write the image prompt
       const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
 
-      // Build reference images array
-      const allReferenceImages: string[] = [...characterBase64Images];
-      
+      const extraReferences: Array<{ dataUrl: string; context: string }> = [];
+
       // Add previous scene image for continuity
       if (previousSceneImage) {
         try {
           const response = await fetch(previousSceneImage);
           const blob = await response.blob();
           const prevDataUrl = await blobToDataUrl(blob);
-          allReferenceImages.push(prevDataUrl);
+          extraReferences.push({
+            dataUrl: prevDataUrl,
+            context: "ATTACHED CONTINUITY FRAME: previous scene image for scene flow continuity only. Never let this override locked character IDs, faces, outfits, accessories, or speaker ownership."
+          });
         } catch (error) {
           console.error('Error converting previous scene image:', error);
         }
       }
+      const { referenceImages: allReferenceImages, referenceImageContexts } = buildReferenceImagePayload(
+        point,
+        characterBase64Images,
+        extraReferences
+      );
       
       // NOTE: Current scene's own image is intentionally NOT added as reference
       // to ensure a fresh generation without self-referencing
@@ -4933,6 +5296,7 @@ ${sceneContext}`;
           body: JSON.stringify({
             prompt: imagePromptText,
             referenceImages: allReferenceImages,
+            referenceImageContexts,
             aspectRatio: storyboardFormat,
             mode: "image",
             apiKey: apiKey
@@ -9707,43 +10071,48 @@ Beispiel einer korrekten Antwort:
                               onBlur={() => setStoryboardHoverHighlight(null)}
                               disabled={isGeneratingVideos || isGeneratingStoryImages || isGeneratingStoryboard || isGeneratingVideoPrompts}
                               className="flex-1"
-                              title="Generiert Videos für alle Szenen mit vorhandenem Video-Prompt"
+                              title="Erstellt fehlende Video-Prompts automatisch und generiert danach die Videos"
                             >
                               {isGeneratingVideos ? (
                                 <>
                                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  {videoGenerationPhase === "prompting" && `Video-Prompts ${(generatingVideoPromptIndex ?? 0) + 1}/${storyPoints.length}...`}
                                   {videoGenerationPhase === "uploading" && `Upload Szene ${(generatingVideoIndex ?? 0) + 1}/${storyPoints.length}...`}
                                   {videoGenerationPhase === "generating" && `Starte Szene ${(generatingVideoIndex ?? 0) + 1}/${storyPoints.length}...`}
                                   {videoGenerationPhase === "polling" && `Videos werden generiert...`}
-                                  {videoGenerationPhase === "idle" && `Video generieren...`}
+                                  {videoGenerationPhase === "idle" && `Videos generieren...`}
                                 </>
                               ) : (
                                 <>
                                   <Video className="w-4 h-4 mr-2" />
-                                  Alle Videos generieren
+                                  Videos generieren
                                 </>
                               )}
                             </Button>
                           ) : (
                             <Button
-                              onClick={generateVideoPrompts}
-                              onMouseEnter={() => setStoryboardHoverHighlight({ scope: "all-cards", label: "Alle Szenen" })}
+                              onClick={generateVideos}
+                              onMouseEnter={() => setStoryboardHoverHighlight({ scope: "all-media", label: "Alle Videos" })}
                               onMouseLeave={() => setStoryboardHoverHighlight(null)}
-                              onFocus={() => setStoryboardHoverHighlight({ scope: "all-cards", label: "Alle Szenen" })}
+                              onFocus={() => setStoryboardHoverHighlight({ scope: "all-media", label: "Alle Videos" })}
                               onBlur={() => setStoryboardHoverHighlight(null)}
-                              disabled={isGeneratingVideoPrompts || isGeneratingStoryImages || isGeneratingStoryboard}
+                              disabled={isGeneratingVideos || isGeneratingVideoPrompts || isGeneratingStoryImages || isGeneratingStoryboard}
                               className="flex-1"
-                              title="Erstellt Video-Prompts für alle Szenen"
+                              title="Erstellt fehlende Video-Prompts automatisch und generiert danach die Videos"
                             >
-                              {isGeneratingVideoPrompts ? (
+                              {isGeneratingVideos || isGeneratingVideoPrompts ? (
                                 <>
                                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Video Prompt {(generatingVideoPromptIndex ?? 0) + 1}/{storyPoints.length}...
+                                  {videoGenerationPhase === "prompting" && `Video-Prompts ${(generatingVideoPromptIndex ?? 0) + 1}/${storyPoints.length}...`}
+                                  {videoGenerationPhase === "uploading" && `Upload Szene ${(generatingVideoIndex ?? 0) + 1}/${storyPoints.length}...`}
+                                  {videoGenerationPhase === "generating" && `Starte Szene ${(generatingVideoIndex ?? 0) + 1}/${storyPoints.length}...`}
+                                  {videoGenerationPhase === "polling" && `Videos werden generiert...`}
+                                  {videoGenerationPhase === "idle" && `Videos generieren...`}
                                 </>
                               ) : (
                                 <>
                                   <Video className="w-4 h-4 mr-2" />
-                                  Alle Video-Prompts
+                                  Videos generieren
                                 </>
                               )}
                             </Button>
