@@ -7625,6 +7625,9 @@ Beispiel einer korrekten Antwort:
                 )}
 
                 <div className="pt-6 border-t border-border">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <Label>Account</Label>
                       <p className="text-sm text-muted-foreground">
                         Angemeldet als: {authData.email}
                       </p>
