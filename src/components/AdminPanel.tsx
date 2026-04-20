@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Search, RefreshCw } from "lucide-react";
+import { Loader2, Search, RefreshCw, Shield } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { getFunctionHeaders, getFunctionUrl } from "@/lib/backend";
 import { useToast } from "@/hooks/use-toast";
 
@@ -98,79 +99,99 @@ export const AdminPanel = ({ requesterEmail }: AdminPanelProps) => {
     }
   };
 
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="pt-6 border-t border-border space-y-6">
-      <div>
-        <Label className="text-base">Admin Panel</Label>
-        <p className="text-xs text-muted-foreground mt-1">
+    <div className="pt-6 border-t border-border">
+      <div className="rounded-lg border border-border p-4 space-y-2">
+        <h4 className="font-semibold text-sm uppercase tracking-wide">Admin Panel</h4>
+        <p className="text-xs text-muted-foreground">
           Lizenzen suchen und Produkt-Zuordnung ändern.
         </p>
-      </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full justify-start">
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Panel öffnen
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Admin Panel</DialogTitle>
+              <DialogDescription>
+                Lizenzen suchen und Produkt-Zuordnung ändern.
+              </DialogDescription>
+            </DialogHeader>
 
-      {/* Lizenz suchen */}
-      <div className="rounded-lg border border-border p-4 space-y-3">
-        <h4 className="font-semibold text-sm uppercase tracking-wide">Lizenz suchen</h4>
-        <div className="space-y-2">
-          <Label htmlFor="admin-lookup-email">Email</Label>
-          <Input
-            id="admin-lookup-email"
-            type="email"
-            placeholder="user@example.com"
-            value={lookupEmail}
-            onChange={(e) => setLookupEmail(e.target.value)}
-          />
-        </div>
-        <Button onClick={handleLookup} disabled={lookupLoading} className="w-full">
-          {lookupLoading ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Search className="w-4 h-4 mr-2" />
-          )}
-          Suchen
-        </Button>
-        {lookupResult && (
-          <pre className="text-xs bg-muted/50 rounded p-2 overflow-auto max-h-64 select-text">
-            {JSON.stringify(lookupResult, null, 2)}
-          </pre>
-        )}
-      </div>
+            <div className="space-y-6 mt-4">
+              {/* Lizenz suchen */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <h4 className="font-semibold text-sm uppercase tracking-wide">Lizenz suchen</h4>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-lookup-email">Email</Label>
+                  <Input
+                    id="admin-lookup-email"
+                    type="email"
+                    placeholder="user@example.com"
+                    value={lookupEmail}
+                    onChange={(e) => setLookupEmail(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleLookup} disabled={lookupLoading} className="w-full">
+                  {lookupLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4 mr-2" />
+                  )}
+                  Suchen
+                </Button>
+                {lookupResult && (
+                  <pre className="text-xs bg-muted/50 rounded p-2 overflow-auto max-h-64 select-text">
+                    {JSON.stringify(lookupResult, null, 2)}
+                  </pre>
+                )}
+              </div>
 
-      {/* Produkt ändern */}
-      <div className="rounded-lg border border-border p-4 space-y-3">
-        <h4 className="font-semibold text-sm uppercase tracking-wide">Produkt ändern</h4>
-        <div className="space-y-2">
-          <Label htmlFor="admin-change-key">License Key</Label>
-          <Input
-            id="admin-change-key"
-            placeholder="ABC-123"
-            value={changeLicenseKey}
-            onChange={(e) => setChangeLicenseKey(e.target.value)}
-            className="font-mono"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="admin-change-product">Product ID</Label>
-          <Input
-            id="admin-change-product"
-            type="number"
-            placeholder="99"
-            value={changeProductId}
-            onChange={(e) => setChangeProductId(e.target.value)}
-          />
-        </div>
-        <Button onClick={handleChange} disabled={changeLoading} className="w-full">
-          {changeLoading ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4 mr-2" />
-          )}
-          Produkt aktualisieren
-        </Button>
-        {changeResult && (
-          <pre className="text-xs bg-muted/50 rounded p-2 overflow-auto max-h-64 select-text">
-            {JSON.stringify(changeResult, null, 2)}
-          </pre>
-        )}
+              {/* Produkt ändern */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <h4 className="font-semibold text-sm uppercase tracking-wide">Produkt ändern</h4>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-change-key">License Key</Label>
+                  <Input
+                    id="admin-change-key"
+                    placeholder="ABC-123"
+                    value={changeLicenseKey}
+                    onChange={(e) => setChangeLicenseKey(e.target.value)}
+                    className="font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-change-product">Product ID</Label>
+                  <Input
+                    id="admin-change-product"
+                    type="number"
+                    placeholder="99"
+                    value={changeProductId}
+                    onChange={(e) => setChangeProductId(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleChange} disabled={changeLoading} className="w-full">
+                  {changeLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Produkt aktualisieren
+                </Button>
+                {changeResult && (
+                  <pre className="text-xs bg-muted/50 rounded p-2 overflow-auto max-h-64 select-text">
+                    {JSON.stringify(changeResult, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
