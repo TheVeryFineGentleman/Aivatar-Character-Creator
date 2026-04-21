@@ -1219,6 +1219,9 @@ const Index = () => {
   }>>([]);
   const storyPointsRef = useRef(storyPoints);
   useEffect(() => { storyPointsRef.current = storyPoints; }, [storyPoints]);
+  // Narrator style anchor: stores the first scene's dialog/narration as a style reference
+  // so all subsequent scenes maintain the same narration tone and style.
+  const narratorStyleAnchorRef = useRef<string>("");
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [regeneratingPointIndex, setRegeneratingPointIndex] = useState<number | null>(null);
   const [expandedStoryPointIndex, setExpandedStoryPointIndex] = useState<number | null>(null);
@@ -3135,7 +3138,7 @@ Viel Spaß beim Erstellen deines Videos!
     }));
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout for text
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 180s timeout
     
     try {
       const point = storyPoints[index];
@@ -3319,7 +3322,7 @@ REGELN:
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
       
       try {
         const currentStoryPoints = storyPointsRef.current;
@@ -3633,6 +3636,7 @@ Write a punchy video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words
 - COLOR PALETTE: ${getStoryColorInstruction(storyColorMood, storyCreatorMode)}
 ${effectiveStoryHook ? `- HOOK DIRECTIVE: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
+${narratorStyleAnchorRef.current && sceneIndex > 0 ? `- NARRATOR STYLE ANCHOR: Match the narration tone established in scene 1. Reference example: "${narratorStyleAnchorRef.current.substring(0, 150)}"` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
 CONTENT COMPLIANCE:
@@ -3769,9 +3773,14 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       }
       
       console.log(`- Successfully loaded ${characterBase64Images.length}/${storyReferenceImages.length} reference images`);
-      
+
+      if (storyReferenceImages.length > 0 && characterBase64Images.length < storyReferenceImages.length) {
+        const failedCount = storyReferenceImages.length - characterBase64Images.length;
+        toast.warning(`${failedCount} Referenzbild${failedCount > 1 ? 'er' : ''} konnte${failedCount > 1 ? 'n' : ''} nicht geladen werden. Charakterkontinuität kann eingeschränkt sein.`, { duration: 6000 });
+      }
+
       if (characterBase64Images.length === 0 && storyReferenceImages.length > 0) {
-        console.error("Fehler: Keine Referenzbilder - Die hochgeladenen Referenzbilder konnten nicht geladen werden.");
+        toast.error("Referenzbilder konnten nicht geladen werden. Bitte lade die Bilder erneut hoch und versuche es nochmal.", { duration: 8000 });
         return;
       }
       
@@ -3792,37 +3801,73 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
       let successCount = 0;
       const RETRIES_PER_CYCLE = 3;
       const MAX_CYCLES = 4;
-      
+
+      // Continuity tracking: which scenes each character appeared in (for multi-scene outfit references)
+      const characterSceneHistoryLocal: Record<string, number[]> = {};
+      // Max extra scene-continuity reference images to add (Gemini API limit: keep total ≤ 5 refs)
+      const MAX_CONTINUITY_SCENE_REFS = 2;
+
       for (let sceneIndex = 0; sceneIndex < storyPointsRef.current.length; sceneIndex++) {
         const point = storyPointsRef.current[sceneIndex];
         if (!point) continue;
 
         setGeneratingStoryImageIndex(sceneIndex);
-        
+
+        const currentPoint = storyPointsRef.current[sceneIndex] || point;
+        const sceneProfilesForRefs = resolveSceneCharacterProfiles(currentPoint);
+
         const styleReferenceEntries = styleBase64Images.map((dataUrl, styleIndex) => ({
           dataUrl,
           context: `ATTACHED STYLE REFERENCE ${styleIndex + 1}: use only for lighting, color, camera feel, and surface style. Never change character identity, face, outfit, accessories, or speaker ownership because of this style image.`
         }));
-        console.log(`Szene ${sceneIndex + 1}: Verwende ${characterBase64Images.length} Charakter-Referenzen und ${styleReferenceEntries.length} Stil-Referenzen`);
-        
+
+        // Build outfit-continuity references from prior scenes where each character appeared.
+        // This ensures consistent clothing even when characters skip scenes.
+        const continuitySceneRefs: Array<{ dataUrl: string; context: string }> = [];
+        const addedPrevSceneIndices = new Set<number>();
+        for (const profile of sceneProfilesForRefs) {
+          const prevAppearances = characterSceneHistoryLocal[profile.id] || [];
+          for (const prevIdx of prevAppearances.slice(-2).reverse()) {
+            if (addedPrevSceneIndices.has(prevIdx)) continue;
+            if (continuitySceneRefs.length >= MAX_CONTINUITY_SCENE_REFS) break;
+            const prevImageUrl = storyPointsRef.current[prevIdx]?.generatedImage;
+            if (!prevImageUrl) continue;
+            try {
+              const resp = await fetch(prevImageUrl);
+              const blob = await resp.blob();
+              const dataUrl = await blobToDataUrl(blob);
+              continuitySceneRefs.push({
+                dataUrl,
+                context: `OUTFIT CONTINUITY from Scene ${prevIdx + 1}: ${profile.id} ("${profile.name}") was rendered here. Maintain EXACTLY the same outfit, accessories, and hairstyle for ${profile.name} in the new scene. Do NOT change any clothing or accessory detail.`
+              });
+              addedPrevSceneIndices.add(prevIdx);
+            } catch { /* skip if image unavailable */ }
+          }
+        }
+
+        // Cap total extra refs to avoid hitting Gemini API limits (character refs + extra refs ≤ ~7 total)
+        const MAX_TOTAL_EXTRA = 4;
+        const extraRefs = [...styleReferenceEntries, ...continuitySceneRefs].slice(0, MAX_TOTAL_EXTRA);
+        console.log(`Szene ${sceneIndex + 1}: Verwende ${characterBase64Images.length} Charakter-Referenzen, ${styleReferenceEntries.length} Stil-Referenzen, ${continuitySceneRefs.length} Outfit-Kontinuitätsreferenzen (gesamt extra: ${extraRefs.length})`);
+
         let result: any = null;
         let totalAttempts = 0;
         let finalErrorMessage = "";
 
         for (let cycleNumber = 1; cycleNumber <= MAX_CYCLES; cycleNumber++) {
           console.log(`Szene ${sceneIndex + 1}: Zyklus ${cycleNumber}/${MAX_CYCLES} mit ${RETRIES_PER_CYCLE} Versuchen...`);
-          
+
           if (cycleNumber > 1) {
             const waitTime = Math.min(5 + (cycleNumber - 1) * 2, 15);
             await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
           }
-          
+
           result = await generateSingleStoryScene(
             sceneIndex,
-            storyPointsRef.current[sceneIndex] || point,
+            currentPoint,
             characterBase64Images,
             RETRIES_PER_CYCLE,
-            styleReferenceEntries
+            extraRefs
           );
           
           totalAttempts += RETRIES_PER_CYCLE;
@@ -3896,9 +3941,45 @@ Respond ONLY with JSON: {"cameraMovement":"descriptive_id","startState":"...","m
           }
           return p;
         }));
+
+        // Store narrator style anchor from first scene with dialog text
+        if (!narratorStyleAnchorRef.current) {
+          const successPoint = storyPointsRef.current[sceneIndex];
+          const dialogSample = successPoint?.dialogText?.trim();
+          if (dialogSample) narratorStyleAnchorRef.current = dialogSample.substring(0, 300);
+        }
+
+        // Update character appearance history for future continuity references
+        const generatedProfiles = resolveSceneCharacterProfiles(storyPointsRef.current[sceneIndex] || currentPoint);
+        for (const profile of generatedProfiles) {
+          if (!characterSceneHistoryLocal[profile.id]) characterSceneHistoryLocal[profile.id] = [];
+          characterSceneHistoryLocal[profile.id].push(sceneIndex);
+        }
+
+        // Auto-populate continuityNotes for the next scene if it has none yet.
+        // This carries outfit/appearance info forward so the AI maintains consistency.
+        if (sceneIndex < storyPointsRef.current.length - 1) {
+          const nextIdx = sceneIndex + 1;
+          const nextPoint = storyPointsRef.current[nextIdx];
+          if (!nextPoint?.continuityNotes?.trim()) {
+            const outfitParts = generatedProfiles
+              .filter(p => p.canonicalVisualLock)
+              .map(p => `${p.name}: ${p.canonicalVisualLock}`);
+            const prevArea = currentPoint?.specificArea;
+            const autoNotes = [
+              outfitParts.length > 0 ? `Keep exact outfits from previous scene — ${outfitParts.join(' | ')}` : '',
+              prevArea ? `Previous scene area: ${prevArea}` : '',
+            ].filter(Boolean).join('. ');
+            if (autoNotes) {
+              setStoryPoints(prev => prev.map((p, idx) => idx === nextIdx ? { ...p, continuityNotes: autoNotes } : p));
+              storyPointsRef.current = storyPointsRef.current.map((p, idx) => idx === nextIdx ? { ...p, continuityNotes: autoNotes } : p);
+            }
+          }
+        }
+
         successCount++;
       }
-      
+
       console.log(`- Story-Bilder fertig: ${successCount}/${storyPointsRef.current.length} Szenen erfolgreich`);
     } finally {
       setGeneratingStoryImageIndex(null);
@@ -4018,6 +4099,7 @@ Write a punchy video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words
 - COLOR PALETTE: ${getStoryColorInstruction(storyColorMood, storyCreatorMode)}
 ${effectiveStoryHook ? `- HOOK DIRECTIVE: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
+${narratorStyleAnchorRef.current && i > 0 ? `- NARRATOR STYLE ANCHOR: Match the narration tone established in scene 1. Reference example: "${narratorStyleAnchorRef.current.substring(0, 150)}"` : ''}
 - Choose ONE camera movement that amplifies the emotion
 ${VEO_PROMPT_WRITER_COMPLIANCE_BLOCK}
 
@@ -4375,6 +4457,8 @@ Respond ONLY with JSON:
         setVideoGenerationPhase("polling");
         const maxPolls = 90;
         let pollCount = 0;
+        let consecutivePollErrors = 0;
+        const MAX_CONSECUTIVE_POLL_ERRORS = 5;
 
         while (pollCount < maxPolls) {
           await new Promise(resolve => setTimeout(resolve, 10000));
@@ -4382,6 +4466,7 @@ Respond ONLY with JSON:
 
           try {
             const result = await pollGeminiVideoOperation(operationName);
+            consecutivePollErrors = 0; // reset on success
             console.log(`- Szene ${sceneIndex + 1} Status: ${result.status}`);
 
             if (result.status === "completed" && result.videoUrl) {
@@ -4394,7 +4479,7 @@ Respond ONLY with JSON:
               );
               return; // Success - exit retry loop
             } else if (result.status === "failed") {
-              const isInternalError = result.error?.toLowerCase().includes('internal') || 
+              const isInternalError = result.error?.toLowerCase().includes('internal') ||
                                       result.error?.toLowerCase().includes('server');
               if (isInternalError && retry < MAX_RETRIES) {
                 console.warn(`⚠️ Szene ${sceneIndex + 1}: Interner Server-Fehler, wird erneut versucht...`);
@@ -4404,7 +4489,12 @@ Respond ONLY with JSON:
               return; // Non-retryable failure
             }
           } catch (error) {
-            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen:`, error);
+            consecutivePollErrors++;
+            console.warn(`⚠️ Status-Abfrage Szene ${sceneIndex + 1} fehlgeschlagen (${consecutivePollErrors}/${MAX_CONSECUTIVE_POLL_ERRORS}):`, error);
+            if (consecutivePollErrors >= MAX_CONSECUTIVE_POLL_ERRORS) {
+              setVideoErrors(prev => new Map(prev).set(sceneIndex, "Video-Status konnte nicht abgefragt werden. Bitte prüfe deine Verbindung und versuche es erneut."));
+              return;
+            }
           }
         }
 
@@ -4520,7 +4610,7 @@ Respond ONLY with JSON:
       
       const previousSceneImage = sceneIndex > 0 ? storyPointsRef.current[sceneIndex - 1]?.generatedImage : null;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
       
       try {
         const imagePromptText = await generateImagePromptViaAI(point, sceneIndex);
@@ -4673,6 +4763,7 @@ Write a punchy video prompt (${getVideoPromptWordTarget(storyCreatorMode)} words
 - COLOR PALETTE: ${getStoryColorInstruction(storyColorMood, storyCreatorMode)}
 ${effectiveStoryHook ? `- HOOK DIRECTIVE: "${effectiveStoryHook}"` : ''}
 ${storyEnableSpeaker ? `- SPEAKER VOICE: ${storySpeakerGender === 'male' ? 'Male (deep, authoritative)' : storySpeakerGender === 'female' ? 'Female (clear, expressive)' : 'Neutral/Androgynous'}` : ''}
+${narratorStyleAnchorRef.current && sceneIndex > 0 ? `- NARRATOR STYLE ANCHOR: Match the narration tone established in scene 1. Reference example: "${narratorStyleAnchorRef.current.substring(0, 150)}"` : ''}
 - Choose ONE camera movement that amplifies the emotion
 
 CONTENT COMPLIANCE:
@@ -5069,7 +5160,7 @@ ${sceneContext}`;
     
     const controller = new AbortController();
     activeRegenerationController.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 180s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
@@ -5255,7 +5346,7 @@ ${sceneContext}`;
     
     const controller = new AbortController();
     activeRegenerationController.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 180s timeout
     
     try {
       // Step 1: Let Text-AI write the image prompt
@@ -5952,7 +6043,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       
       // ===== Gemini Image Generation =====
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120_000); // 120 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120_000); // 180 Sekunden Timeout
 
       // If external signal is already aborted, abort immediately
       if (externalSignal?.aborted) {
@@ -6517,7 +6608,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // 180 Sekunden Timeout
 
       // Call Google Gemini API with ALL reference images
       const response = await fetch(

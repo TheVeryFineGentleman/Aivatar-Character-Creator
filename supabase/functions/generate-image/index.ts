@@ -141,7 +141,7 @@ serve(async (req) => {
 
     // Create AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout for 4K
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 180 second timeout for 4K
 
     let response;
     try {
