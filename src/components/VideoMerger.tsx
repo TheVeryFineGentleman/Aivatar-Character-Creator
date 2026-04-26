@@ -355,7 +355,7 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
       `https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/umd`,
     ];
     // Firefox often needs much longer for WASM download + compile.
-    const timeoutMs = isFirefox ? 120000 : 45000;
+    const timeoutMs = isFirefox ? 180000 : 60000;
     const cdnDiagnostics = await Promise.all([
       probeRemoteAsset(`${cdnSources[0]}/ffmpeg-core.js`, "jsDelivr JS", "GET"),
       probeRemoteAsset(`${cdnSources[0]}/ffmpeg-core.wasm`, "jsDelivr WASM"),
@@ -412,9 +412,12 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
         }
 
         const loadPromise = (async () => {
-          const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
-          const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
-          await ffmpeg.load({ classWorkerURL: ffmpegClassWorkerUrl, coreURL, wasmURL });
+          const [coreURL, wasmURL, classWorkerURL] = await Promise.all([
+            toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+            toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+            toBlobURL(ffmpegClassWorkerUrl, "text/javascript"),
+          ]);
+          await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });
         })();
 
         const timeoutPromise = new Promise<never>((_, reject) =>
@@ -457,6 +460,47 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
     throw new Error("FFmpeg konnte nicht geladen werden.");
   }, []);
 
+  const tryServerMerge = useCallback(async (): Promise<string | null> => {
+    const serverUrl = import.meta.env.VITE_MERGE_SERVER_URL;
+    if (!serverUrl) return null;
+
+    setProgressMessage("Videos werden auf Server zusammengefügt...");
+    setProgress(10);
+
+    const videoDataArray: string[] = [];
+    for (let i = 0; i < videos.length; i++) {
+      setProgressMessage(`Video ${i + 1}/${videos.length} wird vorbereitet...`);
+      setProgress(10 + Math.round((i / videos.length) * 40));
+      const data = await fetchVideoAsUint8Array(videos[i].url);
+      const base64 = btoa(String.fromCharCode(...data));
+      videoDataArray.push(base64);
+    }
+
+    setProgressMessage("Server verarbeitet Videos...");
+    setProgress(60);
+
+    const response = await fetch(`${serverUrl}/api/merge-videos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ videos: videoDataArray }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(err.error || `Server-Fehler: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success || !result.video) throw new Error("Server hat kein Video zurückgegeben");
+
+    setProgress(90);
+    const binaryStr = atob(result.video);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+    const blob = new Blob([bytes], { type: result.mimeType || "video/mp4" });
+    return URL.createObjectURL(blob);
+  }, [videos]);
+
   const mergeVideos = useCallback(async () => {
     if (videos.length === 0) return;
 
@@ -471,6 +515,25 @@ export const VideoMerger: React.FC<VideoMergerProps> = ({ videos, className }) =
       return null;
     });
     setShowZipFallback(false);
+
+    // Try server-side merge first (works in all browsers)
+    const serverUrl = import.meta.env.VITE_MERGE_SERVER_URL;
+    if (serverUrl) {
+      try {
+        const url = await tryServerMerge();
+        if (url) {
+          setMergedVideoUrl(url);
+          setProgress(100);
+          setProgressMessage("Videos erfolgreich zusammengefügt!");
+          setIsMerging(false);
+          return;
+        }
+      } catch (serverErr) {
+        console.warn("[merge] Server-Merge fehlgeschlagen, Fallback auf Browser-FFmpeg:", serverErr);
+        setDiagnosticDetails([`Server-Merge fehlgeschlagen: ${serverErr instanceof Error ? serverErr.message : String(serverErr)}`, "Versuche Browser-FFmpeg als Fallback..."]);
+        setProgress(0);
+      }
+    }
 
     const inputFiles: string[] = [];
     const normalizedFiles: string[] = [];

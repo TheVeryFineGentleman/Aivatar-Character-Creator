@@ -22,8 +22,6 @@ export default defineConfig(({ mode }) => ({
   },
   preview: {
     host: "0.0.0.0",
-    // Port ist egal, DO setzt ihn über --port $PORT,
-    // wichtig ist hier nur allowedHosts:
     allowedHosts,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
@@ -31,5 +29,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  optimizeDeps: {
+    exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
   },
 }));

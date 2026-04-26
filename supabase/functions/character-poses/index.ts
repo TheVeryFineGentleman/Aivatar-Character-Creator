@@ -118,9 +118,10 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Error:", response.status, errorText);
-      let errorMessage = `Google-Fehler: ${response.status}`;
-      if (response.status === 429) errorMessage = "Google-Server ueberlastet - bitte warte einen Moment.";
-      else if (response.status === 401) errorMessage = "Dein API-Key wurde von Google abgelehnt.";
+      let errorMessage = `API error: ${response.status}`;
+      if (response.status === 429) errorMessage = "Rate limit erreicht – dein API-Key hat das kostenlose Kontingent ausgeschöpft. Bitte warte 1–2 Minuten oder aktiviere Billing unter aistudio.google.com.";
+      else if (response.status === 401) errorMessage = "API-Key ungültig oder abgelaufen – bitte prüfe deinen Key in den Einstellungen (aistudio.google.com → API Keys).";
+      else if (response.status === 403) errorMessage = "Zugriff verweigert – bitte stelle sicher, dass Billing in deinem Google-Konto aktiviert ist (aistudio.google.com).";
       return new Response(
         JSON.stringify({ success: false, error: errorMessage }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

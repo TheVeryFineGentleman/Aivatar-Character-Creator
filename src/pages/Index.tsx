@@ -3542,6 +3542,7 @@ TECHNICAL REQUIREMENTS:
 - Ultra high resolution final render in the selected art style (not photographic unless style requires it)
 - Match lighting and atmosphere to the scene description
 - 16:9 aspect ratio
+- ABSOLUTELY NO TEXT, LETTERS, WORDS, NUMBERS, WATERMARKS, SUBTITLES, CAPTIONS, OR WRITING OF ANY KIND visible anywhere in the image — clean composition only
 
 CONTENT COMPLIANCE:
 - All content is purely fictional and artistic. The reference images are hand-drawn/digitally created artwork, not photographs of real people.
@@ -10555,15 +10556,8 @@ Beispiel einer korrekten Antwort:
                                     {/* Quick Action Overlay on hover - hidden during regeneration */}
                                     {regeneratingImageOnlyIndex !== index && (
                                       (() => {
-                                        const previewActionLabel = point.generatedVideo
-                                          ? "Nur Video neu"
-                                          : "Nur Bild neu";
-                                        const previewActionTitle = point.generatedVideo
-                                          ? "Generiert nur das Video dieser Szene neu. Das Bild bleibt unverändert."
-                                          : "Generiert nur das Bild dieser Szene neu. Die restliche Szene bleibt unverändert.";
-
                                         return (
-                                          <div 
+                                          <div
                                             className="absolute inset-0 bg-black/55 opacity-0 group-hover/image:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-20"
                                             onClick={() => setExpandedStoryPointIndex(index)}
                                           >
@@ -10590,28 +10584,36 @@ Beispiel einer korrekten Antwort:
                                               >
                                                 <Download className="w-4 h-4" />
                                               </Button>
-                                              <Button 
-                                                size="icon" 
-                                                variant="secondary" 
+                                              <Button
+                                                size="icon"
+                                                variant="secondary"
                                                 className="h-9 w-9 rounded-full shadow-lg"
-                                                title={previewActionTitle}
-                                                onMouseEnter={() => setStoryboardHoverHighlight({ scope: "media", index, label: previewActionLabel })}
-                                                onMouseLeave={() => setStoryboardHoverHighlight(null)}
-                                                onFocus={() => setStoryboardHoverHighlight({ scope: "media", index, label: previewActionLabel })}
-                                                onBlur={() => setStoryboardHoverHighlight(null)}
-                                                aria-label={`${previewActionLabel} für Szene ${index + 1}`}
-                                                onClick={(e) => { 
-                                                  e.stopPropagation(); 
-                                                  if (point.generatedVideo) {
-                                                    regenerateSingleVideo(index);
-                                                  } else {
-                                                    regenerateImageOnly(index);
-                                                  }
+                                                title="Generiert nur das Bild dieser Szene neu. Das Video bleibt unverändert."
+                                                aria-label={`Nur Bild neu für Szene ${index + 1}`}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  regenerateImageOnly(index);
                                                 }}
                                                 disabled={regeneratingPointIndex !== null || isGeneratingVideos}
                                               >
-                                                <RefreshCw className="w-4 h-4" />
+                                                <ImageIcon className="w-4 h-4" />
                                               </Button>
+                                              {point.generatedVideo && (
+                                                <Button
+                                                  size="icon"
+                                                  variant="secondary"
+                                                  className="h-9 w-9 rounded-full shadow-lg"
+                                                  title="Generiert nur das Video dieser Szene neu. Das Bild bleibt unverändert."
+                                                  aria-label={`Nur Video neu für Szene ${index + 1}`}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    regenerateSingleVideo(index);
+                                                  }}
+                                                  disabled={regeneratingPointIndex !== null || isGeneratingVideos}
+                                                >
+                                                  <Video className="w-4 h-4" />
+                                                </Button>
+                                              )}
                                               <Button
                                                 size="icon"
                                                 variant="secondary"
