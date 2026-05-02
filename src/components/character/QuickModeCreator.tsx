@@ -4,9 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AiProvider, generateImage as aiGenerateImage } from "@/lib/aiProvider";
 
 interface QuickModeCreatorProps {
   apiKey: string;
+  provider: AiProvider;
   imageCount: number;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
@@ -26,29 +28,6 @@ const AGE_OPTIONS = [
   { id: "young-adult", label: "Jung (20-30)" },
   { id: "adult", label: "Erwachsen (30-50)" },
   { id: "senior", label: "Senior (50+)" },
-];
-
-const NATIONALITY_OPTIONS = [
-  { id: "german", label: "Deutsch 🇩🇪", prompt: "German, Northern European features, light skin, often blonde or brown hair" },
-  { id: "italian", label: "Italienisch 🇮🇹", prompt: "Italian, Southern European features, olive skin, dark brown or black hair" },
-  { id: "french", label: "Französisch 🇫🇷", prompt: "French, Western European features, fair to light olive skin, chestnut or dark hair" },
-  { id: "spanish", label: "Spanisch 🇪🇸", prompt: "Spanish, Iberian features, olive to tan skin, dark hair and eyes" },
-  { id: "british", label: "Britisch 🇬🇧", prompt: "British, Northern European features, fair skin, often red, blonde or brown hair" },
-  { id: "japanese", label: "Japanisch 🇯🇵", prompt: "Japanese, East Asian features, fair to light skin, straight dark hair, almond-shaped eyes" },
-  { id: "korean", label: "Koreanisch 🇰🇷", prompt: "Korean, East Asian features, fair skin, dark straight hair, soft facial features" },
-  { id: "chinese", label: "Chinesisch 🇨🇳", prompt: "Chinese, East Asian features, medium to fair skin, dark hair, prominent cheekbones" },
-  { id: "indian", label: "Indisch 🇮🇳", prompt: "Indian, South Asian features, medium brown to golden skin, dark hair, expressive dark eyes" },
-  { id: "brazilian", label: "Brasilianisch 🇧🇷", prompt: "Brazilian, mixed Latin American features, warm tan to brown skin, curly or wavy dark hair" },
-  { id: "mexican", label: "Mexikanisch 🇲🇽", prompt: "Mexican, Latin American features, warm tan skin, dark hair, strong facial structure" },
-  { id: "nigerian", label: "Nigerianisch 🇳🇬", prompt: "Nigerian, West African features, deep rich dark skin, dark hair, strong broad facial features" },
-  { id: "egyptian", label: "Ägyptisch 🇪🇬", prompt: "Egyptian, North African features, olive to medium brown skin, dark hair and eyes, prominent nose" },
-  { id: "russian", label: "Russisch 🇷🇺", prompt: "Russian, Eastern European features, very fair to light skin, often blonde or light brown hair, blue or grey eyes" },
-  { id: "american", label: "Amerikanisch 🇺🇸", prompt: "American, mixed diverse features, varied skin tones and hair colors reflecting the melting pot" },
-  { id: "turkish", label: "Türkisch 🇹🇷", prompt: "Turkish, Anatolian features, olive to medium skin, dark hair, strong eyebrows, expressive eyes" },
-  { id: "swedish", label: "Schwedisch 🇸🇪", prompt: "Swedish, Scandinavian features, very fair skin, blonde to light brown hair, blue or green eyes" },
-  { id: "greek", label: "Griechisch 🇬🇷", prompt: "Greek, Mediterranean features, olive skin, dark wavy hair, strong nose and jaw" },
-  { id: "polish", label: "Polnisch 🇵🇱", prompt: "Polish, Eastern European features, fair skin, light brown to dark blonde hair, blue or green eyes" },
-  { id: "random", label: "Zufällig 🎲", prompt: "" },
 ];
 
 const STYLE_OPTIONS = [
@@ -72,43 +51,38 @@ const STYLE_PROMPT_MAP: Record<string, string> = {
   pixar: "3D rendered, Pixar-quality, stylized, volumetric lighting",
 };
 
-export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imageCount, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
+export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, provider, imageCount, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
-  const [nationality, setNationality] = useState("");
   const [style, setStyle] = useState("realistic");
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
 
-  const canGenerate = apiKey && gender && age && nationality && style;
+  const canGenerate = apiKey && gender && age && style;
 
   const buildPrompt = (index: number) => {
     const genderLabel = GENDER_OPTIONS.find(g => g.id === gender)?.label || gender;
     const ageLabel = AGE_OPTIONS.find(a => a.id === age)?.label || age;
     const stylePrompt = STYLE_PROMPT_MAP[style] || "detailed illustration";
 
-    const nationalityOption = NATIONALITY_OPTIONS.find(n => n.id === nationality);
-    let nationalityPrompt = nationalityOption?.prompt || "";
-
-    // If "random", pick a random nationality (excluding the "random" entry itself)
-    if (nationality === "random") {
-      const pool = NATIONALITY_OPTIONS.filter(n => n.id !== "random");
-      nationalityPrompt = pool[(index * 7 + 3) % pool.length].prompt;
-    }
-
-    const hairStyles = ["short straight hair", "long wavy hair", "curly hair", "buzz cut", "shoulder-length layered hair", "braided hair", "slicked back hair", "messy textured hair", "pixie cut", "long dreadlocks"];
+    const ethnicities = ["European/Caucasian", "East Asian", "South Asian", "African/Black", "Latin American/Hispanic", "Middle Eastern", "Southeast Asian", "Mixed/Biracial", "Nordic/Scandinavian", "Mediterranean"];
+    const hairStyles = ["short straight hair", "long wavy hair", "curly afro hair", "buzz cut", "shoulder-length layered hair", "braided hair", "slicked back hair", "messy textured hair", "pixie cut", "long dreadlocks"];
+    const hairColors = ["jet black", "platinum blonde", "auburn red", "dark brown", "honey blonde", "silver gray", "chestnut", "strawberry blonde", "copper", "deep burgundy"];
     const bodyTypes = ["slim and lean", "athletic and muscular", "average build", "stocky and broad", "tall and slender", "petite and compact", "curvy", "strong and sturdy"];
     const facialFeatures = ["sharp angular jawline with high cheekbones", "round soft face with full cheeks", "oval face with prominent nose", "square jaw with deep-set eyes", "heart-shaped face with wide forehead", "diamond-shaped face with narrow chin", "long face with strong brow ridge", "delicate features with small nose"];
+    const skinTones = ["very fair/pale", "light olive", "warm tan", "medium brown", "deep dark brown", "golden bronze", "cool beige", "rich mahogany"];
 
+    const eth = ethnicities[index % ethnicities.length];
     const hair = hairStyles[(index * 3 + 1) % hairStyles.length];
+    const hColor = hairColors[(index * 2 + 3) % hairColors.length];
     const body = bodyTypes[(index * 5 + 2) % bodyTypes.length];
     const face = facialFeatures[(index * 4 + 1) % facialFeatures.length];
+    const skin = skinTones[(index * 3 + 2) % skinTones.length];
 
     let prompt = `Create a single portrait of exactly one ${genderLabel.toLowerCase()} character, ${ageLabel.toLowerCase()}.`;
-    prompt += ` NATIONALITY: ${nationalityOption?.label.replace(/\s[\u{1F1E0}-\u{1F1FF}]{2}/u, "") || ""} — ${nationalityPrompt}.`;
-    prompt += ` UNIQUE TRAITS: ${hair}, ${body} body type, ${face}.`;
+    prompt += ` MANDATORY UNIQUE TRAITS: ${eth} ethnicity, ${skin} skin tone, ${hair} in ${hColor}, ${body} body type, ${face}.`;
     prompt += ` Style: ${stylePrompt}. Professional character design, soft even studio lighting.`;
     prompt += ` MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no patterns, no environment, no props — ONLY a clean solid white background behind the character.`;
     prompt += ` CRITICAL: This character must look COMPLETELY DIFFERENT from any other generated character. Only vary the character's appearance (face, body, hair, skin) — the background must ALWAYS remain pure white. Show only ONE person. No collage, no grid.`;
@@ -117,36 +91,8 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
 
   const generateSingleImage = async (index: number): Promise<string | null> => {
     const prompt = buildPrompt(index);
-    const model = "gemini-3.1-flash-image-preview";
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 429) throw new Error("rate_limit");
-      if (response.status === 403) throw new Error("API-Key ungültig oder gesperrt.");
-      throw new Error(`API Fehler: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const candidates = data?.candidates ?? [];
-    if (candidates[0]?.finishReason === "IMAGE_OTHER" || candidates[0]?.finishReason === "SAFETY") return null;
-
-    const imgParts = candidates[0]?.content?.parts ?? [];
-    const imagePart = imgParts.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
-    if (imagePart?.inlineData) {
-      return `data:${imagePart.inlineData.mimeType || "image/png"};base64,${imagePart.inlineData.data}`;
-    }
-    return null;
+    const result = await aiGenerateImage(provider, apiKey, prompt, { aspectRatio });
+    return result.dataUrl;
   };
 
   const handleGenerate = async () => {
@@ -181,7 +127,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
   };
 
   const handleReset = () => {
-    setGender(""); setAge(""); setNationality(""); setStyle("realistic"); setError(null);
+    setGender(""); setAge(""); setStyle("realistic"); setError(null);
   };
 
   return (
@@ -205,16 +151,6 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Nationalität *</Label>
-        <Select value={nationality} onValueChange={setNationality}>
-          <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
-          <SelectContent>
-            {NATIONALITY_OPTIONS.map(opt => <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -248,7 +184,7 @@ export const QuickModeCreator: React.FC<QuickModeCreatorProps> = ({ apiKey, imag
       </div>
 
       {error && <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">{error}</div>}
-      {!apiKey && <p className="text-sm text-amber-500">⚠️ Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.</p>}
+      {!apiKey && <p className="text-sm text-amber-500">⚠️ Bitte gib zuerst deinen {provider === "fal" ? "fal.ai" : "Gemini"} API Key in den Einstellungen ein.</p>}
     </div>
   );
 };

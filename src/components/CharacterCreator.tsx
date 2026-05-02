@@ -11,9 +11,11 @@ import { ChatModeCreator } from "@/components/character/ChatModeCreator";
 import { CharacterLightbox } from "@/components/character/CharacterLightbox";
 import { CharacterViewsGenerator } from "@/components/character/CharacterViewsGenerator";
 import { PoseGridGenerator } from "@/components/character/PoseGridGenerator";
+import { AiProvider } from "@/lib/aiProvider";
 
 interface CharacterCreatorProps {
   apiKey: string;
+  provider: AiProvider;
   allImages: string[];
   setAllImages: React.Dispatch<React.SetStateAction<string[]>>;
   onUseAsReference?: (imageUrl: string) => void;
@@ -28,7 +30,7 @@ const MODES = [
 
 type Mode = typeof MODES[number]["id"];
 
-export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allImages, setAllImages, onUseAsReference, refImageSourceLabel, planCode }) => {
+export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, provider, allImages, setAllImages, onUseAsReference, refImageSourceLabel, planCode }) => {
   const [mode, setMode] = useState<Mode>("quick");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState(-1);
@@ -212,6 +214,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           {mode === "quick" ? (
             <QuickModeCreator
               apiKey={apiKey}
+              provider={provider}
               imageCount={Math.floor(characterImageCount[0])}
               onImagesGenerated={handleImagesGenerated}
               onGenerationStart={handleGenerationStart}
@@ -221,6 +224,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ apiKey, allI
           ) : (
             <ChatModeCreator
               apiKey={apiKey}
+              provider={provider}
               onImagesGenerated={handleImagesGenerated}
               onGenerationStart={handleGenerationStart}
               onGenerationProgress={handleGenerationProgress}

@@ -38,6 +38,25 @@ import { StoryDetailPopup } from "@/components/StoryDetailPopup";
 import { VideoMerger } from "@/components/VideoMerger";
 import { useGenerationLimiter, incrementGeneration, decrementGeneration } from "@/hooks/useGenerationLimiter";
 import {
+  AiProvider,
+  generateText as aiGenerateText,
+  generateImage as aiGenerateImage,
+  startVideoGeneration as aiStartVideo,
+  pollVideoOperation as aiPollVideo,
+  loadProviderState,
+  saveProvider,
+  saveGoogleKey,
+  saveFalKey,
+} from "@/lib/aiProvider";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
+import {
+  ProjectMeta,
+  loadProjectState,
+  saveProjectState,
+  getActiveProjectId,
+  setActiveProjectId,
+} from "@/lib/projectStorage";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -696,13 +715,27 @@ const VEO3_FORMAT_OPTIONS = [
 const Index = () => {
   const navigate = useNavigate();
   const { authData, isLoading: authLoading, login, logout } = useAuth();
-  
+
+  // ----- Project save/load (Supabase Storage) -----
+  const [activeProjectId, setActiveProjectIdState] = useState<string | null>(() => getActiveProjectId());
+  const [projectsList, setProjectsList] = useState<ProjectMeta[]>([]);
+  const [projectStatus, setProjectStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
+  const projectAutosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const projectInitialLoadDone = useRef(false);
+
   // Helper: Check if user has Pro-level access (PREMIUM or FULL)
   const isPro = authData.planCode === "PREMIUM" || authData.planCode === "FULL";
   const isFullPlan = authData.planCode === "FULL";
   const displayPlanName = getDisplayPlanName(authData.planCode, authData.planName);
   const { theme, setTheme } = useTheme();
-  const [apiKey, setApiKey] = useState("");
+  const [provider, setProvider] = useState<AiProvider>(() => loadProviderState().provider);
+  const [googleApiKey, setGoogleApiKey] = useState<string>(() => loadProviderState().googleKey);
+  const [falApiKey, setFalApiKey] = useState<string>(() => loadProviderState().falKey);
+  const apiKey = provider === "fal" ? falApiKey : googleApiKey;
+  const setApiKey = (val: string) => {
+    if (provider === "fal") setFalApiKey(val);
+    else setGoogleApiKey(val);
+  };
   const canGenerate = !!apiKey;
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [selectedBackground, setSelectedBackground] = useState("white");
@@ -1475,30 +1508,280 @@ const Index = () => {
     } catch {}
   }, [storyboardFormat]);
 
-  // Helper: Call text AI - direct Gemini for all plans
+  // Helper: Call text AI - routes through active provider (Google Gemini or fal.ai)
   const callGeminiOrFull = async (
     parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>,
     options?: { model?: string; temperature?: number; maxOutputTokens?: number }
   ): Promise<string> => {
-      const model = options?.model || "gemini-2.5-flash";
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts }],
-            generationConfig: {
-              temperature: options?.temperature ?? 0.7,
-              maxOutputTokens: options?.maxOutputTokens ?? 500,
-            },
-          }),
-        }
-      );
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    return aiGenerateText(provider, apiKey, parts, options);
   };
+
+  // Helper: drop-in fetch replacement for Gemini generateContent endpoints.
+  // Routes to Google directly or wraps fal.ai output into a Gemini-shaped Response.
+  // Drop-in fetch replacement that routes Gemini-style requests via the active provider.
+  // Accepts the same arguments as fetch() so callers only swap `fetch(` for `fetchAi(`.
+  const fetchAi = async (
+    url: string,
+    init?: RequestInit
+  ): Promise<Response> => {
+    // Pass through non-Gemini URLs untouched (e.g. Veo polling, file uploads, etc.)
+    const isGeminiGenerateContent = /generativelanguage\.googleapis\.com\/.*\/models\/[^:]+:generateContent/.test(url);
+    if (!isGeminiGenerateContent || provider === "google") {
+      return fetch(url, init);
+    }
+
+    let body: any = {};
+    try {
+      body = init?.body ? JSON.parse(init.body as string) : {};
+    } catch {
+      body = {};
+    }
+    const modelMatch = url.match(/models\/([^:]+):generateContent/);
+    const model = modelMatch?.[1] || "";
+    const signal = init?.signal ?? undefined;
+
+    const responseModalities: string[] | undefined = body?.generationConfig?.responseModalities;
+    const isImageGen = Array.isArray(responseModalities) && responseModalities.includes("IMAGE");
+
+    try {
+      if (isImageGen) {
+        const textPieces: string[] = [];
+        const refImages: string[] = [];
+        for (const content of body?.contents || []) {
+          for (const part of content?.parts || []) {
+            if (part?.text) textPieces.push(part.text);
+            if (part?.inlineData?.data) {
+              refImages.push(`data:${part.inlineData.mimeType || "image/png"};base64,${part.inlineData.data}`);
+            }
+          }
+        }
+        const prompt = textPieces.join("\n\n");
+        const aspectRatio = body?.generationConfig?.imageConfig?.aspectRatio;
+        const result = await aiGenerateImage(provider, apiKey, prompt, {
+          aspectRatio,
+          referenceImages: refImages.length > 0 ? refImages : undefined,
+          signal,
+        });
+        const wrapped = result.dataUrl
+          ? {
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          mimeType: result.dataUrl.match(/^data:([^;]+)/)?.[1] || "image/jpeg",
+                          data: result.dataUrl.replace(/^data:[^;]+;base64,/, ""),
+                        },
+                      },
+                    ],
+                  },
+                  finishReason: "STOP",
+                },
+              ],
+            }
+          : {
+              candidates: [
+                {
+                  content: { parts: [] },
+                  finishReason: result.blocked ? "SAFETY" : "IMAGE_OTHER",
+                },
+              ],
+            };
+        return new Response(JSON.stringify(wrapped), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const allParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+      for (const content of body?.contents || []) {
+        for (const part of content?.parts || []) {
+          allParts.push(part);
+        }
+      }
+      const text = await aiGenerateText(provider, apiKey, allParts, {
+        model,
+        temperature: body?.generationConfig?.temperature,
+        maxOutputTokens: body?.generationConfig?.maxOutputTokens,
+      });
+      const wrapped = {
+        candidates: [
+          {
+            content: { parts: [{ text }] },
+            finishReason: "STOP",
+          },
+        ],
+      };
+      return new Response(JSON.stringify(wrapped), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({ error: { message: err?.message || "fal.ai Fehler" } }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  };
+
+  // Drop-in replacement for the Supabase generate-image Edge Function call.
+  // For Google: identical to a fetch() to the function URL.
+  // For fal.ai: calls aiGenerateImage directly and wraps the result in the
+  // {success, imageBase64, mimeType} response shape the callers already parse.
+  const fetchGenerateImage = async (
+    payload: {
+      prompt: string;
+      referenceImages?: Array<{ data: string; mimeType?: string }>;
+      referenceImageContexts?: any;
+      aspectRatio?: string;
+      mode?: string;
+      apiKey?: string;
+    },
+    signal?: AbortSignal
+  ): Promise<Response> => {
+    if (provider === "google") {
+      return fetch(getFunctionUrl("generate-image"), {
+        method: "POST",
+        headers: getFunctionHeaders(),
+        signal,
+        body: JSON.stringify(payload),
+      });
+    }
+
+    try {
+      const refDataUrls = (payload.referenceImages || []).map(
+        (ref) => `data:${ref.mimeType || "image/png"};base64,${ref.data}`
+      );
+      const result = await aiGenerateImage(provider, apiKey, payload.prompt, {
+        aspectRatio: payload.aspectRatio,
+        referenceImages: refDataUrls.length > 0 ? refDataUrls : undefined,
+        signal,
+      });
+      if (!result.dataUrl) {
+        return new Response(
+          JSON.stringify({ success: false, error: result.blocked ? "Inhalt blockiert" : "Kein Bild generiert" }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      const mimeType = result.dataUrl.match(/^data:([^;]+)/)?.[1] || "image/jpeg";
+      const imageBase64 = result.dataUrl.replace(/^data:[^;]+;base64,/, "");
+      return new Response(
+        JSON.stringify({ success: true, imageBase64, mimeType }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({ success: false, error: err?.message || "fal.ai Fehler" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  };
+
+  // ============================================================
+  // PROJECT SAVE / LOAD (Supabase Storage)
+  // ============================================================
+
+  // Build a serializable snapshot of the current state.
+  // Anything not listed here won't survive project switches.
+  const buildProjectSnapshot = useCallback((): Record<string, any> => ({
+    storyIdea,
+    storyPoints,
+    storyboardMainLocation,
+    storyboardFormat,
+    storyCreatorMode,
+    storyEnableSpeaker,
+    storySpeakerGender,
+    storyVideoMood,
+    storyColorMood,
+    storyHook,
+    storyPacing,
+    customPrompt,
+    imageSlots,
+    selectedFormat,
+    selectedShot,
+    selectedBackground,
+    sceneDescription,
+  }), [
+    storyIdea, storyPoints, storyboardMainLocation, storyboardFormat,
+    storyCreatorMode, storyEnableSpeaker, storySpeakerGender, storyVideoMood,
+    storyColorMood, storyHook, storyPacing, customPrompt, imageSlots,
+    selectedFormat, selectedShot, selectedBackground, sceneDescription,
+  ]);
+
+  // Restore state from a saved snapshot.
+  const applyProjectSnapshot = useCallback((data: Record<string, any> | undefined | null) => {
+    if (!data) return;
+    if (typeof data.storyIdea === "string") setStoryIdea(data.storyIdea);
+    if (Array.isArray(data.storyPoints)) setStoryPoints(data.storyPoints);
+    if (typeof data.storyboardMainLocation === "string") setStoryboardMainLocation(data.storyboardMainLocation);
+    if (typeof data.storyboardFormat === "string") setStoryboardFormat(data.storyboardFormat);
+    if (data.storyCreatorMode === "general" || data.storyCreatorMode === "reel") setStoryCreatorMode(data.storyCreatorMode);
+    if (typeof data.storyEnableSpeaker === "boolean") setStoryEnableSpeaker(data.storyEnableSpeaker);
+    if (data.storySpeakerGender === "male" || data.storySpeakerGender === "female" || data.storySpeakerGender === "neutral") setStorySpeakerGender(data.storySpeakerGender);
+    if (typeof data.storyVideoMood === "string") setStoryVideoMood(data.storyVideoMood);
+    if (typeof data.storyColorMood === "string") setStoryColorMood(data.storyColorMood);
+    if (typeof data.storyHook === "string") setStoryHook(data.storyHook);
+    if (typeof data.storyPacing === "string") setStoryPacing(data.storyPacing);
+    if (typeof data.customPrompt === "string") setCustomPrompt(data.customPrompt);
+    if (Array.isArray(data.imageSlots)) setImageSlots(data.imageSlots);
+    if (typeof data.selectedFormat === "string") setSelectedFormat(data.selectedFormat);
+    if (typeof data.selectedShot === "string") setSelectedShot(data.selectedShot);
+    if (typeof data.selectedBackground === "string") setSelectedBackground(data.selectedBackground);
+    if (typeof data.sceneDescription === "string") setSceneDescription(data.sceneDescription);
+  }, []);
+
+  // Switch project: load its state, replace current.
+  const handleSwitchProject = useCallback(async (projectId: string | null) => {
+    setActiveProjectIdState(projectId);
+    setActiveProjectId(projectId);
+    if (!projectId || !authData.email) {
+      projectInitialLoadDone.current = true;
+      return;
+    }
+    setProjectStatus("loading");
+    try {
+      const state = await loadProjectState(authData.email, projectId);
+      if (state?.data) applyProjectSnapshot(state.data);
+      setProjectStatus("idle");
+    } catch (err: any) {
+      console.warn("[project] load failed:", err?.message);
+      setProjectStatus("error");
+      toast.error("Projekt konnte nicht geladen werden");
+    } finally {
+      projectInitialLoadDone.current = true;
+    }
+  }, [authData.email, applyProjectSnapshot]);
+
+  // Auto-load active project once authData is ready.
+  useEffect(() => {
+    if (!authData.email || projectInitialLoadDone.current) return;
+    const id = getActiveProjectId();
+    if (id) void handleSwitchProject(id);
+    else projectInitialLoadDone.current = true;
+  }, [authData.email, handleSwitchProject]);
+
+  // Auto-save (debounced) whenever a tracked state field changes,
+  // but only after the initial load completed (so we don't overwrite
+  // saved state with empty defaults during boot).
+  useEffect(() => {
+    if (!activeProjectId || !authData.email || !projectInitialLoadDone.current) return;
+    if (projectAutosaveTimer.current) clearTimeout(projectAutosaveTimer.current);
+    projectAutosaveTimer.current = setTimeout(async () => {
+      setProjectStatus("saving");
+      try {
+        await saveProjectState(authData.email, activeProjectId, buildProjectSnapshot());
+        setProjectStatus("saved");
+        setTimeout(() => setProjectStatus((s) => (s === "saved" ? "idle" : s)), 1500);
+      } catch (err: any) {
+        console.warn("[project] autosave failed:", err?.message);
+        setProjectStatus("error");
+      }
+    }, 1500);
+    return () => {
+      if (projectAutosaveTimer.current) clearTimeout(projectAutosaveTimer.current);
+    };
+  }, [activeProjectId, authData.email, buildProjectSnapshot]);
 
   // Browser compatibility check on mount
   useEffect(() => {
@@ -1722,7 +2005,7 @@ const Index = () => {
 
     setIsGeneratingSceneAssistant(true);
     try {
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -2349,7 +2632,7 @@ WICHTIGE REGELN:
 - Schreibe auf Deutsch
 ${count > 1 ? `- AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${count} Strings. Beispiel: ["Idee 1 Text...", "Idee 2 Text..."]\n- Kein Markdown, keine Erklärungen, NUR das JSON-Array!\n` : ''}- Antworte NUR mit den Story-Ideen, keine Nummerierungen, Einleitungen oder Erklärungen`;
 
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -2730,7 +3013,7 @@ WICHTIG:
       };
 
       const requestStoryboardText = async (promptText: string) => {
-        const storyboardResponse = await fetch(
+        const storyboardResponse = await fetchAi(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
           {
             method: "POST",
@@ -2749,7 +3032,7 @@ WICHTIG:
         return storyboardData.candidates?.[0]?.content?.parts?.[0]?.text || null;
       };
 
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -2782,7 +3065,7 @@ WICHTIG:
             } else if (Array.isArray(scenes) && scenes.length > 0) {
               // AI returned fewer scenes than requested - retry once
               console.warn(`⚠️ AI returned ${scenes.length} scenes instead of ${storyPointCount}, retrying...`);
-              const retryResponse = await fetch(
+              const retryResponse = await fetchAi(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
                 {
                   method: "POST",
@@ -2823,7 +3106,7 @@ WICHTIG:
             } else {
               // No scenes at all - retry
               console.warn(`⚠️ AI returned 0 scenes, retrying...`);
-              const retryResponse = await fetch(
+              const retryResponse = await fetchAi(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
                 {
                   method: "POST",
@@ -3144,7 +3427,7 @@ Viel Spaß beim Erstellen deines Videos!
       const sceneCharacterNames = storyCharacterProfiles.map((profile) => profile.name);
       
       // Step 1: Regenerate ALL metadata via AI (structured JSON)
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -3542,7 +3825,6 @@ TECHNICAL REQUIREMENTS:
 - Ultra high resolution final render in the selected art style (not photographic unless style requires it)
 - Match lighting and atmosphere to the scene description
 - 16:9 aspect ratio
-- ABSOLUTELY NO TEXT, LETTERS, WORDS, NUMBERS, WATERMARKS, SUBTITLES, CAPTIONS, OR WRITING OF ANY KIND visible anywhere in the image — clean composition only
 
 CONTENT COMPLIANCE:
 - All content is purely fictional and artistic. The reference images are hand-drawn/digitally created artwork, not photographs of real people.
@@ -3560,21 +3842,16 @@ CONTENT COMPLIANCE:
         );
         
         // 1) Start image generation (don't await yet)
-        const imagePromise = fetch(
-          getFunctionUrl("generate-image"),
+        const imagePromise = fetchGenerateImage(
           {
-            method: "POST",
-            headers: getFunctionHeaders(),
-            signal: controller.signal,
-            body: JSON.stringify({
-              prompt: imagePromptText,
-              referenceImages: referenceImagesPayload,
-              referenceImageContexts,
-              aspectRatio: storyboardFormat,
-              mode: "image",
-              apiKey: apiKey
-            }),
-          }
+            prompt: imagePromptText,
+            referenceImages: referenceImagesPayload,
+            referenceImageContexts,
+            aspectRatio: storyboardFormat,
+            mode: "image",
+            apiKey: apiKey,
+          },
+          controller.signal
         );
 
         // 2) Start video prompt generation simultaneously
@@ -4150,181 +4427,44 @@ Respond ONLY with JSON:
     return `${compliancePrefix}${cleanPrompt}`;
   };
 
-  // Helper: Build Veo request body (bytesBase64Encoded only)
-  const buildVeoRequestBody = (prompt: string, startImageBase64: string, endImageBase64?: string, aspectRatio?: string) => {
-    const startImage = splitImageDataUrl(startImageBase64);
-    const instance: any = { prompt: withVeoCompliancePrefix(prompt) };
-
-    instance.image = { bytesBase64Encoded: startImage.base64, mimeType: startImage.mimeType || "image/png" };
-    if (endImageBase64) {
-      const endImage = splitImageDataUrl(endImageBase64);
-      instance.lastFrame = { bytesBase64Encoded: endImage.base64, mimeType: endImage.mimeType || "image/png" };
-    }
-
-    return {
-      instances: [instance],
-      parameters: {
-        aspectRatio: aspectRatio || "16:9",
-        durationSeconds: 8,
-        personGeneration: "allow_adult",
-      },
-    };
-  };
-
-  // Helper: Start Gemini Veo video generation (bytesBase64Encoded, model fallback only)
+  // Helper: Start video generation - routes through active provider (Gemini Veo or fal.ai)
   const startGeminiVideoGeneration = async (prompt: string, startImageBase64: string, endImageBase64?: string, aspectRatio?: string): Promise<string> => {
-    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
-    const models = getVideoModelCandidates(storyVideoModel);
+    const compliantPrompt = withVeoCompliancePrefix(prompt);
 
-    // Try cached model first
-    const cached = veoWorkingConfigRef.current;
-    const orderedModels = cached.model 
-      ? [cached.model, ...models.filter(m => m !== cached.model)]
-      : models;
-
-    const requestBody = buildVeoRequestBody(prompt, startImageBase64, endImageBase64, aspectRatio);
-    let lastError = "";
-
-    for (const model of orderedModels) {
-      console.log(`- Veo attempt: configured=${mapStoryModelLabel(storyVideoModel)}, model=${model}`);
-
-      const response = await fetch(
-        `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const operationName = data.name;
-        if (!operationName) throw new Error("Keine Operation-ID erhalten");
-        veoWorkingConfigRef.current = { payloadFormat: 'bytesBase64Encoded', model };
-        console.log(`- Veo OK: model=${model}, op=${operationName}`);
-        return operationName;
-      }
-
-      const errText = await response.text();
-      console.warn(`⚠️ Veo ${model} - ${response.status}: ${errText.substring(0, 300)}`);
-
-      if (response.status === 429) throw new Error("Rate limit erreicht. Bitte warte einen Moment.");
-      if (response.status === 401 || response.status === 403) throw new Error("API-Key ungültig oder keine Berechtigung für Video-Generierung");
-
-      if (response.status === 400) {
-        lastError = errText.substring(0, 200);
-        continue;
-      }
-
-      throw new Error(`Video-Generierung fehlgeschlagen: ${response.status} - ${errText.substring(0, 200)}`);
+    let candidates: string[] | undefined;
+    if (provider === "google") {
+      const baseModels = getVideoModelCandidates(storyVideoModel);
+      const cached = veoWorkingConfigRef.current;
+      candidates = cached.model
+        ? [cached.model, ...baseModels.filter((m) => m !== cached.model)]
+        : baseModels;
+      console.log(`- Video attempt: configured=${mapStoryModelLabel(storyVideoModel)}, candidates=${candidates.join(",")}`);
+    } else {
+      console.log("- Video attempt: provider=fal.ai (veo3)");
     }
 
-    throw new Error(`Alle Veo-Modelle fehlgeschlagen. Letzter Fehler: ${lastError}`);
-  };
-
-  // Helper: Poll Gemini Veo video operation status with multi-path extraction
-  const pollGeminiVideoOperation = async (operationName: string): Promise<{ status: string; videoUrl?: string; error?: string }> => {
-    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
-    
-    const response = await fetch(
-      `${GEMINI_BASE}/${operationName}?key=${apiKey}`,
-      { method: "GET" }
+    const result = await aiStartVideo(
+      provider,
+      apiKey,
+      {
+        prompt: compliantPrompt,
+        startImageDataUrl: startImageBase64,
+        endImageDataUrl: endImageBase64,
+        aspectRatio,
+      },
+      candidates
     );
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn("Status-Abfrage fehlgeschlagen:", response.status, errText);
-      if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 404) {
-        return { status: "failed", error: `Status-Abfrage fehlgeschlagen (${response.status})` };
-      }
-      return { status: "processing" };
+    if (provider === "google" && result.modelUsed) {
+      veoWorkingConfigRef.current = { payloadFormat: "bytesBase64Encoded", model: result.modelUsed };
     }
+    console.log(`- Video OK: handle=${result.handle.substring(0, 60)}...`);
+    return result.handle;
+  };
 
-    const data = await response.json();
-    
-    if (data.done) {
-      // Check for error
-      if (data.error) {
-        const errMsg = data.error.message || JSON.stringify(data.error);
-        console.error("❌ Veo operation error:", errMsg);
-        // Safety filter detection
-        if (errMsg.toLowerCase().includes('safety') || errMsg.toLowerCase().includes('blocked') || errMsg.toLowerCase().includes('filter')) {
-          return { status: "failed", error: `Video durch Sicherheitsfilter blockiert: ${errMsg}` };
-        }
-        return { status: "failed", error: errMsg };
-      }
-      
-      const resp = data.response || {};
-      console.log("- Veo done - response keys:", Object.keys(resp).join(", "));
-      
-      // Multi-path video URI extraction
-      const videoUri = 
-        resp.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ||
-        resp.generatedVideos?.[0]?.video?.uri ||
-        resp.video?.uri ||
-        resp.generateVideoResponse?.generatedSamples?.[0]?.uri ||
-        null;
-
-      if (videoUri) {
-        const remoteUrl = videoUri.startsWith("http") 
-          ? `${videoUri}${videoUri.includes('?') ? '&' : '?'}key=${apiKey}`
-          : `${GEMINI_BASE}/${videoUri}?key=${apiKey}`;
-        console.log("- Video URL extrahiert, konvertiere zu Blob...");
-        try {
-          const videoResp = await fetch(remoteUrl);
-          if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
-          const videoBlob = await videoResp.blob();
-          const blobUrl = createManagedBlobUrl(videoBlob);
-          console.log("- Video als Blob-URL gespeichert");
-          return { status: "completed", videoUrl: blobUrl };
-        } catch (dlErr) {
-          console.warn("⚠️ Blob-Konvertierung fehlgeschlagen, nutze direkte URL:", dlErr);
-          return { status: "completed", videoUrl: remoteUrl };
-        }
-      }
-      
-      // Fallback: direct base64 video in predictions
-      const prediction = resp.predictions?.[0];
-      if (prediction?.bytesBase64Encoded) {
-        console.log("- Video als Base64 in predictions erhalten");
-        const mimeType = prediction.mimeType || "video/mp4";
-        const videoUrl = `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
-        return { status: "completed", videoUrl };
-      }
-
-      // Check for raiMediaFilteredReasons (content policy)
-      const filteredReasons = resp.generateVideoResponse?.raiMediaFilteredReasons;
-      if (filteredReasons && Array.isArray(filteredReasons) && filteredReasons.length > 0) {
-        console.error("❌ Video durch Inhaltsrichtlinie blockiert:", filteredReasons);
-        // Translate common Veo content policy messages to German
-        const translatedReasons = filteredReasons.map((reason: string) => {
-          if (reason.includes("photorealistic children")) return "Das Bild enthält Personen, die als minderjährig eingestuft wurden. Bitte ändere das Referenzbild oder den Prompt, sodass die Figur eindeutig erwachsen wirkt.";
-          if (reason.includes("violence")) return "Der Inhalt wurde wegen Gewaltdarstellung blockiert.";
-          if (reason.includes("sexual")) return "Der Inhalt wurde wegen sexueller Darstellung blockiert.";
-          if (reason.includes("dangerous")) return "Der Inhalt wurde als gefährlich eingestuft.";
-          if (reason.includes("hate")) return "Der Inhalt wurde wegen Hassrede blockiert.";
-          if (reason.includes("harassment")) return "Der Inhalt wurde wegen Belästigung blockiert.";
-          if (reason.includes("deceptive")) return "Der Inhalt wurde als irreführend eingestuft.";
-          return `Inhaltsrichtlinie: ${reason}`;
-        });
-        return { status: "failed", error: translatedReasons.join(" | ") };
-      }
-
-      // Structured diagnostics on failure
-      const diagKeys = JSON.stringify(Object.keys(resp));
-      const deepKeys = resp.generateVideoResponse ? JSON.stringify(Object.keys(resp.generateVideoResponse)) : "n/a";
-      console.error(`❌ Kein Video gefunden. Response keys: ${diagKeys}, generateVideoResponse keys: ${deepKeys}`);
-      console.error("- Response preview:", JSON.stringify(resp).substring(0, 800));
-      return { status: "failed", error: "Video-Generierung fehlgeschlagen. Bitte den Prompt oder das Bild anpassen und erneut versuchen." };
-    }
-    
-    // Log progress metadata if available
-    if (data.metadata) {
-      console.log("⏳ Veo progress:", JSON.stringify(data.metadata).substring(0, 200));
-    }
-    
-    return { status: "processing" };
+  // Helper: Poll video operation status - delegates to provider abstraction
+  const pollGeminiVideoOperation = async (operationName: string): Promise<{ status: string; videoUrl?: string; error?: string }> => {
+    return aiPollVideo(provider, apiKey, operationName);
   };
 
   // Helper: Convert image URL/blob to base64
@@ -4545,30 +4685,25 @@ Respond ONLY with JSON:
           extraReferences
         );
         
-        const imageResponse = await fetch(
-          getFunctionUrl("generate-image"),
+        const imageResponse = await fetchGenerateImage(
           {
-            method: "POST",
-            headers: getFunctionHeaders(),
-            signal: controller.signal,
-            body: JSON.stringify({
-              prompt: imagePromptText,
-              referenceImages: allReferenceImages,
-              referenceImageContexts,
-              aspectRatio: storyboardFormat,
-              mode: "image",
-              apiKey: apiKey
-            }),
-          }
+            prompt: imagePromptText,
+            referenceImages: allReferenceImages,
+            referenceImageContexts,
+            aspectRatio: storyboardFormat,
+            mode: "image",
+            apiKey: apiKey,
+          },
+          controller.signal
         );
-        
+
         clearTimeout(timeoutId);
-        
+
         if (!imageResponse.ok) {
           const errorData = await imageResponse.json().catch(() => ({}));
           throw new Error(errorData.error || `API Error: ${imageResponse.status}`);
         }
-        
+
         const imageResult = await imageResponse.json();
         if (!imageResult.success) throw new Error(imageResult.error || "Kein Bild generiert");
         
@@ -5101,21 +5236,16 @@ ${sceneContext}`;
       );
       
       // Call edge function for image generation
-      const imageResponse = await fetch(
-        getFunctionUrl("generate-image"),
+      const imageResponse = await fetchGenerateImage(
         {
-          method: "POST",
-          headers: getFunctionHeaders(),
-          signal: controller.signal,
-          body: JSON.stringify({
-            prompt: imagePromptText,
-            referenceImages: allReferenceImages,
-            referenceImageContexts,
-            aspectRatio: storyboardFormat,
-            mode: "image",
-            apiKey: apiKey
-          }),
-        }
+          prompt: imagePromptText,
+          referenceImages: allReferenceImages,
+          referenceImageContexts,
+          aspectRatio: storyboardFormat,
+          mode: "image",
+          apiKey: apiKey,
+        },
+        controller.signal
       );
       
       clearTimeout(timeoutId);
@@ -5288,21 +5418,16 @@ ${sceneContext}`;
       // to ensure a fresh generation without self-referencing
 
       // Call edge function for image generation (same as regenerateSingleStoryScene)
-      const imageResponse = await fetch(
-        getFunctionUrl("generate-image"),
+      const imageResponse = await fetchGenerateImage(
         {
-          method: "POST",
-          headers: getFunctionHeaders(),
-          signal: controller.signal,
-          body: JSON.stringify({
-            prompt: imagePromptText,
-            referenceImages: allReferenceImages,
-            referenceImageContexts,
-            aspectRatio: storyboardFormat,
-            mode: "image",
-            apiKey: apiKey
-          }),
-        }
+          prompt: imagePromptText,
+          referenceImages: allReferenceImages,
+          referenceImageContexts,
+          aspectRatio: storyboardFormat,
+          mode: "image",
+          apiKey: apiKey,
+        },
+        controller.signal
       );
       
       clearTimeout(timeoutId);
@@ -5448,7 +5573,7 @@ Zusammenfassung: "${suggestion}"
 
 Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertigen Beschreibungen` : 'der fertigen Beschreibung'}, ohne Erklärungen. Auf Deutsch.`;
 
-        const response = await fetch(
+        const response = await fetchAi(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
           {
             method: "POST",
@@ -5532,7 +5657,7 @@ Antworte NUR mit ${expandCount > 1 ? `einem JSON-Array mit ${expandCount} fertig
     const suggestCount = 3;
     setIsLoadingStorySuggestions(true);
     try {
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
         {
           method: "POST",
@@ -5657,25 +5782,12 @@ Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, o
 
   // Load saved data on mount
   useEffect(() => {
-    let sessionApiKey: string | null = null;
-    try {
-      sessionApiKey = sessionStorage.getItem("session_gemini_api_key");
-    } catch (storageError) {
-      console.warn("Could not read session API key:", storageError);
-    }
-
-    if (sessionApiKey) {
-      setApiKey(sessionApiKey);
-    } else {
-      // Backward-compat migration from old cookie storage.
+    // One-time cookie migration (legacy from earlier versions).
+    if (!googleApiKey) {
       const savedApiKey = getCookie("gemini_api_key");
       if (savedApiKey) {
-        setApiKey(savedApiKey);
-        try {
-          sessionStorage.setItem("session_gemini_api_key", savedApiKey);
-        } catch (storageError) {
-          console.warn("Could not migrate API key to sessionStorage:", storageError);
-        }
+        setGoogleApiKey(savedApiKey);
+        saveGoogleKey(savedApiKey);
       }
     }
 
@@ -5742,18 +5854,16 @@ Antworte NUR mit den ${suggestCount} kurzen Zusammenfassungen, eine pro Zeile, o
     } catch {}
   }, []);
 
-  // Save API key when it changes
+  // Persist provider + both API keys in localStorage
   useEffect(() => {
-    try {
-      if (apiKey) {
-        sessionStorage.setItem("session_gemini_api_key", apiKey);
-      } else {
-        sessionStorage.removeItem("session_gemini_api_key");
-      }
-    } catch (storageError) {
-      console.warn("Could not persist API key in sessionStorage:", storageError);
-    }
-  }, [apiKey]);
+    saveProvider(provider);
+  }, [provider]);
+  useEffect(() => {
+    saveGoogleKey(googleApiKey);
+  }, [googleApiKey]);
+  useEffect(() => {
+    saveFalKey(falApiKey);
+  }, [falApiKey]);
 
   // Save reference images when they change
   useEffect(() => {
@@ -5950,7 +6060,25 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
           },
         })),
       ];
-      
+
+      // ===== fal.ai branch (early return) =====
+      if (provider === "fal") {
+        if (externalSignal?.aborted) throw new Error("Generierung abgebrochen");
+        const result = await aiGenerateImage(provider, apiKey, finalPromptText, {
+          aspectRatio: formatOption?.ratio || "1:1",
+          referenceImages: base64Images,
+          signal: externalSignal,
+        });
+        if (!result.dataUrl) {
+          if (result.blocked && retryCount === 0) return null;
+          throw new Error("⚠️ fal.ai konnte kein Bild generieren. Bitte ändere deinen Prompt oder dein Referenzbild.");
+        }
+        const falBlob = await (await fetch(result.dataUrl)).blob();
+        const falObjectUrl = createManagedBlobUrl(falBlob);
+        console.log(`- Image ${index + 1} generated via fal.ai:`, falObjectUrl);
+        return falObjectUrl;
+      }
+
       // ===== Gemini Image Generation =====
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120_000); // 120 Sekunden Timeout
@@ -5965,7 +6093,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
 
       let response: Response;
       try {
-        response = await fetch(
+        response = await fetchAi(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${encodeURIComponent(apiKey)}`,
           {
             method: "POST",
@@ -6521,7 +6649,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 Sekunden Timeout
 
       // Call Google Gemini API with ALL reference images
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -6823,7 +6951,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       }
       parts.push({ text: prompt });
 
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7083,7 +7211,7 @@ Ultra high resolution, maintain style consistency with reference image(s).`;
       });
 
       // Call Gemini to analyze the image and generate a video prompt
-      const generateResponse = await fetch(
+      const generateResponse = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7155,9 +7283,9 @@ Antworte NUR mit dem Prompt, ohne zusätzliche Erklärungen. Der Prompt sollte a
     if (!canGenerate) return;
     
     setIsGeneratingSuggestions(true);
-    
+
     try {
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7232,7 +7360,7 @@ Antworte NUR mit den 5 Vorschlägen, einer pro Zeile, ohne Nummerierung oder zus
     setIsEditingPrompt(true);
 
     try {
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7413,7 +7541,7 @@ REGELN FÜR SCENE (nur wenn scenery):
 - Atmosphärische Details (Nebel, Regen, Sonnenstrahlen)`
       });
 
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7499,11 +7627,11 @@ REGELN FÜR SCENE (nur wenn scenery):
   // Generate AI background suggestion for scenery when prompt exists (legacy)
   const handleGenerateBackgroundSuggestion = async () => {
     if (!canGenerate || !customPrompt.trim() || isGeneratingBackgroundSuggestion) return;
-    
+
     setIsGeneratingBackgroundSuggestion(true);
-    
+
     try {
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7555,9 +7683,9 @@ Beispiel einer korrekten Antwort:
   // Generate background only from AI Assistant input (unified control)
   const handleGenerateBackgroundOnly = async () => {
     setIsGeneratingBackgroundSuggestion(true);
-    
+
     try {
-      const response = await fetch(
+      const response = await fetchAi(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -7760,10 +7888,20 @@ Beispiel einer korrekten Antwort:
         <LoginDialog onLogin={login} />
       ) : (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Version Indicator */}
-        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-1 z-20">
-          <div className="text-[10px] text-muted-foreground/50 font-mono select-none">
-            v1.4.9
+        {/* Version Indicator + Project Switcher */}
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-2 z-20">
+          <ProjectSwitcher
+            email={authData.email}
+            activeProjectId={activeProjectId}
+            onSwitchProject={handleSwitchProject}
+            onProjectsChanged={setProjectsList}
+          />
+          <div className="text-[10px] text-muted-foreground/50 font-mono select-none flex items-center gap-2">
+            <span>v1.5.0</span>
+            {projectStatus === "saving" && <span className="text-primary/70">• speichert…</span>}
+            {projectStatus === "saved" && <span className="text-green-500/80">• gespeichert</span>}
+            {projectStatus === "loading" && <span className="text-primary/70">• lädt…</span>}
+            {projectStatus === "error" && <span className="text-destructive/80">• Fehler</span>}
           </div>
         </div>
         <PromoBanner planCode={authData.planCode} />
@@ -7783,8 +7921,37 @@ Beispiel einer korrekten Antwort:
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="settings-api-key">Google Gemini API Key</Label>
+                <div className="space-y-3">
+                  <Label>AI Provider</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProvider("google")}
+                      className={cn(
+                        "px-3 py-2 rounded-lg border text-sm font-medium transition-all",
+                        provider === "google"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
+                      )}
+                    >
+                      Google Gemini
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProvider("fal")}
+                      className={cn(
+                        "px-3 py-2 rounded-lg border text-sm font-medium transition-all",
+                        provider === "fal"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/30"
+                      )}
+                    >
+                      fal.ai
+                    </button>
+                  </div>
+                  <Label htmlFor="settings-api-key">
+                    {provider === "fal" ? "fal.ai API Key" : "Google Gemini API Key"}
+                  </Label>
                   <Input
                     id="settings-api-key"
                     type="password"
@@ -7794,7 +7961,7 @@ Beispiel einer korrekten Antwort:
                     className="font-mono"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Dein API Key wird nur im aktuellen Browser gespeichert.
+                    Beide Keys werden separat im Browser gespeichert.
                   </p>
                 </div>
                 
@@ -10556,8 +10723,15 @@ Beispiel einer korrekten Antwort:
                                     {/* Quick Action Overlay on hover - hidden during regeneration */}
                                     {regeneratingImageOnlyIndex !== index && (
                                       (() => {
+                                        const previewActionLabel = point.generatedVideo
+                                          ? "Nur Video neu"
+                                          : "Nur Bild neu";
+                                        const previewActionTitle = point.generatedVideo
+                                          ? "Generiert nur das Video dieser Szene neu. Das Bild bleibt unverändert."
+                                          : "Generiert nur das Bild dieser Szene neu. Die restliche Szene bleibt unverändert.";
+
                                         return (
-                                          <div
+                                          <div 
                                             className="absolute inset-0 bg-black/55 opacity-0 group-hover/image:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-20"
                                             onClick={() => setExpandedStoryPointIndex(index)}
                                           >
@@ -10584,36 +10758,28 @@ Beispiel einer korrekten Antwort:
                                               >
                                                 <Download className="w-4 h-4" />
                                               </Button>
-                                              <Button
-                                                size="icon"
-                                                variant="secondary"
+                                              <Button 
+                                                size="icon" 
+                                                variant="secondary" 
                                                 className="h-9 w-9 rounded-full shadow-lg"
-                                                title="Generiert nur das Bild dieser Szene neu. Das Video bleibt unverändert."
-                                                aria-label={`Nur Bild neu für Szene ${index + 1}`}
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  regenerateImageOnly(index);
+                                                title={previewActionTitle}
+                                                onMouseEnter={() => setStoryboardHoverHighlight({ scope: "media", index, label: previewActionLabel })}
+                                                onMouseLeave={() => setStoryboardHoverHighlight(null)}
+                                                onFocus={() => setStoryboardHoverHighlight({ scope: "media", index, label: previewActionLabel })}
+                                                onBlur={() => setStoryboardHoverHighlight(null)}
+                                                aria-label={`${previewActionLabel} für Szene ${index + 1}`}
+                                                onClick={(e) => { 
+                                                  e.stopPropagation(); 
+                                                  if (point.generatedVideo) {
+                                                    regenerateSingleVideo(index);
+                                                  } else {
+                                                    regenerateImageOnly(index);
+                                                  }
                                                 }}
                                                 disabled={regeneratingPointIndex !== null || isGeneratingVideos}
                                               >
-                                                <ImageIcon className="w-4 h-4" />
+                                                <RefreshCw className="w-4 h-4" />
                                               </Button>
-                                              {point.generatedVideo && (
-                                                <Button
-                                                  size="icon"
-                                                  variant="secondary"
-                                                  className="h-9 w-9 rounded-full shadow-lg"
-                                                  title="Generiert nur das Video dieser Szene neu. Das Bild bleibt unverändert."
-                                                  aria-label={`Nur Video neu für Szene ${index + 1}`}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    regenerateSingleVideo(index);
-                                                  }}
-                                                  disabled={regeneratingPointIndex !== null || isGeneratingVideos}
-                                                >
-                                                  <Video className="w-4 h-4" />
-                                                </Button>
-                                              )}
                                               <Button
                                                 size="icon"
                                                 variant="secondary"
@@ -11369,9 +11535,10 @@ Beispiel einer korrekten Antwort:
 
           {/* Character Creator Tab Content */}
           {activeMainTab === "character" && (
-            <CharacterCreator 
-              apiKey={apiKey} 
-              allImages={characterImages} 
+            <CharacterCreator
+              apiKey={apiKey}
+              provider={provider}
+              allImages={characterImages}
               setAllImages={setCharacterImages}
               planCode={authData.planCode}
               onUseAsReference={refImageSource ? async (imageUrl: string) => {

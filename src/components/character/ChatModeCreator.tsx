@@ -4,9 +4,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, RotateCcw, Send, MessageSquare, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFunctionUrl, getFunctionHeaders } from "@/lib/backend";
+import { AiProvider, generateImage as aiGenerateImage } from "@/lib/aiProvider";
 
 interface ChatModeCreatorProps {
   apiKey: string;
+  provider: AiProvider;
   onImagesGenerated: (images: string[]) => void;
   onGenerationStart?: (total: number) => void;
   onGenerationProgress?: (index: number) => void;
@@ -18,7 +20,7 @@ type ChatMessage = {
   content: string;
 };
 
-export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
+export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, provider, onImagesGenerated, onGenerationStart, onGenerationProgress, onGenerationEnd }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -40,7 +42,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
       generateImages(generatedPrompts);
     } else if (generatedPrompts && !apiKey) {
       console.warn("⚠️ Prompts vorhanden aber kein API-Key");
-      setError("Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.");
+      setError("Bitte gib zuerst deinen API Key in den Einstellungen ein.");
     }
   }, [generatedPrompts, hasGenerated, apiKey]);
 
@@ -173,7 +175,7 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
       return;
     }
     if (!apiKey) {
-      setError("Bitte gib zuerst deinen Gemini API Key in den Einstellungen ein.");
+      setError("Bitte gib zuerst deinen API Key in den Einstellungen ein.");
       return;
     }
     console.log(`🚀 Starte Generierung von ${prompts.length} Bildern...`);
@@ -210,33 +212,8 @@ export const ChatModeCreator: React.FC<ChatModeCreatorProps> = ({ apiKey, onImag
   };
 
   const generateSingleImage = async (prompt: string): Promise<string | null> => {
-    const model = "gemini-3.1-flash-image-preview";
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 429) throw new Error("rate_limit");
-      throw new Error(`API Fehler: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const candidates = data?.candidates ?? [];
-    if (candidates[0]?.finishReason === "IMAGE_OTHER" || candidates[0]?.finishReason === "SAFETY") return null;
-    const imgParts = candidates[0]?.content?.parts ?? [];
-    const imagePart = imgParts.find((p: any) => p.inlineData?.data && p.inlineData.mimeType?.startsWith("image/"));
-    if (imagePart?.inlineData) {
-      return `data:${imagePart.inlineData.mimeType || "image/png"};base64,${imagePart.inlineData.data}`;
-    }
-    return null;
+    const result = await aiGenerateImage(provider, apiKey, prompt);
+    return result.dataUrl;
   };
 
   const handleRegenerateWithChanges = async () => {
