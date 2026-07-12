@@ -26,7 +26,6 @@ import { LoginDialog } from "@/components/LoginDialog";
 import { AnimatedTitle } from "@/components/AnimatedTitle";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
-import PromoBanner from "@/components/PromoBanner";
 import { AdminPanel, isAdminEmail } from "@/components/AdminPanel";
 import { ReferenceImagePreview } from "@/components/ReferenceImagePreview";
 import { ImageDropZone } from "@/components/ImageDropZone";
@@ -7904,7 +7903,6 @@ Beispiel einer korrekten Antwort:
             {projectStatus === "error" && <span className="text-destructive/80">• Fehler</span>}
           </div>
         </div>
-        <PromoBanner planCode={authData.planCode} />
         {/* Settings & Tutorial Buttons */}
         <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex flex-col gap-2 z-20">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
