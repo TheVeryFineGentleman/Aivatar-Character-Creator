@@ -4,13 +4,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-const allowedHosts = [
-  "localhost",
-  "127.0.0.1",
-  "aivatar-character-creator-z5i9x.ondigitalocean.app",
-  "aivataracademy.online",
-];
-
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -22,7 +15,7 @@ export default defineConfig(({ mode }) => ({
   },
   preview: {
     host: "0.0.0.0",
-    allowedHosts,
+    allowedHosts: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
