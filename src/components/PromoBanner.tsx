@@ -43,7 +43,7 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 text-center">
             {/* Deal badge */}
             <a 
-              href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal"
+              href="https://www.digistore24.com/product/644591"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20 hover:bg-white/25 hover:scale-105 transition-all duration-200 cursor-pointer"
@@ -61,19 +61,9 @@ const PromoBanner = ({ planCode }: PromoBannerProps) => {
               </span>
             </div>
             
-            {/* Code section */}
-            <div className="flex flex-wrap items-center justify-center gap-2 text-white">
-              <span className="text-sm">
-                Code:
-              </span>
-              <span className="font-mono font-bold text-sm bg-black/25 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-yellow-400/40 text-yellow-300 hover:bg-black/35 transition-colors cursor-pointer select-all">
-                avatarcreatorstudio-deal
-              </span>
-            </div>
-            
             {/* CTA badge */}
             <a 
-              href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal"
+              href="https://www.digistore24.com/product/644591"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-yellow-400 text-black font-black text-sm sm:text-base px-4 py-1 rounded-full shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all duration-200 cursor-pointer"

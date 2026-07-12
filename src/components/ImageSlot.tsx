@@ -76,7 +76,7 @@ export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index,
                   Wartet...
                 </p>
                 <a 
-                  href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal" 
+                  href="https://www.digistore24.com/product/644591"
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mt-1 hover:bg-primary/20 hover:border-primary/50 transition-all cursor-pointer block"
