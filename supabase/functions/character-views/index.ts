@@ -38,15 +38,23 @@ serve(async (req) => {
 
     const stylePrompts: Record<string, string> = {
       realistic: "photorealistic, natural lighting, detailed skin texture, 85mm f/1.4 lens, professional photography",
-      anime: "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic",
-      comic: "comic book style, bold outlines, dynamic composition",
-      pixar: "3D rendered, Pixar-quality, stylized, volumetric lighting",
+      anime: "FULLY drawn 2D anime / manga illustration — clean bold cel ink linework, flat cel-shaded colour blocks with hard-edged shadows, large expressive stylised anime eyes, simplified non-photographic skin, distinct stylised hair, vibrant saturated palette, authentic Japanese animation look. Hand-drawn anime art, NOT a photograph",
+      comic: "FULLY drawn Western comic-book illustration — thick black ink outlines, bold flat cel shading, halftone / Ben-Day dot texture, high-contrast dramatic colours, dynamic graphic-novel rendering. Inked comic artwork, NOT a photograph",
+      pixar: "FULLY re-rendered stylised 3D CGI character in modern Pixar / 3D-animation style — smooth subsurface-scattering skin, soft rounded slightly-exaggerated features, large expressive eyes, glossy stylised hair, cinematic volumetric lighting, polished animated-movie render. A 3D render, NOT a photograph",
     };
 
     const anglePrompt = anglePrompts[angle] || anglePrompts.front;
     const stylePrompt = stylePrompts[style] || stylePrompts.realistic;
+    const stylized = style !== "realistic";
 
-    const prompt = `SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\n${anglePrompt}\n\nART STYLE: ${stylePrompt}\n\nCRITICAL RULES:\n- Reproduce the EXACT same character from the reference image: same face, hair color, hairstyle, skin tone, facial features, eye color.\n- MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no environment.\n- Professional studio lighting, soft and even.\n- Show only the character, no props, no other people.\n- This is a fictional digital character illustration for an art project.`;
+    // For stylised looks the reference photo must drive WHO it is, not HOW it's
+    // rendered — otherwise the model keeps the photo's realism and the style
+    // barely shows. For realistic, keep the exact 1:1 reproduction.
+    const identityRule = stylized
+      ? "Keep the SAME character identity and likeness from the reference image (same face structure, hairstyle, hair colour, skin tone mapped into the style, facial features, eye colour) BUT fully RE-DRAW the character in the ART STYLE above. Do NOT reproduce the reference's photographic rendering — transform the medium completely so the result is unmistakably this art style at 100% strength."
+      : "Reproduce the EXACT same character from the reference image: same face, hair color, hairstyle, skin tone, facial features, eye color.";
+
+    const prompt = `SAFETY CONTEXT: This is purely fictional artistic content featuring digitally created characters. All characters are clearly adults (18+). Content is non-explicit and appropriate for general audiences. Do NOT generate violent, explicit, or suggestive content.\n\n${anglePrompt}\n\nART STYLE: ${stylePrompt}\n\nCRITICAL RULES:\n- ${identityRule}\n- MANDATORY BACKGROUND: Pure white seamless studio background (#FFFFFF). No gradients, no textures, no environment.\n- ${stylized ? "Render the ENTIRE image (character, hair, skin, eyes, lighting) in the chosen art style — it must NOT look like a photograph." : "Professional studio lighting, soft and even."}\n- Show only the character, no props, no other people.\n- This is a fictional digital character illustration for an art project.`;
 
     const cleanBase64 = referenceImage.replace(/^data:image\/[a-z]+;base64,/, '');
 
@@ -61,7 +69,7 @@ serve(async (req) => {
     let response;
     try {
       response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

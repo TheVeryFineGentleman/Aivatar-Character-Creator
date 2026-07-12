@@ -1,248 +1,252 @@
-import React, { useState, useCallback, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { X, ZoomIn } from "lucide-react";
-import { DownloadButton } from "@/components/DownloadButton";
+/**
+ * Fullscreen image lightbox with wheel-zoom and drag-to-pan.
+ * Open by passing a `src` data-URL or http URL.
+ *
+ * Optional gallery mode: pass `items` + `index` + `onIndexChange` to show a
+ * thumbnail strip of the other generated images under the main image and allow
+ * navigating between them (thumbnails, arrow buttons, ←/→ keys).
+ */
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { X, ZoomIn, ZoomOut, Download, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { ResolutionDownloadMenu } from "@/components/ResolutionDownloadMenu";
+import { cn } from "@/lib/cn";
 
-interface FullscreenLightboxProps {
+export interface LightboxItem {
   src: string;
-  aspectRatio: string;
-  expandedIndex: number;
-  onClose: () => void;
-  isBasicPlan?: boolean;
-  onLockedClick?: () => void;
+  filename?: string;
+  caption?: string;
+  label?: string;
 }
 
-export const FullscreenLightbox: React.FC<FullscreenLightboxProps> = ({
-  src,
-  aspectRatio,
-  expandedIndex,
-  onClose,
-  isBasicPlan = false,
-  onLockedClick,
-}) => {
+interface Props {
+  src: string | null;
+  alt?: string;
+  filename?: string;
+  caption?: string;
+  onClose: () => void;
+  /** All images to show as thumbnails under the main image. */
+  items?: LightboxItem[];
+  /** Index of the current image inside `items`. */
+  index?: number;
+  /** Called when the user picks another image (thumbnail / arrows / keys). */
+  onIndexChange?: (i: number) => void;
+}
+
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 6;
+
+export function FullscreenLightbox({
+  src, alt = "Bild", filename = "aivatar.png", caption, onClose,
+  items, index, onIndexChange,
+}: Props) {
   const [zoom, setZoom] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  
-  // Touch/pinch state
-  const lastTouchDistance = useRef<number | null>(null);
-  const lastTouchCenter = useRef<{ x: number; y: number } | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; tX: number; tY: number } | null>(null);
+  const didDragRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const clampPosition = (pos: { x: number; y: number }, z: number) => {
-    const maxOffset = (z - 1) * 50;
-    return {
-      x: Math.max(-maxOffset, Math.min(maxOffset, pos.x)),
-      y: Math.max(-maxOffset, Math.min(maxOffset, pos.y)),
+  const hasGallery =
+    Array.isArray(items) && items.length > 1 &&
+    typeof index === "number" && index >= 0 && !!onIndexChange;
+
+  const go = (i: number) => {
+    if (!hasGallery) return;
+    const len = items!.length;
+    onIndexChange!(((i % len) + len) % len);
+  };
+  const prev = () => go((index ?? 0) - 1);
+  const next = () => go((index ?? 0) + 1);
+
+  useEffect(() => {
+    if (!src) return;
+    setZoom(1);
+    setTranslate({ x: 0, y: 0 });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(MAX_ZOOM, z * 1.2));
+      if (e.key === "-") setZoom((z) => Math.max(MIN_ZOOM, z / 1.2));
+      if (e.key === "0") { setZoom(1); setTranslate({ x: 0, y: 0 }); }
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
     };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [src, onClose, hasGallery, index, items]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!src) return null;
+
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z * (e.deltaY > 0 ? 0.92 : 1.08))));
   };
 
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLImageElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseXPx = e.clientX - (rect.left + rect.width / 2);
-    const mouseYPx = e.clientY - (rect.top + rect.height / 2);
-
-    const delta = e.deltaY > 0 ? -0.25 : 0.25;
-    const newZoom = Math.min(Math.max(zoom + delta, 1), 4);
-
-    if (newZoom === 1) {
-      setPosition({ x: 0, y: 0 });
-    } else {
-      const zoomRatio = newZoom / zoom;
-      setPosition(prev => ({
-        x: prev.x * zoomRatio + (mouseXPx / rect.width * 100) * (1 - zoomRatio),
-        y: prev.y * zoomRatio + (mouseYPx / rect.height * 100) * (1 - zoomRatio),
-      }));
-    }
-
-    setZoom(newZoom);
-  }, [zoom]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
+  const onMouseDown = (e: React.MouseEvent) => {
     if (zoom <= 1) return;
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [zoom]);
+    didDragRef.current = false;
+    dragRef.current = { startX: e.clientX, startY: e.clientY, tX: translate.x, tY: translate.y };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    // Past a small threshold this is a drag (pan), not a click.
+    if (Math.hypot(dx, dy) > 4) didDragRef.current = true;
+    setTranslate({ x: dragRef.current.tX + dx, y: dragRef.current.tY + dy });
+  };
+  const endDrag = () => { dragRef.current = null; };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
-    if (zoom <= 1 || !isDragging) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100 * zoom;
-    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100 * zoom;
-
-    setPosition(prev => clampPosition({
-      x: prev.x + deltaX,
-      y: prev.y + deltaY,
-    }, zoom));
-
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [zoom, isDragging, dragStart]);
-
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
-
-  // Touch handlers for pinch-to-zoom and drag
-  const getTouchDistance = (touches: React.TouchList) => {
-    if (touches.length < 2) return null;
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
+  const onImageClick = () => {
+    // A drag just happened → only pan, swallow the click.
+    if (didDragRef.current) { didDragRef.current = false; return; }
+    if (zoom > 1) { setZoom(1); setTranslate({ x: 0, y: 0 }); return; }
+    // In gallery mode a click on the image advances to the next one (in addition
+    // to the arrow buttons / thumbnails / ←→ keys). Zoom stays on the wheel and
+    // the toolbar buttons.
+    if (hasGallery) { next(); return; }
+    setZoom(2);
   };
 
-  const getTouchCenter = (touches: React.TouchList) => {
-    if (touches.length < 2) {
-      return { x: touches[0].clientX, y: touches[0].clientY };
-    }
-    return {
-      x: (touches[0].clientX + touches[1].clientX) / 2,
-      y: (touches[0].clientY + touches[1].clientY) / 2,
-    };
-  };
-
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLImageElement>) => {
-    e.stopPropagation();
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      lastTouchDistance.current = getTouchDistance(e.touches);
-      lastTouchCenter.current = getTouchCenter(e.touches);
-    } else if (e.touches.length === 1 && zoom > 1) {
-      setIsDragging(true);
-      setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    }
-  }, [zoom]);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLImageElement>) => {
-    e.stopPropagation();
-    
-    if (e.touches.length === 2 && lastTouchDistance.current !== null) {
-      e.preventDefault();
-      const newDist = getTouchDistance(e.touches);
-      if (newDist === null) return;
-      
-      const scale = newDist / lastTouchDistance.current;
-      const newZoom = Math.min(Math.max(zoom * scale, 1), 4);
-      
-      if (newZoom === 1) {
-        setPosition({ x: 0, y: 0 });
-      }
-      
-      setZoom(newZoom);
-      lastTouchDistance.current = newDist;
-      
-      // Also pan with two fingers
-      const center = getTouchCenter(e.touches);
-      if (lastTouchCenter.current && imgRef.current) {
-        const rect = imgRef.current.getBoundingClientRect();
-        const dx = ((center.x - lastTouchCenter.current.x) / rect.width) * 100 * newZoom;
-        const dy = ((center.y - lastTouchCenter.current.y) / rect.height) * 100 * newZoom;
-        setPosition(prev => clampPosition({ x: prev.x + dx, y: prev.y + dy }, newZoom));
-      }
-      lastTouchCenter.current = center;
-    } else if (e.touches.length === 1 && isDragging && zoom > 1) {
-      e.preventDefault();
-      const rect = imgRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const dx = ((e.touches[0].clientX - dragStart.x) / rect.width) * 100 * zoom;
-      const dy = ((e.touches[0].clientY - dragStart.y) / rect.height) * 100 * zoom;
-      setPosition(prev => clampPosition({ x: prev.x + dx, y: prev.y + dy }, zoom));
-      setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    }
-  }, [zoom, isDragging, dragStart]);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLImageElement>) => {
-    if (e.touches.length < 2) {
-      lastTouchDistance.current = null;
-      lastTouchCenter.current = null;
-    }
-    if (e.touches.length === 0) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleBackdropClick = () => {
-    if (zoom > 1) {
-      setZoom(1);
-      setPosition({ x: 0, y: 0 });
-    } else {
-      onClose();
-    }
-  };
-
-
-  return (
+  // Portal to <body> so the fixed overlay fills the viewport rather than being
+  // trapped inside an ancestor that creates a containing block (the gallery
+  // Card uses `backdrop-blur`, which would otherwise clip/offset the lightbox).
+  return createPortal(
     <div
-      className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center animate-backdrop-in"
-      onClick={handleBackdropClick}
+      ref={containerRef}
+      className="fixed inset-0 z-50 bg-ink-950/95 backdrop-blur-xl animate-fade-in flex items-center justify-center"
+      onClick={(e) => e.target === containerRef.current && onClose()}
+      onWheel={onWheel}
+      onMouseMove={onMouseMove}
+      onMouseUp={endDrag}
+      onMouseLeave={endDrag}
     >
-      {/* Close button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-        onClick={(e) => { e.stopPropagation(); onClose(); }}
+      {/* Image wrapper — sized to the image's intrinsic box so we can pin the
+          download button to the top-right CORNER of the picture, not the
+          viewport. Wrapper itself does NOT get the transform; it stays
+          unscaled even when the user zooms the image inside. */}
+      <div
+        className={cn(
+          "relative inline-block max-w-[95vw]",
+          hasGallery ? "max-h-[74vh]" : "max-h-[90vh]",
+        )}
       >
-        <X className="w-5 h-5" />
-      </Button>
-
-      {/* Aspect ratio badge */}
-      <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
-        <Badge variant="outline" className="text-[10px] h-5 px-2 border-primary/50 text-primary bg-primary/10">
-          <span className="mr-1">📐</span> {aspectRatio}
-        </Badge>
-      </div>
-
-      {/* Download button */}
-      <div className="absolute bottom-14 sm:bottom-4 right-3 sm:right-4 z-10">
-        <DownloadButton
-          imageUrl={src}
-          fileName={`szene-${expandedIndex + 1}-${aspectRatio.replace(":", "x")}.png`}
-          variant="lightbox"
-          isBasicPlan={isBasicPlan}
-          onLockedClick={onLockedClick}
+        <img
+          src={src}
+          alt={alt}
+          draggable={false}
+          onMouseDown={onMouseDown}
+          className={cn(
+            "block max-w-full rounded-2xl shadow-2xl animate-scale-in select-none",
+            hasGallery ? "max-h-[74vh]" : "max-h-[90vh]",
+            zoom > 1 ? "cursor-grab active:cursor-grabbing" : hasGallery ? "cursor-pointer" : "cursor-zoom-in",
+          )}
+          style={{
+            transform: `translate(${translate.x}px, ${translate.y}px) scale(${zoom})`,
+            transition: dragRef.current ? "none" : "transform 120ms ease-out",
+          }}
+          onClick={onImageClick}
         />
+
+        {/* Download — corner of the IMAGE (not the viewport). */}
+        <div className="absolute top-3 right-3 z-20" onClick={(e) => e.stopPropagation()}>
+          <ResolutionDownloadMenu
+            dataUrl={src}
+            filename={filename}
+            align="right"
+            preferSide="bottom"
+            triggerTitle="Herunterladen"
+            triggerClassName="w-10 h-10 rounded-2xl bg-ink-950/65 border border-white/15 backdrop-blur-md flex items-center justify-center text-ink-50 hover:bg-ink-950/85 hover:border-white/25 transition-all shadow-lg"
+          >
+            <Download className="w-4 h-4" />
+          </ResolutionDownloadMenu>
+        </div>
       </div>
 
-      {/* Zoom indicator */}
-      {zoom > 1 && (
-        <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 z-10 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs font-medium flex items-center gap-1.5">
-          <ZoomIn className="w-3.5 h-3.5" />
-          {Math.round(zoom * 100)}%
+      {/* Prev / next arrows (gallery mode) */}
+      {hasGallery && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            title="Vorheriges Bild"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur flex items-center justify-center text-ink-50/80 hover:text-ink-50 transition-all z-10"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            title="Nächstes Bild"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur flex items-center justify-center text-ink-50/80 hover:text-ink-50 transition-all z-10"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
+      )}
+
+      {caption && (
+        <div
+          className={cn(
+            "absolute left-6 right-6 text-center text-xs text-ink-50/65 pointer-events-none",
+            hasGallery ? "bottom-28" : "bottom-6",
+          )}
+        >
+          {caption}
         </div>
       )}
 
-      {/* Hint text */}
-      <p className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs sm:text-sm text-center whitespace-nowrap">
-        {zoom > 1 ? "Tippen zum Zurücksetzen" : "Tippen zum Schließen • Pinch zum Zoomen"}
-      </p>
+      {/* Thumbnail strip (gallery mode) */}
+      {hasGallery && (
+        <div
+          className="absolute bottom-0 inset-x-0 z-10 flex justify-center pb-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex gap-2 max-w-[92vw] overflow-x-auto px-3 py-2.5 rounded-2xl bg-ink-950/70 backdrop-blur-md border border-white/10">
+            {items!.map((it, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); go(i); }}
+                title={it.label || `Bild ${i + 1}`}
+                className={cn(
+                  "relative w-14 h-14 rounded-lg overflow-hidden border-2 shrink-0 transition-all",
+                  i === index
+                    ? "border-flare-400 ring-2 ring-flare-400/40"
+                    : "border-white/10 opacity-60 hover:opacity-100 hover:border-white/30",
+                )}
+              >
+                <img src={it.src} alt={it.label || `Bild ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Zoomable image */}
-      <img
-        ref={imgRef}
-        src={src}
-        alt="Vollbild-Ansicht"
-        className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl select-none touch-none"
-        style={{
-          transform: `translate(${position.x}%, ${position.y}%) scale(${zoom})`,
-          cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "ns-resize",
-          transition: isDragging ? "none" : "transform 0.1s ease-out",
-        }}
-        draggable={false}
-        onClick={(e) => e.stopPropagation()}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      />
-    </div>
+      <div className="absolute top-6 right-6 flex items-center gap-2">
+        {hasGallery && (
+          <div className="mr-1 px-2.5 h-10 rounded-2xl bg-white/5 border border-white/10 backdrop-blur flex items-center text-xs text-ink-50/70 font-medium">
+            {(index ?? 0) + 1} / {items!.length}
+          </div>
+        )}
+        <ToolbarBtn onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z * 1.25))} title="Reinzoomen"><ZoomIn className="w-4 h-4" /></ToolbarBtn>
+        <ToolbarBtn onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z / 1.25))} title="Rauszoomen"><ZoomOut className="w-4 h-4" /></ToolbarBtn>
+        <ToolbarBtn onClick={() => { setZoom(1); setTranslate({ x: 0, y: 0 }); }} title="Zurücksetzen"><RotateCcw className="w-4 h-4" /></ToolbarBtn>
+        <ToolbarBtn onClick={onClose} title="Schließen"><X className="w-4 h-4" /></ToolbarBtn>
+      </div>
+    </div>,
+    document.body,
   );
-};
+}
+
+function ToolbarBtn({ onClick, children, title }: { onClick: () => void; children: React.ReactNode; title: string }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 backdrop-blur flex items-center justify-center text-ink-50/75 hover:bg-white/10 hover:text-ink-50 transition-all"
+    >
+      {children}
+    </button>
+  );
+}

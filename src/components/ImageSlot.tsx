@@ -1,298 +1,210 @@
-import { useState, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Loader2, Trash2, Lock, Clock, X, AlertCircle, Ban, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
-import { DownloadButton } from "@/components/DownloadButton";
+/**
+ * Single image card — used by ImageGallery and as a standalone slot in StudioPage etc.
+ * Layout ported from Projekt: top-left #index badge, centered hover overlay with prominent
+ * circular action buttons (Maximize / Regenerate / Download / Delete), progress bar during
+ * loading, structured error state with retry+delete row.
+ */
+import { useState } from "react";
+import {
+  Download, Maximize2, RefreshCw, AlertCircle, Trash2,
+  Image as ImageIcon, Loader2, Ban,
+} from "lucide-react";
+import { cn } from "@/lib/cn";
+import { ResolutionDownloadMenu } from "@/components/ResolutionDownloadMenu";
+import { SlotProgress } from "@/components/ui/SlotProgress";
 
-export type ImageSlotStatus = "pending" | "loading" | "completed" | "error";
-
-interface ImageSlotProps {
-  status: ImageSlotStatus;
-  imageUrl?: string;
-  thumbnailUrl?: string;
-  progress?: number;
-  index: number;
-  onDownload?: () => void;
-  onImageClick?: () => void;
-  onDelete?: () => void;
-  onRemoveFromQueue?: () => void;
-  onCancel?: () => void;
-  onRegenerate?: () => void;
-  imageVersions?: string[];
-  currentVersionIndex?: number;
-  onVersionChange?: (versionIndex: number) => void;
-  retrying?: boolean;
-  isWaitingForPro?: boolean;
-  isInQueue?: boolean;
-  format?: string;
-  errorMessage?: string;
-  isBasicPlan?: boolean;
-  onLockedClick?: () => void;
+export interface ImageSlotData {
+  id: string;
+  status: "pending" | "loading" | "done" | "error";
+  dataUrl?: string;
+  progress?: number;       // 0..100
+  error?: string;
+  errorHint?: string;
+  prompt?: string;
+  filename?: string;
 }
 
-const getAspectClass = (format: string) => {
-  switch (format) {
-    case "9:16": return "aspect-[9/16]";
-    case "16:9": return "aspect-[16/9]";
-    case "4:3": return "aspect-[4/3]";
-    case "3:4": return "aspect-[3/4]";
-    case "4:5": return "aspect-[4/5]";
-    case "5:4": return "aspect-[5/4]";
-    case "21:9": return "aspect-[21/9]";
-    default: return "aspect-square"; // 1:1
-  }
-};
+interface Props {
+  slot: ImageSlotData;
+  aspectClass?: string;
+  index?: number;
+  onRetry?: (id: string) => void;
+  onZoom?: (slot: ImageSlotData) => void;
+  onDelete?: (id: string) => void;
+  onCancel?: (id: string) => void;
+  filenamePrefix?: string;
+}
 
-export const ImageSlot = ({ status, imageUrl, thumbnailUrl, progress = 0, index, onDownload, onImageClick, onDelete, onRemoveFromQueue, onCancel, onRegenerate, imageVersions, currentVersionIndex = 0, onVersionChange, retrying = false, isWaitingForPro = false, isInQueue = false, format = "1:1", errorMessage, isBasicPlan = false, onLockedClick }: ImageSlotProps) => {
-  const totalVersions = imageVersions?.length || 0;
-  const hasMultipleVersions = totalVersions > 1;
-  const aspectClass = getAspectClass(format);
-  
-  // Track transition from loading → completed
-  const [showReveal, setShowReveal] = useState(false);
-  const prevStatusRef = useRef(status);
-  
-  useEffect(() => {
-    if (prevStatusRef.current === "loading" && status === "completed") {
-      setShowReveal(true);
-      const timer = setTimeout(() => setShowReveal(false), 600);
-      return () => clearTimeout(timer);
-    }
-    prevStatusRef.current = status;
-  }, [status]);
+export function ImageSlotCard({
+  slot, aspectClass = "aspect-square", index, onRetry, onZoom, onDelete, onCancel,
+  filenamePrefix = "aivatar",
+}: Props) {
+  const fname = slot.filename || `${filenamePrefix}-${index ?? "x"}.png`;
+
+  // Keep the hover overlay open while the download resolution menu is open.
+  const [dlOpen, setDlOpen] = useState(false);
 
   return (
-    <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-      <CardContent className={`p-0 relative ${aspectClass}`}>
-        {status === "pending" && (
-          <div className="w-full h-full flex items-center justify-center bg-muted/20">
-            {isWaitingForPro ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-4 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                  <Lock className="w-10 h-10 text-primary" />
-                </div>
-                <p className="text-sm font-medium text-foreground/80">
-                  Wartet...
-                </p>
-                <a 
-                  href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mt-1 hover:bg-primary/20 hover:border-primary/50 transition-all cursor-pointer block"
-                >
-                  <p className="text-sm font-bold text-primary">
-                    ⚡ Pro: 2x schneller
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    2 Bilder gleichzeitig generieren
-                  </p>
-                </a>
-                {/* Remove from queue button */}
-                {onRemoveFromQueue && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveFromQueue();
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Entfernen
-                  </Button>
-                )}
-              </div>
-            ) : isInQueue ? (
-              <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-muted-foreground/60" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  In Warteschlange
-                </p>
-                {/* Remove from queue button */}
-                {onRemoveFromQueue && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveFromQueue();
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="mt-1 text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Entfernen
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-white/8 bg-ink-900/70 backdrop-blur-sm shadow-soft",
+        aspectClass,
+      )}
+    >
+      {/* ── Pending ── */}
+      {slot.status === "pending" && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/[0.02]">
+          <ImageIcon className="w-12 h-12 text-ink-50/25" />
+        </div>
+      )}
+
+      {/* ── Loading ── */}
+      {slot.status === "loading" && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 animate-fade-in">
+          {/* Subtle shimmer behind the spinner so the slot reads as "active". */}
+          <div className="absolute inset-0 skeleton" />
+          <Loader2 className="relative z-10 w-8 h-8 text-flare-300 animate-spin" />
+          <p className="relative z-10 text-xs text-ink-50/55">Generiere…</p>
+          {onCancel && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCancel(slot.id); }}
+              className="relative z-10 inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md text-ink-50/55 hover:text-danger hover:bg-danger/10 transition-colors"
+            >
+              <Ban className="w-3 h-3" /> Abbrechen
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Done ── */}
+      {slot.status === "done" && slot.dataUrl && (
+        <div className="group relative w-full h-full cursor-pointer" onClick={() => onZoom?.(slot)}>
+          <img
+            src={slot.dataUrl}
+            alt={`Bild ${index ?? ""}`}
+            // animate-image-reveal fades the image in gently — synced with
+            // the SlotProgress centre flash that pops up on done.
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 animate-image-reveal"
+            loading="lazy"
+            decoding="async"
+          />
+
+          {/* Centered hover overlay — Projekt-style */}
+          <div className={cn(
+            "absolute inset-0 bg-ink-950/60 transition-opacity flex items-center justify-center gap-2 z-10",
+            dlOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}>
+            {onZoom && (
+              <RoundActionBtn title="Vergrößern" onClick={(e) => { e.stopPropagation(); onZoom(slot); }}>
+                <Maximize2 className="w-5 h-5" />
+              </RoundActionBtn>
             )}
-          </div>
-        )}
-        
-        {status === "loading" && (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-4 bg-muted/20">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <div className="w-full space-y-2">
-              <Progress value={progress} className="h-2" />
-              <p className="text-xs text-center text-muted-foreground">
-                {retrying ? "Wiederhole..." : `${Math.round(progress)}%`}
-              </p>
-            </div>
-            {onCancel && (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancel();
-                }}
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <Ban className="w-3 h-3 mr-1" />
-                Abbrechen
-              </Button>
+            <ResolutionDownloadMenu
+              dataUrl={slot.dataUrl}
+              filename={fname}
+              triggerTitle="Herunterladen"
+              onOpenChange={setDlOpen}
+              triggerClassName={ROUND_BTN_CLASS}
+            >
+              <Download className="w-5 h-5" />
+            </ResolutionDownloadMenu>
+            {onRetry && (
+              <RoundActionBtn title="Neu generieren" onClick={(e) => { e.stopPropagation(); onRetry(slot.id); }}>
+                <RefreshCw className="w-5 h-5" />
+              </RoundActionBtn>
             )}
-          </div>
-        )}
-        
-        {status === "completed" && imageUrl && (
-          <div className="relative group w-full h-full cursor-pointer" onClick={onImageClick}>
-            {/* Fade-up-out overlay when transitioning from loading */}
-            {showReveal && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 p-4 bg-muted/20 animate-[fade-up-out_500ms_ease-out_forwards]">
-                <Loader2 className="w-8 h-8 text-primary" />
-                <div className="w-full space-y-2">
-                  <Progress value={100} className="h-2" />
-                  <p className="text-xs text-center text-muted-foreground">100%</p>
-                </div>
-              </div>
-            )}
-            <img
-              src={thumbnailUrl || imageUrl}
-              alt={`Generiert ${index + 1}`}
-              className={`w-full h-full object-cover ${showReveal ? 'animate-[fade-in_500ms_ease-out_150ms_both]' : ''}`}
-              style={{ imageRendering: 'auto' }}
-              loading="lazy"
-              decoding="async"
-              sizes="(max-width: 768px) 50vw, 25vw"
-              onLoad={() => console.log(`- Image ${index + 1} loaded successfully`)}
-              onError={(e) => {
-                console.error(`❌ Image ${index + 1} failed to load`);
-                console.error("Image URL:", imageUrl.substring(0, 100));
-                console.error("Error:", e);
-              }}
-            />
-            {/* Version navigation overlay - bottom */}
-            {hasMultipleVersions && (
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-full px-1.5 py-0.5 shadow-md">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 rounded-full"
-                  onClick={(e) => { e.stopPropagation(); onVersionChange?.(currentVersionIndex - 1); }}
-                  disabled={currentVersionIndex === 0}
-                >
-                  <ChevronLeft className="w-3 h-3" />
-                </Button>
-                <span className="text-[10px] font-medium min-w-[28px] text-center">
-                  {currentVersionIndex + 1}/{totalVersions}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 rounded-full"
-                  onClick={(e) => { e.stopPropagation(); onVersionChange?.(currentVersionIndex + 1); }}
-                  disabled={currentVersionIndex === totalVersions - 1}
-                >
-                  <ChevronRight className="w-3 h-3" />
-                </Button>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <DownloadButton
-                imageUrl={imageUrl}
-                fileName={`character-${index + 1}.png`}
-                variant="gallery"
-                isBasicPlan={isBasicPlan}
-                onLockedClick={onLockedClick}
-              />
-              {onRegenerate && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRegenerate();
-                  }}
-                  variant="secondary"
-                  size="icon"
-                  className="rounded-full"
-                >
-                  <RefreshCw className="w-5 h-5" />
-                </Button>
-              )}
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.();
-                }}
-                variant="destructive"
-                size="icon"
-                className="rounded-full"
+            {onDelete && (
+              <RoundActionBtn
+                title="Entfernen"
+                onClick={(e) => { e.stopPropagation(); onDelete(slot.id); }}
+                tone="danger"
               >
                 <Trash2 className="w-5 h-5" />
-              </Button>
-            </div>
+              </RoundActionBtn>
+            )}
           </div>
-        )}
-        
-        {status === "error" && (
-          <div className="w-full h-full absolute inset-0 flex flex-col bg-destructive/10">
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center justify-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
-                <AlertCircle className="w-4 h-4 text-destructive" />
-              </div>
-              <p
-                className="text-destructive text-center w-full leading-snug font-medium text-xs"
-                style={{ whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-word' }}
-              >
-                {errorMessage || "Generierung fehlgeschlagen"}
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-2 p-2 shrink-0">
-              {onRegenerate && (
-                <Button
-                  onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
-                  variant="secondary"
-                  size="sm"
-                  className="text-[10px] h-6 px-2"
-                >
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Retry
-                </Button>
-              )}
-              {onDelete && (
-                <Button
-                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  variant="destructive"
-                  size="sm"
-                  className="text-[10px] h-6 px-2"
-                >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Löschen
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
-          #{index + 1}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {/* ── Error ── */}
+      {slot.status === "error" && (
+        <div className="absolute inset-0 flex flex-col bg-danger/8">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center justify-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-danger/20 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-4 h-4 text-danger" />
+            </div>
+            <p
+              className="text-danger text-center w-full leading-snug font-medium text-xs"
+              style={{ whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "break-word" }}
+            >
+              {slot.error || "Generierung fehlgeschlagen"}
+            </p>
+            {slot.errorHint && (
+              <p className="text-[10.5px] text-ink-50/55 leading-snug text-center">{slot.errorHint}</p>
+            )}
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 shrink-0">
+            {onRetry && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onRetry(slot.id); }}
+                className="inline-flex items-center gap-1 text-[10px] h-6 px-2 rounded-md bg-white/5 border border-white/10 text-ink-50 hover:bg-white/10 active:scale-[0.97] transition-all"
+              >
+                <RefreshCw className="w-3 h-3" /> Retry
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(slot.id); }}
+                className="inline-flex items-center gap-1 text-[10px] h-6 px-2 rounded-md bg-danger/15 text-danger border border-danger/30 hover:bg-danger/25 active:scale-[0.97] transition-all"
+              >
+                <Trash2 className="w-3 h-3" /> Löschen
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Shared progress bar + done-flash (loading / done states) ── */}
+      {(slot.status === "loading" || slot.status === "done") && (
+        <SlotProgress status={slot.status} expectedMs={20000} />
+      )}
+
+      {/* ── #Index badge (top-left) ── */}
+      {index !== undefined && (
+        <div className="absolute top-2 left-2 z-10 bg-ink-950/80 backdrop-blur-sm px-2 py-0.5 rounded text-[11px] font-semibold text-ink-50/85 pointer-events-none">
+          #{index}
+        </div>
+      )}
+    </div>
   );
-};
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const ROUND_BTN_CLASS =
+  "w-10 h-10 rounded-full flex items-center justify-center transition-all border backdrop-blur active:scale-95 bg-white/12 border-white/15 text-ink-50 hover:bg-white/20 hover:shadow-lg";
+
+function RoundActionBtn({
+  onClick, title, children, tone,
+}: {
+  onClick: (e: React.MouseEvent) => void;
+  title: string;
+  children: React.ReactNode;
+  tone?: "danger";
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={cn(
+        "w-10 h-10 rounded-full flex items-center justify-center transition-all border backdrop-blur",
+        "active:scale-95",
+        tone === "danger"
+          ? "bg-danger/85 border-danger/40 text-white hover:bg-danger hover:shadow-lg hover:shadow-danger/30"
+          : "bg-white/12 border-white/15 text-ink-50 hover:bg-white/20 hover:shadow-lg",
+      )}
+    >
+      {children}
+    </button>
+  );
+}

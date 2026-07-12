@@ -1,287 +1,165 @@
-import React, { useState, useCallback, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { DownloadButton } from "@/components/DownloadButton";
+/**
+ * Lightbox specialised for generated character portraits — adds copy-prompt
+ * and "use as reference" actions on top of the generic FullscreenLightbox.
+ */
+import { useState } from "react";
+import { Copy, Download, RefreshCw, ChevronLeft, ChevronRight, X, ImagePlus, Check } from "lucide-react";
+import { ResolutionDownloadMenu } from "@/components/ResolutionDownloadMenu";
+import { cn } from "@/lib/cn";
+import { toast } from "sonner";
 
-interface CharacterLightboxProps {
-  images: string[];
-  initialIndex: number;
-  onClose: () => void;
+export interface CharacterImage {
+  id: string;
+  dataUrl: string;
+  prompt?: string;
+  meta?: Record<string, string>;
 }
 
-export const CharacterLightbox: React.FC<CharacterLightboxProps> = ({
-  images,
-  initialIndex,
-  onClose,
-}) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [zoom, setZoom] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const lastTouchDistance = useRef<number | null>(null);
-  const lastTouchCenter = useRef<{ x: number; y: number } | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+interface Props {
+  images: CharacterImage[];
+  startId?: string | null;
+  open: boolean;
+  onClose: () => void;
+  onRegenerate?: (img: CharacterImage) => void;
+  onUseAsReference?: (img: CharacterImage) => void;
+  filenamePrefix?: string;
+}
 
-  const resetZoom = () => {
-    setZoom(1);
-    setPosition({ x: 0, y: 0 });
-  };
+export function CharacterLightbox({
+  images, startId, open, onClose, onRegenerate, onUseAsReference, filenamePrefix = "character",
+}: Props) {
+  const [index, setIndex] = useState(() => {
+    const i = images.findIndex((x) => x.id === startId);
+    return i >= 0 ? i : 0;
+  });
 
-  const selectImage = (index: number) => {
-    setCurrentIndex(index);
-    resetZoom();
-  };
+  if (!open || !images.length) return null;
+  const current = images[Math.min(index, images.length - 1)];
 
-  const clampPosition = (pos: { x: number; y: number }, z: number) => {
-    const maxOffset = (z - 1) * 50;
-    return {
-      x: Math.max(-maxOffset, Math.min(maxOffset, pos.x)),
-      y: Math.max(-maxOffset, Math.min(maxOffset, pos.y)),
-    };
-  };
+  const prev = () => setIndex((i) => (i - 1 + images.length) % images.length);
+  const next = () => setIndex((i) => (i + 1) % images.length);
 
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLImageElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseXPx = e.clientX - (rect.left + rect.width / 2);
-    const mouseYPx = e.clientY - (rect.top + rect.height / 2);
-    const delta = e.deltaY > 0 ? -0.25 : 0.25;
-    const newZoom = Math.min(Math.max(zoom + delta, 1), 4);
-    if (newZoom === 1) {
-      setPosition({ x: 0, y: 0 });
-    } else {
-      const zoomRatio = newZoom / zoom;
-      setPosition(prev => ({
-        x: prev.x * zoomRatio + (mouseXPx / rect.width * 100) * (1 - zoomRatio),
-        y: prev.y * zoomRatio + (mouseYPx / rect.height * 100) * (1 - zoomRatio),
-      }));
+  const copyPrompt = async () => {
+    if (!current.prompt) return;
+    try {
+      await navigator.clipboard.writeText(current.prompt);
+      toast.success("Prompt kopiert.");
+    } catch {
+      toast.error("Konnte Prompt nicht kopieren.");
     }
-    setZoom(newZoom);
-  }, [zoom]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
-    if (zoom <= 1) return;
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [zoom]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
-    if (zoom <= 1 || !isDragging) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100 * zoom;
-    const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100 * zoom;
-    setPosition(prev => clampPosition({ x: prev.x + deltaX, y: prev.y + deltaY }, zoom));
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [zoom, isDragging, dragStart]);
-
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
-
-  const getTouchDistance = (touches: React.TouchList) => {
-    if (touches.length < 2) return null;
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
   };
-
-  const getTouchCenter = (touches: React.TouchList) => {
-    if (touches.length < 2) return { x: touches[0].clientX, y: touches[0].clientY };
-    return {
-      x: (touches[0].clientX + touches[1].clientX) / 2,
-      y: (touches[0].clientY + touches[1].clientY) / 2,
-    };
-  };
-
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLImageElement>) => {
-    e.stopPropagation();
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      lastTouchDistance.current = getTouchDistance(e.touches);
-      lastTouchCenter.current = getTouchCenter(e.touches);
-    } else if (e.touches.length === 1 && zoom > 1) {
-      setIsDragging(true);
-      setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    }
-  }, [zoom]);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLImageElement>) => {
-    e.stopPropagation();
-    if (e.touches.length === 2 && lastTouchDistance.current !== null) {
-      e.preventDefault();
-      const newDist = getTouchDistance(e.touches);
-      if (newDist === null) return;
-      const scale = newDist / lastTouchDistance.current;
-      const newZoom = Math.min(Math.max(zoom * scale, 1), 4);
-      if (newZoom === 1) setPosition({ x: 0, y: 0 });
-      setZoom(newZoom);
-      lastTouchDistance.current = newDist;
-      const center = getTouchCenter(e.touches);
-      if (lastTouchCenter.current && imgRef.current) {
-        const rect = imgRef.current.getBoundingClientRect();
-        const dx = ((center.x - lastTouchCenter.current.x) / rect.width) * 100 * newZoom;
-        const dy = ((center.y - lastTouchCenter.current.y) / rect.height) * 100 * newZoom;
-        setPosition(prev => clampPosition({ x: prev.x + dx, y: prev.y + dy }, newZoom));
-      }
-      lastTouchCenter.current = center;
-    } else if (e.touches.length === 1 && isDragging && zoom > 1) {
-      e.preventDefault();
-      const rect = imgRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const dx = ((e.touches[0].clientX - dragStart.x) / rect.width) * 100 * zoom;
-      const dy = ((e.touches[0].clientY - dragStart.y) / rect.height) * 100 * zoom;
-      setPosition(prev => clampPosition({ x: prev.x + dx, y: prev.y + dy }, zoom));
-      setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    }
-  }, [zoom, isDragging, dragStart]);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLImageElement>) => {
-    if (e.touches.length < 2) {
-      lastTouchDistance.current = null;
-      lastTouchCenter.current = null;
-    }
-    if (e.touches.length === 0) setIsDragging(false);
-  }, []);
-
-  const handleBackdropClick = () => {
-    if (zoom > 1) resetZoom();
-    else onClose();
-  };
-
-  const currentFileName = `character-${currentIndex + 1}-${Date.now()}.png`;
-
-  const src = images[currentIndex];
 
   return (
     <div
-      className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col animate-backdrop-in"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 bg-ink-950/95 backdrop-blur-xl animate-fade-in flex"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") prev();
+        if (e.key === "ArrowRight") next();
+        if (e.key === "Escape") onClose();
+      }}
+      tabIndex={-1}
+      role="dialog"
     >
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 z-10" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-1">
-          {images.length > 1 && (
-            <button
-              onClick={() => selectImage((currentIndex - 1 + images.length) % images.length)}
-              className="p-1 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
-          <span className="text-white/60 text-sm min-w-[3ch] text-center">{currentIndex + 1} / {images.length}</span>
-          {images.length > 1 && (
-            <button
-              onClick={() => selectImage((currentIndex + 1) % images.length)}
-              className="p-1 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        
-        {zoom > 1 && (
-          <div className="bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs font-medium flex items-center gap-1.5">
-            <ZoomIn className="w-3.5 h-3.5" />
-            {Math.round(zoom * 100)}%
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <div onClick={(e) => e.stopPropagation()}>
-            <DownloadButton
-              imageUrl={images[currentIndex]}
-              fileName={currentFileName}
-              variant="lightbox"
-              isBasicPlan={false}
-              className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
-            />
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Main image area */}
-      <div className="flex-1 flex items-center justify-center relative min-h-0 px-4">
-        {images.length > 1 && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute left-2 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-              onClick={(e) => { e.stopPropagation(); selectImage((currentIndex - 1 + images.length) % images.length); }}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-              onClick={(e) => { e.stopPropagation(); selectImage((currentIndex + 1) % images.length); }}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </>
-        )}
-
+      <div className="flex-1 flex items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
+        <button onClick={prev} className="absolute left-4 w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
         <img
-          ref={imgRef}
-          src={src}
-          alt={`Charakter ${currentIndex + 1}`}
-          className="max-w-[90vw] max-h-[70vh] object-contain rounded-lg shadow-2xl select-none touch-none"
-          style={{
-            transform: `translate(${position.x}%, ${position.y}%) scale(${zoom})`,
-            cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
-            transition: isDragging ? "none" : "transform 0.15s ease-out",
-          }}
-          draggable={false}
-          onClick={(e) => e.stopPropagation()}
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          src={current.dataUrl}
+          alt="Charakter"
+          className="max-w-[80vw] max-h-[90vh] rounded-2xl shadow-2xl animate-scale-in"
         />
+        <button onClick={next} className="absolute right-4 w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center">
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Bottom thumbnail strip */}
-      {images.length > 1 && (
-        <div
-          className="flex items-center justify-center gap-2 px-4 py-3 overflow-x-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => selectImage(i)}
-              className={cn(
-                "w-14 h-14 rounded-lg overflow-hidden border-2 transition-all shrink-0",
-                i === currentIndex
-                  ? "border-primary ring-1 ring-primary/50 scale-110"
-                  : "border-white/20 opacity-60 hover:opacity-100"
-              )}
-            >
-              <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
-            </button>
-          ))}
+      <aside
+        onClick={(e) => e.stopPropagation()}
+        className="hidden lg:flex flex-col w-80 bg-ink-900/95 backdrop-blur-2xl border-l border-white/8 p-5 overflow-y-auto"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-xs uppercase tracking-widest text-ink-50/45 font-medium">
+            Bild {index + 1} / {images.length}
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      )}
 
-      {/* Hint */}
-      <p className="text-white/40 text-xs text-center pb-3">
-        {zoom > 1 ? "Tippen zum Zurücksetzen" : "Scrollen zum Zoomen • Tippen zum Schließen"}
-      </p>
+        {current.meta && Object.keys(current.meta).length > 0 && (
+          <div className="space-y-2 mb-5">
+            {Object.entries(current.meta).map(([k, v]) => (
+              <div key={k} className="rounded-xl bg-ink-950/40 border border-white/5 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-widest text-ink-50/45 mb-0.5">{k}</div>
+                <div className="text-xs text-ink-50/85 break-words">{v}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {current.prompt && (
+          <div className="rounded-xl bg-ink-950/40 border border-white/8 p-3 mb-5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] uppercase tracking-widest text-ink-50/45 font-medium">Prompt</span>
+              <CopyButton onCopy={copyPrompt} />
+            </div>
+            <p className="text-[11px] text-ink-50/65 leading-relaxed whitespace-pre-wrap">{current.prompt}</p>
+          </div>
+        )}
+
+        <div className="mt-auto space-y-2">
+          <ResolutionDownloadMenu
+            dataUrl={current.dataUrl}
+            filename={`${filenamePrefix}-${index + 1}.png`}
+            align="left"
+            preferSide="top"
+            triggerClassName="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+          >
+            <span className="text-flare-300"><Download className="w-4 h-4" /></span>
+            <span className="flex-1 text-left">Herunterladen</span>
+          </ResolutionDownloadMenu>
+          {onUseAsReference && (
+            <SideAction onClick={() => { onUseAsReference(current); onClose(); }} icon={<ImagePlus className="w-4 h-4" />}>
+              Als Referenz nutzen
+            </SideAction>
+          )}
+          {onRegenerate && (
+            <SideAction onClick={() => onRegenerate(current)} icon={<RefreshCw className="w-4 h-4" />}>
+              Variante generieren
+            </SideAction>
+          )}
+        </div>
+      </aside>
     </div>
   );
-};
+}
+
+function CopyButton({ onCopy }: { onCopy: () => void }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      onClick={() => { onCopy(); setDone(true); setTimeout(() => setDone(false), 1500); }}
+      className="text-[10px] text-ink-50/55 hover:text-flare-300 inline-flex items-center gap-1"
+    >
+      {done ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
+      {done ? "Kopiert" : "Kopieren"}
+    </button>
+  );
+}
+
+function SideAction({ onClick, icon, children }: { onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm",
+        "bg-white/5 border border-white/10 hover:bg-white/10 transition-colors",
+      )}
+    >
+      <span className="text-flare-300">{icon}</span>
+      <span className="flex-1 text-left">{children}</span>
+    </button>
+  );
+}

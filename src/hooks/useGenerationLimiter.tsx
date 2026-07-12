@@ -1,38 +1,76 @@
-import { useState, useCallback, useSyncExternalStore } from "react";
+/**
+ * Generation limiter — guard against runaway loops, server abuse, and the per-plan caps.
+ * Tracks per-session counters and exposes a `check` that returns whether the user may
+ * generate `n` more images. Backed by sessionStorage so a reload resets the counter.
+ */
 
-// Global generation concurrency limiter
-// Ensures max 2 concurrent generations across ALL tools
-const MAX_CONCURRENT = 2;
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
-let activeCount = 0;
-const listeners = new Set<() => void>();
+const SESSION_KEY = "aivatar:gen.session";
 
-const notify = () => listeners.forEach((l) => l());
+interface SessionCounter {
+  total: number;
+  perRun: number[];
+  startedAt: number;
+}
 
-const subscribe = (callback: () => void) => {
-  listeners.add(callback);
-  return () => listeners.delete(callback);
-};
+function read(): SessionCounter {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw) as SessionCounter;
+  } catch { /* noop */ }
+  return { total: 0, perRun: [], startedAt: Date.now() };
+}
 
-const getSnapshot = () => activeCount;
+function write(value: SessionCounter) {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(value)); } catch { /* noop */ }
+}
 
-export const incrementGeneration = () => {
-  activeCount++;
-  console.log(`🔒 Generation started (${activeCount}/${MAX_CONCURRENT})`);
-  notify();
-};
+const SOFT_HOURLY_CAP = 200; // safety net regardless of plan
 
-export const decrementGeneration = () => {
-  activeCount = Math.max(0, activeCount - 1);
-  console.log(`🔓 Generation ended (${activeCount}/${MAX_CONCURRENT})`);
-  notify();
-};
+export function useGenerationLimiter() {
+  const { plan } = useAuth();
+  const [counter, setCounter] = useState<SessionCounter>(read);
 
-export const isGenerationLimitReached = () => activeCount >= MAX_CONCURRENT;
+  useEffect(() => { write(counter); }, [counter]);
 
-export const useGenerationLimiter = () => {
-  const active = useSyncExternalStore(subscribe, getSnapshot);
-  const limitReached = active >= MAX_CONCURRENT;
+  /** How many images may run in a single generation pass. */
+  const maxPerRun = plan.maxImagesPerRun === -1 ? 20 : plan.maxImagesPerRun;
 
-  return { activeGenerations: active, limitReached, MAX_CONCURRENT };
-};
+  /** Clamp the requested count to the plan & hourly cap. */
+  const clampCount = useCallback((requested: number): { allowed: number; reason: string | null } => {
+    if (requested < 1) return { allowed: 0, reason: "Mindestens 1 Bild." };
+    let allowed = Math.min(requested, maxPerRun);
+    let reason: string | null = null;
+    if (allowed < requested) reason = `Dein ${plan.label}-Plan erlaubt max. ${plan.maxImagesPerRun === -1 ? "20" : plan.maxImagesPerRun} pro Durchgang.`;
+    if (counter.total + allowed > SOFT_HOURLY_CAP) {
+      const remaining = Math.max(0, SOFT_HOURLY_CAP - counter.total);
+      allowed = Math.min(allowed, remaining);
+      reason = allowed === 0
+        ? `Soft-Limit erreicht (${SOFT_HOURLY_CAP} Bilder/Session) — bitte später erneut.`
+        : `Nur noch ${remaining} Bilder in dieser Session (Soft-Limit).`;
+    }
+    return { allowed, reason };
+  }, [counter.total, maxPerRun, plan.label, plan.maxImagesPerRun]);
+
+  const record = useCallback((count: number) => {
+    setCounter((c) => ({ ...c, total: c.total + count, perRun: [...c.perRun, count].slice(-50) }));
+  }, []);
+
+  const reset = useCallback(() => {
+    const fresh = { total: 0, perRun: [], startedAt: Date.now() };
+    setCounter(fresh);
+    write(fresh);
+  }, []);
+
+  return useMemo(() => ({
+    total: counter.total,
+    perRunHistory: counter.perRun,
+    maxPerRun,
+    softCap: SOFT_HOURLY_CAP,
+    clampCount,
+    record,
+    reset,
+  }), [counter.total, counter.perRun, maxPerRun, clampCount, record, reset]);
+}

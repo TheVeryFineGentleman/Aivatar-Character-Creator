@@ -1,98 +1,98 @@
-import { X, Gift, Timer } from "lucide-react";
+/**
+ * Contextual upgrade nudge — picks the most relevant CTA for the user's current plan.
+ * Dismissible (per-session) so it never feels naggy.
+ */
 import { useState } from "react";
+import { Sparkles, ArrowRight, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/cn";
 
-interface PromoBannerProps {
-  planCode?: string;
+interface Props {
+  variant?: "inline" | "hero";
+  className?: string;
 }
 
-const PromoBanner = ({ planCode }: PromoBannerProps) => {
-  const [isVisible, setIsVisible] = useState(true);
+const STORAGE_KEY = "aivatar:promo.dismissed";
 
-  // Show for Basic users
-  if (planCode !== "BASIC" || !isVisible) {
+function dismissedKeys(): string[] {
+  try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+}
+function markDismissed(key: string) {
+  try {
+    const next = Array.from(new Set([...dismissedKeys(), key]));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch { /* noop */ }
+}
+
+export function PromoBanner({ variant = "inline", className }: Props) {
+  const { plan, credentials } = useAuth();
+
+  // Pick a CTA tailored to the user's situation.
+  const promo = (() => {
+    if (!credentials) {
+      return { id: "login", title: "Lizenzschlüssel einlösen", body: "Bereits gekauft? Logge dich ein, um Premium-Features freizuschalten.", cta: "Anmelden", to: "/" };
+    }
+    if (plan.tier === "basic") {
+      return { id: "pro", title: "Mehr aus Aivatar holen", body: "Mit Pro schaltest du Character Chat, Character Views, Pose-Grid und 40 Bilder pro Durchgang frei.", cta: "Pro ansehen", to: "/pricing" };
+    }
+    if (plan.tier === "premium") {
+      return { id: "premium-up", title: "Story & Reels brauchen Premium", body: "Multi-Szenen-Storyboards, KI-Dialoge und Veo3-Videos gibt's nur im Premium-Paket.", cta: "Premium ansehen", to: "/pricing" };
+    }
+    // Premium- und Full-Käufer haben bereits alles freigeschaltet.
     return null;
+  })();
+
+  const [dismissed, setDismissed] = useState(() => (promo ? dismissedKeys().includes(promo.id) : true));
+
+  if (!promo || dismissed) return null;
+
+  const hide = () => {
+    markDismissed(promo.id);
+    setDismissed(true);
+  };
+
+  if (variant === "hero") {
+    return (
+      <div className={cn("relative rounded-3xl bg-flare-grad text-white p-6 sm:p-8 shadow-glow overflow-hidden", className)}>
+        <button onClick={hide} className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <X className="w-3.5 h-3.5" />
+        </button>
+        <div className="flex items-start gap-3 mb-3">
+          <Sparkles className="w-5 h-5" />
+          <div className="text-xs uppercase tracking-widest opacity-90">Empfehlung</div>
+        </div>
+        <h3 className="text-xl sm:text-2xl font-semibold tracking-tight mb-1.5">{promo.title}</h3>
+        <p className="text-sm opacity-90 max-w-md mb-4">{promo.body}</p>
+        <Link
+          to={promo.to}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white text-flare-600 text-sm font-semibold hover:bg-white/90 transition-colors"
+        >
+          {promo.cta} <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full px-4 mb-4 animate-fade-in">
-      <div className="relative overflow-hidden rounded-2xl shadow-xl">
-        {/* Smooth gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-rose-500 to-orange-500" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-        
-        {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Circle particles */}
-          <div className="absolute w-3 h-3 bg-white/20 rounded-full animate-[float1_8s_ease-in-out_infinite]" style={{ left: '5%', top: '20%' }} />
-          <div className="absolute w-2 h-2 bg-yellow-300/30 rounded-full animate-[float2_6s_ease-in-out_infinite]" style={{ left: '15%', top: '60%' }} />
-          <div className="absolute w-4 h-4 bg-white/15 rounded-full animate-[float3_10s_ease-in-out_infinite]" style={{ left: '25%', top: '30%' }} />
-          <div className="absolute w-2 h-2 bg-orange-200/25 rounded-full animate-[float1_7s_ease-in-out_infinite]" style={{ left: '35%', top: '70%' }} />
-          <div className="absolute w-3 h-3 bg-white/20 rounded-full animate-[float2_9s_ease-in-out_infinite]" style={{ left: '55%', top: '25%' }} />
-          <div className="absolute w-2 h-2 bg-yellow-200/30 rounded-full animate-[float3_5s_ease-in-out_infinite]" style={{ left: '65%', top: '65%' }} />
-          <div className="absolute w-4 h-4 bg-white/10 rounded-full animate-[float1_11s_ease-in-out_infinite]" style={{ left: '75%', top: '40%' }} />
-          <div className="absolute w-2 h-2 bg-white/25 rounded-full animate-[float2_8s_ease-in-out_infinite]" style={{ left: '85%', top: '55%' }} />
-          <div className="absolute w-3 h-3 bg-orange-100/20 rounded-full animate-[float3_7s_ease-in-out_infinite]" style={{ left: '92%', top: '20%' }} />
-          
-          {/* Star shapes */}
-          <div className="absolute text-yellow-300/40 animate-[float2_6s_ease-in-out_infinite] text-lg" style={{ left: '10%', top: '40%' }}>✦</div>
-          <div className="absolute text-white/30 animate-[float1_8s_ease-in-out_infinite] text-sm" style={{ left: '45%', top: '50%' }}>✦</div>
-          <div className="absolute text-yellow-200/35 animate-[float3_7s_ease-in-out_infinite] text-base" style={{ left: '80%', top: '30%' }}>✦</div>
-        </div>
-        
-        <div className="relative py-4 px-6">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 text-center">
-            {/* Deal badge */}
-            <a 
-              href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20 hover:bg-white/25 hover:scale-105 transition-all duration-200 cursor-pointer"
-            >
-              <Gift className="w-4 h-4 text-yellow-300" />
-              <span className="font-bold text-sm text-white tracking-wide">
-                EXKLUSIV-DEAL
-              </span>
-            </a>
-            
-            {/* Pro badge */}
-            <div className="flex items-center gap-1.5 text-white/90">
-              <span className="text-sm font-medium">
-                Avatar Creator Studio „PRO"
-              </span>
-            </div>
-            
-            {/* Code section */}
-            <div className="flex flex-wrap items-center justify-center gap-2 text-white">
-              <span className="text-sm">
-                Code:
-              </span>
-              <span className="font-mono font-bold text-sm bg-black/25 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-yellow-400/40 text-yellow-300 hover:bg-black/35 transition-colors cursor-pointer select-all">
-                avatarcreatorstudio-deal
-              </span>
-            </div>
-            
-            {/* CTA badge */}
-            <a 
-              href="https://www.digistore24.com/product/644591?voucher=avatarcreatorstudio-deal"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-yellow-400 text-black font-black text-sm sm:text-base px-4 py-1 rounded-full shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all duration-200 cursor-pointer"
-            >
-              &gt;&gt; zum EXKLUSIV-DEAL
-            </a>
-          </div>
-          
-          <button
-            onClick={() => setIsVisible(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/20 rounded-full transition-all duration-200"
-            aria-label="Banner schließen"
-          >
-            <X className="w-4 h-4 text-white/70 hover:text-white" />
-          </button>
-        </div>
+    <div className={cn(
+      "relative flex flex-wrap items-center gap-3 px-4 py-3 rounded-2xl bg-flare-500/10 border border-flare-400/30",
+      className,
+    )}>
+      <Sparkles className="w-4 h-4 text-flare-300 flex-shrink-0" />
+      <div className="text-xs text-ink-50/85 flex-1 min-w-0">
+        <span className="font-medium text-ink-50">{promo.title}</span>
+        <span className="text-ink-50/65"> · {promo.body}</span>
       </div>
+      <Link
+        to={promo.to}
+        className="text-xs font-medium text-flare-300 hover:text-flare-200 inline-flex items-center gap-1 flex-shrink-0"
+      >
+        {promo.cta} <ArrowRight className="w-3 h-3" />
+      </Link>
+      <button onClick={hide} className="p-1 rounded hover:bg-white/5 text-ink-50/55 hover:text-ink-50">
+        <X className="w-3 h-3" />
+      </button>
     </div>
   );
-};
-
-export default PromoBanner;
+}
