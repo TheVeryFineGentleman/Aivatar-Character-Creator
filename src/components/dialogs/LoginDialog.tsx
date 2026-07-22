@@ -66,11 +66,11 @@ export function LoginDialog({ open, onClose }: { open: boolean; onClose: () => v
         />
 
         {/* Dev-Login Shortcuts (wie in Projekt). Tippe die Werte selbst ein oder
-            klicke einen Quick-Button. */}
+            klicke einen Quick-Button. Admin ist bewusst NICHT als Knopf dabei —
+            Admin-Anmeldung nur durch manuelle Eingabe von E-Mail + Lizenzschlüssel. */}
         <div className="grid grid-cols-2 gap-2 mt-1">
           <DevQuickLogin label="Basic"             hint="1 · 1"      onPick={() => { setEmail("1"); setLicenseKey("1"); }} />
           <DevQuickLogin label="Pro"               hint="2 · 2"      onPick={() => { setEmail("2"); setLicenseKey("2"); }} />
-          <DevQuickLogin label="Premium / Admin"   hint="3 · 3" admin onPick={() => { setEmail("3"); setLicenseKey("3"); }} />
           <DevQuickLogin label="Full (Einmalkauf)" hint="4 · 4"      onPick={() => { setEmail("4"); setLicenseKey("4"); }} />
         </div>
       </div>
