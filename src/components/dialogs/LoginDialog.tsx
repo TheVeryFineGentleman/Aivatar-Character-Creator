@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, KeyRound, ExternalLink, ShieldCheck } from "lucide-react";
+import { Mail, KeyRound, ExternalLink } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -64,40 +64,7 @@ export function LoginDialog({ open, onClose }: { open: boolean; onClose: () => v
           hint="Findest du in deiner Bestätigungs-Mail."
           error={error || undefined}
         />
-
-        {/* Dev-Login Shortcuts (wie in Projekt). Tippe die Werte selbst ein oder
-            klicke einen Quick-Button. Admin ist bewusst NICHT als Knopf dabei —
-            Admin-Anmeldung nur durch manuelle Eingabe von E-Mail + Lizenzschlüssel. */}
-        <div className="grid grid-cols-2 gap-2 mt-1">
-          <DevQuickLogin label="Basic"             hint="1 · 1"      onPick={() => { setEmail("1"); setLicenseKey("1"); }} />
-          <DevQuickLogin label="Pro"               hint="2 · 2"      onPick={() => { setEmail("2"); setLicenseKey("2"); }} />
-          <DevQuickLogin label="Full (Einmalkauf)" hint="4 · 4"      onPick={() => { setEmail("4"); setLicenseKey("4"); }} />
-        </div>
       </div>
     </Dialog>
-  );
-}
-
-function DevQuickLogin({
-  label, hint, admin, onPick,
-}: { label: string; hint: string; admin?: boolean; onPick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onPick}
-      title={`Schnelltest-Login: ${hint}`}
-      className={
-        "px-2 py-2 rounded-xl border border-dashed text-[11px] inline-flex flex-col items-center gap-0.5 transition-colors " +
-        (admin
-          ? "border-flare-400/30 bg-flare-500/5 hover:bg-flare-500/10 text-flare-200"
-          : "border-white/12 bg-white/[0.03] hover:bg-white/5 text-ink-50/75")
-      }
-    >
-      <span className="inline-flex items-center gap-1 font-medium">
-        {admin && <ShieldCheck className="w-3 h-3" />}
-        {label}
-      </span>
-      <kbd className="font-mono text-[10px] opacity-70">{hint}</kbd>
-    </button>
   );
 }
