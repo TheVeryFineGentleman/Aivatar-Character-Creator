@@ -10,7 +10,7 @@ export const BACKEND = {
   apiUrl: (import.meta.env.VITE_AI_SERVER_URL as string | undefined) || "http://localhost:3001",
 
   // Supabase (Edge Functions + auth)
-  supabaseUrl: (import.meta.env.VITE_SUPABASE_URL as string | undefined) || "https://wpewsxohwvdrinowxjb.supabase.co",
+  supabaseUrl: (import.meta.env.VITE_SUPABASE_URL as string | undefined) || "https://wpewsxohwwvdrinowxjb.supabase.co",
   supabaseAnonKey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) || "",
 
   // Storefronts
