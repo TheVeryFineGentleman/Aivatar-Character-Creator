@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { API } from "@/lib/backend";
+import { BACKEND, SUPA_FUNC } from "@/lib/backend";
 import { ls, KEYS } from "@/lib/storage";
 import { planFromServer, PLANS, type PlanCapabilities, type PlanTier } from "@/lib/plans";
 
@@ -66,27 +66,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const res = await fetch(API("/api/license/check"), {
+    // Läuft über die Supabase Edge Function `license-check` — die injiziert
+    // serverseitig den toolApiKey (den das Tool nicht kennt) und leitet an den
+    // Key-Manager weiter. Direkt an den Key-Manager ginge nicht: der verlangt
+    // toolApiKey und würde sonst mit 400 abweisen.
+    const res = await fetch(SUPA_FUNC("license-check"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(BACKEND.supabaseAnonKey ? { Authorization: `Bearer ${BACKEND.supabaseAnonKey}` } : {}),
+      },
       body: JSON.stringify({ email: c.email, licenseKey: c.licenseKey }),
     });
     let data: any = null;
     try { data = await res.json(); } catch { /* noop */ }
     if (!res.ok || !data?.valid) {
-      const code = data?.code || `HTTP_${res.status}`;
+      // Key-Manager liefert den Grund als `reason`; ältere/andere Backends als `code`.
+      const code = data?.reason || data?.code || `HTTP_${res.status}`;
       const messages: Record<string, string> = {
         LICENSE_NOT_FOUND: "Lizenzschlüssel nicht gefunden – prüfe deine Eingabe.",
         LICENSE_EXPIRED: "Lizenz abgelaufen – bitte erneuere deine Lizenz.",
         LICENSE_NOT_ACTIVE: "Lizenz ist nicht aktiv.",
         EMAIL_MISMATCH: "E-Mail stimmt nicht mit der Lizenz überein.",
+        LICENSE_FOR_OTHER_TOOL: "Dieser Lizenzschlüssel gehört zu einem anderen Produkt.",
       };
       throw new Error(messages[code] || data?.error || "Lizenzprüfung fehlgeschlagen.");
     }
+    // Key-Manager liefert das Produkt als `planCode`; Fallbacks für andere Backends.
+    const planCode = data.planCode || data.productCode || data.product?.code;
     return {
       valid: true,
-      tier: planFromServer(data.productCode || data.product?.code),
-      productCode: data.productCode || data.product?.code,
+      tier: planFromServer(planCode),
+      productCode: planCode,
       expiresAt: data.expiresAt,
       isAdmin: ADMIN_EMAILS.has(c.email.toLowerCase()),
     };
