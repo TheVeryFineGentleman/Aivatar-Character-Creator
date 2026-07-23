@@ -17,9 +17,9 @@ export const BACKEND = {
   // Hinweis zum Naming: die URL-Namen folgen den INTERNEN Tier-Codes
   // (premium / full / studio), nicht den Anzeigenamen (Pro / Premium / Full).
   // Wer das ändert, muss die Property-Namen überall in der App nachziehen.
-  digistorePremiumUrl:        "https://www.digistore24.com/product/644591", // = "Pro" (127 € einmalig)
-  digistoreFullUrl:           "https://www.digistore24.com/product/653613", // = "Premium" (197 € einmalig)
-  digistoreFullUpgradeUrl:    "https://www.digistore24.com/product/653613?voucher=acs127", // = "Premium"-Upgrade aus Pro (Differenz 70 € via Voucher)
+  digistorePremiumUrl:        "https://www.digistore24.com/product/644591", // = "Pro" (247 € einmalig)
+  digistoreFullUrl:           "https://www.digistore24.com/product/653613", // = "Premium" (297 € einmalig)
+  digistoreFullUpgradeUrl:    "https://www.digistore24.com/product/653613?voucher=acs127", // = "Premium"-Upgrade aus Pro (Differenz jetzt 50 € — Digistore-Voucher acs127 muss entsprechend angepasst sein)
   digistoreStudioUrl:         "",                                            // = "Full"-Einmalkauf — Placeholder, vom User zu setzen
 
   // External help links

@@ -3,8 +3,8 @@
  *
  * Vier Pakete (Mapping: intern → Anzeigename — wie in Projekt):
  *   - basic   → "Basic"   (Gratis, Reinschnupper-Funktionen)
- *   - premium → "Pro"     (127 € einmalig, voller Avatar-Creator inkl. Chat/Views/Poses)
- *   - full    → "Premium" (197 € einmalig, alles inkl. Story/Reel + Veo-Videos)
+ *   - premium → "Pro"     (247 € einmalig, voller Avatar-Creator inkl. Chat/Views/Poses)
+ *   - full    → "Premium" (297 € einmalig, alles inkl. Story/Reel + Veo-Videos)
  *   - studio  → "Full"    (Einmalkauf — alles drin, kein Abo) — Placeholder
  *
  * Achtung: Die internen Codes basic/premium/full sind Projekt-kompatibel
@@ -13,7 +13,7 @@
  *
  * Upgrade-Logik: Wer Pro hat und auf Premium upgradet, zahlt nur die Differenz
  * (`PREMIUM_UPGRADE_FROM_PRO_EUR`). Die PricingPage zeigt diesen Preis dann
- * statt der vollen 197 € — und linkt auf `BACKEND.digistoreFullUpgradeUrl`.
+ * statt der vollen 297 € — und linkt auf `BACKEND.digistoreFullUpgradeUrl`.
  *
  * `studio` taucht NICHT in der PricingPage als Upgrade-Option auf — Käufer
  * sollen den Einmalkauf nicht parallel zu einem laufenden Abo machen.
@@ -70,8 +70,8 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
     tier: "premium",
     label: "Pro",
     tagline: "Perfekt für Creator",
-    priceEur: 127,
-    monthlyChip: "127 € einmalig",
+    priceEur: 247,
+    monthlyChip: "247 € einmalig",
     billing: "oneTime",
     avatarStudio: true,
     quickCreator: true,
@@ -89,8 +89,8 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
     tier: "full",
     label: "Premium",
     tagline: "Maximaler Content-Boost",
-    priceEur: 197,
-    monthlyChip: "197 € einmalig",
+    priceEur: 297,
+    monthlyChip: "297 € einmalig",
     billing: "oneTime",
     avatarStudio: true,
     quickCreator: true,
