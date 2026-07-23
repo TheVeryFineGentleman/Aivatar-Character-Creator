@@ -107,7 +107,7 @@ export function LoginDialog({ open, onClose }: { open: boolean; onClose: () => v
           hint="Findest du in deiner Bestätigungs-Mail."
           error={error || undefined}
         />
-        <div className="flex justify-end">
+        <div className="flex justify-start">
           <button
             type="button"
             onClick={handleRemind}
