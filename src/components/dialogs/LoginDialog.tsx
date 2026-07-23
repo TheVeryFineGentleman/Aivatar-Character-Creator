@@ -4,12 +4,14 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
+import { BACKEND, SUPA_FUNC } from "@/lib/backend";
 import { toast } from "sonner";
 
 export function LoginDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [licenseKey, setLicenseKey] = useState("");
+  const [remindLoading, setRemindLoading] = useState(false);
 
   const handle = async () => {
     if (!email.trim() || !licenseKey.trim()) {
@@ -20,6 +22,47 @@ export function LoginDialog({ open, onClose }: { open: boolean; onClose: () => v
     if (ok) {
       toast.success("Angemeldet — willkommen zurück.");
       onClose();
+    }
+  };
+
+  // "Key vergessen?" — löst über die Edge Function `license-remind` eine
+  // Erinnerungs-Mail mit dem aktuellen Lizenzschlüssel aus. Die Function
+  // injiziert serverseitig den toolApiKey; das Tool braucht nur die E-Mail.
+  const handleRemind = async () => {
+    const mail = email.trim();
+    if (!mail) {
+      toast.error("Bitte zuerst deine E-Mail-Adresse eingeben.");
+      return;
+    }
+    setRemindLoading(true);
+    try {
+      const res = await fetch(SUPA_FUNC("license-remind"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(BACKEND.supabaseAnonKey ? { Authorization: `Bearer ${BACKEND.supabaseAnonKey}` } : {}),
+        },
+        body: JSON.stringify({ email: mail }),
+      });
+      let data: any = null;
+      try { data = await res.json(); } catch { /* noop */ }
+
+      if (res.ok && data?.sent) {
+        toast.success("Erledigt — wir haben dir deinen Lizenzschlüssel per E-Mail geschickt. Schau ggf. auch im Spam-Ordner nach.");
+        return;
+      }
+
+      const reasons: Record<string, string> = {
+        USER_NOT_FOUND: "Zu dieser E-Mail konnten wir keinen Zugang finden. Nutze die E-Mail aus deiner Bestellbestätigung.",
+        ACTIVE_LICENSE_NOT_FOUND: "Wir haben keine aktive Lizenz zu dieser E-Mail gefunden.",
+        INVALID_TOOL_API_KEY: "Dienst gerade nicht verfügbar. Bitte später erneut versuchen.",
+        MAIL_SENDING_FAILED: "E-Mail konnte nicht versendet werden. Bitte später erneut versuchen.",
+      };
+      toast.error(reasons[data?.reason] || "Konnte die Erinnerung nicht senden. Bitte später erneut versuchen.");
+    } catch {
+      toast.error("Netzwerkfehler — bitte später erneut versuchen.");
+    } finally {
+      setRemindLoading(false);
     }
   };
 
@@ -64,6 +107,16 @@ export function LoginDialog({ open, onClose }: { open: boolean; onClose: () => v
           hint="Findest du in deiner Bestätigungs-Mail."
           error={error || undefined}
         />
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleRemind}
+            disabled={remindLoading}
+            className="text-xs text-ink-50/55 hover:text-flare-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {remindLoading ? "Sende E-Mail…" : "Key vergessen?"}
+          </button>
+        </div>
       </div>
     </Dialog>
   );
