@@ -697,9 +697,12 @@ REGELN:
       // lastFrame is a Veo 3.1-ONLY feature. When we send an end frame put 3.1
       // first; otherwise prefer the stable 3.0 production model. fal.ai ignores
       // both lists.
+      // Veo 3.1 ist das einzige, das aktuelle Keys freigeschaltet haben — daher
+      // IMMER zuerst probieren. 3.0/2.0 bleiben nur als Fallback dahinter (schaden
+      // nicht: der Server iteriert bei 404 einfach weiter). lastFrame kann nur 3.1.
       const googleModels = endCompressed
-        ? ["veo-3.1-generate-preview", "veo-3.0-generate-001", "veo-2.0-generate-001"]
-        : ["veo-3.0-generate-001", "veo-3.1-generate-preview", "veo-3.0-generate-preview", "veo-2.0-generate-001"];
+        ? ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"]
+        : ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview", "veo-3.0-generate-001", "veo-2.0-generate-001"];
 
       const runOnce = (withEnd: boolean) => runVideoJob(
         {
@@ -774,13 +777,21 @@ REGELN:
       toast.success(`Szene ${scenes.findIndex((x) => x.id === scene.id) + 1}: Video bereit.`);
     } catch (e: any) {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Video-Generierung fehlgeschlagen.");
-      // Surface useful detail: the server returns "Video-Generierung fehlgeschlagen: 404"
-      // when the Veo model isn't available for this key — that's almost always a deploy
-      // or Veo-access problem. Make that actionable in the toast.
-      const is404 = /(\b404\b|fehlgeschlagen)/i.test(err.message);
-      const hint = err.hint || (is404
-        ? "Veo-Modell nicht verfügbar. Server-Update einspielen oder Google-Key für Veo freischalten (Billing)."
-        : undefined);
+      // Den ECHTEN Serverfehler zeigen. Nur wenn er wirklich nach fehlendem
+      // Veo-Zugriff/Modell aussieht den Billing/Deploy-Hinweis anhaengen — sonst
+      // wuerde jeder Poll-/Download-Fehler (der auch "fehlgeschlagen" enthaelt)
+      // faelschlich als "Modell nicht verfuegbar" gemeldet.
+      const msg = err.message || "";
+      const isModelAccess =
+        /Veo-Zugriff|ohne Veo|Allowlist|Alle Veo-Modelle|predictLongRunning|not found|nicht verfügbar|401|403/i.test(msg);
+      const isDownloadOrPoll = /Video-Download|Status-Abfrage|Kein Video in der Antwort/i.test(msg);
+      const hint =
+        err.hint ||
+        (isModelAccess
+          ? "Veo-Zugriff fehlt: Google-Key für Veo freischalten (Billing) oder Server-Update einspielen."
+          : isDownloadOrPoll
+            ? "Video wurde erzeugt, aber Abruf schlug fehl — bitte erneut versuchen (ggf. kürzere Dauer)."
+            : undefined);
       updateScene(scene.id, { videoStatus: "error", videoError: err.message, videoHint: hint } as any);
       toast.error(err.message, { description: hint });
     }
