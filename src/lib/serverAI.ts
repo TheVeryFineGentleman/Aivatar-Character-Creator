@@ -18,32 +18,55 @@ function looksLikeConnectionRefused(err: unknown): boolean {
   return /fail|network|cors|fetch/i.test(msg);
 }
 
-async function postJson<T = any>(path: string, body: unknown, init: RequestInit = {}): Promise<T> {
-  let res: Response;
+async function postJson<T = any>(path: string, body: unknown, init: RequestInit = {}, timeoutMs?: number): Promise<T> {
+  // Optional per-request timeout. The timer stays armed across the BODY read too,
+  // because the finishing poll-video response streams the whole finished MP4 as
+  // base64 — a stall lives in that body stream, not the headers. A timeout maps to
+  // a transient NETWORK error so runVideoJob re-polls instead of hanging at 95%.
+  let timedOut = false;
+  const ctrl = timeoutMs ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => { timedOut = true; ctrl.abort(); }, timeoutMs) : null;
   try {
-    res = await fetch(API(path), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(init.headers || {}) },
-      body: JSON.stringify(body),
-      ...init,
-    });
-  } catch (e) {
-    if (looksLikeConnectionRefused(e)) {
-      throw new AIError(
-        "SERVER_UNREACHABLE",
-        "Backend-Server nicht erreichbar.",
-        `Läuft der Express-Server unter ${API("")}? (npm run dev im /Server-Ordner)`,
-      );
+    let res: Response;
+    try {
+      res = await fetch(API(path), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(init.headers || {}) },
+        body: JSON.stringify(body),
+        ...init,
+        ...(ctrl ? { signal: ctrl.signal } : {}),
+      });
+    } catch (e) {
+      if (timedOut) throw new AIError("NETWORK", "Zeitüberschreitung beim Server-Aufruf.");
+      if (looksLikeConnectionRefused(e)) {
+        throw new AIError(
+          "SERVER_UNREACHABLE",
+          "Backend-Server nicht erreichbar.",
+          `Läuft der Express-Server unter ${API("")}? (npm run dev im /Server-Ordner)`,
+        );
+      }
+      throw new AIError("NETWORK", "Netzwerkfehler beim Server-Aufruf.");
     }
-    throw new AIError("NETWORK", "Netzwerkfehler beim Server-Aufruf.");
+    if (!res.ok) {
+      // Read the body ONCE as text, then try JSON — a reverse-proxy/gateway error
+      // (nginx 502/504, Cloudflare, PM2 restart page, Express 413 PayloadTooLarge)
+      // isn't JSON, and res.json() would otherwise swallow the real cause.
+      let raw = "";
+      try { raw = await res.text(); } catch { /* noop */ }
+      let payload: any = null;
+      try { payload = raw ? JSON.parse(raw) : null; } catch { /* noop */ }
+      const text = payload?.error || payload?.message || (raw ? raw.slice(0, 300) : `Server-Fehler (${res.status}).`);
+      throw new AIError(res.status, text);
+    }
+    try {
+      return (await res.json()) as T;
+    } catch (e) {
+      if (timedOut) throw new AIError("NETWORK", "Zeitüberschreitung beim Server-Aufruf.");
+      throw new AIError("NETWORK", "Ungültige Server-Antwort.");
+    }
+  } finally {
+    if (timer) clearTimeout(timer);
   }
-  if (!res.ok) {
-    let payload: any = null;
-    try { payload = await res.json(); } catch { /* noop */ }
-    const text = payload?.error || payload?.message || `Server-Fehler (${res.status}).`;
-    throw new AIError(res.status, text);
-  }
-  return res.json() as Promise<T>;
 }
 
 async function getJson<T = any>(path: string): Promise<T> {
@@ -107,7 +130,10 @@ export function startVideo(opts: StartVideoOpts): Promise<StartVideoResult> {
 }
 
 export function pollVideo(opts: PollVideoOpts): Promise<PollVideoResult> {
-  return postJson<PollVideoResult>("/api/ai/poll-video", opts);
+  // 120s ceiling: the completing poll makes the server download+base64-inline the
+  // whole finished MP4. If that body stalls, time out → transient → runVideoJob
+  // re-polls (the server re-fetches on the next poll) instead of hanging forever.
+  return postJson<PollVideoResult>("/api/ai/poll-video", opts, {}, 120_000);
 }
 
 export interface RunVideoProgress {
@@ -118,16 +144,42 @@ export interface RunVideoProgress {
   error?: string;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Terminal (non-retryable) video failures — surface these immediately.
+ * Everything else (network blips, transient 5xx, "Status-Abfrage/Video-Download
+ * fehlgeschlagen", rate limits) is treated as transient and retried, so a single
+ * hiccup does not kill a scene mid-reel.
+ *
+ * NOTE: lastFrame/"not supported" MUST stay terminal so the caller's
+ * retry-without-end-frame path still triggers.
+ */
+const TERMINAL_VIDEO_ERR =
+  /Inhaltsrichtlinie|raiMedia|Veo-Zugriff|ohne Veo|Allowlist|API-Key ung(ü|ue)ltig|Ung(ü|ue)ltiges oder fehlendes Startbild|lastFrame|not supported|isn'?t supported by this model|Kein Video in der Antwort|Alle Veo-Modelle fehlgeschlagen|Kein API-Key/i;
+
+function isTransientVideoError(err: unknown): boolean {
+  const msg = String((err as any)?.message ?? err ?? "");
+  return !TERMINAL_VIDEO_ERR.test(msg);
+}
+
 /**
  * Start a video and poll until done. Reports each tick to `onProgress`.
  * Provider + apiKey are forwarded to the server so it knows which backend to call.
+ *
+ * Resilient by design: `startVideo` is retried on transient errors, and a
+ * transient poll failure (network drop, transient server 5xx, or a server
+ * "failed" whose message is a transient download/status blip) does NOT abort the
+ * job — the server re-fetches the finished video on the next poll, so we keep
+ * polling until the overall deadline. Genuinely terminal failures still throw
+ * right away.
  */
 export async function runVideoJob(
   opts: StartVideoOpts,
   onProgress?: (p: RunVideoProgress) => void,
   signal?: AbortSignal,
   pollMs = 5000,
-  timeoutMs = 6 * 60 * 1000,
+  timeoutMs = 8 * 60 * 1000,
 ): Promise<string> {
   if (!opts.apiKey) {
     throw new AIError("NO_KEY", "Kein API-Key gesetzt.", "Trag den Key in den Einstellungen ein.");
@@ -140,19 +192,52 @@ export async function runVideoJob(
     );
   }
 
-  const start = await startVideo(opts);
+  const deadline = Date.now() + timeoutMs;
+  const MAX_START_ATTEMPTS = 3;
+  const MAX_CONSECUTIVE_POLL_FAILS = 6;
+
+  // Start with retry/backoff on transient errors.
+  let start: StartVideoResult | undefined;
+  for (let attempt = 1; ; attempt++) {
+    if (signal?.aborted) throw new AIError("ABORTED", "Video-Generierung abgebrochen.");
+    try {
+      start = await startVideo(opts);
+      break;
+    } catch (e) {
+      if (!isTransientVideoError(e) || attempt >= MAX_START_ATTEMPTS || Date.now() > deadline) throw e;
+      await sleep(Math.min(15000, 2000 * attempt));
+    }
+  }
   onProgress?.({ status: "processing", handle: start.handle, ticks: 0 });
 
-  const deadline = Date.now() + timeoutMs;
   let ticks = 0;
+  let consecutiveFails = 0;
   while (Date.now() < deadline) {
     if (signal?.aborted) throw new AIError("ABORTED", "Video-Generierung abgebrochen.");
-    await new Promise((r) => setTimeout(r, pollMs));
+    await sleep(pollMs);
     ticks++;
-    const tick = await pollVideo({ handle: start.handle, provider: opts.provider, apiKey: opts.apiKey });
+
+    let tick: PollVideoResult;
+    try {
+      tick = await pollVideo({ handle: start.handle, provider: opts.provider, apiKey: opts.apiKey });
+    } catch (e) {
+      // Transient error just talking to the server — keep the job alive.
+      if (!isTransientVideoError(e) || ++consecutiveFails >= MAX_CONSECUTIVE_POLL_FAILS) throw e;
+      onProgress?.({ status: "processing", handle: start.handle, ticks });
+      continue;
+    }
+
     onProgress?.({ ...tick, handle: start.handle, ticks });
     if (tick.status === "completed" && tick.videoUrl) return tick.videoUrl;
-    if (tick.status === "failed") throw new AIError("VIDEO_FAIL", tick.error || "Video-Generierung fehlgeschlagen.");
+    if (tick.status === "failed") {
+      const err = new AIError("VIDEO_FAIL", tick.error || "Video-Generierung fehlgeschlagen.");
+      // Terminal → surface now (content filter, Veo access, lastFrame, …).
+      if (!isTransientVideoError({ message: tick.error }) || ++consecutiveFails >= MAX_CONSECUTIVE_POLL_FAILS) throw err;
+      // Transient server-side blip (download/status). The server re-fetches the
+      // finished video on the next poll, so keep going.
+      continue;
+    }
+    consecutiveFails = 0; // a clean "processing" tick clears the transient streak
   }
   throw new AIError("VIDEO_TIMEOUT", "Video-Generierung dauert zu lange.", "Versuche es erneut oder mit kürzerer Dauer.");
 }

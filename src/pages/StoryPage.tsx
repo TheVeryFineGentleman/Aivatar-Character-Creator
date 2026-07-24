@@ -117,8 +117,12 @@ export default function StoryPage() {
   // of scene N+1, so cuts visually flow into each other. Default on.
   const [continuityMode, setContinuityMode] = useProjectValue("story:continuityMode", true);
   // Session flag: once Veo's lastFrame is rejected for this key, skip it for
-  // the rest of the session and fall back to last-frame extraction.
-  const [lastFrameUnavailable, setLastFrameUnavailable] = useState(false);
+  // the rest of the session and fall back to last-frame extraction. Must be a
+  // ref, not state: generateAllVideos runs a whole batch inside one render's
+  // closures, so a setState from scene 1 wouldn't be visible to scenes 2..N in
+  // the same run — they'd keep retrying the guaranteed-failing lastFrame path
+  // and lose their continuity transition. A ref updates synchronously.
+  const lastFrameUnavailableRef = useRef(false);
   const [speakerGender, setSpeakerGender] = useProjectValue<"male" | "female" | "neutral">("story:speakerGender", "neutral");
   const [artStyle, setArtStyle] = useProjectValue("story:artStyle", "cinematic");
   const [pacing, setPacing] = useProjectValue("story:pacing", "instant-action");
@@ -694,49 +698,50 @@ REGELN:
       const endCompressed = opts.endImageOverride
         ? await cropDataUrlToAspect(opts.endImageOverride, videoRatio)
         : undefined;
-      // lastFrame is a Veo 3.1-ONLY feature. When we send an end frame put 3.1
-      // first; otherwise prefer the stable 3.0 production model. fal.ai ignores
-      // both lists.
-      // Veo 3.1 ist das einzige, das aktuelle Keys freigeschaltet haben — daher
-      // IMMER zuerst probieren. 3.0/2.0 bleiben nur als Fallback dahinter (schaden
-      // nicht: der Server iteriert bei 404 einfach weiter). lastFrame kann nur 3.1.
-      const googleModels = endCompressed
-        ? ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"]
-        : ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview", "veo-3.0-generate-001", "veo-2.0-generate-001"];
-
-      const runOnce = (withEnd: boolean) => runVideoJob(
-        {
-          provider: videoProvider,
-          apiKey,
-          modelCandidates: videoProvider === "google" ? googleModels : undefined,
-          params: {
-            prompt: videoPrompt,
-            startImageDataUrl: startCompressed,
-            // Server forwards endImageDataUrl as Veo's `lastFrame`. Only Veo 3.1
-            // supports it — older models 400 or just ignore it.
-            endImageDataUrl: withEnd ? endCompressed : undefined,
-            // Veo/fal only render 9:16 | 16:9 | 1:1 — snap the chosen format so the
-            // clip is never silently rendered as the provider default (16:9).
-            aspectRatio: videoAspect(aspect),
-            // Veo 3.1's lastFrame ONLY works at 8s. At 4s or 6s Google rejects
-            // the request with "lastFrame isn't supported by this model".
-            // Force 8s when we're sending an end frame.
-            durationSeconds: withEnd ? 8 : (mode === "reel" ? 6 : 8),
+      const runOnce = (withEnd: boolean) => {
+        // lastFrame ist Veo-3.1-only → der WITH-end-Versuch bleibt auf 3.1.
+        // Der Retry OHNE End-Frame erweitert wieder auf die volle Liste, damit ein
+        // transienter 3.1-Ausfall (preview-Modell, gelegentlich 5xx/overloaded) auf
+        // die stabilen 3.0/2.0 durchfallen kann. Vorher wurde die Liste einmal aus
+        // `endCompressed` berechnet — dann schickte der Retry dieselbe 3.1-only-
+        // Liste und scheiterte identisch, was ganze Continuity-Reels killte.
+        const googleModels = withEnd
+          ? ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"]
+          : ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview", "veo-3.0-generate-001", "veo-2.0-generate-001"];
+        return runVideoJob(
+          {
+            provider: videoProvider,
+            apiKey,
+            modelCandidates: videoProvider === "google" ? googleModels : undefined,
+            params: {
+              prompt: videoPrompt,
+              startImageDataUrl: startCompressed,
+              // Server forwards endImageDataUrl as Veo's `lastFrame`. Only Veo 3.1
+              // supports it — older models 400 or just ignore it.
+              endImageDataUrl: withEnd ? endCompressed : undefined,
+              // Veo/fal only render 9:16 | 16:9 | 1:1 — snap the chosen format so the
+              // clip is never silently rendered as the provider default (16:9).
+              aspectRatio: videoAspect(aspect),
+              // Veo 3.1's lastFrame ONLY works at 8s. At 4s or 6s Google rejects
+              // the request with "lastFrame isn't supported by this model".
+              // Force 8s when we're sending an end frame.
+              durationSeconds: withEnd ? 8 : (mode === "reel" ? 6 : 8),
+            },
           },
-        },
-        (p) => {
-          const fakePct = Math.min(95, 5 + p.ticks * 6);
-          updateScene(scene.id, {
-            videoStatus: p.status === "completed" ? "done" : "loading",
-            videoProgressPct: fakePct,
-            videoJobId: p.handle,
-          });
-        },
-      );
+          (p) => {
+            const fakePct = Math.min(95, 5 + p.ticks * 6);
+            updateScene(scene.id, {
+              videoStatus: p.status === "completed" ? "done" : "loading",
+              videoProgressPct: fakePct,
+              videoJobId: p.handle,
+            });
+          },
+        );
+      };
 
       // Once Veo's lastFrame failed for this key (session flag), don't try it
       // again — it costs an extra 5+s server round-trip for guaranteed failure.
-      const tryWithEnd = !!endCompressed && !lastFrameUnavailable;
+      const tryWithEnd = !!endCompressed && !lastFrameUnavailableRef.current;
 
       let videoUrl: string;
       try {
@@ -745,8 +750,8 @@ REGELN:
         const msg = String(e?.message || "");
         const lastFrameRejected = /lastFrame.*not supported|isn'?t supported by this model/i.test(msg);
         if (endCompressed && (tryWithEnd || lastFrameRejected)) {
-          if (lastFrameRejected && !lastFrameUnavailable) {
-            setLastFrameUnavailable(true);
+          if (lastFrameRejected && !lastFrameUnavailableRef.current) {
+            lastFrameUnavailableRef.current = true;
             toast.info("Veo-Modell ohne lastFrame — Übergänge laufen jetzt über Frame-Extraktion (auch nahtlos).", {
               id: "lastframe-disabled",
             });
@@ -775,6 +780,9 @@ REGELN:
       }
       updateScene(scene.id, { videoStatus: "done", videoUrl: durableVideoUrl, videoPrompt, videoProgressPct: 100 });
       toast.success(`Szene ${scenes.findIndex((x) => x.id === scene.id) + 1}: Video bereit.`);
+      // Return the finished URL so the continuity batch can chain frames without
+      // depending on a React state read that hasn't flushed yet.
+      return durableVideoUrl;
     } catch (e: any) {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Video-Generierung fehlgeschlagen.");
       // Den ECHTEN Serverfehler zeigen. Nur wenn er wirklich nach fehlendem
@@ -784,14 +792,21 @@ REGELN:
       const msg = err.message || "";
       const isModelAccess =
         /Veo-Zugriff|ohne Veo|Allowlist|Alle Veo-Modelle|predictLongRunning|not found|nicht verfügbar|401|403/i.test(msg);
-      const isDownloadOrPoll = /Video-Download|Status-Abfrage|Kein Video in der Antwort/i.test(msg);
+      // "Kein Video in der Antwort" / "Inhaltsrichtlinie" = KEIN Video erzeugt
+      // (meist Inhaltsfilter beim echten Gesicht-Startbild) — NICHT als "Abruf
+      // schlug fehl, erneut versuchen" labeln: ein identischer Retry scheitert
+      // wieder und verbrennt Veo-Kontingent.
+      const isEmptyOrFiltered = /Kein Video in der Antwort|Inhaltsrichtlinie/i.test(msg);
+      const isDownloadOrPoll = /Video-Download|Status-Abfrage/i.test(msg);
       const hint =
         err.hint ||
         (isModelAccess
           ? "Veo-Zugriff fehlt: Google-Key für Veo freischalten (Billing) oder Server-Update einspielen."
-          : isDownloadOrPoll
-            ? "Video wurde erzeugt, aber Abruf schlug fehl — bitte erneut versuchen (ggf. kürzere Dauer)."
-            : undefined);
+          : isEmptyOrFiltered
+            ? "Kein Video erzeugt — Inhalt evtl. von Veo gefiltert. Prompt/Startbild (Gesicht) anpassen; ein identischer erneuter Versuch schlägt meist wieder fehl."
+            : isDownloadOrPoll
+              ? "Video wurde erzeugt, aber Abruf schlug fehl — bitte erneut versuchen (ggf. kürzere Dauer)."
+              : undefined);
       updateScene(scene.id, { videoStatus: "error", videoError: err.message, videoHint: hint } as any);
       toast.error(err.message, { description: hint });
     }
@@ -856,7 +871,7 @@ REGELN:
           // Google Veo with lastFrame access: pass next scene's image as end frame.
           // Otherwise (fal.ai, or Veo without lastFrame for this key): extract
           // the previous video's last frame as this scene's start.
-          const useLastFrame = videoProvider === "google" && !lastFrameUnavailable;
+          const useLastFrame = videoProvider === "google" && !lastFrameUnavailableRef.current;
           if (useLastFrame) {
             const next = scenes[i + 1];
             if (next) {
@@ -881,15 +896,13 @@ REGELN:
           continue;
         }
 
-        await generateSceneVideo(s, { startImageOverride, endImageOverride });
-
-        // Read the updated video URL from React state for the next iteration.
-        let justFinishedUrl: string | undefined;
-        setScenes((cur) => {
-          justFinishedUrl = cur.find((x) => x.id === s.id)?.videoUrl;
-          return cur;
-        });
-        if (justFinishedUrl) prevVideoUrl = justFinishedUrl;
+        // Use the URL returned directly from generateSceneVideo for the next
+        // iteration's continuity frame. Reading it back from React state here was
+        // unreliable — the preceding updateScene had already dirtied the fiber, so
+        // the functional-updater read ran deferred and returned undefined, which
+        // silently broke the fal / Veo-without-lastFrame frame-extraction chain.
+        const finishedUrl = await generateSceneVideo(s, { startImageOverride, endImageOverride });
+        if (finishedUrl) prevVideoUrl = finishedUrl;
       }
     } finally {
       setGeneratingVideos(false);
