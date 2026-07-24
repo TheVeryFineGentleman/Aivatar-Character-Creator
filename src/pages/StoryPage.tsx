@@ -749,7 +749,13 @@ REGELN:
       } catch (e: any) {
         const msg = String(e?.message || "");
         const lastFrameRejected = /lastFrame.*not supported|isn'?t supported by this model/i.test(msg);
-        if (endCompressed && (tryWithEnd || lastFrameRejected)) {
+        // Inhaltsfilter/leeres Ergebnis kommt vom START-Bild (Gesicht), das in
+        // BEIDEN Versuchen identisch ist — ein Retry ohne End-Frame schickt genau
+        // dasselbe Gesicht und scheitert identisch, nur verbrennt es Veo-Kontingent
+        // und Zeit. Solche Fehler NICHT nochmal versuchen, sondern sofort ehrlich
+        // durchreichen (der äußere Catch hängt den Inhaltsfilter-Hinweis an).
+        const contentFiltered = /Kein Video in der Antwort|Inhaltsrichtlinie|raiMedia|gefiltert/i.test(msg);
+        if (endCompressed && !contentFiltered && (tryWithEnd || lastFrameRejected)) {
           if (lastFrameRejected && !lastFrameUnavailableRef.current) {
             lastFrameUnavailableRef.current = true;
             toast.info("Veo-Modell ohne lastFrame — Übergänge laufen jetzt über Frame-Extraktion (auch nahtlos).", {
