@@ -15,6 +15,13 @@ import { cn } from "@/lib/cn";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StorageMeter } from "@/components/StorageMeter";
 
+// Build-Version (Git-Commit) — oben links, damit sofort sichtbar ist, welcher
+// Stand geladen ist. Verlinkt auf den GitHub-Commit, wenn es ein echter SHA ist.
+const APP_VERSION = __APP_VERSION__;
+const COMMIT_URL = /^[0-9a-f]{7,40}$/i.test(APP_VERSION)
+  ? `https://github.com/TheVeryFineGentleman/Aivatar-Character-Creator/commit/${APP_VERSION}`
+  : null;
+
 // ─── Tab config — 3 main tabs, Projekt-style consolidation ───────────────────
 
 type TabId = "studio" | "character" | "story";
@@ -169,6 +176,26 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
           </div>
           <span className="hidden sm:block text-[15px] font-bold tracking-tight">Aivatar</span>
         </Link>
+
+        {/* Build-Version (Git-Commit) — verrät sofort, welcher Stand live ist */}
+        {COMMIT_URL ? (
+          <a
+            href={COMMIT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Build ${APP_VERSION} · ${__APP_BUILT__}`}
+            className="shrink-0 font-mono text-[10px] leading-none text-ink-50/35 hover:text-ink-50/70 transition-colors"
+          >
+            {APP_VERSION}
+          </a>
+        ) : (
+          <span
+            title={`Build ${APP_VERSION} · ${__APP_BUILT__}`}
+            className="shrink-0 font-mono text-[10px] leading-none text-ink-50/35"
+          >
+            {APP_VERSION}
+          </span>
+        )}
 
         {credentials && (
           <>
