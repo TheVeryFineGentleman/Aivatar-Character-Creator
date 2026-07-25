@@ -17,7 +17,8 @@ import { useSettings } from "@/hooks/useSettings";
 import { useProjectValue, useProjectRefImages, useProjectResults } from "@/hooks/useProjectGallery";
 import { downloadAllAsZip, DOWNLOAD_RESOLUTIONS } from "@/lib/image";
 import { Menu, MenuItem, MenuSection } from "@/components/ui/Menu";
-import { geminiGenerateImage, AIError } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage } from "@/lib/generate";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
 
@@ -62,7 +63,7 @@ const BG_OPTIONS = [
 ];
 
 export default function PosesPage() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
 
   const [refs, setRefs] = useProjectRefImages("poses:refs");
   const [selectedRef, setSelectedRef] = useProjectValue("poses:selectedRef", 0);
@@ -82,7 +83,7 @@ export default function PosesPage() {
   const bgLabel = BG_OPTIONS.find(b => b.value === background)?.label || background;
 
   const handleGenerate = async () => {
-    if (!hasActiveKey) { toast.error("API-Key fehlt."); return; }
+    if (!hasGenKey) { toast.error("API-Key fehlt."); return; }
     if (refs.length === 0) { toast.error("Lade ein Referenzbild hoch."); return; }
 
     setRunning(true);
@@ -104,10 +105,9 @@ export default function PosesPage() {
       ].filter(Boolean).join("\n");
 
       try {
-        const dataUrl = await geminiGenerateImage({
+        const dataUrl = await generateImage(genChain, {
           prompt,
           references: [{ mimeType: ref.mimeType, base64: ref.base64 }],
-          apiKey: activeKey,
           aspectRatio,
         });
         setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "done", dataUrl } : x));
@@ -136,10 +136,9 @@ export default function PosesPage() {
       "Photorealistic, full body framing.",
     ].filter(Boolean).join("\n");
     try {
-      const dataUrl = await geminiGenerateImage({
+      const dataUrl = await generateImage(genChain, {
         prompt,
         references: [{ mimeType: ref.mimeType, base64: ref.base64 }],
-        apiKey: activeKey,
         aspectRatio,
       });
       setResults(prev => prev.map((x, i) => i === idx ? { ...x, status: "done", dataUrl } : x));
@@ -290,7 +289,7 @@ export default function PosesPage() {
         {/* Generate button — w-full */}
         <Button
           onClick={handleGenerate}
-          disabled={refs.length === 0 || running || !hasActiveKey}
+          disabled={refs.length === 0 || running || !hasGenKey}
           fullWidth
           className="mb-4"
           iconLeft={running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}

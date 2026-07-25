@@ -21,10 +21,19 @@ interface SettingsValue {
   setFalKey: (k: string) => void;
   clearAll: () => void;
 
-  /** Key für Text- & Bild-Generierung — immer Google. */
+  /** @deprecated Key für Text-/Bild-Generierung (früher immer Google). Nutze genChain. */
   activeKey: string;
-  /** True wenn ein Google-Key gesetzt ist (für Text/Bilder). */
+  /** @deprecated True wenn ein Google-Key gesetzt ist. Nutze hasGenKey. */
   hasActiveKey: boolean;
+
+  /**
+   * Geordnete Provider-Kette für ALLE Generierung (Bild/Text/Video):
+   * [gewählter Provider, anderer Provider] — jeweils nur wenn dessen Key gesetzt
+   * ist. Der erste wird zuerst genutzt, bei Fehler/fehlendem Key der nächste.
+   */
+  genChain: { provider: Provider; key: string }[];
+  /** True wenn mindestens ein Key (Google ODER fal) gesetzt ist. */
+  hasGenKey: boolean;
 
   /** Praktische Booleans für UI-Logik (z. B. Provider-Tiles disabled). */
   hasGoogleKey: boolean;
@@ -73,6 +82,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return null;
   }, [provider, googleKey, falKey]);
 
+  // Symmetrische Kette für ALLE Generierung: gewählter Provider zuerst, der
+  // andere als Fallback — jeweils nur mit gesetztem Key.
+  const genChain = useMemo<{ provider: Provider; key: string }[]>(() => {
+    const g = { provider: "google" as Provider, key: googleKey };
+    const f = { provider: "fal" as Provider, key: falKey };
+    const ordered = provider === "fal" ? [f, g] : [g, f];
+    return ordered.filter((x) => !!x.key);
+  }, [provider, googleKey, falKey]);
+
   return (
     <SettingsContext.Provider value={{
       provider, googleKey, falKey,
@@ -80,6 +98,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       clearAll,
       activeKey: googleKey,
       hasActiveKey: !!googleKey,
+      genChain,
+      hasGenKey: genChain.length > 0,
       hasGoogleKey: !!googleKey,
       hasFalKey: !!falKey,
       videoApi,

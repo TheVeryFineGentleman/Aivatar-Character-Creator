@@ -20,7 +20,8 @@ import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectGallery, useProjectValue, useProjectRefImages } from "@/hooks/useProjectGallery";
-import { geminiGenerateImage, geminiText, AIError } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage, generateText } from "@/lib/generate";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
 
@@ -183,7 +184,7 @@ function buildPrompt(opts: {
 }
 
 export default function StudioPage() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
   const { plan } = useAuth();
 
   // Uploaded references + all inputs are persisted per project.
@@ -213,7 +214,7 @@ export default function StudioPage() {
   const [running, setRunning] = useState(false);
 
   const generate = async () => {
-    if (!hasActiveKey) {
+    if (!hasGenKey) {
       toast.error("Bitte hinterlege zuerst deinen API-Key in den Einstellungen.");
       return;
     }
@@ -241,10 +242,9 @@ export default function StudioPage() {
         hasReference: refs.length > 0,
       });
       try {
-        const dataUrl = await geminiGenerateImage({
+        const dataUrl = await generateImage(genChain, {
           prompt: prompt + `\n\nFrame ${idx + 1} of the shoot — same person, fresh natural moment.`,
           references: refs.map(r => ({ mimeType: r.mimeType, base64: r.base64 })),
-          apiKey: activeKey,
           aspectRatio: aspect,
         });
         setSlots(s => s.map(x => x.id === slot.id ? { ...x, status: "done", dataUrl, prompt } : x));
@@ -269,10 +269,9 @@ export default function StudioPage() {
       hasReference: refs.length > 0,
     });
     try {
-      const dataUrl = await geminiGenerateImage({
+      const dataUrl = await generateImage(genChain, {
         prompt,
         references: refs.map(r => ({ mimeType: r.mimeType, base64: r.base64 })),
-        apiKey: activeKey,
         aspectRatio: aspect,
       });
       setSlots(s => s.map(x => x.id === id ? { ...x, status: "done", dataUrl } : x));
@@ -283,11 +282,11 @@ export default function StudioPage() {
   };
 
   const suggestBackground = async () => {
-    if (!hasActiveKey) { toast.error("API-Key fehlt."); return; }
+    if (!hasGenKey) { toast.error("API-Key fehlt."); return; }
     setSuggesting(true);
     try {
       const seed = customPrompt.trim() || sceneDescription.trim() || `${shotType} portrait, ${style} style`;
-      const result = await geminiText({
+      const result = await generateText(genChain, {
         prompt: `Der Nutzer hat folgenden Bild-Kontext: "${seed}".
 
 Beschreibe einen passenden Hintergrund. STRENGE REGELN:
@@ -295,7 +294,6 @@ Beschreibe einen passenden Hintergrund. STRENGE REGELN:
 - KEINE Einleitungen, keine Erklärungen
 - KEINE Details über Personen oder Charaktere
 - 2-3 Sätze auf Deutsch`,
-        apiKey: activeKey,
       });
       const s = result.trim();
       if (s) setAiSuggestion(s);
@@ -317,7 +315,7 @@ Beschreibe einen passenden Hintergrund. STRENGE REGELN:
 
   // ── KI-Assistent: build a polished image prompt from natural-language input ──
   const handleGenerateWithAI = async () => {
-    if (!hasActiveKey || !chatInput.trim()) return;
+    if (!hasGenKey || !chatInput.trim()) return;
     setGeneratingPrompt(true);
     try {
       const wantsPrompt = aiTarget === "prompt" || aiTarget === "both";
@@ -327,7 +325,7 @@ Beschreibe einen passenden Hintergrund. STRENGE REGELN:
       const styleLabel = STYLES.find(s => s.value === style)?.label || style;
 
       if (wantsPrompt) {
-        const result = await geminiText({
+        const result = await generateText(genChain, {
           prompt: `Du bist ein Profi-Prompt-Writer für KI-Bildgenerierung.
 
 Wunsch des Nutzers: "${chatInput.trim()}"
@@ -335,7 +333,6 @@ Wunsch des Nutzers: "${chatInput.trim()}"
 Kontext: ${shotLabel}, ${styleLabel}-Stil${refs.length > 0 ? ", mit Referenzbild" : ""}.
 
 Schreibe einen prägnanten, dichten Bild-Prompt auf Deutsch (max. 3 Sätze). Beschreibe Pose, Ausdruck, Licht, Atmosphäre. KEINE Einleitungen, KEINE Meta-Kommentare. NUR der Prompt-Text.`,
-          apiKey: activeKey,
         });
         const prompt = result.trim();
         if (prompt) {
@@ -346,11 +343,10 @@ Schreibe einen prägnanten, dichten Bild-Prompt auf Deutsch (max. 3 Sätze). Bes
       }
 
       if (wantsBackground) {
-        const result = await geminiText({
+        const result = await generateText(genChain, {
           prompt: `Beschreibe einen passenden Hintergrund für: "${chatInput.trim()}".
 
 STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätze auf Deutsch.`,
-          apiKey: activeKey,
         });
         const bg = result.trim();
         if (bg) setSceneDescription(bg);
@@ -648,7 +644,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                   <div className="flex lg:flex-col gap-2 lg:pt-9 self-stretch lg:self-auto">
                     <Button
                       onClick={handleGenerateWithAI}
-                      disabled={!hasActiveKey || !chatInput.trim() || generatingPrompt}
+                      disabled={!hasGenKey || !chatInput.trim() || generatingPrompt}
                       className="lg:w-10 lg:flex-1 flex-1"
                       title={
                         aiTarget === "background" ? "Hintergrund generieren" :
@@ -740,7 +736,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
           {slots.length === 0 ? (
             <Button
               onClick={generate}
-              disabled={running || !hasActiveKey || refs.length === 0}
+              disabled={running || !hasGenKey || refs.length === 0}
               fullWidth
               size="lg"
               iconLeft={running ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
@@ -751,7 +747,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
             <>
               <Button
                 onClick={generate}
-                disabled={running || !hasActiveKey || refs.length === 0}
+                disabled={running || !hasGenKey || refs.length === 0}
                 className="flex-[2]"
                 size="lg"
                 iconLeft={<Plus className="w-5 h-5" />}
@@ -760,7 +756,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
               </Button>
               <Button
                 onClick={regenerateAll}
-                disabled={running || !hasActiveKey || refs.length === 0}
+                disabled={running || !hasGenKey || refs.length === 0}
                 variant="danger"
                 className="flex-1"
                 size="lg"
@@ -801,7 +797,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
             {/* Add more images right where the gallery is — no need to scroll back up. */}
             <Button
               onClick={generate}
-              disabled={running || !hasActiveKey || refs.length === 0}
+              disabled={running || !hasGenKey || refs.length === 0}
               fullWidth
               size="lg"
               iconLeft={running ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}

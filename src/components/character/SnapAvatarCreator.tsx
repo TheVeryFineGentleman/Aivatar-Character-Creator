@@ -17,7 +17,8 @@ import { NATIONALITIES, pickRandomNationality } from "@/lib/nationalities";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useGenerationLimiter } from "@/hooks/useGenerationLimiter";
-import { AIError, geminiGenerateImage } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage } from "@/lib/generate";
 import { buildVariationBlocks } from "@/lib/characterPrompt";
 import { uid } from "@/lib/uid";
 
@@ -56,7 +57,7 @@ function buildSnapPrompt(opts: { gender: string; ageRange: string; nationalityCo
 }
 
 export function SnapAvatarCreator() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
   const { plan } = useAuth();
   const limiter = useGenerationLimiter();
 
@@ -78,7 +79,7 @@ export function SnapAvatarCreator() {
   };
 
   const snap = async () => {
-    if (!hasActiveKey) { toast.error("Bitte hinterlege zuerst deinen API-Key in den Einstellungen."); return; }
+    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key in den Einstellungen."); return; }
 
     const { allowed, reason } = limiter.clampCount(count);
     if (reason) toast.info(reason);
@@ -98,9 +99,8 @@ export function SnapAvatarCreator() {
     await Promise.all(newSlots.map(async (slot, i) => {
       try {
         const fullPrompt = `${prompt}\n\n${variations[i]}`;
-        const dataUrl = await geminiGenerateImage({
+        const dataUrl = await generateImage(genChain, {
           prompt: fullPrompt,
-          apiKey: activeKey,
           aspectRatio: aspect,
         });
         setItems((s) => s.map((x) => (x.id === slot.id ? { ...x, status: "done", dataUrl, prompt: fullPrompt } : x)));
@@ -117,7 +117,7 @@ export function SnapAvatarCreator() {
     setItems((s) => s.map((x) => (x.id === id ? { ...x, status: "loading", error: undefined } : x)));
     const prompt = `${buildSnapPrompt({ gender, ageRange, nationalityCode: nationality, style })}\n\n${buildVariationBlocks(1)[0]}`;
     try {
-      const dataUrl = await geminiGenerateImage({ prompt, apiKey: activeKey, aspectRatio: aspect });
+      const dataUrl = await generateImage(genChain, { prompt, aspectRatio: aspect });
       setItems((s) => s.map((x) => (x.id === id ? { ...x, status: "done", dataUrl } : x)));
     } catch (e: any) {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");

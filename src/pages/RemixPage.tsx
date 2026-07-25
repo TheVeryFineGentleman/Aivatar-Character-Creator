@@ -16,7 +16,8 @@ import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectGallery, useProjectValue, useProjectRefImages } from "@/hooks/useProjectGallery";
-import { geminiGenerateImage, AIError } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage } from "@/lib/generate";
 import { buildRemixPrompts } from "@/lib/characterPrompt";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
@@ -32,7 +33,7 @@ const STYLE_OPTIONS = [
 ];
 
 export default function RemixPage() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
   const { plan } = useAuth();
 
   const [refs, setRefs] = useProjectRefImages("remix:refs");
@@ -46,7 +47,7 @@ export default function RemixPage() {
   const [error, setError] = useState<string | null>(null);
 
   const hasInput = refs.length > 0 || idea.trim().length > 0;
-  const canGenerate = hasActiveKey && hasInput;
+  const canGenerate = hasGenKey && hasInput;
 
   const reset = () => {
     setIdea(""); setStyle("auto"); setAspectRatio("1:1"); setError(null);
@@ -67,7 +68,7 @@ export default function RemixPage() {
     await Promise.all(fresh.map(async (slot, i) => {
       try {
         const prompt = prompts[i];
-        const dataUrl = await geminiGenerateImage({ prompt, references, apiKey: activeKey, aspectRatio });
+        const dataUrl = await generateImage(genChain, { prompt, references, aspectRatio });
         setSlots(s => s.map(x => x.id === slot.id ? { ...x, status: "done", dataUrl, prompt } : x));
       } catch (e: any) {
         const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
@@ -82,7 +83,7 @@ export default function RemixPage() {
     try {
       const prompt = buildRemixPrompts({ idea, styleId: style, hasReference: refs.length > 0, count: 1 })[0];
       const references = refs.map(r => ({ mimeType: r.mimeType, base64: r.base64 }));
-      const dataUrl = await geminiGenerateImage({ prompt, references, apiKey: activeKey, aspectRatio });
+      const dataUrl = await generateImage(genChain, { prompt, references, aspectRatio });
       setSlots(s => s.map(x => x.id === id ? { ...x, status: "done", dataUrl, prompt } : x));
     } catch (e: any) {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
@@ -93,7 +94,7 @@ export default function RemixPage() {
   // Missing-input hint
   const missing: string[] = [];
   if (!hasInput) missing.push("Bild hochladen oder Idee eingeben");
-  if (!hasActiveKey) missing.push("API-Key (Einstellungen)");
+  if (!hasGenKey) missing.push("API-Key (Einstellungen)");
 
   return (
     <PlanGate requires="premium" feature="Smart Remix">

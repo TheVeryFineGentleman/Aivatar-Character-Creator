@@ -25,7 +25,8 @@ import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectValue, useProjectRefImages } from "@/hooks/useProjectGallery";
-import { geminiGenerateImage, geminiText, extractJson, AIError, translateErrorToGerman } from "@/lib/ai";
+import { extractJson, AIError, translateErrorToGerman } from "@/lib/ai";
+import { generateImage, generateText } from "@/lib/generate";
 import { uid } from "@/lib/uid";
 import { runVideoJob } from "@/lib/serverAI";
 import { uploadAsset } from "@/lib/projectAssets";
@@ -73,7 +74,7 @@ function newScene(raw: Partial<StoryScene>, idx: number): StoryScene {
 }
 
 export default function StoryPage() {
-  const { activeKey, hasActiveKey, videoApi } = useSettings();
+  const { genChain, hasGenKey, videoApi } = useSettings();
   const { plan, credentials } = useAuth();
   const { current: currentProject } = useProjects();
   const projectId = currentProject?.id ?? null;
@@ -260,11 +261,11 @@ export default function StoryPage() {
   };
 
   const generateSuggestions = async () => {
-    if (!hasActiveKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
+    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
     const n = Math.max(1, Math.min(20, suggestCount));
     setLoadingSuggestions(true);
     try {
-      const json = await geminiText({
+      const json = await generateText(genChain, {
         prompt: `Generiere genau ${n} sehr kurze Story-Ideen (jeweils max. 6 Wörter) für ein ${mode === "reel" ? "kurzes Reel/TikTok-Video" : "längeres Storyboard"}.
 
 REGELN:
@@ -273,9 +274,7 @@ REGELN:
 - Eigenständig und unterschiedlich voneinander
 - Antworte NUR mit einem JSON-Array von Strings, sonst nichts
 
-Beispiel-Format: ${JSON.stringify(Array.from({ length: n }, (_, i) => `Idee ${i + 1}`))}`,
-        apiKey: activeKey,
-      });
+Beispiel-Format: ${JSON.stringify(Array.from({ length: n }, (_, i) => `Idee ${i + 1}`))}`,      });
       const parsed = extractJson(json);
       if (Array.isArray(parsed) && parsed.length >= 1) {
         const list = parsed.slice(0, n).map((s: any) => String(s));
@@ -298,7 +297,7 @@ Beispiel-Format: ${JSON.stringify(Array.from({ length: n }, (_, i) => `Idee ${i 
     setPickedIdx(i);
     const seed = storySuggestions[i];
 
-    if (!hasActiveKey) {
+    if (!hasGenKey) {
       // No key — just paste the seed
       setIdea(seed);
       return;
@@ -311,7 +310,7 @@ Beispiel-Format: ${JSON.stringify(Array.from({ length: n }, (_, i) => `Idee ${i 
         ? "\n- REEL-OPTIMIERT: Denke an viralen TikTok-Content\n- Hook-First: starte mit dem visuell stärksten Moment\n- Übertriebene Emotionen, scroll-stopping"
         : "";
 
-      const result = await geminiText({
+      const result = await generateText(genChain, {
         prompt: `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung — optimiert für ein ${mode === "reel" ? "Social-Media-Reel" : "längeres Storyboard"}.
 
 REGELN:
@@ -322,9 +321,7 @@ REGELN:
 
 Zusammenfassung: "${seed}"
 
-Antworte NUR mit der fertigen Beschreibung auf Deutsch. Keine Einleitungen, keine Meta-Kommentare, keine Anführungszeichen drumherum.`,
-        apiKey: activeKey,
-      });
+Antworte NUR mit der fertigen Beschreibung auf Deutsch. Keine Einleitungen, keine Meta-Kommentare, keine Anführungszeichen drumherum.`,      });
       const expanded = result.trim();
       if (expanded) setIdea(expanded);
       else setIdea(seed);
@@ -341,7 +338,7 @@ Antworte NUR mit der fertigen Beschreibung auf Deutsch. Keine Einleitungen, kein
   // KI-Assistent: free-text brief → generate N full story ideas. If there is already
   // an idea in the left textarea, the input is treated as an adjustment wish instead.
   const generateStoryIdea = async () => {
-    if (!hasActiveKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
+    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
     const trimmedBrief = aiAssistantInput.trim();
     const trimmedIdea  = idea.trim();
     if (!trimmedBrief && !trimmedIdea) {
@@ -382,10 +379,8 @@ REGELN:
 - Auf Deutsch${reelHints}
 - ${outputRule}`;
 
-      const result = await geminiText({
-        prompt,
-        apiKey: activeKey,
-        json: ideaCount > 1,
+      const result = await generateText(genChain, {
+        prompt,        json: ideaCount > 1,
       });
 
       let newIdeas: string[];
@@ -438,7 +433,7 @@ REGELN:
   };
 
   const generateStoryboard = async () => {
-    if (!hasActiveKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
+    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
     if (!idea.trim()) { toast.error("Bitte gib deine Story-Idee ein."); return; }
 
     abortRef.current = false;
@@ -446,10 +441,8 @@ REGELN:
     setExpandedSceneId(null);
     try {
       const prompt = buildStoryboardPrompt({ ...config, characters });
-      const json = await geminiText({
-        prompt,
-        apiKey: activeKey,
-        temperature: mode === "reel" ? 0.55 : 0.8,
+      const json = await generateText(genChain, {
+        prompt,        temperature: mode === "reel" ? 0.55 : 0.8,
         maxOutputTokens: mode === "reel" ? 6000 : 8000,
         json: true,
       });
@@ -510,7 +503,7 @@ REGELN:
     scene: StoryScene,
     opts: { prevImageOverride?: string | null } = {},
   ): Promise<string | null> => {
-    if (!hasActiveKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return null; }
+    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return null; }
     updateScene(scene.id, { imageStatus: "loading", imageError: undefined, imageHint: undefined });
 
     // The previous scene's image goes in ONLY for environment / outfit / lighting
@@ -562,10 +555,9 @@ REGELN:
       });
 
       try {
-        const dataUrl = await geminiGenerateImage({
+        const dataUrl = await generateImage(genChain, {
           prompt,
           references: allRefs,
-          apiKey: activeKey,
           aspectRatio: aspect,
         });
         if (abortRef.current) return null;
@@ -601,7 +593,7 @@ REGELN:
     if (abortRef.current) return null;
     const rawMsg = lastErr?.message || "Bild-Generierung fehlgeschlagen.";
     let germanMsg = rawMsg;
-    try { germanMsg = await translateErrorToGerman(rawMsg, activeKey); } catch { /* keep raw */ }
+    try { germanMsg = await translateErrorToGerman(rawMsg, genChain[0]?.key ?? ""); } catch { /* keep raw */ }
     updateScene(scene.id, { imageStatus: "error", imageError: germanMsg, imageHint: lastErr?.hint });
     return null;
   };
@@ -652,8 +644,10 @@ REGELN:
       toast.error("Kein Video-Key gesetzt (Google oder fal.ai) — Einstellungen öffnen.");
       return;
     }
-    const videoProvider = videoApi.provider;
-    const apiKey = videoApi.key;
+    // Provider-Kette fürs Video: gewählter Provider zuerst, der andere als
+    // Fallback bei Fehler (beide können Video; fal hat andere Moderation, kann
+    // also z. B. einen von Veo gefilterten Frame doch rendern).
+    const videoChain = genChain.length ? genChain : [videoApi];
 
     // In continuity mode the override frame IS the scene's image now — show it
     // immediately so the UI reflects the new start frame while Veo renders.
@@ -698,7 +692,7 @@ REGELN:
       const endCompressed = opts.endImageOverride
         ? await cropDataUrlToAspect(opts.endImageOverride, videoRatio)
         : undefined;
-      const runOnce = (withEnd: boolean) => {
+      const runOnce = (withEnd: boolean, provider: "google" | "fal", key: string) => {
         // lastFrame ist Veo-3.1-only → der WITH-end-Versuch bleibt auf 3.1.
         // Der Retry OHNE End-Frame erweitert wieder auf die volle Liste, damit ein
         // transienter 3.1-Ausfall (preview-Modell, gelegentlich 5xx/overloaded) auf
@@ -710,9 +704,9 @@ REGELN:
           : ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview", "veo-3.0-generate-001", "veo-2.0-generate-001"];
         return runVideoJob(
           {
-            provider: videoProvider,
-            apiKey,
-            modelCandidates: videoProvider === "google" ? googleModels : undefined,
+            provider,
+            apiKey: key,
+            modelCandidates: provider === "google" ? googleModels : undefined,
             params: {
               prompt: videoPrompt,
               startImageDataUrl: startCompressed,
@@ -743,32 +737,49 @@ REGELN:
       // again — it costs an extra 5+s server round-trip for guaranteed failure.
       const tryWithEnd = !!endCompressed && !lastFrameUnavailableRef.current;
 
-      let videoUrl: string;
-      try {
-        videoUrl = await runOnce(/* withEnd */ tryWithEnd);
-      } catch (e: any) {
-        const msg = String(e?.message || "");
-        const lastFrameRejected = /lastFrame.*not supported|isn'?t supported by this model/i.test(msg);
-        // Inhaltsfilter/leeres Ergebnis kommt vom START-Bild (Gesicht), das in
-        // BEIDEN Versuchen identisch ist — ein Retry ohne End-Frame schickt genau
-        // dasselbe Gesicht und scheitert identisch, nur verbrennt es Veo-Kontingent
-        // und Zeit. Solche Fehler NICHT nochmal versuchen, sondern sofort ehrlich
-        // durchreichen (der äußere Catch hängt den Inhaltsfilter-Hinweis an).
-        const contentFiltered = /Kein Video in der Antwort|Inhaltsrichtlinie|raiMedia|gefiltert/i.test(msg);
-        if (endCompressed && !contentFiltered && (tryWithEnd || lastFrameRejected)) {
-          if (lastFrameRejected && !lastFrameUnavailableRef.current) {
-            lastFrameUnavailableRef.current = true;
-            toast.info("Veo-Modell ohne lastFrame — Übergänge laufen jetzt über Frame-Extraktion (auch nahtlos).", {
-              id: "lastframe-disabled",
-            });
-          } else if (!lastFrameRejected) {
-            toast.warning(`Szene ${scenes.findIndex((x) => x.id === scene.id) + 1}: erneuter Versuch ohne End-Frame…`);
+      // Provider-Fallback: erst der gewählte Provider (mit lastFrame-Retry-Logik),
+      // bei Fehler der nächste in der Kette (z. B. fal, wenn Veo den Frame filtert).
+      let videoUrl: string | undefined;
+      let lastVideoErr: unknown;
+      for (let ci = 0; ci < videoChain.length; ci++) {
+        const link = videoChain[ci];
+        try {
+          try {
+            videoUrl = await runOnce(/* withEnd */ tryWithEnd, link.provider, link.key);
+          } catch (e: any) {
+            const msg = String(e?.message || "");
+            const lastFrameRejected = /lastFrame.*not supported|isn'?t supported by this model/i.test(msg);
+            // Inhaltsfilter/leeres Ergebnis kommt vom START-Bild (Gesicht) — ein
+            // Retry OHNE End-Frame schickt dasselbe Gesicht und scheitert identisch.
+            // Also NICHT ohne End-Frame wiederholen, sondern raus (der Provider-Loop
+            // versucht dann den anderen Provider, dessen Moderation abweichen kann).
+            const contentFiltered = /Kein Video in der Antwort|Inhaltsrichtlinie|raiMedia|gefiltert/i.test(msg);
+            if (endCompressed && !contentFiltered && (tryWithEnd || lastFrameRejected)) {
+              if (lastFrameRejected && !lastFrameUnavailableRef.current) {
+                lastFrameUnavailableRef.current = true;
+                toast.info("Veo-Modell ohne lastFrame — Übergänge laufen jetzt über Frame-Extraktion (auch nahtlos).", {
+                  id: "lastframe-disabled",
+                });
+              } else if (!lastFrameRejected) {
+                toast.warning(`Szene ${scenes.findIndex((x) => x.id === scene.id) + 1}: erneuter Versuch ohne End-Frame…`);
+              }
+              if (import.meta.env.DEV) console.warn("[Video] retry without lastFrame:", msg);
+              videoUrl = await runOnce(/* withEnd */ false, link.provider, link.key);
+            } else {
+              throw e;
+            }
           }
-          if (import.meta.env.DEV) console.warn("[Video] retry without lastFrame:", msg);
-          videoUrl = await runOnce(/* withEnd */ false);
-        } else {
-          throw e;
+          break; // Erfolg mit diesem Provider
+        } catch (e) {
+          lastVideoErr = e;
+          if (ci < videoChain.length - 1) {
+            toast.warning(`Szene ${scenes.findIndex((x) => x.id === scene.id) + 1}: ${link.provider} fehlgeschlagen — versuche ${link.provider === "google" ? "fal.ai" : "Google"}…`);
+            if (import.meta.env.DEV) console.warn(`[Video] provider ${link.provider} failed, falling back:`, e);
+          }
         }
+      }
+      if (videoUrl === undefined) {
+        throw lastVideoErr instanceof Error ? lastVideoErr : new AIError("VIDEO_FAIL", "Video-Generierung fehlgeschlagen.");
       }
       // Offload the (ephemeral) fal/Veo video URL to the bucket so it stays
       // available after it expires / across reloads. Server fetches it directly.
@@ -1293,7 +1304,7 @@ REGELN:
                           <button
                             type="button"
                             onClick={generateSuggestions}
-                            disabled={loadingSuggestions || expandingSuggestion || !hasActiveKey}
+                            disabled={loadingSuggestions || expandingSuggestion || !hasGenKey}
                             className="inline-flex items-center gap-1 text-[11px] text-flare-300 hover:text-flare-200 mt-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Neue Vorschläge generieren"
                           >
@@ -1334,7 +1345,7 @@ REGELN:
                   <button
                     type="button"
                     onClick={generateStoryIdea}
-                    disabled={generatingIdea || (!aiAssistantInput.trim() && !idea.trim()) || !hasActiveKey}
+                    disabled={generatingIdea || (!aiAssistantInput.trim() && !idea.trim()) || !hasGenKey}
                     className={cn(
                       "rounded-2xl flex items-center justify-center transition-all flex-shrink-0",
                       "w-12 h-12 lg:w-12 lg:h-auto lg:min-h-[160px] lg:flex-1",

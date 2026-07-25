@@ -303,29 +303,47 @@ export function fetchTranscript(youtubeUrl: string): Promise<TranscriptResult> {
   return postJson<TranscriptResult>("/api/ai/transcript", { url: youtubeUrl });
 }
 
-export interface ServerGenerateTextOpts {
-  prompt: string;
-  model?: string;
-  json?: boolean;
-  apiKey?: string;
-  provider?: VideoProvider;
-  temperature?: number;
+export interface ImageRef { mimeType: string; base64: string; }
+
+/**
+ * fal.ai image generation via the server proxy (nano-banana / nano-banana/edit).
+ * Returns a data: URL. Throws AIError on block/empty so the caller can fall back.
+ * The server route expects { prompt, provider, apiKey, options:{ referenceImages,
+ * aspectRatio } } where referenceImages are data-URL strings.
+ */
+export async function serverGenerateImageFal(opts: {
+  prompt: string; apiKey: string; references?: ImageRef[]; aspectRatio?: string;
+}): Promise<string> {
+  const referenceImages = (opts.references ?? []).map((r) => `data:${r.mimeType};base64,${r.base64}`);
+  const res = await postJson<{ dataUrl: string | null; blocked?: boolean }>("/api/ai/generate-image", {
+    prompt: opts.prompt,
+    provider: "fal",
+    apiKey: opts.apiKey,
+    options: { referenceImages, aspectRatio: opts.aspectRatio },
+  });
+  if (res?.blocked) throw new AIError("BLOCKED", "fal.ai hat den Inhalt blockiert (Moderation).");
+  if (!res?.dataUrl) throw new AIError("NO_IMAGE", "fal.ai lieferte kein Bild.");
+  return res.dataUrl;
 }
 
-export function serverGenerateText(opts: ServerGenerateTextOpts): Promise<{ text: string }> {
-  return postJson("/api/ai/generate-text", opts);
-}
-
-export interface ServerGenerateImageOpts {
-  prompt: string;
-  references?: { mimeType: string; base64: string }[];
-  apiKey?: string;
-  provider?: VideoProvider;
-  aspectRatio?: string;
-}
-
-export function serverGenerateImage(opts: ServerGenerateImageOpts): Promise<{ dataUrl: string }> {
-  return postJson("/api/ai/generate-image", opts);
+/**
+ * fal.ai text generation via the server proxy (fal-ai/any-llm). Returns the text.
+ * Server route expects { parts:[{text}|{inlineData}], options:{model}, provider,
+ * apiKey } — NOT { prompt } (that was the old broken shape).
+ */
+export async function serverGenerateTextFal(opts: {
+  prompt: string; apiKey: string; model?: string; references?: ImageRef[];
+}): Promise<string> {
+  const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+  for (const r of opts.references ?? []) parts.push({ inlineData: { mimeType: r.mimeType, data: r.base64 } });
+  parts.push({ text: opts.prompt });
+  const res = await postJson<{ text: string }>("/api/ai/generate-text", {
+    provider: "fal",
+    apiKey: opts.apiKey,
+    parts,
+    options: { model: opts.model },
+  });
+  return (res?.text ?? "").toString();
 }
 
 /* ============================================================

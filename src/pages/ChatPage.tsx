@@ -19,7 +19,8 @@ import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectGallery, useProjectValue } from "@/hooks/useProjectGallery";
-import { geminiGenerateImage, AIError } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage } from "@/lib/generate";
 import { buildChatPrompts } from "@/lib/characterPrompt";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
@@ -81,7 +82,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
   const { plan } = useAuth();
 
   const [answers, setAnswers] = useProjectValue<Record<number, string>>("chat:answers", {});
@@ -174,7 +175,7 @@ export default function ChatPage() {
   const reviewComplete = step >= QUESTIONS.length;
 
   const generate = async (mode: "append" | "replace" = "append") => {
-    if (!hasActiveKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
+    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
     const limit = plan.maxImagesPerRun === -1 ? count : Math.min(count, plan.maxImagesPerRun);
     const fresh: ImageSlot[] = Array.from({ length: limit }, () => ({ id: uid(), status: "loading" as const }));
     setSlots((prev) => mode === "replace" ? fresh : [...prev, ...fresh]);
@@ -186,7 +187,7 @@ export default function ChatPage() {
     await Promise.all(fresh.map(async (slot, i) => {
       try {
         const prompt = prompts[i];
-        const dataUrl = await geminiGenerateImage({ prompt, apiKey: activeKey, aspectRatio: aspect });
+        const dataUrl = await generateImage(genChain, { prompt, aspectRatio: aspect });
         setSlots((s) => s.map((x) => x.id === slot.id ? { ...x, status: "done", dataUrl } : x));
       } catch (e: any) {
         const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
@@ -420,7 +421,7 @@ export default function ChatPage() {
             {/* Add more characters without scrolling back up to the chat. */}
             <Button
               onClick={() => generate("append")}
-              disabled={running || !hasActiveKey}
+              disabled={running || !hasGenKey}
               fullWidth
               size="lg"
               iconLeft={running ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}

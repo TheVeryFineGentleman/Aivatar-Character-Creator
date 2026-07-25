@@ -17,7 +17,8 @@ import { useProjectValue, useProjectRefImages, useProjectResults } from "@/hooks
 import { downloadAllAsZip, DOWNLOAD_RESOLUTIONS } from "@/lib/image";
 import { urlToBase64 } from "@/lib/image";
 import { Menu, MenuItem, MenuSection } from "@/components/ui/Menu";
-import { geminiGenerateImage, AIError } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage } from "@/lib/generate";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
 
@@ -100,7 +101,7 @@ function buildViewPrompt(view: typeof ANGLES[number], style: string): string {
 }
 
 export default function ViewsPage() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
   const [refs, setRefs] = useProjectRefImages("views:refs");
   const [selectedRef, setSelectedRef] = useProjectValue("views:selectedRef", 0);
   const [aspectRatio, setAspectRatio] = useProjectValue("views:aspectRatio", "1:1");
@@ -111,7 +112,7 @@ export default function ViewsPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const handleGenerate = async () => {
-    if (!hasActiveKey) { toast.error("API-Key fehlt."); return; }
+    if (!hasGenKey) { toast.error("API-Key fehlt."); return; }
     if (refs.length === 0) { toast.error("Lade ein Referenzbild hoch."); return; }
 
     setRunning(true);
@@ -130,10 +131,9 @@ export default function ViewsPage() {
         const references = [{ mimeType: ref.mimeType, base64: ref.base64 }];
         if (frontAnchor && i > 0) references.push(frontAnchor);
 
-        const dataUrl = await geminiGenerateImage({
+        const dataUrl = await generateImage(genChain, {
           prompt: buildViewPrompt(ANGLES[i], style),
           references,
-          apiKey: activeKey,
           aspectRatio,
         });
         setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "done", dataUrl } : x));
@@ -176,10 +176,9 @@ export default function ViewsPage() {
     }
 
     try {
-      const dataUrl = await geminiGenerateImage({
+      const dataUrl = await generateImage(genChain, {
         prompt: buildViewPrompt(ANGLES[idx], style),
         references,
-        apiKey: activeKey,
         aspectRatio,
       });
       setResults(prev => prev.map((x, i) => i === idx ? { ...x, status: "done", dataUrl } : x));
@@ -324,7 +323,7 @@ export default function ViewsPage() {
         {/* Generate button — full width */}
         <Button
           onClick={handleGenerate}
-          disabled={refs.length === 0 || running || !hasActiveKey}
+          disabled={refs.length === 0 || running || !hasGenKey}
           fullWidth
           className="mb-4"
           iconLeft={running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}

@@ -16,7 +16,8 @@ import { NATIONALITIES, pickRandomNationality, findNationality } from "@/lib/nat
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectGallery, useProjectValue } from "@/hooks/useProjectGallery";
-import { geminiGenerateImage, AIError } from "@/lib/ai";
+import { AIError } from "@/lib/ai";
+import { generateImage } from "@/lib/generate";
 import { buildQuickPrompts } from "@/lib/characterPrompt";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
@@ -43,7 +44,7 @@ const STYLE_OPTIONS = [
 ];
 
 export default function QuickPage() {
-  const { activeKey, hasActiveKey } = useSettings();
+  const { genChain, hasGenKey } = useSettings();
   const { plan } = useAuth();
 
   const [gender, setGender] = useProjectValue("quick:gender", "");
@@ -57,7 +58,7 @@ export default function QuickPage() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canGenerate = hasActiveKey && gender && ageId;
+  const canGenerate = hasGenKey && gender && ageId;
 
   const randomize = () => {
     const n = pickRandomNationality();
@@ -86,7 +87,7 @@ export default function QuickPage() {
     await Promise.all(fresh.map(async (slot, i) => {
       try {
         const prompt = prompts[i];
-        const dataUrl = await geminiGenerateImage({ prompt, apiKey: activeKey, aspectRatio });
+        const dataUrl = await generateImage(genChain, { prompt, aspectRatio });
         setSlots(s => s.map(x => x.id === slot.id ? { ...x, status: "done", dataUrl } : x));
       } catch (e: any) {
         const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
@@ -102,7 +103,7 @@ export default function QuickPage() {
     try {
       const nationalityHint = findNationality(nat)?.promptHint;
       const prompt = buildQuickPrompts({ gender, age, styleId: style, nationalityHint, count: 1 })[0];
-      const dataUrl = await geminiGenerateImage({ prompt, apiKey: activeKey, aspectRatio });
+      const dataUrl = await generateImage(genChain, { prompt, aspectRatio });
       setSlots(s => s.map(x => x.id === id ? { ...x, status: "done", dataUrl } : x));
     } catch (e: any) {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
@@ -114,7 +115,7 @@ export default function QuickPage() {
   const missing: string[] = [];
   if (!gender) missing.push("Geschlecht");
   if (!ageId) missing.push("Alter");
-  if (!hasActiveKey) missing.push("API-Key (Einstellungen)");
+  if (!hasGenKey) missing.push("API-Key (Einstellungen)");
 
   return (
     <PlanGate requires="basic" feature="Der Quick Character Creator">
