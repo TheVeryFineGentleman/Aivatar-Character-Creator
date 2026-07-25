@@ -10,7 +10,7 @@
  * den Server-Proxy (nano-banana / any-llm).
  */
 
-import { AIError, geminiGenerateImage, geminiText } from "@/lib/ai";
+import { AIError, extractJson, geminiGenerateImage, geminiText } from "@/lib/ai";
 import { serverGenerateImageFal, serverGenerateTextFal, type ImageRef } from "@/lib/serverAI";
 
 export type GenProvider = "google" | "fal";
@@ -66,13 +66,17 @@ export async function generateText(chain: GenLink[], args: GenerateTextArgs): Pr
   for (const link of chain) {
     if (!link.key) continue;
     try {
-      if (link.provider === "fal") {
-        return await serverGenerateTextFal({ prompt: args.prompt, apiKey: link.key, model: args.model });
-      }
-      return await geminiText({
-        prompt: args.prompt, apiKey: link.key, model: args.model,
-        temperature: args.temperature, maxOutputTokens: args.maxOutputTokens, json: args.json,
-      });
+      const text = link.provider === "fal"
+        ? await serverGenerateTextFal({ prompt: args.prompt, apiKey: link.key, model: args.model })
+        : await geminiText({
+            prompt: args.prompt, apiKey: link.key, model: args.model,
+            temperature: args.temperature, maxOutputTokens: args.maxOutputTokens, json: args.json,
+          });
+      // Bei json-Modus sicherstellen, dass die Antwort parsebar ist — sonst wirft
+      // extractJson und wir fallen auf den nächsten Provider zurück (z. B. fal
+      // liefert kaputtes JSON-Storyboard → Google übernimmt).
+      if (args.json) extractJson(text);
+      return text;
     } catch (e) {
       lastErr = e;
     }
