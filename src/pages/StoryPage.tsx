@@ -598,7 +598,7 @@ REGELN:
     return null;
   };
 
-  const generateAllImages = async () => {
+  const generateAllImages = async (opts: { onlyMissing?: boolean } = {}) => {
     if (!scenes.length) { toast.error("Erst Storyboard generieren."); return; }
     abortRef.current = false;
     setGeneratingImages(true);
@@ -608,6 +608,14 @@ REGELN:
       let prevImg: string | null = null;
       for (const s of scenes) {
         if (abortRef.current) break; // user clicked „Abbrechen"
+        // „Fehlende Bilder generieren": bereits fertige Szenen NICHT neu rendern.
+        // Ihr Bild wird trotzdem als Kontinuitäts-Referenz weitergereicht, damit
+        // die nachfolgenden fehlenden Szenen die Anschluss-Kette behalten.
+        const alreadyDone = s.imageStatus === "done" && (!!s.imageDataUrl || !!s.imageUrl);
+        if (opts.onlyMissing && alreadyDone) {
+          prevImg = s.imageDataUrl || s.imageUrl || prevImg;
+          continue;
+        }
         const dataUrl = await generateSceneImage(s, { prevImageOverride: prevImg });
         if (dataUrl) prevImg = dataUrl;
       }
@@ -1003,7 +1011,7 @@ REGELN:
   const primaryAction = () => {
     switch (phase) {
       case "create":      return generateFullStory();
-      case "images":      return generateAllImages();
+      case "images":      return generateAllImages({ onlyMissing: anyImage });
       case "videos":      return generateAllVideos();
       case "videos-redo": return generateAllVideos({ force: true });
     }
@@ -1700,7 +1708,7 @@ REGELN:
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    onClick={generateAllImages}
+                    onClick={() => generateAllImages()}
                     loading={generatingImages}
                     size="sm"
                     iconLeft={<ImageIcon className="w-3.5 h-3.5" />}
