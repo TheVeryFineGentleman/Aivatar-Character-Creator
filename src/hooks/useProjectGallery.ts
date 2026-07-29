@@ -66,7 +66,7 @@ export function useProjectGallery(pageKey: string): [Slots, Dispatch<SetStateAct
           inflight.current.add(s.id);
           uploadAsset(email, projectId, "generated", s.dataUrl!)
             .then((url) => setSlots((cur) => cur.map((x) => (x.id === s.id ? { ...x, dataUrl: url } : x))))
-            .catch(() => { /* keep base64; retried on next change */ })
+            .catch((err) => console.warn("[gallery] Spaces-Upload fehlgeschlagen (behalte base64, retry bei nächster Änderung):", err?.message || err))
             .finally(() => inflight.current.delete(s.id));
         }
       }
@@ -180,7 +180,7 @@ export function useProjectRefImages(pageKey: string): [RefImage[], Dispatch<SetS
           const src = r.dataUrl?.startsWith("data:") ? r.dataUrl : `data:${r.mimeType};base64,${r.base64}`;
           uploadAsset(email, projectId, "refs", src)
             .then((url) => { urlById.current.set(r.id, url); setRefs((cur) => [...cur]); })
-            .catch(() => {})
+            .catch((err) => console.warn("[refs] Spaces-Upload fehlgeschlagen:", err?.message || err))
             .finally(() => inflight.current.delete(r.id));
         }
       }
@@ -236,7 +236,7 @@ export function useProjectResults(pageKey: string): [ImageSlotData[], Dispatch<S
           inflight.current.add(r.id);
           uploadAsset(email, projectId, "generated", r.dataUrl!)
             .then((url) => setResults((cur) => cur.map((x) => (x.id === r.id ? { ...x, dataUrl: url } : x))))
-            .catch(() => {})
+            .catch((err) => console.warn("[results] Spaces-Upload fehlgeschlagen:", err?.message || err))
             .finally(() => inflight.current.delete(r.id));
         }
       }
