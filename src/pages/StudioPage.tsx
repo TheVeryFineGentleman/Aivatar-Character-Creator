@@ -17,6 +17,8 @@ import { MultiDownloadButton } from "@/components/DownloadButton";
 import { PlanGate } from "@/components/PlanGate";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
 import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
+import { useProjectProfile } from "@/hooks/useProjectProfile";
+import { buildProfilePreamble } from "@/lib/projectProfile";
 import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
@@ -190,6 +192,7 @@ export default function StudioPage() {
 
   // Uploaded references + all inputs are persisted per project.
   const [refs, setRefs] = useProjectRefImages("studio:refs");
+  const [projectProfile] = useProjectProfile();
   const [aspect, setAspect] = useProjectValue("studio:aspect", "4:5");
   const [shotType, setShotType] = useProjectValue("studio:shotType", "upperbody");
   const [background, setBackground] = useProjectValue("studio:background", "white");
@@ -288,7 +291,7 @@ export default function StudioPage() {
     try {
       const seed = customPrompt.trim() || sceneDescription.trim() || `${shotType} portrait, ${style} style`;
       const result = await generateText(genChain, {
-        prompt: `Der Nutzer hat folgenden Bild-Kontext: "${seed}".
+        prompt: buildProfilePreamble(projectProfile) + `Der Nutzer hat folgenden Bild-Kontext: "${seed}".
 
 Beschreibe einen passenden Hintergrund. STRENGE REGELN:
 - Antworte NUR mit der reinen Hintergrundbeschreibung
@@ -327,7 +330,7 @@ Beschreibe einen passenden Hintergrund. STRENGE REGELN:
 
       if (wantsPrompt) {
         const result = await generateText(genChain, {
-          prompt: `Du bist ein Profi-Prompt-Writer für KI-Bildgenerierung.
+          prompt: buildProfilePreamble(projectProfile) + `Du bist ein Profi-Prompt-Writer für KI-Bildgenerierung.
 
 Wunsch des Nutzers: "${chatInput.trim()}"
 
@@ -345,7 +348,7 @@ Schreibe einen prägnanten, dichten Bild-Prompt auf Deutsch (max. 3 Sätze). Bes
 
       if (wantsBackground) {
         const result = await generateText(genChain, {
-          prompt: `Beschreibe einen passenden Hintergrund für: "${chatInput.trim()}".
+          prompt: buildProfilePreamble(projectProfile) + `Beschreibe einen passenden Hintergrund für: "${chatInput.trim()}".
 
 STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätze auf Deutsch.`,
         });

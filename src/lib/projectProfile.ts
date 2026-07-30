@@ -34,13 +34,14 @@ export const CONTENT_TYPES: { value: ProfileContentType; label: string }[] = [
 export function buildProfilePreamble(p: ProjectProfile | null | undefined): string {
   if (!p || !p.completed || p.skipped) return "";
   const ct = CONTENT_TYPES.find((c) => c.value === p.contentType)?.label;
-  return [
+  const lines = [
     "KONTEXT (Projekt-Profil — richte deinen Vorschlag genau daran aus):",
     p.purpose ? `- Ziel des Projekts: ${p.purpose}` : "",
     ct ? `- Content-Typ: ${ct}` : "",
     p.language ? `- Sprache der Ausgabe: ${p.language}` : "",
-    "",
-  ].filter(Boolean).join("\n");
+  ].filter(Boolean);
+  // Sauberer Abstand zur nachfolgenden Aufgabe (sonst klebt "…Deutsch" am Prompt).
+  return lines.join("\n") + "\n\n";
 }
 
 /** Mappt das Profil auf Pro-Seite-Voreinstellungen (Format je Content-Typ, Sprache). */

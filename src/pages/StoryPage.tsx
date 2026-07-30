@@ -26,6 +26,8 @@ import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectValue, useProjectRefImages } from "@/hooks/useProjectGallery";
+import { useProjectProfile } from "@/hooks/useProjectProfile";
+import { buildProfilePreamble } from "@/lib/projectProfile";
 import { extractJson, AIError, translateErrorToGerman } from "@/lib/ai";
 import { generateImage, generateText } from "@/lib/generate";
 import { uid } from "@/lib/uid";
@@ -82,6 +84,7 @@ export default function StoryPage() {
 
   // Uploaded character references + their typed meta persist per project.
   const [refs, setRefs] = useProjectRefImages("story:refs");
+  const [projectProfile] = useProjectProfile();
   const [characterNames, setCharacterNames] = useProjectValue<string[]>("story:characterNames", []);
   const [characterGenders, setCharacterGenders] = useProjectValue<Array<"male" | "female" | "neutral">>("story:characterGenders", []);
   const [characterDescriptions, setCharacterDescriptions] = useProjectValue<string[]>("story:characterDescriptions", []);
@@ -267,7 +270,7 @@ export default function StoryPage() {
     setLoadingSuggestions(true);
     try {
       const json = await generateText(genChain, {
-        prompt: `Generiere genau ${n} sehr kurze Story-Ideen (jeweils max. 6 Wörter) für ein ${mode === "reel" ? "kurzes Reel/TikTok-Video" : "längeres Storyboard"}.
+        prompt: buildProfilePreamble(projectProfile) + `Generiere genau ${n} sehr kurze Story-Ideen (jeweils max. 6 Wörter) für ein ${mode === "reel" ? "kurzes Reel/TikTok-Video" : "längeres Storyboard"}.
 
 REGELN:
 - Jede Idee ist eine prägnante deutsche Phrase
@@ -312,7 +315,7 @@ Beispiel-Format: ${JSON.stringify(Array.from({ length: n }, (_, i) => `Idee ${i 
         : "";
 
       const result = await generateText(genChain, {
-        prompt: `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung — optimiert für ein ${mode === "reel" ? "Social-Media-Reel" : "längeres Storyboard"}.
+        prompt: buildProfilePreamble(projectProfile) + `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung — optimiert für ein ${mode === "reel" ? "Social-Media-Reel" : "längeres Storyboard"}.
 
 REGELN:
 - 3–6 Sätze, visuell und atmosphärisch
@@ -381,7 +384,7 @@ REGELN:
 - ${outputRule}`;
 
       const result = await generateText(genChain, {
-        prompt,        json: ideaCount > 1,
+        prompt: buildProfilePreamble(projectProfile) + prompt,        json: ideaCount > 1,
       });
 
       let newIdeas: string[];
