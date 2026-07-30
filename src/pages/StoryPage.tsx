@@ -704,6 +704,7 @@ REGELN:
         language,
         aspect,
         voiceMode: enableSpeaker ? voiceMode : "sprecher",
+        speakerGender,
         // Position + continuity drive the "one continuous take" in/out directives.
         sceneIndex: sceneIdx < 0 ? 0 : sceneIdx,
         sceneCount: scenes.length,

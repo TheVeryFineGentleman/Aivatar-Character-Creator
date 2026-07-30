@@ -598,6 +598,14 @@ export function buildSceneImagePrompt(opts: {
  * Build the prompt for the video-generation API (Veo3 / fal.ai).
  * Targets short clips with the pacing/mood/hook directives the user picked.
  */
+/** Fester Stimm-Deskriptor — WORTGLEICH über alle Clips, damit Veo möglichst
+ *  dieselbe Sprecherstimme trifft (Veo bietet kein echtes Voice-Locking). */
+function voiceDescriptor(g: "male" | "female" | "neutral"): string {
+  if (g === "male") return "a warm, medium-deep, steady male voice, natural and clear, at a moderate, even pace";
+  if (g === "female") return "a warm, clear, steady female voice, natural and clear, at a moderate, even pace";
+  return "a calm, neutral, steady voice, natural and clear, at a moderate, even pace";
+}
+
 export function buildSceneVideoPrompt(opts: {
   scene: StoryScene;
   mode: StoryMode;
@@ -608,6 +616,8 @@ export function buildSceneVideoPrompt(opts: {
   language: string;
   aspect: string;
   voiceMode: "sprecher" | "dialog";
+  /** Für eine über alle Clips konstante Sprecherstimme. */
+  speakerGender?: "male" | "female" | "neutral";
   /** Position of this scene in the reel (0-based) + total — drives the
    *  continuous-take in/out directives so segments flow into each other. */
   sceneIndex?: number;
@@ -617,6 +627,7 @@ export function buildSceneVideoPrompt(opts: {
   continuity?: boolean;
 }): string {
   const { scene, mode, pacing, mood, colorMood, effectiveHook, language, aspect, voiceMode } = opts;
+  const speakerGender = opts.speakerGender ?? "neutral";
   const langName = getLanguageName(language);
 
   // ── Continuous-take handling ────────────────────────────────────────────────
@@ -669,6 +680,14 @@ export function buildSceneVideoPrompt(opts: {
         "This is narration only — the on-screen subject does NOT mouth or lip-sync these words.";
   }
 
+  // Konsistente Stimme über ALLE Clips: identischer Deskriptor pro Reel, damit Veo
+  // (das jeden Clip separat generiert) möglichst dieselbe Sprecherstimme trifft.
+  const voiceLine = scene.dialogText
+    ? (voiceMode === "sprecher"
+        ? `Narrator voice — KEEP IT IDENTICAL ACROSS EVERY CLIP OF THIS REEL: ${voiceDescriptor(speakerGender)}. One and the same narrator in every segment — same timbre, pitch, pace and accent; never change the voice between clips.`
+        : "Character voices stay CONSISTENT across the whole reel: each named character keeps the exact same voice (timbre, pitch, accent) in every clip — never re-cast a character's voice between segments.")
+    : "";
+
   const lines = [
     `${scene.shotType.replace(/-/g, " ")}, ${scene.cameraAngle.replace(/-/g, " ")}.`,
     `Action: ${scene.keyAction || scene.summary}.`,
@@ -686,6 +705,7 @@ export function buildSceneVideoPrompt(opts: {
     startMotionLine,
     endHandling,
     openingLine,
+    voiceLine,
     speechLine,
     "ABSOLUTELY NO on-screen text, captions, watermarks, or logos.",
   ];
