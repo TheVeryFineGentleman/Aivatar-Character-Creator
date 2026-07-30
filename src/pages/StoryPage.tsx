@@ -734,10 +734,11 @@ REGELN:
               // Veo/fal only render 9:16 | 16:9 | 1:1 — snap the chosen format so the
               // clip is never silently rendered as the provider default (16:9).
               aspectRatio: videoAspect(aspect),
-              // Veo 3.1's lastFrame ONLY works at 8s. At 4s or 6s Google rejects
-              // the request with "lastFrame isn't supported by this model".
-              // Force 8s when we're sending an end frame.
-              durationSeconds: withEnd ? 8 : (mode === "reel" ? 6 : 8),
+              // Veo 3.1's lastFrame ONLY works at 8s (at 4s/6s Google rejects it).
+              // Zudem immer 8s rendern: die LETZTE Reel-Szene hat keinen End-Frame
+              // und bekam früher nur 6s — zu kurz, der Dialog wurde abgeschnitten.
+              // 8s gibt jeder Szene genug Zeit, alles vollständig auszusprechen.
+              durationSeconds: 8,
             },
           },
           (p) => {

@@ -3,7 +3,7 @@
  * Single button → opens a menu when multiple formats apply.
  */
 import { useState } from "react";
-import { Download, FileImage, FileArchive, Loader2 } from "lucide-react";
+import { Download, FileArchive, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Menu, MenuItem, MenuSection } from "@/components/ui/Menu";
 import { downloadDataUrl, downloadAllAsZip, DOWNLOAD_RESOLUTIONS } from "@/lib/image";
@@ -43,8 +43,12 @@ interface MultiProps {
   label?: string;
 }
 
-/** Multi-file download — ZIP per resolution preset. */
-export function MultiDownloadButton({ images, zipName = "aivatar-collection.zip", label = "Alle herunterladen" }: MultiProps) {
+/**
+ * Multi-Download — IMMER als ZIP. Haupt-Klick lädt sofort ein ZIP mit allen
+ * Bildern (Originalauflösung); der Caret öffnet nur die Auflösungswahl (ebenfalls
+ * ZIP). Es gibt bewusst keinen Einzeldownload-Pfad mehr hier — „Alle" heißt ZIP.
+ */
+export function MultiDownloadButton({ images, zipName = "aivatar-collection.zip", label = "Alle als ZIP" }: MultiProps) {
   const [busy, setBusy] = useState(false);
 
   const downloadAll = async (maxWidth: number) => {
@@ -63,41 +67,37 @@ export function MultiDownloadButton({ images, zipName = "aivatar-collection.zip"
   if (!images.length) return null;
 
   return (
-    <Menu
-      align="right"
-      triggerClassName="inline-flex items-center gap-2 px-3 h-8 text-xs rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-      trigger={
-        <>
-          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-          {label}
-        </>
-      }
-    >
-      <MenuSection label="Alle als ZIP — Auflösung wählen">
-        {DOWNLOAD_RESOLUTIONS.map((opt) => (
-          <MenuItem
-            key={opt.label}
-            icon={<FileArchive className="w-4 h-4" />}
-            onClick={() => downloadAll(opt.maxWidth)}
-            disabled={busy}
-          >
-            {opt.label}
-          </MenuItem>
-        ))}
-      </MenuSection>
-      {images.length <= 6 && (
-        <MenuSection label="Einzeln (Original)">
-          {images.map((img, i) => (
+    <div className="inline-flex items-stretch overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      {/* Haupt-Aktion: EIN Klick → ZIP mit allen Bildern (Originalauflösung). */}
+      <button
+        type="button"
+        onClick={() => downloadAll(0)}
+        disabled={busy}
+        title={`Alle ${images.length} Bilder als ZIP herunterladen`}
+        className="inline-flex items-center gap-2 px-3 h-8 text-xs transition-colors hover:bg-white/10 disabled:opacity-50"
+      >
+        {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileArchive className="w-3.5 h-3.5" />}
+        {label}
+      </button>
+      {/* Sekundär: Auflösung wählen (weiterhin ZIP). */}
+      <Menu
+        align="right"
+        triggerClassName="flex items-center justify-center px-1.5 h-8 border-l border-white/10 transition-colors hover:bg-white/10"
+        trigger={<ChevronDown className="w-3.5 h-3.5" />}
+      >
+        <MenuSection label="Als ZIP — Auflösung wählen">
+          {DOWNLOAD_RESOLUTIONS.map((opt) => (
             <MenuItem
-              key={img.filename + i}
-              icon={<FileImage className="w-4 h-4" />}
-              onClick={() => downloadDataUrl(img.dataUrl, img.filename)}
+              key={opt.label}
+              icon={<FileArchive className="w-4 h-4" />}
+              onClick={() => downloadAll(opt.maxWidth)}
+              disabled={busy}
             >
-              <span className="truncate">{img.filename}</span>
+              {opt.label}
             </MenuItem>
           ))}
         </MenuSection>
-      )}
-    </Menu>
+      </Menu>
+    </div>
   );
 }

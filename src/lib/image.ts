@@ -267,11 +267,21 @@ export async function downloadAllAsZip(
   maxWidth: number,
 ): Promise<void> {
   if (!images.length) return;
-  const { default: JSZip } = await import("jszip").catch(() => ({ default: null as any }));
+  // JSZip robust auflösen: der CJS/ESM-Interop unterscheidet sich zwischen dev
+  // (esbuild) und prod (rollup) — der Konstruktor kann auf mod, mod.default oder
+  // mod.default.default liegen. Die aufrufbare Ebene finden, statt blind `.default`
+  // zu nehmen (das war je nach Build undefined → stiller Einzeldownload-Fallback).
+  const mod: any = await import("jszip").catch(() => null);
+  const JSZip =
+    typeof mod === "function" ? mod :
+    typeof mod?.default === "function" ? mod.default :
+    typeof mod?.default?.default === "function" ? mod.default.default :
+    null;
   const preset = DOWNLOAD_RESOLUTIONS.find((r) => r.maxWidth === maxWidth);
   const suffix = preset?.suffix ?? String(maxWidth || "orig");
 
   if (!JSZip) {
+    console.warn("[downloadAllAsZip] JSZip konnte nicht geladen werden — Fallback auf Einzeldownloads.");
     // Fallback: trigger sequential downloads.
     for (const img of images) {
       const out = await resizeDataUrl(img.dataUrl, maxWidth);
