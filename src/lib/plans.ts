@@ -128,6 +128,15 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
 export const PLAN_RANK: Record<PlanTier, number> = { basic: 0, premium: 1, full: 2, studio: 3 };
 
 /**
+ * Vollverkauf-Variante (Einmalkauf, kein Abo). In dieser Version werden KEINE
+ * Pläne/Abos/Upselling-Flächen angezeigt (Pricing-Links, Preis-Chip, Promo-Banner),
+ * weil der Nutzer bereits alles gekauft hat.
+ */
+export function isFullSale(plan: PlanCapabilities | null | undefined): boolean {
+  return plan?.billing === "oneTime";
+}
+
+/**
  * Upgrade-Preis Pro → Premium: nur die Differenz zwischen den beiden Paketen.
  * Wird in der PricingPage angezeigt, wenn der User schon Pro hat.
  */

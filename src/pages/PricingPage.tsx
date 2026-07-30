@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/layout/Shell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { PLANS, PREMIUM_UPGRADE_FROM_PRO_EUR, type PlanTier } from "@/lib/plans";
+import { PLANS, PREMIUM_UPGRADE_FROM_PRO_EUR, isFullSale, type PlanTier } from "@/lib/plans";
 import { BACKEND } from "@/lib/backend";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/cn";
@@ -77,7 +77,21 @@ const ACCENT_CLASSES: Record<PlanTier, { plate: string; check: string; gradient:
 };
 
 export default function PricingPage() {
-  const { license } = useAuth();
+  const { license, plan } = useAuth();
+
+  // Vollverkauf (Einmalkauf): keine Pläne/Abos — es ist bereits alles gekauft.
+  if (isFullSale(plan)) {
+    return (
+      <div>
+        <PageHeader title="Vollversion" subtitle="Du hast die Vollversion — alle Funktionen sind dauerhaft freigeschaltet. Keine Pläne, keine Abos." />
+        <Card glowing className="max-w-xl mx-auto text-center py-12">
+          <Crown className="w-10 h-10 text-flare-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Alles freigeschaltet</h2>
+          <p className="text-ink-50/60">Deine Vollversion enthält sämtliche Tools und Features — es gibt nichts zu upgraden.</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>

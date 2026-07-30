@@ -14,6 +14,7 @@ import { Menu, MenuItem, MenuSection, MenuDivider } from "@/components/ui/Menu";
 import { cn } from "@/lib/cn";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StorageMeter } from "@/components/StorageMeter";
+import { isFullSale } from "@/lib/plans";
 
 // Build-Version (Git-Commit) — oben links, damit sofort sichtbar ist, welcher
 // Stand geladen ist. Verlinkt auf den GitHub-Commit, wenn es ein echter SHA ist.
@@ -107,6 +108,8 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
   const navigate = useNavigate();
   const location = useLocation();
   const planTier = (plan.tier ?? "basic") as "basic" | "premium" | "full" | "studio";
+  // Vollverkauf (Einmalkauf): keine Pläne/Abos/Preise anzeigen.
+  const fullSale = isFullSale(plan);
 
   // Fehlt ein nötiger API-Key? Google ist immer Pflicht (Text & Bilder); der
   // fal.ai-Key nur bei Video-fähigen Plänen. Mirrort SettingsDialog.connectNeedsAttention.
@@ -331,16 +334,18 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
                 <div className="text-sm font-medium truncate">{credentials.email}</div>
                 <div className="text-[11px] text-ink-50/55 mt-1.5 flex items-center gap-2">
                   <Badge tone={plan.tier === "studio" ? "cool" : plan.tier === "full" ? "accent" : plan.tier === "premium" ? "cool" : "neutral"} className="!text-[9px] !py-0">{plan.label}</Badge>
-                  <span>{plan.monthlyChip}</span>
+                  <span>{fullSale ? "Vollversion — alles freigeschaltet" : plan.monthlyChip}</span>
                 </div>
               </div>
               <MenuSection>
                 <MenuItem icon={<KeyRound className="w-4 h-4" />} onClick={onSettings}>
                   API-Keys & Provider
                 </MenuItem>
-                <MenuItem icon={<CreditCard className="w-4 h-4" />} onClick={() => navigate("/pricing")}>
-                  Pläne & Abos
-                </MenuItem>
+                {!fullSale && (
+                  <MenuItem icon={<CreditCard className="w-4 h-4" />} onClick={() => navigate("/pricing")}>
+                    Pläne & Abos
+                  </MenuItem>
+                )}
                 {license?.isAdmin && (
                   <MenuItem
                     icon={<ShieldCheck className="w-4 h-4" />}

@@ -4,6 +4,8 @@ import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import { DisclaimerPopup } from "@/components/DisclaimerPopup";
 import { CookieConsent } from "@/components/CookieConsent";
 import { AivatarAcademyPromo } from "@/components/AivatarAcademyPromo";
+import { useAuth } from "@/hooks/useAuth";
+import { isFullSale } from "@/lib/plans";
 
 const PROMO_HIDDEN_PREFIXES = ["/legal", "/admin", "/pricing"];
 
@@ -30,13 +32,15 @@ export function Shell({ children }: { children: ReactNode }) {
 }
 
 function Footer() {
+  const { plan } = useAuth();
+  const fullSale = isFullSale(plan);
   return (
     <footer className="border-t border-white/5 mt-12 py-8 bg-ink-950/60">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-ink-50/45">
           <div className="flex items-center gap-4">
             <span>© {new Date().getFullYear()} Aivatar</span>
-            <Link to="/pricing" className="hover:text-ink-50">Preise</Link>
+            {!fullSale && <Link to="/pricing" className="hover:text-ink-50">Preise</Link>}
             <Link to="/legal" className="hover:text-ink-50">Rechtliches</Link>
           </div>
           <div className="text-[10px] uppercase tracking-widest text-ink-50/35">
