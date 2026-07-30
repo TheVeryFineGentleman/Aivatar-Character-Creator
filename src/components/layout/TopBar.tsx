@@ -209,7 +209,7 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
       {/* ── Center: tabs with sliding underline ── */}
       <div
         ref={tabsWrapRef}
-        className="flex-1 flex items-center justify-center gap-1 relative overflow-x-auto"
+        className="flex-1 flex items-center justify-center gap-1 relative overflow-x-auto no-scrollbar"
       >
         {TABS.map((tab) => {
           const locked = tab.planKey ? !plan[tab.planKey] : false;

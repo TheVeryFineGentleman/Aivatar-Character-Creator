@@ -16,6 +16,7 @@ import { ImageGrid, type ImageSlot } from "@/components/ImageGrid";
 import { MultiDownloadButton } from "@/components/DownloadButton";
 import { PlanGate } from "@/components/PlanGate";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
+import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
 import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
@@ -605,7 +606,14 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                   {/* Left: Prompt output with version navigation header */}
                   <div className="flex-1 flex flex-col">
                     <div className="flex items-center justify-between mb-2 h-7">
-                      <label htmlFor="custom-prompt-input" className="text-sm font-medium">Custom Image Prompt</label>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <label htmlFor="custom-prompt-input" className="text-sm font-medium">Custom Image Prompt</label>
+                        <AiSuggestButton
+                          label="KI-Vorschlag"
+                          buildPrompt={() => `Schreibe einen detaillierten, direkt nutzbaren Bild-Prompt für eine Pose/Szene, passend zum Projekt. Aktuell: "${customPrompt || "—"}". Antworte nur mit dem Prompt.`}
+                          onApply={(v) => handleCustomPromptChange(v)}
+                        />
+                      </div>
                       {promptVersions.length > 0 && (
                         <div className="flex items-center gap-1">
                           <button
