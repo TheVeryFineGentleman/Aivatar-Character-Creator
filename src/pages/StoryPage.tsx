@@ -41,6 +41,7 @@ import { cn } from "@/lib/cn";
 import {
   type StoryMode, type StoryScene, type StoryCharacter, type StoryConfig,
   buildStoryboardPrompt, buildSceneImagePrompt, buildSceneVideoPrompt, getEffectiveStoryHook,
+  enforceHardCutVariation,
   resolveCharacterNames,
   STORY_ART_STYLES, STORY_PACING_OPTIONS, STORY_MOOD_OPTIONS, STORY_COLOR_OPTIONS, STORY_LANGUAGES,
 } from "@/lib/storyPrompts";
@@ -119,9 +120,9 @@ export default function StoryPage() {
   const [enableSpeaker, setEnableSpeaker] = useProjectValue("story:enableSpeaker", true);
   const [enableSceneDescription, setEnableSceneDescription] = useProjectValue("story:enableSceneDescription", true);
   // Continuity Mode: the last frame of scene N's video becomes the start frame
-  // of scene N+1, so cuts visually flow into each other. Default OFF — das
-  // Erklär-/Erzähl-Reel-Format lebt von bewusst sichtbaren harten Schnitten;
-  // nahtlose Übergänge sind jetzt Opt-in über den Toggle.
+  // of scene N+1, so cuts visually flow into each other. Default OFF und im
+  // Reel-Modus gar nicht verfügbar: Erklär-/Erzähl-Reels werden IMMER mit
+  // bewusst sichtbaren harten Schnitten montiert.
   const [continuityMode, setContinuityMode] = useProjectValue("story:continuityMode", false);
   // Session flag: once Veo's lastFrame is rejected for this key, skip it for
   // the rest of the session and fall back to last-frame extraction. Must be a
@@ -167,6 +168,12 @@ export default function StoryPage() {
     enableSpeaker, enableSceneDescription, speakerGender, artStyle,
     pacing, videoMood, colorMood, hook, language, customDetails,
   };
+
+  // Die EINZIGE Quelle für „fließen die Clips ineinander?". Reels werden immer
+  // hart geschnitten — der Toggle wirkt nur im General-Modus. Steuert Prompt,
+  // Frame-Verkettung (lastFrame / Frame-Extraktion) UND den Merge gemeinsam,
+  // damit die drei nie widersprüchliche Anweisungen produzieren.
+  const seamlessActive = continuityMode && mode !== "reel";
 
   const expandedSceneIndex = expandedSceneId ? scenes.findIndex((s) => s.id === expandedSceneId) : -1;
   const expandedScene = expandedSceneIndex >= 0 ? scenes[expandedSceneIndex] : null;
@@ -446,7 +453,7 @@ REGELN:
     setGeneratingStoryboard(true);
     setExpandedSceneId(null);
     try {
-      const prompt = buildStoryboardPrompt({ ...config, characters, continuity: continuityMode });
+      const prompt = buildStoryboardPrompt({ ...config, characters });
       const json = await generateText(genChain, {
         prompt,        temperature: mode === "reel" ? 0.55 : 0.8,
         maxOutputTokens: mode === "reel" ? 6000 : 8000,
@@ -472,7 +479,11 @@ REGELN:
         dialogText: resolveCharacterNames(s.dialogText, characters),
         continuityNotes: resolveCharacterNames(s.continuityNotes, characters),
       }));
-      setScenes(named);
+      // Reel = harte Schnitte: falls das Modell zweimal hintereinander dieselbe
+      // Einstellung/denselben Winkel gewählt hat, hier deterministisch auftrennen.
+      setScenes(mode === "reel"
+        ? enforceHardCutVariation(named, { voiceMode, enableSpeaker })
+        : named);
 
       if (mapped.length < pointCount) {
         toast.warning(`KI hat ${mapped.length} von ${pointCount} Szenen generiert.`);
@@ -563,7 +574,6 @@ REGELN:
         hasPrevImage: !!prevRef,
         aspect,
         voiceMode: enableSpeaker ? voiceMode : "sprecher",
-        continuity: continuityMode,
         attempt,
       });
 
@@ -712,7 +722,7 @@ REGELN:
         // Position + continuity drive the "one continuous take" in/out directives.
         sceneIndex: sceneIdx < 0 ? 0 : sceneIdx,
         sceneCount: scenes.length,
-        continuity: continuityMode,
+        continuity: seamlessActive,
       });
       // Crop+compress reference frames before sending. Cropping to the EXACT
       // target ratio is what stops Veo from letterboxing an off-ratio start
@@ -865,7 +875,7 @@ REGELN:
     // Continuity mode walks scenes in ORDER (not just the unfinished ones), so
     // it can carry frames between scenes. Without continuity we generate only
     // what's missing, like before.
-    const targets = continuityMode
+    const targets = seamlessActive
       ? scenes.filter((s) => opts.force || s.videoStatus !== "done")
       : scenes.filter((s) =>
           s.imageStatus === "done" &&
@@ -909,14 +919,14 @@ REGELN:
         const s = scenes[i];
         if (!targets.find((t) => t.id === s.id)) {
           // Already-done scene — still remember its video for fal's last-frame path.
-          if (continuityMode && s.videoStatus === "done" && s.videoUrl) prevVideoUrl = s.videoUrl;
+          if (seamlessActive && s.videoStatus === "done" && s.videoUrl) prevVideoUrl = s.videoUrl;
           continue;
         }
 
         let startImageOverride: string | undefined;
         let endImageOverride: string | undefined;
 
-        if (continuityMode) {
+        if (seamlessActive) {
           // Google Veo with lastFrame access: pass next scene's image as end frame.
           // Otherwise (fal.ai, or Veo without lastFrame for this key): extract
           // the previous video's last frame as this scene's start.
@@ -1635,22 +1645,33 @@ REGELN:
             <div className={cn("collapse-row mt-4", showAdvanced && "is-open")}>
               <div className="collapse-inner">
                 <div className="space-y-3 p-4 rounded-2xl bg-ink-950 border border-white/10 shadow-inner animate-slide-down">
-                {/* Continuity Mode — last frame of scene N's video becomes the start frame of scene N+1. */}
-                <label className="flex items-start gap-2 text-sm text-ink-50/80 cursor-pointer p-3 rounded-xl border border-white/8 bg-ink-900/40 hover:border-flare-400/30 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={continuityMode}
-                    onChange={(e) => setContinuityMode(e.target.checked)}
-                    className="rounded mt-0.5"
-                  />
-                  <div className="min-w-0">
-                    <div className="font-medium text-ink-50">Nahtlose Übergänge</div>
+                {/* Continuity Mode — last frame of scene N's video becomes the start frame
+                    of scene N+1. Nur im General-Modus: Reels schneiden immer hart. */}
+                {mode === "reel" ? (
+                  <div className="text-sm text-ink-50/80 p-3 rounded-xl border border-white/8 bg-ink-900/40">
+                    <div className="font-medium text-ink-50">Harte Schnitte</div>
                     <div className="text-[11px] text-ink-50/55 mt-0.5 leading-tight">
-                      Das Ende von Video&nbsp;N wird zum Anfang (und Bild) von Video&nbsp;N+1. Erzeugt fließende Schnitte ohne sichtbare Sprünge.
-                      „Alle Videos generieren" läuft dann sequenziell.
+                      Reels werden immer mit deutlich sichtbaren harten Schnitten montiert — jede Szene ist ein neues
+                      Kamera-Setup. Keine Überblendungen, kein Morph.
                     </div>
                   </div>
-                </label>
+                ) : (
+                  <label className="flex items-start gap-2 text-sm text-ink-50/80 cursor-pointer p-3 rounded-xl border border-white/8 bg-ink-900/40 hover:border-flare-400/30 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={continuityMode}
+                      onChange={(e) => setContinuityMode(e.target.checked)}
+                      className="rounded mt-0.5"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium text-ink-50">Nahtlose Übergänge</div>
+                      <div className="text-[11px] text-ink-50/55 mt-0.5 leading-tight">
+                        Das Ende von Video&nbsp;N wird zum Anfang (und Bild) von Video&nbsp;N+1. Erzeugt fließende Schnitte ohne sichtbare Sprünge.
+                        „Alle Videos generieren" läuft dann sequenziell.
+                      </div>
+                    </div>
+                  </label>
+                )}
 
                 <div className="flex justify-end -mb-1">
                   <AiSuggestButton
@@ -1815,7 +1836,8 @@ REGELN:
                 aspectRatio={videoAspect(aspect)}
                 // Continuity = each clip's first frame duplicates the previous
                 // clip's last frame → let the server drop it for seamless joins.
-                seamless={continuityMode}
+                // Im Reel nie: dort sollen die Schnitte hart und sichtbar bleiben.
+                seamless={seamlessActive}
               />
             </div>
           )}

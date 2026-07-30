@@ -95,10 +95,8 @@ export function getReelStoryboardDirective(opts: {
   effectiveHook: string;
   voiceMode: "sprecher" | "dialog";
   enableSpeaker: boolean;
-  /** „Nahtlose Übergänge" aktiv → fließender Szenenanschluss statt Hard Cuts. */
-  continuity?: boolean;
 }): string {
-  const { effectiveHook, voiceMode, enableSpeaker, continuity } = opts;
+  const { effectiveHook, voiceMode, enableSpeaker } = opts;
 
   // Wie das Skript vorgetragen wird: Off-Sprecher über handelnder Person vs.
   // Person, die ihre Zeile direkt in die Kamera spricht.
@@ -135,15 +133,12 @@ DRAMATISCHE VISUALISIERUNG (Pflicht für JEDE Szene):
 - Die Aktion passiert WÄHREND die Zeile gesprochen wird und ihr Höhepunkt sitzt auf dem stärksten Wort.
 - Keine abstrakten, subtilen oder rein symbolischen Bilder: Die Umsetzung muss ohne Ton sofort verständlich sein und darf absurd überzogen wirken — aber physisch machbar, keine Magie, keine Fantasy.
 
-${continuity
-    ? `FLIESSENDE ÜBERGÄNGE (Nutzer-Einstellung „Nahtlose Übergänge"):
-- Die Clips werden nahtlos aneinandergefügt: Jede Szene schließt räumlich, zeitlich und kameratechnisch direkt an die vorige an.
-- Setups dürfen sich von Szene zu Szene ENTWICKELN (Kamera wandert, Person bewegt sich weiter), aber nie hart springen — kein abrupter Wechsel von Winkel, Distanz oder Position.
-- EIN Look über das ganze Reel: gleicher Hauptort, gleiche Personen, gleiches Outfit, gleiche Lichtstimmung.`
-    : `HARTE SCHNITTE STATT ÜBERGÄNGEN:
-- Jede Szene ist ein NEUES, deutlich anderes Kamera-Setup: anderer Winkel, andere Einstellungsgröße oder andere Position im Hauptort als die Szene davor.
-- Kein fließender Szenenübergang, kein Morph, keine Anschlussbewegung — die Schnitte sind bewusst sichtbar und geben dem Reel Tempo (Pattern Interrupt bei jedem Cut).
-- Trotzdem EIN Look über das ganze Reel: gleicher Hauptort, gleiche Personen, gleiches Outfit, gleiche Lichtstimmung.`}
+HARTE SCHNITTE — PFLICHT, KEINE ÜBERGÄNGE:
+- Das Reel wird AUSSCHLIESSLICH mit harten Schnitten montiert. Kein Morph, kein Fade, kein Dissolve, keine Anschlussbewegung, kein fließender Übergang — nie.
+- Jeder Schnitt muss DEUTLICH SICHTBAR sein: Der Sprung von Szene zu Szene ist gewollt und gibt dem Reel Tempo (Pattern Interrupt bei jedem Cut).
+- Aufeinanderfolgende Szenen MÜSSEN sich in shotType UND cameraAngle unterscheiden — und zwar drastisch (z. B. "extreme-close-up" → "full-shot", "eye-level" → "low-angle"). Nie zweimal hintereinander dieselbe Einstellungsgröße oder denselben Winkel.
+- Auch specificArea und Körperposition/Blickrichtung der Person sollen sich pro Szene klar ändern, damit der Schnitt sofort als Schnitt gelesen wird.
+- Trotzdem EIN Look über das ganze Reel: gleicher Hauptort, gleiche Personen, gleiches Outfit, gleiche Lichtstimmung.
 
 VERWENDE DIESEN HOOK ALS LEITPLANKE:
 - "${effectiveHook}"
@@ -330,6 +325,54 @@ export interface StoryScene {
   videoPrompt?: string;
 }
 
+/**
+ * Erzwingt sichtbar harte Schnitte im Reel: Zwei aufeinanderfolgende Szenen
+ * dürfen weder dieselbe Einstellungsgröße noch denselben Kamerawinkel haben —
+ * sonst liest sich der Schnitt als Jump Cut statt als bewusster Wechsel.
+ *
+ * Das Storyboard-Modell bekommt die Regel bereits im Prompt; das hier ist die
+ * deterministische Absicherung, wenn es sie ignoriert. Bei Sprech-Szenen bleibt
+ * die Auswahl in den Werten, die Blick in die Linse zulassen (sonst würde eine
+ * erzwungene Variation den Talking-Head kaputt machen).
+ */
+export function enforceHardCutVariation(
+  scenes: StoryScene[],
+  opts: { voiceMode: "sprecher" | "dialog"; enableSpeaker: boolean },
+): StoryScene[] {
+  const ALL_SHOTS = STORY_SHOT_TYPES.map((s) => s.value);
+  const ALL_ANGLES = STORY_CAMERA_ANGLES.map((a) => a.value);
+  // Talking-Head: Gesicht muss lesbar und frontal bleiben.
+  const TALK_SHOTS = ["extreme-close-up", "close-up", "medium-close-up", "medium-shot"];
+  const TALK_ANGLES = ["eye-level", "low-angle"];
+
+  // Wähle aus dem Pool den Wert, der am weitesten vom Vorgänger entfernt ist —
+  // bei Einstellungsgrößen (nach Nähe sortiert) ist das automatisch der
+  // deutlichste Größensprung.
+  const pickContrast = (pool: string[], prev: string): string => {
+    const i = pool.indexOf(prev);
+    if (i < 0) return pool[0];
+    return pool[(i + Math.ceil(pool.length / 2)) % pool.length];
+  };
+
+  // Sequenziell gegen die BEREITS korrigierte Vorgängerszene prüfen — würde man
+  // gegen das Original vergleichen, könnte eine Korrektur in Szene N zufällig auf
+  // den Wert von Szene N+1 fallen und das Duplikat bliebe stehen.
+  const out: StoryScene[] = [];
+  scenes.forEach((scene, i) => {
+    if (i === 0) { out.push(scene); return; }
+    const prev = out[i - 1];
+    const isTalking = opts.enableSpeaker && opts.voiceMode === "dialog" && !!scene.dialogText?.trim();
+    const shotPool = isTalking ? TALK_SHOTS : ALL_SHOTS;
+    const anglePool = isTalking ? TALK_ANGLES : ALL_ANGLES;
+
+    const patch: Partial<StoryScene> = {};
+    if (scene.shotType === prev.shotType) patch.shotType = pickContrast(shotPool, prev.shotType);
+    if (scene.cameraAngle === prev.cameraAngle) patch.cameraAngle = pickContrast(anglePool, prev.cameraAngle);
+    out.push(Object.keys(patch).length ? { ...scene, ...patch } : scene);
+  });
+  return out;
+}
+
 export interface StoryConfig {
   mode: StoryMode;
   idea: string;
@@ -351,15 +394,13 @@ export interface StoryConfig {
 
 interface StoryboardPromptOpts extends StoryConfig {
   characters: StoryCharacter[];
-  /** „Nahtlose Übergänge" aktiv — Reel-Szenen fließen statt hart zu schneiden. */
-  continuity?: boolean;
 }
 
 export function buildStoryboardPrompt(opts: StoryboardPromptOpts): string {
   const {
     mode, idea, pointCount, voiceMode, dialogMode, generationDirection, enableSpeaker,
     enableSceneDescription, speakerGender, artStyle, pacing, videoMood, colorMood,
-    hook, language, customDetails, characters, continuity,
+    hook, language, customDetails, characters,
   } = opts;
 
   const effectiveHook = getEffectiveStoryHook(mode, hook, enableSpeaker);
@@ -377,7 +418,7 @@ export function buildStoryboardPrompt(opts: StoryboardPromptOpts): string {
     : "";
 
   const reelDirective = mode === "reel"
-    ? getReelStoryboardDirective({ effectiveHook, voiceMode, enableSpeaker, continuity })
+    ? getReelStoryboardDirective({ effectiveHook, voiceMode, enableSpeaker })
     : "";
 
   return `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
@@ -492,8 +533,6 @@ export function buildSceneImagePrompt(opts: {
   /** Reel-Format: "dialog" = Person spricht in die Kamera (Talking-Head-Frame),
    *  "sprecher" = Off-Stimme, Person handelt nur. Default "sprecher". */
   voiceMode?: "sprecher" | "dialog";
-  /** „Nahtlose Übergänge" aktiv → Frames fließen statt hart zu schneiden. */
-  continuity?: boolean;
   /**
    * Retry index (0 = first try). Each background retry varies and softens the
    * prompt: scene text is run through the content-safety filter and a reword /
@@ -653,14 +692,14 @@ export function buildSceneImagePrompt(opts: {
     "Content policy: depict clothed adults only. No nudity, no sexually suggestive content, no graphic violence, no minors. Tasteful cinematic storytelling.",
     "ABSOLUTELY NO TEXT, LETTERS, WORDS, NUMBERS, WATERMARKS, CAPTIONS or LOGOS anywhere in the image.",
     "Sharp focus on the action, plausible anatomy, realistic hands, true-to-style rendering. It must read as one frame of a larger, continuous scene.",
-    // Continuity across scenes: every still belongs to ONE shoot. In reel mode
-    // WITHOUT „Nahtlose Übergänge" the cuts are deliberate hard cuts, so each
-    // scene is a visibly NEW setup inside that one production look; with the
-    // toggle ON (and in general mode) the frame should flow into the next.
-    mode === "reel" && !opts.continuity
+    // Continuity across scenes: every still belongs to ONE shoot. Reels are ALWAYS
+    // cut hard, so each scene is a visibly NEW setup inside that one production
+    // look; in general mode the frame should flow into the next one instead.
+    mode === "reel"
       ? "Cinematography: ONE consistent production look across the whole reel — same lens character, exposure, " +
         "white balance and colour grade in every scene. But THIS frame is a deliberately NEW camera setup: " +
-        "clearly different angle, shot size or position than the previous scene. The edit will HARD CUT between scenes."
+        "clearly different angle, shot size AND position than the previous scene — the difference must be obvious " +
+        "at a glance. The edit HARD CUTS between scenes; never compose this frame as a continuation of the previous one."
       : "Cinematography continuity: same lens character, exposure, white balance and colour grade as a single continuous production — this frame is one moment inside an ongoing take, captured mid-motion (never a posed end-of-shot freeze), ready to flow straight into the next frame.",
   ].filter(Boolean).join("\n");
 }
@@ -712,8 +751,10 @@ export function buildSceneVideoPrompt(opts: {
   //   aus EINEM längeren Take — enter already moving, leave still moving — damit
   //   die Schnitte unsichtbar werden (Veos Intro→Beat→Outro-Ausklang erzeugt
   //   sonst Freeze/Jitter an jedem Join).
-  const continuity = !!opts.continuity;
   const isReel = mode === "reel";
+  // Reels werden IMMER hart geschnitten — die Continuous-Take-Grammatik gilt nur
+  // noch im General-Modus mit aktivierten „Nahtlosen Übergängen".
+  const continuity = !!opts.continuity && !isReel;
   const idx = opts.sceneIndex ?? 0;
   const isFirst = idx === 0;
   const isLast = opts.sceneCount ? idx === opts.sceneCount - 1 : false;
@@ -722,16 +763,14 @@ export function buildSceneVideoPrompt(opts: {
   // Erklär-/Erzähl-Reels werden mit BEWUSST sichtbaren harten Schnitten
   // montiert: jeder Clip ist ein in sich stehender Beat (eine Aussage + eine
   // Aktion), startet sofort auf voller Energie und endet abrupt ohne Ausklang —
-  // der Schnitt selbst ist der Pattern Interrupt. Nur wenn der Nutzer
-  // „Nahtlose Übergänge" (continuity) explizit einschaltet, gilt weiterhin die
-  // Continuous-Take-Grammatik darunter.
-  const hardCuts = isReel && !continuity;
+  // der Schnitt selbst ist der Pattern Interrupt.
+  const hardCuts = isReel;
 
   const continuousTakeLine = hardCuts
     ? "HARD-CUT REEL EDITING — this clip is ONE self-contained beat of a fast-paced vertical explainer reel. " +
-      "The reel is assembled with deliberate, visible hard cuts: every clip is a clearly different camera setup, " +
-      "and the cut itself is the pattern interrupt. One statement, one action, one emotional read — " +
-      "this clip never starts telling the next beat."
+      "The reel is assembled with deliberate, clearly VISIBLE hard cuts: every clip is an obviously different camera " +
+      "setup, and the cut itself is the pattern interrupt. Never blend, morph, fade or dissolve into the neighbouring " +
+      "clips. One statement, one action, one emotional read — this clip never starts telling the next beat."
     : continuity
       ? "CONTINUOUS TAKE — this clip is ONE segment of a single, unbroken longer video, not a standalone clip. " +
         "Keep camera energy, lens, lighting, colour grade and motion rhythm seamlessly continuous with the neighbouring segments."
