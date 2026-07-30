@@ -15,6 +15,7 @@ import { Slider } from "@/components/ui/Slider";
 import { SlotProgress } from "@/components/ui/SlotProgress";
 import { PlanGate } from "@/components/PlanGate";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
+import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
 import { ImageDropZone, type RefImage } from "@/components/ImageDropZone";
 import { StoryDetailDialog } from "@/components/dialogs/StoryDetailDialog";
 import { RegenerationSurfaceOverlay } from "@/components/RegenerationSurfaceOverlay";
@@ -1639,6 +1640,13 @@ REGELN:
                   </div>
                 </label>
 
+                <div className="flex justify-end -mb-1">
+                  <AiSuggestButton
+                    label="Hook vorschlagen"
+                    buildPrompt={() => `Schreibe EINEN kurzen, scroll-stoppenden Hook/Eröffnungssatz für ein ${mode === "reel" ? "Reel" : "Video"}, passend zum Projekt. Aktuell: "${hook || "—"}". Antworte nur mit dem Hook.`}
+                    onApply={setHook}
+                  />
+                </div>
                 <Input
                   label={mode === "reel" ? "Hook (Pflicht bei Reel — Default wenn leer)" : "Hook (optional)"}
                   value={hook}
@@ -1646,6 +1654,13 @@ REGELN:
                   placeholder={mode === "reel" ? 'z.B. „Niemand ahnt, was in der ersten Sekunde passiert."' : "Optionaler Eröffnungs-Beat"}
                 />
 
+                <div className="flex justify-end -mb-1">
+                  <AiSuggestButton
+                    label="Details vorschlagen"
+                    buildPrompt={() => `Fülle „Custom Details" für dieses Projekt sinnvoll aus (Branche, Zielgruppe, Besonderheiten, Tabu-Themen). Aktuell: "${customDetails || "—"}". Kurz, nur der Text.`}
+                    onApply={setCustomDetails}
+                  />
+                </div>
                 <Textarea
                   label="Custom Details (optional)"
                   rows={2}

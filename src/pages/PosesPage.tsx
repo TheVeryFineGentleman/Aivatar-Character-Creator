@@ -16,6 +16,7 @@ import { ASPECT_RATIOS } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useProjectValue, useProjectRefImages, useProjectResults } from "@/hooks/useProjectGallery";
 import { downloadAllAsZip, DOWNLOAD_RESOLUTIONS } from "@/lib/image";
+import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
 import { Menu, MenuItem, MenuSection } from "@/components/ui/Menu";
 import { AIError } from "@/lib/ai";
 import { generateImage } from "@/lib/generate";
@@ -268,7 +269,14 @@ export default function PosesPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium block">Outfit (optional)</label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium block">Outfit (optional)</label>
+              <AiSuggestButton
+                label="Vorschlag"
+                buildPrompt={() => `Schlage ein passendes Outfit für diese Charakter-/Posen-Reihe vor. Antworte NUR mit einer kurzen Outfit-Beschreibung (wenige Worte). Aktuell: "${outfit || "—"}".`}
+                onApply={setOutfit}
+              />
+            </div>
             <Input
               value={outfit}
               onChange={(e) => setOutfit(e.target.value)}
@@ -276,7 +284,15 @@ export default function PosesPage() {
             />
           </div>
           <div className="space-y-1.5 col-span-2">
-            <label className="text-xs font-medium block">Ort (optional)</label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium block">Ort (optional)</label>
+              <AiSuggestButton
+                label="Vorschlag"
+                disabled={background !== "location"}
+                buildPrompt={() => `Schlage einen passenden Ort/Hintergrund für die Szene vor. Antworte NUR mit einer kurzen Ortsbeschreibung (wenige Worte). Aktuell: "${location || "—"}".`}
+                onApply={setLocation}
+              />
+            </div>
             <Input
               value={location}
               onChange={(e) => setLocation(e.target.value)}

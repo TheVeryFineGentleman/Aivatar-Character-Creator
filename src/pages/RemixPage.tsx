@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Wand2, Sparkles, Loader2, RefreshCw, RotateCcw, ImageDown, Trash2, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
+import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -123,7 +124,14 @@ export default function RemixPage() {
 
         {/* Idea */}
         <div className="space-y-2">
-          <label className="text-sm font-medium block">Idee / Beschreibung (optional)</label>
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-sm font-medium block">Idee / Beschreibung (optional)</label>
+            <AiSuggestButton
+              label="KI-Idee"
+              buildPrompt={() => `Schlage eine kreative Bild-Idee/Beschreibung vor, die zu diesem Projekt passt (1-2 Sätze, konkret & visuell). Aktuell: "${idea || "—"}". Antworte nur mit der Idee.`}
+              onApply={setIdea}
+            />
+          </div>
           <Textarea
             placeholder="z.B. 'mutige Weltraum-Pilotin im Retro-Sci-Fi-Look' — oder leer lassen und nur das Bild sprechen lassen."
             value={idea}

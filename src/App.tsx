@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Shell } from "@/components/layout/Shell";
 import { TopBar } from "@/components/layout/TopBar";
 import { LoginDialog } from "@/components/dialogs/LoginDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
+import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
+import { useProjects } from "@/hooks/useProjects";
+import { loadProject } from "@/lib/projectStorage";
 import { TutorialPanel } from "@/components/tutorials/TutorialPanel";
 import { TutorialLauncher } from "@/components/tutorials/TutorialLauncher";
 import HomePage from "@/pages/HomePage";
@@ -22,6 +25,19 @@ import NotFoundPage from "@/pages/NotFoundPage";
 export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  // Profil-Setup einmalig anbieten, sobald ein Projekt (noch) kein Profil hat.
+  // Storage wird SYNCHRON gelesen (nicht der reaktive Hook), damit der Dialog bei
+  // Projekten MIT Profil nicht kurz aufblitzt.
+  const { current } = useProjects();
+  const promptedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!current || promptedFor.current === current.id) return;
+    promptedFor.current = current.id;
+    const stored = (loadProject(current.id)?.state as { values?: Record<string, unknown> } | undefined)?.values?.profile;
+    if (!stored) setProfileOpen(true);
+  }, [current?.id]);
 
   return (
     <>
@@ -46,6 +62,7 @@ export default function App() {
       </Shell>
       <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ProfileSetupDialog open={profileOpen} onClose={() => setProfileOpen(false)} />
       <TutorialPanel onOpenSettings={() => setSettingsOpen(true)} />
     </>
   );
