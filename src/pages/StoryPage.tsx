@@ -573,6 +573,10 @@ REGELN:
         updateScene(scene.id, {
           imageStatus: "done", imageDataUrl: dataUrl, detailedImagePrompt: prompt,
           imageError: undefined, imageHint: undefined,
+          // Neu generiertes Bild → das alte, nicht mehr passende Video entfernen,
+          // sodass nur das neue Bild angezeigt wird.
+          videoStatus: "idle", videoUrl: undefined, videoJobId: undefined,
+          videoProgressPct: undefined, videoError: undefined,
         });
         // Persist the image to the bucket so it survives reloads (best-effort —
         // falls back silently to the in-session base64 if Spaces isn't configured).
