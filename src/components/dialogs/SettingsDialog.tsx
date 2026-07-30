@@ -10,6 +10,7 @@ import { Trash2, ExternalLink, Eye, EyeOff, Sun, Moon, Monitor, KeyRound, Palett
 import { Badge } from "@/components/ui/Badge";
 import { BACKEND } from "@/lib/backend";
 import { StorageMeter } from "@/components/StorageMeter";
+import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
 import { cn } from "@/lib/cn";
 
 type SectionId = "connect" | "appearance" | "storage";
@@ -174,6 +175,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 <a href={BACKEND.geminiKeyUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-flare-300 hover:text-flare-200">
                   aistudio.google.com → API Keys <ExternalLink className="w-3 h-3" />
                 </a>
+                <div className="mt-3"><TutorialCTA tutorialId="google-api-key" /></div>
               </Section>
 
               {showFal && (
@@ -188,6 +190,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   <a href={BACKEND.falKeyUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-glacier-300 hover:text-glacier-200">
                     fal.ai → Dashboard → Keys <ExternalLink className="w-3 h-3" />
                   </a>
+                  <div className="mt-3"><TutorialCTA tutorialId="fal-api-key" /></div>
                 </Section>
               )}
             </div>
