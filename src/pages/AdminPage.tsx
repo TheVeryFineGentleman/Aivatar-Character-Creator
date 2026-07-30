@@ -6,7 +6,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { SUPA_FUNC, BACKEND } from "@/lib/backend";
+import { API } from "@/lib/backend";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStorageQuota, type ServerQuota } from "@/lib/serverAI";
 import { formatBytes } from "@/lib/projectStorage";
@@ -15,13 +15,15 @@ interface LicenseRecord {
   email: string;
   licenseKey: string;
   productCode?: string;
+  productName?: string;
   status?: string;
   expiresAt?: string;
 }
 
 export default function AdminPage() {
-  const { license, credentials } = useAuth();
+  const { license } = useAuth();
   const [email, setEmail] = useState("");
+  const [adminKey, setAdminKey] = useState("");
   const [result, setResult] = useState<LicenseRecord | null>(null);
   const [quota, setQuota] = useState<ServerQuota | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,37 +39,33 @@ export default function AdminPage() {
     );
   }
 
-  // Alle Admin-Aktionen laufen über die Supabase Edge Function `license-admin`.
-  // Sie injiziert serverseitig den toolApiKey + den Admin-Key (die das Frontend
-  // NICHT kennt) und leitet an den Key-Manager weiter. Auth: der eingeloggte
-  // Admin (requesterEmail) muss in der Allowlist der Function stehen.
-  const callAdmin = async (payload: Record<string, unknown>) => {
-    const res = await fetch(SUPA_FUNC("license-admin"), {
+  // Direkt gegen den Key-Manager (DigitalOcean) — kein Supabase. Auth über den
+  // ADMIN_API_KEY, den der Admin ins Feld tippt (Header x-admin-api-key).
+  const callPanel = async (path: string, body: Record<string, unknown>) => {
+    const res = await fetch(API(path), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(BACKEND.supabaseAnonKey ? { Authorization: `Bearer ${BACKEND.supabaseAnonKey}` } : {}),
-      },
-      body: JSON.stringify({ requesterEmail: credentials?.email ?? "", ...payload }),
+      headers: { "Content-Type": "application/json", "x-admin-api-key": adminKey.trim() },
+      body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({} as any));
+    if (res.status === 401 || res.status === 503) throw new Error("Admin-Key falsch oder nicht konfiguriert.");
     if (!res.ok) throw new Error(data?.error || `Fehler (${res.status})`);
     return data;
   };
 
   const lookup = async () => {
     if (!email.trim()) { toast.error("Email benötigt."); return; }
+    if (!adminKey.trim()) { toast.error("Admin-Key benötigt."); return; }
     setLoading(true);
     try {
-      const data = await callAdmin({ action: "lookup", email: email.trim() });
+      const data = await callPanel("/api/admin/panel/lookup", { email: email.trim() });
       if (data?.found === false || !data?.licenseKey) {
         toast.error("Keine Lizenz gefunden.");
         setResult(null); setQuota(null);
         return;
       }
       setResult(data as LicenseRecord);
-      const qEmail = (data.email as string) || email.trim();
-      await fetchStorageQuota(qEmail).then((q) => setQuota(q)).catch(() => setQuota(null));
+      await fetchStorageQuota((data.email as string) || email.trim()).then((q) => setQuota(q)).catch(() => setQuota(null));
     } catch (e: any) {
       toast.error(e.message);
       setResult(null); setQuota(null);
@@ -81,7 +79,7 @@ export default function AdminPage() {
     const pid = Number(newProductId);
     if (!Number.isInteger(pid) || pid <= 0) { toast.error("Gültige Produkt-ID (Zahl) angeben."); return; }
     try {
-      await callAdmin({ action: "change-product", licenseKey: result.licenseKey, productId: pid });
+      await callPanel("/api/admin/panel/change-product", { licenseKey: result.licenseKey, productId: pid });
       toast.success(`Produkt für ${result.email} → ID ${pid}`);
       await lookup();
     } catch (e: any) {
@@ -99,8 +97,9 @@ export default function AdminPage() {
 
       <Card className="mb-4">
         <CardHeader title="Lizenz-Lookup" subtitle="Findet den aktuellen Plan einer E-Mail-Adresse" icon={<Search className="w-4 h-4" />} />
-        <div className="max-w-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="kunde@beispiel.de" />
+          <Input label="Admin-Key" type="password" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} placeholder="Server-Admin-Schlüssel" />
         </div>
         <div className="mt-4">
           <Button onClick={lookup} loading={loading} iconLeft={<Search className="w-4 h-4" />}>Suchen</Button>
@@ -113,7 +112,7 @@ export default function AdminPage() {
             <CardHeader title="Treffer" subtitle={result.email} icon={<RefreshCw className="w-4 h-4" />} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <Field label="Schlüssel" value={result.licenseKey} mono />
-              <Field label="Produkt" value={result.productCode || "—"} />
+              <Field label="Produkt" value={result.productName || result.productCode || "—"} />
               <Field label="Status" value={result.status || "—"} />
               <Field label="Läuft ab" value={result.expiresAt ? new Date(result.expiresAt).toLocaleDateString("de-DE") : "—"} />
             </div>
@@ -124,7 +123,7 @@ export default function AdminPage() {
                 value={newProductId}
                 onChange={(e) => setNewProductId(e.target.value)}
                 placeholder="z. B. 4 = Pro, 5 = Premium"
-                className="max-w-[200px]"
+                className="max-w-[220px]"
               />
               <Button onClick={changeProduct} variant="secondary" disabled={!newProductId.trim()}>Produkt ändern</Button>
             </div>
