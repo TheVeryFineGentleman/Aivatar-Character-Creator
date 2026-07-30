@@ -119,8 +119,10 @@ export default function StoryPage() {
   const [enableSpeaker, setEnableSpeaker] = useProjectValue("story:enableSpeaker", true);
   const [enableSceneDescription, setEnableSceneDescription] = useProjectValue("story:enableSceneDescription", true);
   // Continuity Mode: the last frame of scene N's video becomes the start frame
-  // of scene N+1, so cuts visually flow into each other. Default on.
-  const [continuityMode, setContinuityMode] = useProjectValue("story:continuityMode", true);
+  // of scene N+1, so cuts visually flow into each other. Default OFF — das
+  // Erklär-/Erzähl-Reel-Format lebt von bewusst sichtbaren harten Schnitten;
+  // nahtlose Übergänge sind jetzt Opt-in über den Toggle.
+  const [continuityMode, setContinuityMode] = useProjectValue("story:continuityMode", false);
   // Session flag: once Veo's lastFrame is rejected for this key, skip it for
   // the rest of the session and fall back to last-frame extraction. Must be a
   // ref, not state: generateAllVideos runs a whole batch inside one render's
@@ -270,7 +272,7 @@ export default function StoryPage() {
     setLoadingSuggestions(true);
     try {
       const json = await generateText(genChain, {
-        prompt: buildProfilePreamble(projectProfile) + `Generiere genau ${n} sehr kurze Story-Ideen (jeweils max. 6 Wörter) für ein ${mode === "reel" ? "kurzes Reel/TikTok-Video" : "längeres Storyboard"}.
+        prompt: buildProfilePreamble(projectProfile) + `Generiere genau ${n} sehr kurze ${mode === "reel" ? "Themen-Ideen (jeweils max. 6 Wörter) für ein Erklär-/Erzähl-Reel (TikTok/Shorts) — Botschaften, Thesen oder Themen, die man erklären/erzählen kann, KEINE Geschichten" : "Story-Ideen (jeweils max. 6 Wörter) für ein längeres Storyboard"}.
 
 REGELN:
 - Jede Idee ist eine prägnante deutsche Phrase
@@ -311,11 +313,11 @@ Beispiel-Format: ${JSON.stringify(Array.from({ length: n }, (_, i) => `Idee ${i 
     setIdea("");
     try {
       const reelHints = mode === "reel"
-        ? "\n- REEL-OPTIMIERT: Denke an viralen TikTok-Content\n- Hook-First: starte mit dem visuell stärksten Moment\n- Übertriebene Emotionen, scroll-stopping"
+        ? "\n- ERKLÄR-/ERZÄHL-REEL: eine klare Botschaft, die gesprochen vermittelt wird (in die Kamera oder als Off-Sprecher) — KEINE Kurzgeschichte\n- Hook-First: der stärkste gesprochene Satz kommt zuerst\n- Zu jeder Aussage eine übertriebene, wörtliche visuelle Umsetzung (z. B. „KI ist kaputt\" → Kugel zertrümmert einen Laptop)\n- Harte Schnitte, Creator-Style, scroll-stopping"
         : "";
 
       const result = await generateText(genChain, {
-        prompt: buildProfilePreamble(projectProfile) + `Erweitere diese kurze Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung — optimiert für ein ${mode === "reel" ? "Social-Media-Reel" : "längeres Storyboard"}.
+        prompt: buildProfilePreamble(projectProfile) + `Erweitere diese kurze ${mode === "reel" ? "Themen-Idee zu einem packenden Konzept für ein Erklär-/Erzähl-Reel: Was wird gesagt, und mit welchen dramatischen Bildern wird es unterstrichen?" : "Story-Zusammenfassung zu einer visuell packenden Szenenbeschreibung — optimiert für ein längeres Storyboard."}
 
 REGELN:
 - 3–6 Sätze, visuell und atmosphärisch
@@ -353,14 +355,14 @@ Antworte NUR mit der fertigen Beschreibung auf Deutsch. Keine Einleitungen, kein
     try {
       const tweak = !!trimmedIdea;
       const reelHints = mode === "reel"
-        ? "\n- REEL-OPTIMIERT: Hook-First, scroll-stopping, viraler TikTok-Vibe"
+        ? "\n- ERKLÄR-/ERZÄHL-REEL: eine Botschaft/These, gesprochen vermittelt (in die Kamera oder Off-Sprecher) — keine Kurzgeschichte\n- Hook-First: stärkster gesprochener Satz zuerst, scroll-stopping\n- Pro Aussage eine übertriebene, wörtliche visuelle Umsetzung als Blickfang (z. B. „KI ist kaputt\" → Kugel zertrümmert einen Laptop)"
         : "";
       const outputRule = ideaCount > 1
         ? `AUSGABEFORMAT: Antworte AUSSCHLIESSLICH mit einem JSON-Array mit genau ${ideaCount} Strings. Kein Markdown, keine Erklärungen.`
         : `AUSGABEFORMAT: Antworte NUR mit der Story-Idee, keine Einleitungen, keine Anführungszeichen.`;
 
       const prompt = tweak
-        ? `Du bist ein Story-Autor für ${mode === "reel" ? "kurze Social-Media-Reels" : "längere Storyboards"}.
+        ? `Du bist ein ${mode === "reel" ? "Creator-Texter für kurze Erklär-/Erzähl-Reels (TikTok/Shorts)" : "Story-Autor für längere Storyboards"}.
 
 AKTUELLE STORY-IDEE:
 "${trimmedIdea}"
@@ -373,7 +375,7 @@ REGELN:
 - ${ideaCount > 1 ? "Jede Variante" : "Die Variante"} 4–8 Sätze, visuell und konkret beschrieben
 - Auf Deutsch
 - ${outputRule}`
-        : `Du bist ein Story-Autor für ${mode === "reel" ? "kurze Social-Media-Reels" : "längere Storyboards"}. Erstelle genau ${ideaCount} fesselnde Story-Idee${ideaCount > 1 ? "n" : ""}.
+        : `Du bist ein ${mode === "reel" ? "Creator-Texter für kurze Erklär-/Erzähl-Reels (TikTok/Shorts)" : "Story-Autor für längere Storyboards"}. Erstelle genau ${ideaCount} fesselnde Story-Idee${ideaCount > 1 ? "n" : ""}.
 
 BRIEFING vom User:
 "${trimmedBrief}"
@@ -444,7 +446,7 @@ REGELN:
     setGeneratingStoryboard(true);
     setExpandedSceneId(null);
     try {
-      const prompt = buildStoryboardPrompt({ ...config, characters });
+      const prompt = buildStoryboardPrompt({ ...config, characters, continuity: continuityMode });
       const json = await generateText(genChain, {
         prompt,        temperature: mode === "reel" ? 0.55 : 0.8,
         maxOutputTokens: mode === "reel" ? 6000 : 8000,
@@ -560,6 +562,8 @@ REGELN:
         hasReferences: refs.length > 0 || !!prevRef,
         hasPrevImage: !!prevRef,
         aspect,
+        voiceMode: enableSpeaker ? voiceMode : "sprecher",
+        continuity: continuityMode,
         attempt,
       });
 
@@ -700,7 +704,7 @@ REGELN:
       const videoPrompt = buildSceneVideoPrompt({
         scene, mode,
         pacing, mood: videoMood, colorMood,
-        effectiveHook: getEffectiveStoryHook(mode, hook),
+        effectiveHook: getEffectiveStoryHook(mode, hook, enableSpeaker),
         language,
         aspect,
         voiceMode: enableSpeaker ? voiceMode : "sprecher",
@@ -1651,7 +1655,7 @@ REGELN:
                 <div className="flex justify-end -mb-1">
                   <AiSuggestButton
                     label="Hook vorschlagen"
-                    buildPrompt={() => `Schreibe EINEN kurzen, scroll-stoppenden Hook/Eröffnungssatz für ein ${mode === "reel" ? "Reel" : "Video"}, passend zum Projekt. Aktuell: "${hook || "—"}". Antworte nur mit dem Hook.`}
+                    buildPrompt={() => `Schreibe EINEN kurzen, scroll-stoppenden ${mode === "reel" ? "gesprochenen Hook-Satz für ein Erklär-/Erzähl-Reel (wird direkt in die Kamera oder vom Off-Sprecher gesprochen)" : "Hook/Eröffnungssatz für ein Video"}, passend zum Projekt. Aktuell: "${hook || "—"}". Antworte nur mit dem Hook.`}
                     onApply={setHook}
                   />
                 </div>

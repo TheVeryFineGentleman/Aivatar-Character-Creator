@@ -3,16 +3,17 @@ import { sanitizeText, SAFE_PORTRAIT_CLAUSE } from "./contentSafety";
 export type StoryMode = "general" | "reel";
 
 export const REEL_DEFAULT_HOOK_DIRECTIVE =
-  "Open with the most surprising, emotionally intense, or highest-stakes visual beat in the first second.";
+  "Open with the boldest spoken claim of the whole reel, delivered in the first second, while a dramatic visual literally acts it out on screen.";
 
-export function getEffectiveStoryHook(mode: StoryMode, hook: string): string {
+/** Default-Hook für Reels OHNE Sprechtext — rein visuell statt "spoken claim". */
+export const REEL_DEFAULT_VISUAL_HOOK_DIRECTIVE =
+  "Open with the boldest, most dramatic visual beat of the whole reel in the first second — an action that makes the message obvious without sound.";
+
+export function getEffectiveStoryHook(mode: StoryMode, hook: string, hasSpeech: boolean = true): string {
   const trimmed = hook.trim();
   if (trimmed) return trimmed;
-  return mode === "reel" ? REEL_DEFAULT_HOOK_DIRECTIVE : "";
-}
-
-export function getVideoPromptWordTarget(mode: StoryMode): string {
-  return mode === "reel" ? "75-95" : "80-120";
+  if (mode !== "reel") return "";
+  return hasSpeech ? REEL_DEFAULT_HOOK_DIRECTIVE : REEL_DEFAULT_VISUAL_HOOK_DIRECTIVE;
 }
 
 export const LANGUAGE_NAMES: Record<string, string> = {
@@ -37,12 +38,12 @@ export function getStoryPacingInstruction(pacing: string, mode: StoryMode): stri
         : "Slow build-up over 3-5 seconds";
     case "fast-cuts":
       return mode === "reel"
-        ? "Rapid contrast from clip to clip, but each clip still needs one clean focal action"
+        ? "Hard visible cut from clip to clip with strong contrast, but each clip still needs one clean focal action"
         : "Fast rapid cuts throughout";
     case "tension-arc":
     default:
       return mode === "reel"
-        ? "Immediate hook, rising tension every beat, then a payoff or cliffhanger before the clip ends"
+        ? "Spoken hook first, every cut delivers the next punchy statement plus its visual, punchline or call-to-action at the end"
         : "Tension arc with dramatic payoff";
   }
 }
@@ -90,53 +91,69 @@ export function getStoryColorInstruction(color: string, mode: StoryMode): string
   }
 }
 
-export function getReelStoryboardDirective(effectiveHook: string): string {
+export function getReelStoryboardDirective(opts: {
+  effectiveHook: string;
+  voiceMode: "sprecher" | "dialog";
+  enableSpeaker: boolean;
+  /** „Nahtlose Übergänge" aktiv → fließender Szenenanschluss statt Hard Cuts. */
+  continuity?: boolean;
+}): string {
+  const { effectiveHook, voiceMode, enableSpeaker, continuity } = opts;
+
+  // Wie das Skript vorgetragen wird: Off-Sprecher über handelnder Person vs.
+  // Person, die ihre Zeile direkt in die Kamera spricht.
+  const deliveryLine = !enableSpeaker
+    ? "- Ohne Sprechtext: Jede Szene ist ein rein visueller Beat — die keyAction allein muss die Aussage der Szene tragen."
+    : voiceMode === "dialog"
+      ? '- Vortrag: Die sichtbare Person spricht ihre Zeile DIREKT IN DIE KAMERA (Creator-Style, Blick in die Linse), während die dramatische Aktion im selben Bild passiert — von ihr selbst ausgeführt oder deutlich sichtbar im Hintergrund.\n' +
+        '- Kamera für Sprech-Szenen: Wähle nur Werte, die Blick in die Linse erlauben — cameraAngle "eye-level" oder "low-angle", shotType zwischen "close-up" und "medium-shot". KEIN over-shoulder, bird-eye oder worm-eye für die sprechende Person.'
+      : "- Vortrag: Ein Off-Sprecher trägt das Skript, während die sichtbare Person die Aussage HANDELND umsetzt. Die Person spricht nicht selbst.";
+
+  const scriptBlock = enableSpeaker
+    ? `
+DAS GESPROCHENE SKRIPT IST DAS RÜCKGRAT:
+- Alle dialogText-Zeilen hintereinander ergeben EIN durchgehendes gesprochenes Skript: Szene 1 = gesprochener HOOK-Satz, jede weitere Szene = genau EINE Kernaussage, letzte Szene = Punchline, Fazit oder Call-to-Action.
+- Gesprochene Creator-Sprache: kurz, direkt, aktiv, keine Schachtelsätze. Direkte Ansprache („du") ist ausdrücklich erwünscht.
+- Jeder Clip ist EXAKT 8 Sekunden lang. Schreibe ca. 15–22 Wörter dialogText pro Szene: Die Zeile soll die vollen ~7–8 Sekunden Sprechzeit füllen (deutlich kürzere Zeilen erzeugen Stille im Clip), muss aber vollständig in die 8 Sekunden passen.
+- Auch im smart-Dialogmodus braucht praktisch JEDE Szene ihre Zeile — ein 8-Sekunden-Clip ohne Sprechtext bedeutet Stille. Lasse dialogText höchstens in EINER Szene bewusst leer, wenn deren Aktion allein stärker wirkt.
+${deliveryLine}
+`
+    : `
+OHNE SPRECHTEXT:
+${deliveryLine}
+`;
+
   return `
-REEL-MODUS - KRITISCHE ANWEISUNGEN (höchste Priorität):
-Du erstellst ein Storyboard für ein vertikales Social-Media-Reel (TikTok, Instagram Reels, YouTube Shorts).
-Jede Szene wird zu einem kurzen Videoclip. Die exakte Gesamtdauer kommt aus dem Nutzerbriefing.
+REEL-MODUS — ERKLÄR-/ERZÄHL-FORMAT (höchste Priorität):
+Du erstellst KEINE Kurzgeschichte und KEIN Mini-Drama, sondern ein Erklär-/Erzähl-Reel im Creator-Stil (TikTok, Instagram Reels, YouTube Shorts):
+Eine Botschaft wird GESPROCHEN vermittelt, während übertriebene, dramatische Bilder das Gesagte wörtlich sichtbar machen.
+Jede Szene wird zu einem Videoclip von EXAKT 8 Sekunden — die Gesamtdauer des Reels ist also Szenenanzahl × 8 Sekunden.
+${scriptBlock}
+DRAMATISCHE VISUALISIERUNG (Pflicht für JEDE Szene):
+- keyAction = eine übertriebene, physische, WÖRTLICHE Umsetzung der Aussage dieser Szene — ein visueller Gag oder Stunt, der die Zeile unterstreicht.
+- Beispiel: Zeile „KI ist kaputt" → eine Person lässt eine schwere Kugel auf einen Laptop krachen, Display zersplittert.
+- Die Aktion passiert WÄHREND die Zeile gesprochen wird und ihr Höhepunkt sitzt auf dem stärksten Wort.
+- Keine abstrakten, subtilen oder rein symbolischen Bilder: Die Umsetzung muss ohne Ton sofort verständlich sein und darf absurd überzogen wirken — aber physisch machbar, keine Magie, keine Fantasy.
+
+${continuity
+    ? `FLIESSENDE ÜBERGÄNGE (Nutzer-Einstellung „Nahtlose Übergänge"):
+- Die Clips werden nahtlos aneinandergefügt: Jede Szene schließt räumlich, zeitlich und kameratechnisch direkt an die vorige an.
+- Setups dürfen sich von Szene zu Szene ENTWICKELN (Kamera wandert, Person bewegt sich weiter), aber nie hart springen — kein abrupter Wechsel von Winkel, Distanz oder Position.
+- EIN Look über das ganze Reel: gleicher Hauptort, gleiche Personen, gleiches Outfit, gleiche Lichtstimmung.`
+    : `HARTE SCHNITTE STATT ÜBERGÄNGEN:
+- Jede Szene ist ein NEUES, deutlich anderes Kamera-Setup: anderer Winkel, andere Einstellungsgröße oder andere Position im Hauptort als die Szene davor.
+- Kein fließender Szenenübergang, kein Morph, keine Anschlussbewegung — die Schnitte sind bewusst sichtbar und geben dem Reel Tempo (Pattern Interrupt bei jedem Cut).
+- Trotzdem EIN Look über das ganze Reel: gleicher Hauptort, gleiche Personen, gleiches Outfit, gleiche Lichtstimmung.`}
 
 VERWENDE DIESEN HOOK ALS LEITPLANKE:
 - "${effectiveHook}"
-
-REEL-DRAMATURGIE:
-- Szene 1 = DER HOOK: Muss innerhalb von 1 Sekunde visuell Aufmerksamkeit binden. Kein langsamer Aufbau.
-- Jede weitere Szene = ESKALATION ODER KLARER WECHSEL: Jede Szene zeigt einen neuen Beat, neue Information oder einen sichtbaren Spannungsanstieg.
-- Letzte Szene = PAYOFF ODER OFFENE FRAGE: Das Ende soll klar wirken und zum Weiterschauen motivieren.
+- Szene 1 muss in der ersten Sekunde sitzen: stärkste Aussage + stärkstes Bild zuerst. Kein Aufbau, kein Intro, keine Begrüßung wie „Hallo Leute".
 
 REEL-VISUELLE REGELN:
-- Genau EIN dominanter Fokus pro Szene: eine Person, eine Aktion, ein Konflikt. Keine geteilte Aufmerksamkeit.
+- Genau EIN dominanter Fokus pro Szene: eine Person, eine Aktion, eine Aussage. Keine geteilte Aufmerksamkeit.
 - Handy-lesbar: Die Szene muss auch auf einem kleinen Smartphone-Screen sofort klar sein.
-- Keine Filler-Shots, keine neutralen Establishing Shots, keine statischen Übergänge ohne Konflikt.
-- Starker Szenenkontrast: Winkel, Entfernung, Komposition oder Machtdynamik sollen sich deutlich von der vorherigen Szene unterscheiden.
-- Bewegung ist Pflicht: Kamera, Körperhaltung, Blick oder Umwelt müssen spüren lassen, dass etwas passiert.
+- Keine Filler-Shots, keine neutralen Establishing Shots, keine Szene ohne Aussage.
 - 9:16-Komposition: Gesichter, Hände und Kernaktion müssen in der vertikalen Safe Zone klar sichtbar bleiben.
-
-REEL-INHALTLICHE REGELN:
-- Denke in aufmerksamkeitsstarken Momenten, nicht in langsamer Exposition.
-- Bevorzuge klare Emotionen und klare Bildsignale statt subtiler Andeutungen.
-- Jede Szene muss ohne Ton verständlich sein.
-- Jede Szene soll visuell die Frage beantworten: Warum schaut man weiter?
-`;
-}
-
-export function getReelVideoPromptDirective(effectiveHook: string): string {
-  return `
-REEL MODE - CRITICAL PRIORITY:
-This video is for a vertical 9:16 social media reel (TikTok/Instagram Reels/YouTube Shorts).
-Each scene is a short beat-sized clip. The exact total runtime is defined by the user brief.
-Use this hook directive as the north star: "${effectiveHook}"
-
-RULES FOR REEL PROMPTS:
-- The first 0.5-1 second must land on the strongest visual beat, not an intro
-- One focal subject, one focal action, one emotional read per clip
-- No slow establishing shots, no idle camera settle, no filler gestures
-- Movement must begin immediately but remain clean and readable
-- Vertical composition: keep the core action large, obvious, and mobile-readable
-- Protect subject clarity: background and props are secondary to the main beat
-- Build a pattern interrupt from the previous clip through scale, angle, motion, or power shift
-- End on a payoff frame or an unanswered question that pulls into the next clip
-- Strong contrast, strong silhouettes, strong facial readability, strong emotional intent
 `;
 }
 
@@ -334,20 +351,24 @@ export interface StoryConfig {
 
 interface StoryboardPromptOpts extends StoryConfig {
   characters: StoryCharacter[];
+  /** „Nahtlose Übergänge" aktiv — Reel-Szenen fließen statt hart zu schneiden. */
+  continuity?: boolean;
 }
 
 export function buildStoryboardPrompt(opts: StoryboardPromptOpts): string {
   const {
     mode, idea, pointCount, voiceMode, dialogMode, generationDirection, enableSpeaker,
     enableSceneDescription, speakerGender, artStyle, pacing, videoMood, colorMood,
-    hook, language, customDetails, characters,
+    hook, language, customDetails, characters, continuity,
   } = opts;
 
-  const effectiveHook = getEffectiveStoryHook(mode, hook);
+  const effectiveHook = getEffectiveStoryHook(mode, hook, enableSpeaker);
   const characterNames = characters.map((c) => c.name);
+  // Der Video-Prompt parst dialogText als "Name: Gesprochener Satz" — das Format
+  // muss dem Storyboard-Modell deshalb EXPLIZIT vorgegeben werden.
   const dialogueRule = characterNames.length > 0
-    ? `  - falls voiceMode = "dialog": JEDER gesprochene Satz MUSS mit einem exakten Charakternamen aus dieser Liste beginnen: ${characterNames.map((n) => `"${n}"`).join(", ")}`
-    : '  - falls voiceMode = "dialog": Verteile die Dialoge logisch auf die sichtbaren Figuren der Szene';
+    ? `  - falls voiceMode = "dialog": JEDE dialogText-Zeile MUSS exakt das Format "Name: Gesprochener Satz" haben — der Name vor dem Doppelpunkt ist ein exakter Charaktername aus dieser Liste: ${characterNames.map((n) => `"${n}"`).join(", ")}`
+    : '  - falls voiceMode = "dialog": JEDE dialogText-Zeile MUSS exakt das Format "Name: Gesprochener Satz" haben (Sprechername, Doppelpunkt, Text). Verteile die Dialoge logisch auf die sichtbaren Figuren der Szene';
 
   const characterBlock = characters.length > 0
     ? characters.map((c, i) =>
@@ -355,7 +376,9 @@ export function buildStoryboardPrompt(opts: StoryboardPromptOpts): string {
       ).join("\n")
     : "";
 
-  const reelDirective = mode === "reel" ? getReelStoryboardDirective(effectiveHook) : "";
+  const reelDirective = mode === "reel"
+    ? getReelStoryboardDirective({ effectiveHook, voiceMode, enableSpeaker, continuity })
+    : "";
 
   return `Du bist ein professioneller Drehbuchautor für visuelle Storyboards.
 
@@ -442,7 +465,9 @@ FELDREGELN:
   - falls enableSceneDescription = false: "(wird vom Nutzer manuell erstellt)"
 - "dialogText":
   - nur ausgeben, falls enableSpeaker = true
-  - falls voiceMode = "sprecher": Schreibe einen Erzähler-/Voiceover-Text in der 3. Person oder als Off-Stimme. KEIN Dialog zwischen Personen.
+  - falls voiceMode = "sprecher": ${mode === "reel"
+    ? 'Schreibe die Off-Sprecher-Zeile des Reels: gesprochene Creator-Sprache, direkt und aktivierend (2. Person „du" erlaubt), ca. 15–22 Wörter (soll ~7–8 Sekunden Sprechzeit füllen). KEIN Dialog zwischen Personen.'
+    : "Schreibe einen Erzähler-/Voiceover-Text in der 3. Person oder als Off-Stimme. KEIN Dialog zwischen Personen."}
   - falls voiceMode = "dialog":
 ${dialogueRule}
 - "continuityNotes": kurze Notiz zu Kleidung, Haaren, Accessoires, Requisiten oder Sprecherzuordnung
@@ -464,6 +489,11 @@ export function buildSceneImagePrompt(opts: {
   hasReferences: boolean;
   hasPrevImage: boolean;
   aspect: string;
+  /** Reel-Format: "dialog" = Person spricht in die Kamera (Talking-Head-Frame),
+   *  "sprecher" = Off-Stimme, Person handelt nur. Default "sprecher". */
+  voiceMode?: "sprecher" | "dialog";
+  /** „Nahtlose Übergänge" aktiv → Frames fließen statt hart zu schneiden. */
+  continuity?: boolean;
   /**
    * Retry index (0 = first try). Each background retry varies and softens the
    * prompt: scene text is run through the content-safety filter and a reword /
@@ -477,6 +507,14 @@ export function buildSceneImagePrompt(opts: {
   const style = STORY_ART_STYLES.find((a) => a.value === artStyle);
   const styleLine = style?.english || artStyle;
   const stylized = isStylizedArtStyle(artStyle);
+  // Erklär-Reel mit sprechender Person: der Frame zeigt die Person MITTEN im
+  // Sprechen in die Linse — sonst kann Veo daraus keinen Talking-Head animieren.
+  const talkingHead = mode === "reel" && opts.voiceMode === "dialog" && !!scene.dialogText?.trim();
+  // Bei mehreren Personen im Bild: WER spricht, kommt aus dem "Name: …"-Prefix
+  // der Dialogzeile — sonst rendert das Modell die falsche Person frontal.
+  const speakerName = talkingHead
+    ? (scene.dialogText?.match(/^\s*([^:]{1,40}):/)?.[1]?.trim() ?? "")
+    : "";
 
   // On retries, strip anything that could trip a content-safety false-positive
   // out of the free-text scene fields before they go into the prompt.
@@ -517,17 +555,41 @@ export function buildSceneImagePrompt(opts: {
   const detailed = soften(scene.detailedDescription || "");
 
   return [
-    "A single cinematic film still — the DECISIVE moment of the scene, frozen mid-action.",
-    "This is the key visual beat: the camera catches the subject IN the action, " +
-      "not before and not after. Think of it as the one frame a director would pick to " +
-      "summarise this scene at a glance.",
+    ...(talkingHead
+      ? [
+          // ── Talking-Head-Frame: Creator spricht in die Linse, Gag im selben Bild ──
+          "A single cinematic film still — one frame of a creator-style talking-to-camera reel, frozen mid-word.",
+          `DIRECT ADDRESS: ${speakerName ? `${speakerName} is the person speaking — ${speakerName}` : "the subject"} is speaking straight INTO the camera lens at this exact moment — ` +
+            "direct eye contact with the viewer, face fully visible and near-frontal, mouth open mid-speech, " +
+            "eyebrows and hands actively mid-gesture. It must feel like a paused video of someone talking, full of energy." +
+            (speakerName ? " Every other person in the frame stays in the background action and does NOT look at the camera." : ""),
+          "If the camera angle or shot type listed below conflicts with direct address, DIRECT ADDRESS WINS — " +
+            "keep the speaking face frontal, large and clearly readable.",
+          "STRICT: NOT a calm posed portrait, NOT a neutral smile at the lens, NOT a closed mouth — " +
+            "the subject is visibly mid-sentence, expressive and engaged.",
+          "THE DRAMATIC ACTION IS STAGED IN THE SAME FRAME: while the subject speaks, the key action below is " +
+            "clearly visible — either performed by the speaker themself with a prop, or unfolding dramatically " +
+            "behind them in the background. Both the speaking face AND the action must read instantly.",
+        ]
+      : [
+          "A single cinematic film still — the DECISIVE moment of the scene, frozen mid-action.",
+          "This is the key visual beat: the camera catches the subject IN the action, " +
+            "not before and not after. Think of it as the one frame a director would pick to " +
+            "summarise this scene at a glance.",
 
-    // ── Forbid the static failure modes the model defaults to ──
-    "STRICT: do NOT render a static posed portrait. Do NOT show the subject standing still, " +
-      "arms at the sides, facing camera, smiling at the lens. No line-up shots, no headshots, " +
-      "no relaxed standing poses unless the script explicitly requires stillness.",
-    "The subject is mid-gesture, mid-step, mid-reaction — body language, hands and face all " +
-      "clearly engaged in the action. Limbs are in motion; weight is shifted; the moment is alive.",
+          // ── Forbid the static failure modes the model defaults to ──
+          "STRICT: do NOT render a static posed portrait. Do NOT show the subject standing still, " +
+            "arms at the sides, facing camera, smiling at the lens. No line-up shots, no headshots, " +
+            "no relaxed standing poses unless the script explicitly requires stillness.",
+          "The subject is mid-gesture, mid-step, mid-reaction — body language, hands and face all " +
+            "clearly engaged in the action. Limbs are in motion; weight is shifted; the moment is alive.",
+        ]),
+    // Erklär-Reel: die keyAction ist eine bewusst überzogene, wörtliche
+    // Visualisierung der gesprochenen Aussage — kein subtiles Symbolbild.
+    mode === "reel"
+      ? "REEL ACTION STYLE: the key action is a deliberately exaggerated, physical, literal visual statement — " +
+        "a stunt-like gag that makes the scene's message obvious without sound. Bold, absurdly overstated, instantly readable."
+      : "",
 
     // ── What's actually happening ──
     action ? `KEY ACTION (this MUST be clearly visible and unmistakable): ${action}.` : "",
@@ -579,7 +641,11 @@ export function buildSceneImagePrompt(opts: {
     // safety / recitation false-positive isn't reproduced verbatim, and restate
     // the positive policy guarantee explicitly.
     attempt > 0
-      ? `RENDER VARIATION #${attempt}: keep the same characters, location and key action, but freely re-interpret and re-frame the moment — change camera angle, distance, composition and lighting compared to any earlier attempt. Describe everything in neutral, tasteful, policy-safe terms.`
+      ? (talkingHead
+          // Talking-Head: die Kamera darf beim Retry NICHT wegdrehen — der Frame
+          // muss frontal bleiben, sonst kann Veo keinen Direct-Address animieren.
+          ? `RENDER VARIATION #${attempt}: keep the same characters, location, key action AND the direct-to-camera address, but freely re-interpret lighting, background staging, framing distance and gesture compared to any earlier attempt. The speaker KEEPS talking straight into the lens. Describe everything in neutral, tasteful, policy-safe terms.`
+          : `RENDER VARIATION #${attempt}: keep the same characters, location and key action, but freely re-interpret and re-frame the moment — change camera angle, distance, composition and lighting compared to any earlier attempt. Describe everything in neutral, tasteful, policy-safe terms.`)
       : "",
     attempt > 0 ? SAFE_PORTRAIT_CLAUSE : "",
 
@@ -587,10 +653,15 @@ export function buildSceneImagePrompt(opts: {
     "Content policy: depict clothed adults only. No nudity, no sexually suggestive content, no graphic violence, no minors. Tasteful cinematic storytelling.",
     "ABSOLUTELY NO TEXT, LETTERS, WORDS, NUMBERS, WATERMARKS, CAPTIONS or LOGOS anywhere in the image.",
     "Sharp focus on the action, plausible anatomy, realistic hands, true-to-style rendering. It must read as one frame of a larger, continuous scene.",
-    // Continuity across scenes: every still belongs to ONE shoot, so it cuts
-    // cleanly to the next frame in the reel and gives the video model a coherent
-    // start frame to continue from.
-    "Cinematography continuity: same lens character, exposure, white balance and colour grade as a single continuous production — this frame is one moment inside an ongoing take, captured mid-motion (never a posed end-of-shot freeze), ready to flow straight into the next frame.",
+    // Continuity across scenes: every still belongs to ONE shoot. In reel mode
+    // WITHOUT „Nahtlose Übergänge" the cuts are deliberate hard cuts, so each
+    // scene is a visibly NEW setup inside that one production look; with the
+    // toggle ON (and in general mode) the frame should flow into the next.
+    mode === "reel" && !opts.continuity
+      ? "Cinematography: ONE consistent production look across the whole reel — same lens character, exposure, " +
+        "white balance and colour grade in every scene. But THIS frame is a deliberately NEW camera setup: " +
+        "clearly different angle, shot size or position than the previous scene. The edit will HARD CUT between scenes."
+      : "Cinematography continuity: same lens character, exposure, white balance and colour grade as a single continuous production — this frame is one moment inside an ongoing take, captured mid-motion (never a posed end-of-shot freeze), ready to flow straight into the next frame.",
   ].filter(Boolean).join("\n");
 }
 
@@ -622,42 +693,70 @@ export function buildSceneVideoPrompt(opts: {
    *  continuous-take in/out directives so segments flow into each other. */
   sceneIndex?: number;
   sceneCount?: number;
-  /** When true, this clip is one segment of a single continuous video: it must
-   *  start/end mid-motion (no fade/settle/freeze) so hard cuts read as seamless. */
+  /** When true („Nahtlose Übergänge"), this clip is one segment of a single
+   *  continuous video: it must start/end mid-motion so cuts read as seamless.
+   *  When false in reel mode, the clip uses hard-cut grammar instead (start
+   *  instantly, end abrupt — the visible cut is deliberate). */
   continuity?: boolean;
 }): string {
   const { scene, mode, pacing, mood, colorMood, effectiveHook, language, aspect, voiceMode } = opts;
   const speakerGender = opts.speakerGender ?? "neutral";
   const langName = getLanguageName(language);
 
-  // ── Continuous-take handling ────────────────────────────────────────────────
-  // The reel is assembled from per-scene clips. To make the hard cuts invisible,
-  // every clip must behave like a slice cut out of ONE longer take: enter already
-  // moving, leave still moving — never the self-contained "intro → beat → outro"
-  // shape Veo defaults to (that wind-down is exactly what produces the freeze /
-  // jitter at each join). The first clip still opens on the hook; the last clip
-  // still lands a payoff.
+  // ── Clip-Grammatik ─────────────────────────────────────────────────────────
+  // Das Reel wird aus Einzelclips montiert. Zwei Betriebsarten:
+  // • Hard Cuts (Reel-Standard): jeder Clip ist ein in sich stehender Beat, der
+  //   sofort auf voller Energie startet und abrupt endet — der sichtbare Schnitt
+  //   ist gewollt (Pattern Interrupt).
+  // • Continuity („Nahtlose Übergänge"): jeder Clip verhält sich wie ein Stück
+  //   aus EINEM längeren Take — enter already moving, leave still moving — damit
+  //   die Schnitte unsichtbar werden (Veos Intro→Beat→Outro-Ausklang erzeugt
+  //   sonst Freeze/Jitter an jedem Join).
   const continuity = !!opts.continuity;
+  const isReel = mode === "reel";
   const idx = opts.sceneIndex ?? 0;
   const isFirst = idx === 0;
   const isLast = opts.sceneCount ? idx === opts.sceneCount - 1 : false;
 
-  const continuousTakeLine = continuity
-    ? "CONTINUOUS TAKE — this clip is ONE segment of a single, unbroken longer video, not a standalone clip. " +
-      "Keep camera energy, lens, lighting, colour grade and motion rhythm seamlessly continuous with the neighbouring segments."
-    : "";
-  const startMotionLine = continuity && !isFirst
-    ? "Start ALREADY IN MOTION on the very first frame: the supplied opening frame is a live, moving moment — " +
-      "continue its movement instantly. NO fade-in, NO dip from black, NO settling, NO static hold, NO re-establishing pause at the start."
-    : "";
-  const endHandling = continuity
+  // ── Hard-cut reel grammar ──────────────────────────────────────────────────
+  // Erklär-/Erzähl-Reels werden mit BEWUSST sichtbaren harten Schnitten
+  // montiert: jeder Clip ist ein in sich stehender Beat (eine Aussage + eine
+  // Aktion), startet sofort auf voller Energie und endet abrupt ohne Ausklang —
+  // der Schnitt selbst ist der Pattern Interrupt. Nur wenn der Nutzer
+  // „Nahtlose Übergänge" (continuity) explizit einschaltet, gilt weiterhin die
+  // Continuous-Take-Grammatik darunter.
+  const hardCuts = isReel && !continuity;
+
+  const continuousTakeLine = hardCuts
+    ? "HARD-CUT REEL EDITING — this clip is ONE self-contained beat of a fast-paced vertical explainer reel. " +
+      "The reel is assembled with deliberate, visible hard cuts: every clip is a clearly different camera setup, " +
+      "and the cut itself is the pattern interrupt. One statement, one action, one emotional read — " +
+      "this clip never starts telling the next beat."
+    : continuity
+      ? "CONTINUOUS TAKE — this clip is ONE segment of a single, unbroken longer video, not a standalone clip. " +
+        "Keep camera energy, lens, lighting, colour grade and motion rhythm seamlessly continuous with the neighbouring segments."
+      : "";
+  const startMotionLine = hardCuts
+    ? "Start INSTANTLY at full energy on the very first frame — the beat is already happening. " +
+      "NO fade-in, NO dip from black, NO camera settle, NO wind-up, NO greeting pause."
+    : continuity && !isFirst
+      ? "Start ALREADY IN MOTION on the very first frame: the supplied opening frame is a live, moving moment — " +
+        "continue its movement instantly. NO fade-in, NO dip from black, NO settling, NO static hold, NO re-establishing pause at the start."
+      : "";
+  const endHandling = hardCuts
     ? (isLast
-        ? "End on a clear payoff frame."
-        : "End WHILE STILL IN MOTION: the action is mid-movement as the clip ends and flows directly into the next segment. " +
-          "NO slow-down, NO fade-out, NO freeze-frame, NO final held pose, NO concluding beat — the motion continues past the cut.")
-    : "End on a payoff frame or an unanswered question.";
-  // Hook only matters on the opening clip; with continuity off, keep prior behaviour.
-  const openingLine = (!continuity || isFirst) && effectiveHook
+        ? "Land the final beat cleanly — punchline, conclusion or call-to-action — and hold full energy to the very last frame. NO fade-out."
+        : "End clean and ABRUPT at full energy: finish the spoken line and the action's impact, then stop. " +
+          "NO fade-out, NO slow-down, NO freeze-frame, NO concluding pose — the edit hard-cuts straight to the next, visibly different setup.")
+    : continuity
+      ? (isLast
+          ? "End on a clear payoff frame."
+          : "End WHILE STILL IN MOTION: the action is mid-movement as the clip ends and flows directly into the next segment. " +
+            "NO slow-down, NO fade-out, NO freeze-frame, NO final held pose, NO concluding beat — the motion continues past the cut.")
+      : "End on a payoff frame or an unanswered question.";
+  // Hook: im Reel gehört der Hook NUR in den ersten Clip (jeder weitere Clip hat
+  // seine eigene Aussage). Sonst: mit continuity off, wie bisher auf jedem Clip.
+  const openingLine = (isReel ? isFirst : (!continuity || isFirst)) && effectiveHook
     ? `Opening directive: ${effectiveHook}`
     : "";
 
@@ -668,25 +767,58 @@ export function buildSceneVideoPrompt(opts: {
   let speechLine = "";
   if (scene.dialogText) {
     // Storyboard dialog lines are prefixed with the speaker name ("Isla: …").
+    // Only dialog mode uses that convention — narrator text must stay verbatim
+    // (a line like "Achtung: das wird teuer" would otherwise lose its opening).
     const m = scene.dialogText.match(/^\s*([^:]{1,40}):\s*(.+)$/s);
     const speaker = voiceMode === "dialog" && m ? m[1].trim() : "";
-    const line = (m ? m[2] : scene.dialogText).trim();
-    speechLine = voiceMode === "dialog"
-      ? `On-camera spoken dialogue in ${langName}${speaker ? ` — ${speaker} says` : ""}: "${line}". ` +
-        "The speaking character is clearly visible and faces the camera enough to read the mouth; " +
-        "animate accurate lip-sync with natural mouth, jaw and facial movement precisely matching these words, " +
-        "synced to the audio. Do NOT keep the mouth closed or static while the line is spoken."
-      : `Off-screen narrator voiceover in ${langName}: "${line}". ` +
-        "This is narration only — the on-screen subject does NOT mouth or lip-sync these words.";
+    const line = (voiceMode === "dialog" && m ? m[2] : scene.dialogText).trim();
+    if (voiceMode === "dialog") {
+      speechLine = isReel
+        // Erklär-Reel: Creator spricht die Zeile DIREKT in die Linse, während
+        // die Key Action im selben Bild passiert (selbst oder im Hintergrund).
+        ? `Direct-to-camera speech in ${langName}${speaker ? ` — ${speaker} speaks` : ""}: "${line}". ` +
+          "The speaker talks straight INTO the camera lens — creator-style direct address, confident eye contact " +
+          "with the viewer, face fully visible and near-frontal (if the shot/angle listed above conflicts with this, " +
+          "direct address wins). Animate accurate lip-sync with natural mouth, jaw " +
+          "and facial movement precisely matching these words, synced to the audio. Do NOT keep the mouth closed or " +
+          "static while the line is spoken.\n" +
+          "ACTION SYNC: the key action above happens WHILE the line is spoken — performed by the speaker themself or " +
+          "unfolding clearly in the frame behind them — timed so its impact lands exactly on the strongest word of the line."
+        : `On-camera spoken dialogue in ${langName}${speaker ? ` — ${speaker} says` : ""}: "${line}". ` +
+          "The speaking character is clearly visible and faces the camera enough to read the mouth; " +
+          "animate accurate lip-sync with natural mouth, jaw and facial movement precisely matching these words, " +
+          "synced to the audio. Do NOT keep the mouth closed or static while the line is spoken.";
+    } else {
+      speechLine = isReel
+        // Erklär-Reel mit Off-Sprecher: die Person spricht NICHT, sie FÜHRT die
+        // Aussage aus — der Impact der Aktion sitzt auf dem stärksten Wort.
+        ? `Off-screen narrator voiceover in ${langName}: "${line}". ` +
+          "Narration only — the on-screen person does NOT mouth or lip-sync these words. Instead they PERFORM: " +
+          "the key action unfolds during the narration, its impact timed to land exactly on the strongest word of the line."
+        : `Off-screen narrator voiceover in ${langName}: "${line}". ` +
+          "This is narration only — the on-screen subject does NOT mouth or lip-sync these words.";
+    }
   }
 
   // Konsistente Stimme über ALLE Clips: identischer Deskriptor pro Reel, damit Veo
   // (das jeden Clip separat generiert) möglichst dieselbe Sprecherstimme trifft.
+  const productionWord = isReel ? "reel" : "video";
   const voiceLine = scene.dialogText
     ? (voiceMode === "sprecher"
-        ? `Narrator voice — KEEP IT IDENTICAL ACROSS EVERY CLIP OF THIS REEL: ${voiceDescriptor(speakerGender)}. One and the same narrator in every segment — same timbre, pitch, pace and accent; never change the voice between clips.`
-        : "Character voices stay CONSISTENT across the whole reel: each named character keeps the exact same voice (timbre, pitch, accent) in every clip — never re-cast a character's voice between segments.")
+        ? `Narrator voice — KEEP IT IDENTICAL ACROSS EVERY CLIP OF THIS ${productionWord.toUpperCase()}: ${voiceDescriptor(speakerGender)}. One and the same narrator in every segment — same timbre, pitch, pace and accent; never change the voice between clips.`
+        : `Character voices stay CONSISTENT across the whole ${productionWord}: each named character keeps the exact same voice (timbre, pitch, accent) in every clip — never re-cast a character's voice between segments.`)
     : "";
+
+  // Speech-Fencing: Veo darf NUR die zitierte Zeile sprechen lassen — und sie
+  // soll den 8s-Clip füllen. Ohne Zeile (Reel): gar keine Sprache erfinden,
+  // sonst improvisiert Veo Fülltext, der nicht zum Skript gehört.
+  const speechFence = scene.dialogText
+    ? "SPEECH TIMING: the quoted line is the ONLY spoken language in this clip — speak it exactly as written and " +
+      "pace the delivery naturally so it fills almost the entire clip. Never invent, add or improvise any other " +
+      "dialogue, filler phrases, greetings or background chatter."
+    : (isReel
+        ? "NO SPOKEN WORDS in this clip — ambient and action sound only; do not invent any speech, voiceover or chatter."
+        : "");
 
   const lines = [
     `${scene.shotType.replace(/-/g, " ")}, ${scene.cameraAngle.replace(/-/g, " ")}.`,
@@ -707,6 +839,7 @@ export function buildSceneVideoPrompt(opts: {
     openingLine,
     voiceLine,
     speechLine,
+    speechFence,
     "ABSOLUTELY NO on-screen text, captions, watermarks, or logos.",
   ];
 
