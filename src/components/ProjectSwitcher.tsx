@@ -7,30 +7,22 @@ import { Folder, FolderPlus, ChevronDown, Check, Pencil, Trash2, Loader2, X } fr
 import { Menu, MenuDivider, MenuSection } from "@/components/ui/Menu";
 import { Badge } from "@/components/ui/Badge";
 import { useProjects } from "@/hooks/useProjects";
+import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
 
 export function ProjectSwitcher() {
-  const { projects, current, switchTo, create, rename, remove, canCreateMore, quota } = useProjects();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
+  const { projects, current, switchTo, create, remove, canCreateMore, quota } = useProjects();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
 
   if (!current) return null;
 
-  const startEdit = (id: string, name: string) => {
-    setEditingId(id);
-    setDraft(name);
-  };
-
-  const commitEdit = () => {
-    if (editingId && draft.trim()) {
-      rename(editingId, draft.trim());
-      toast.success("Projekt umbenannt.");
-    }
-    setEditingId(null);
-    setDraft("");
+  // „Umbenennen" öffnet jetzt den Bearbeiten-Dialog (Projektname + Profil).
+  const openEdit = (id: string) => {
+    if (id !== current.id) switchTo(id);
+    setEditOpen(true);
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -56,6 +48,7 @@ export function ProjectSwitcher() {
   };
 
   return (
+    <>
     <Menu
       align="left"
       triggerClassName="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white/5 transition-colors max-w-[200px]"
@@ -79,7 +72,6 @@ export function ProjectSwitcher() {
           <div className="max-h-72 overflow-y-auto">
             {projects.map((p) => {
               const active = p.id === current.id;
-              const editing = editingId === p.id;
               return (
                 <div
                   key={p.id}
@@ -88,42 +80,19 @@ export function ProjectSwitcher() {
                     active && "bg-white/3",
                   )}
                 >
-                  {editing ? (
-                    <>
-                      <input
-                        autoFocus
-                        value={draft}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") commitEdit();
-                          if (e.key === "Escape") { setEditingId(null); setDraft(""); }
-                        }}
-                        className="flex-1 bg-ink-950/60 border border-white/10 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-flare-400/50"
-                      />
-                      <button onClick={commitEdit} className="p-1 hover:text-flare-300" title="Speichern">
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => { setEditingId(null); setDraft(""); }} className="p-1 hover:text-danger" title="Abbrechen">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => switchTo(p.id)} className="flex-1 flex items-center gap-2 text-left text-sm min-w-0">
-                        <Folder className={cn("w-3.5 h-3.5 flex-shrink-0", active ? "text-flare-300" : "text-ink-50/55")} />
-                        <span className={cn("truncate", active ? "text-ink-50" : "text-ink-50/80")}>{p.name}</span>
-                        {active && <Check className="w-3 h-3 text-flare-300 flex-shrink-0" />}
-                      </button>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
-                        <button onClick={() => startEdit(p.id, p.name)} className="p-1 rounded hover:bg-white/5 hover:text-flare-300" title="Umbenennen">
-                          <Pencil className="w-3 h-3" />
-                        </button>
-                        <button onClick={() => handleDelete(p.id, p.name)} className="p-1 rounded hover:bg-white/5 hover:text-danger" title="Löschen" disabled={projects.length <= 1}>
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </>
-                  )}
+                  <button onClick={() => switchTo(p.id)} className="flex-1 flex items-center gap-2 text-left text-sm min-w-0">
+                    <Folder className={cn("w-3.5 h-3.5 flex-shrink-0", active ? "text-flare-300" : "text-ink-50/55")} />
+                    <span className={cn("truncate", active ? "text-ink-50" : "text-ink-50/80")}>{p.name}</span>
+                    {active && <Check className="w-3 h-3 text-flare-300 flex-shrink-0" />}
+                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
+                    <button onClick={() => openEdit(p.id)} className="p-1 rounded hover:bg-white/5 hover:text-flare-300" title="Umbenennen & Profil bearbeiten">
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => handleDelete(p.id, p.name)} className="p-1 rounded hover:bg-white/5 hover:text-danger" title="Löschen" disabled={projects.length <= 1}>
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -170,5 +139,7 @@ export function ProjectSwitcher() {
         )}
       </div>
     </Menu>
+    <ProfileSetupDialog open={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
+    </>
   );
 }

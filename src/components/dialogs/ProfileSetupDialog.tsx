@@ -1,64 +1,74 @@
 /**
- * Projekt-Profil-Setup — erscheint beim Erstellen/Öffnen eines Projekts ohne
- * Profil (App-Level-Gate). Überspringbar („Später"). Kompakt: Ziel + Content-Typ
- * + Sprache. Auf Fertigstellen werden Voreinstellungen deterministisch geseedet.
+ * Projekt-Profil-Dialog. Zwei Modi:
+ *  - "create": App-Level-Gate beim ersten profillosen Projekt, überspringbar.
+ *  - "edit":   aus dem Projekt-Menü (Umbenennen) — hier lässt sich der Projekt-
+ *              NAME und das Profil ändern.
+ * Bei Fertigstellen werden Voreinstellungen deterministisch geseedet.
  */
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, UserCircle2, Sparkles } from "lucide-react";
-import { Textarea } from "@/components/ui/Input";
+import { Input, Textarea } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectProfile } from "@/hooks/useProjectProfile";
+import { loadProject } from "@/lib/projectStorage";
 import { CONTENT_TYPES, applyProfileDefaults, type ProjectProfile, type ProfileContentType } from "@/lib/projectProfile";
 import { toast } from "sonner";
 
 const LANGUAGES = ["Deutsch", "English", "Français", "Español", "Italiano"];
 
-export function ProfileSetupDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { current } = useProjects();
+export function ProfileSetupDialog({ open, mode = "create", onClose }: { open: boolean; mode?: "create" | "edit"; onClose: () => void }) {
+  const { current, rename } = useProjects();
   const [, setProfile] = useProjectProfile();
+  const [name, setName] = useState("");
   const [purpose, setPurpose] = useState("");
   const [contentType, setContentType] = useState<ProfileContentType>("reel");
   const [language, setLanguage] = useState("Deutsch");
+  const isEdit = mode === "edit";
 
+  // Beim Öffnen aus dem aktuellen Projekt + (falls vorhanden) Profil vorbelegen.
+  // Synchron aus dem Storage gelesen, damit der Edit-Modus die echten Werte zeigt.
   useEffect(() => {
-    if (open) { setPurpose(""); setContentType("reel"); setLanguage("Deutsch"); }
+    if (!open || !current) return;
+    setName(current.name);
+    const p = ((loadProject(current.id)?.state as { values?: Record<string, unknown> } | undefined)?.values?.profile) as ProjectProfile | undefined;
+    setPurpose(p?.purpose ?? "");
+    setContentType(p?.contentType ?? "reel");
+    setLanguage(p?.language ?? "Deutsch");
   }, [open, current?.id]);
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && save(true);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && dismiss();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, isEdit]);
 
   if (!open || !current) return null;
 
-  const save = (skipped: boolean) => {
+  const persist = (skipped: boolean) => {
+    const trimmed = name.trim();
+    if (trimmed && trimmed !== current.name) rename(current.id, trimmed);
     const profile: ProjectProfile = {
-      version: 1,
-      completed: true,
-      skipped,
-      purpose: purpose.trim(),
-      contentType,
-      language,
-      createdAt: Date.now(),
+      version: 1, completed: true, skipped,
+      purpose: purpose.trim(), contentType, language, createdAt: Date.now(),
     };
     setProfile(profile);
-    if (!skipped) {
-      applyProfileDefaults(current.id, profile);
-      toast.success("Profil gespeichert — KI-Vorschläge & Voreinstellungen passen sich jetzt an.");
-    }
+    if (!skipped) applyProfileDefaults(current.id, profile);
+    toast.success(isEdit ? "Gespeichert." : (skipped ? "Ohne Profil weiter." : "Profil gespeichert — KI-Vorschläge & Voreinstellungen passen sich an."));
     onClose();
   };
 
+  // Wegklicken: im Edit-Modus = abbrechen (keine Änderung); im Create-Modus = überspringen.
+  const dismiss = () => (isEdit ? onClose() : persist(true));
+
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => save(true)} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={dismiss} />
       <div className="relative w-[min(560px,100%)] max-h-[calc(100vh-4rem)] overflow-y-auto bg-ink-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl animate-slide-down">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 border-b border-white/5">
@@ -67,17 +77,13 @@ export function ProfileSetupDialog({ open, onClose }: { open: boolean; onClose: 
               <UserCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-ink-50">Projekt-Profil</h2>
+              <h2 className="text-lg font-semibold text-ink-50">{isEdit ? "Projekt bearbeiten" : "Projekt-Profil"}</h2>
               <p className="text-sm text-ink-50/55 mt-0.5">
-                Sag der KI kurz, worum es geht — dann passen alle Vorschläge & Voreinstellungen dazu.
+                {isEdit ? "Name und Profil dieses Projekts — steuert Vorschläge & Voreinstellungen." : "Sag der KI kurz, worum es geht — dann passen alle Vorschläge & Voreinstellungen dazu."}
               </p>
             </div>
           </div>
-          <button
-            onClick={() => save(true)}
-            title="Überspringen"
-            className="w-9 h-9 rounded-xl hover:bg-white/5 flex items-center justify-center text-ink-50/60 hover:text-ink-50 flex-none"
-          >
+          <button onClick={dismiss} title={isEdit ? "Abbrechen" : "Überspringen"} className="w-9 h-9 rounded-xl hover:bg-white/5 flex items-center justify-center text-ink-50/60 hover:text-ink-50 flex-none">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -85,53 +91,43 @@ export function ProfileSetupDialog({ open, onClose }: { open: boolean; onClose: 
         {/* Body */}
         <div className="p-6 space-y-5">
           <div>
+            <label className="text-sm font-medium block mb-1.5">Projektname</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Café-Reels Sommer" />
+          </div>
+
+          <div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <label className="text-sm font-medium">Was möchtest du in diesem Projekt erstellen?</label>
               <AiSuggestButton
                 label="Ausformulieren"
-                buildPrompt={() =>
-                  `Formuliere aus dieser kurzen Notiz ein klares, konkretes Projekt-Ziel (1-2 Sätze, auf ${language}): "${purpose || contentType}". Antworte NUR mit dem Zieltext, ohne Anführungszeichen.`
-                }
+                buildPrompt={() => `Formuliere aus dieser kurzen Notiz ein klares, konkretes Projekt-Ziel (1-2 Sätze, auf ${language}): "${purpose || contentType}". Antworte NUR mit dem Zieltext, ohne Anführungszeichen.`}
                 onApply={setPurpose}
               />
             </div>
-            <Textarea
-              rows={3}
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              placeholder="z. B. Kurze, verspielte Werbe-Reels für mein Café auf Instagram"
-            />
+            <Textarea rows={3} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="z. B. Kurze, verspielte Werbe-Reels für mein Café auf Instagram" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium block mb-1.5">Content-Typ</label>
-              <Select
-                value={contentType}
-                onChange={(e) => setContentType(e.target.value as ProfileContentType)}
-                options={CONTENT_TYPES.map((c) => ({ value: c.value, label: c.label }))}
-              />
+              <Select value={contentType} onChange={(e) => setContentType(e.target.value as ProfileContentType)} options={CONTENT_TYPES.map((c) => ({ value: c.value, label: c.label }))} />
             </div>
             <div>
               <label className="text-sm font-medium block mb-1.5">Sprache</label>
-              <Select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                options={LANGUAGES.map((l) => ({ value: l, label: l }))}
-              />
+              <Select value={language} onChange={(e) => setLanguage(e.target.value)} options={LANGUAGES.map((l) => ({ value: l, label: l }))} />
             </div>
           </div>
 
           <p className="text-xs text-ink-50/45 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-flare-300 flex-none" />
-            Du kannst das Profil später jederzeit ändern — es steuert nur Vorschläge & Voreinstellungen.
+            {isEdit ? "Änderungen gelten für dieses Projekt." : "Du kannst das später jederzeit über Umbenennen im Projekt-Menü ändern."}
           </p>
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-white/5 bg-ink-950/40 flex items-center justify-between gap-3">
-          <Button variant="ghost" size="sm" onClick={() => save(true)}>Später</Button>
-          <Button onClick={() => save(false)} disabled={!purpose.trim()}>Profil speichern</Button>
+          <Button variant="ghost" size="sm" onClick={dismiss}>{isEdit ? "Abbrechen" : "Später"}</Button>
+          <Button onClick={() => persist(false)} disabled={!isEdit && !purpose.trim()}>{isEdit ? "Speichern" : "Profil speichern"}</Button>
         </div>
       </div>
     </div>,
