@@ -501,7 +501,7 @@ REGELN:
 
   const generateSceneImage = async (
     scene: StoryScene,
-    opts: { prevImageOverride?: string | null } = {},
+    opts: { prevImageOverride?: string | null; minAttempt?: number } = {},
   ): Promise<string | null> => {
     if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return null; }
     updateScene(scene.id, { imageStatus: "loading", imageError: undefined, imageHint: undefined });
@@ -541,7 +541,12 @@ REGELN:
     // rendering. Only once every attempt is exhausted do we surface an error,
     // and only then with a German-translated message.
     let lastErr: AIError | null = null;
-    for (let attempt = 0; attempt < MAX_IMAGE_ATTEMPTS; attempt++) {
+    // `minAttempt` hebt die Softening-Stufe an: beim Nachgenerieren fehlender
+    // (also bereits am Filter gescheiterter) Szenen starten wir sofort mit einer
+    // entschärften, umformulierten Prompt-Variante statt dem rohen Erstversuch.
+    const attemptFloor = opts.minAttempt ?? 0;
+    for (let i = 0; i < MAX_IMAGE_ATTEMPTS; i++) {
+      const attempt = attemptFloor + i;
       if (abortRef.current) return null; // explicit user cancel — bail silently
 
       const prompt = buildSceneImagePrompt({
@@ -581,7 +586,7 @@ REGELN:
         // Keep the card looking like it's still loading — do NOT flip to error yet.
         updateScene(scene.id, { imageStatus: "loading", imageError: undefined, imageHint: undefined });
         // Back off before the next variant: longer on rate-limit / server errors.
-        if (attempt < MAX_IMAGE_ATTEMPTS - 1) {
+        if (i < MAX_IMAGE_ATTEMPTS - 1) {
           const code = lastErr.code;
           const backoff = code === 429 ? 4000 : (typeof code === "number" && code >= 500 ? 2500 : 700);
           await sleep(backoff);
@@ -616,7 +621,12 @@ REGELN:
           prevImg = s.imageDataUrl || s.imageUrl || prevImg;
           continue;
         }
-        const dataUrl = await generateSceneImage(s, { prevImageOverride: prevImg });
+        // Nachgenerierte (fehlende) Szenen sind schon einmal gescheitert → direkt
+        // mit einer stark entschärften, umformulierten Prompt-Variante starten.
+        const dataUrl = await generateSceneImage(s, {
+          prevImageOverride: prevImg,
+          minAttempt: opts.onlyMissing ? 2 : 0,
+        });
         if (dataUrl) prevImg = dataUrl;
       }
     } finally {

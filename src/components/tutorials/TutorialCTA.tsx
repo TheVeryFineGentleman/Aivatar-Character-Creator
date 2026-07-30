@@ -1,10 +1,10 @@
 /**
- * "▶ Video-Tutorial ansehen" — Chip mit klar erkennbarem Play-Badge, damit
- * sofort ersichtlich ist, dass hier ein Erklär-VIDEO startet (nicht irgendeine
- * andere Aktion). Öffnet das Tutorial-Panel und spielt das passende Video ab.
+ * Großer, unübersehbarer "Video-Tutorial ansehen"-Button. Gefüllter Akzent-
+ * Verlauf, weißes Play-Badge, kräftiger Glow + sanfter Puls-Ring — bewusst
+ * auffälliger als alle umliegenden (sekundären/ghost) Buttons, damit niemand
+ * das Erklärvideo übersieht. Öffnet das Tutorial-Panel und spielt das Video.
  *
- * Rendert nichts, wenn das zugehörige Tool im aktuellen Plan gesperrt ist —
- * so kann der Link bedenkenlos auf jeder Seite platziert werden.
+ * Rendert nichts, wenn das zugehörige Tool im aktuellen Plan gesperrt ist.
  */
 import { Play } from "lucide-react";
 import { useTutorials } from "@/hooks/useTutorials";
@@ -24,20 +24,28 @@ export function TutorialCTA({ tutorialId, className }: { tutorialId: string; cla
       onClick={() => openPanel(t.id)}
       title="Video-Tutorial ansehen"
       className={cn(
-        "group inline-flex items-center gap-2 py-1.5 pl-1.5 pr-3.5 rounded-full border",
-        "text-[13px] font-semibold transition-all hover:brightness-110 active:scale-[0.98]",
+        "group relative inline-flex items-center gap-3 pl-2.5 pr-5 py-2.5 rounded-full",
+        "font-bold text-sm text-white transition-all",
+        "hover:scale-[1.04] active:scale-[0.98]",
         className,
       )}
-      style={{ color: t.color, background: tint(t.color, 0.12), borderColor: tint(t.color, 0.35) }}
+      style={{
+        background: `linear-gradient(135deg, ${t.color}, ${tint(t.color, 0.72)})`,
+        boxShadow: `0 0 0 1.5px ${tint(t.color, 0.55)}, 0 8px 26px ${tint(t.color, 0.45)}`,
+        textShadow: "0 1px 2px rgba(0,0,0,0.28)",
+      }}
     >
-      {/* Gefülltes Play-Badge — universelles „Video abspielen"-Signal. */}
+      {/* Sanft pulsierender Glow-Ring — fängt den Blick, ohne zu nerven. */}
       <span
-        className="flex items-center justify-center w-5 h-5 rounded-full flex-none shadow-sm transition-transform group-hover:scale-105"
+        className="pointer-events-none absolute -inset-1 rounded-full animate-pulse opacity-40 blur-md -z-10"
         style={{ background: t.color }}
-      >
-        <Play className="w-2.5 h-2.5 text-ink-950 fill-current translate-x-[1px]" />
+        aria-hidden
+      />
+      {/* Weißes Play-Badge — universelles „Video abspielen"-Signal. */}
+      <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white flex-none shadow-md transition-transform group-hover:scale-110">
+        <Play className="w-4 h-4 translate-x-[1px]" style={{ color: t.color, fill: "currentColor" }} />
       </span>
-      Video-Tutorial ansehen
+      <span className="relative whitespace-nowrap tracking-tight">Video-Tutorial ansehen</span>
     </button>
   );
 }

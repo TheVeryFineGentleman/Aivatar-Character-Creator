@@ -104,10 +104,13 @@ export async function translateErrorToGerman(text: string, apiKey: string): Prom
 const GEMINI_URL = (model: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
+// Gemini 3 GA-Modelle. Die 2.5-Familie wird von Google abgeschaltet und ist für
+// neue Nutzer bereits gesperrt ("no longer available to new users") — daher der
+// Wechsel. image = Nano Banana 2 (direkter Nachfolger von gemini-2.5-flash-image).
 const MODELS = {
-  text:  "gemini-2.5-flash",
-  textLite: "gemini-2.5-flash-lite",
-  image: "gemini-2.5-flash-image",
+  text:  "gemini-3.6-flash",
+  textLite: "gemini-3.5-flash-lite",
+  image: "gemini-3.1-flash-image",
 } as const;
 
 interface Part {
