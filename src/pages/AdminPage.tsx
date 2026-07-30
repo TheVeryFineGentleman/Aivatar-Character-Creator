@@ -6,8 +6,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
-import { API } from "@/lib/backend";
+import { SUPA_FUNC, BACKEND } from "@/lib/backend";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStorageQuota, type ServerQuota } from "@/lib/serverAI";
 import { formatBytes } from "@/lib/projectStorage";
@@ -21,13 +20,12 @@ interface LicenseRecord {
 }
 
 export default function AdminPage() {
-  const { license } = useAuth();
+  const { license, credentials } = useAuth();
   const [email, setEmail] = useState("");
-  const [adminKey, setAdminKey] = useState("");
   const [result, setResult] = useState<LicenseRecord | null>(null);
   const [quota, setQuota] = useState<ServerQuota | null>(null);
   const [loading, setLoading] = useState(false);
-  const [newProduct, setNewProduct] = useState("FULL");
+  const [newProductId, setNewProductId] = useState("");
 
   if (!license?.isAdmin) {
     return (
@@ -39,24 +37,37 @@ export default function AdminPage() {
     );
   }
 
+  // Alle Admin-Aktionen laufen über die Supabase Edge Function `license-admin`.
+  // Sie injiziert serverseitig den toolApiKey + den Admin-Key (die das Frontend
+  // NICHT kennt) und leitet an den Key-Manager weiter. Auth: der eingeloggte
+  // Admin (requesterEmail) muss in der Allowlist der Function stehen.
+  const callAdmin = async (payload: Record<string, unknown>) => {
+    const res = await fetch(SUPA_FUNC("license-admin"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(BACKEND.supabaseAnonKey ? { Authorization: `Bearer ${BACKEND.supabaseAnonKey}` } : {}),
+      },
+      body: JSON.stringify({ requesterEmail: credentials?.email ?? "", ...payload }),
+    });
+    const data = await res.json().catch(() => ({} as any));
+    if (!res.ok) throw new Error(data?.error || `Fehler (${res.status})`);
+    return data;
+  };
+
   const lookup = async () => {
-    if (!email.trim() || !adminKey.trim()) {
-      toast.error("Email und Admin-Key benötigt.");
-      return;
-    }
+    if (!email.trim()) { toast.error("Email benötigt."); return; }
     setLoading(true);
     try {
-      const res = await fetch(API("/api/admin/license/lookup"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Admin-Key": adminKey.trim() },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Lookup fehlgeschlagen.");
-      setResult(data);
-
-      // Try fetching extras — non-fatal if this endpoint is missing.
-      await fetchStorageQuota(data.email).then((q) => setQuota(q)).catch(() => setQuota(null));
+      const data = await callAdmin({ action: "lookup", email: email.trim() });
+      if (data?.found === false || !data?.licenseKey) {
+        toast.error("Keine Lizenz gefunden.");
+        setResult(null); setQuota(null);
+        return;
+      }
+      setResult(data as LicenseRecord);
+      const qEmail = (data.email as string) || email.trim();
+      await fetchStorageQuota(qEmail).then((q) => setQuota(q)).catch(() => setQuota(null));
     } catch (e: any) {
       toast.error(e.message);
       setResult(null); setQuota(null);
@@ -66,15 +77,12 @@ export default function AdminPage() {
   };
 
   const changeProduct = async () => {
-    if (!result) return;
+    if (!result?.licenseKey) return;
+    const pid = Number(newProductId);
+    if (!Number.isInteger(pid) || pid <= 0) { toast.error("Gültige Produkt-ID (Zahl) angeben."); return; }
     try {
-      const res = await fetch(API("/api/admin/license/change-product"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Admin-Key": adminKey.trim() },
-        body: JSON.stringify({ email: result.email, newProductCode: newProduct }),
-      });
-      if (!res.ok) throw new Error("Änderung fehlgeschlagen.");
-      toast.success(`Produkt für ${result.email} → ${newProduct}`);
+      await callAdmin({ action: "change-product", licenseKey: result.licenseKey, productId: pid });
+      toast.success(`Produkt für ${result.email} → ID ${pid}`);
       await lookup();
     } catch (e: any) {
       toast.error(e.message);
@@ -91,9 +99,8 @@ export default function AdminPage() {
 
       <Card className="mb-4">
         <CardHeader title="Lizenz-Lookup" subtitle="Findet den aktuellen Plan einer E-Mail-Adresse" icon={<Search className="w-4 h-4" />} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="max-w-md">
           <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="kunde@beispiel.de" />
-          <Input label="Admin-Key" type="password" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} placeholder="X-Admin-Key Header" />
         </div>
         <div className="mt-4">
           <Button onClick={lookup} loading={loading} iconLeft={<Search className="w-4 h-4" />}>Suchen</Button>
@@ -111,12 +118,15 @@ export default function AdminPage() {
               <Field label="Läuft ab" value={result.expiresAt ? new Date(result.expiresAt).toLocaleDateString("de-DE") : "—"} />
             </div>
             <div className="flex items-end gap-3 pt-3 border-t border-white/5">
-              <Select label="Neues Produkt" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} options={[
-                { value: "BASIC",   label: "BASIC" },
-                { value: "PREMIUM", label: "PREMIUM" },
-                { value: "FULL",    label: "FULL" },
-              ]} />
-              <Button onClick={changeProduct} variant="secondary">Produkt ändern</Button>
+              <Input
+                label="Neue Produkt-ID"
+                type="number"
+                value={newProductId}
+                onChange={(e) => setNewProductId(e.target.value)}
+                placeholder="z. B. 4 = Pro, 5 = Premium"
+                className="max-w-[200px]"
+              />
+              <Button onClick={changeProduct} variant="secondary" disabled={!newProductId.trim()}>Produkt ändern</Button>
             </div>
           </Card>
 
