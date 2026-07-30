@@ -32,6 +32,7 @@ const AuthContext = createContext<AuthValue | null>(null);
 const ADMIN_EMAILS = new Set<string>([
   // Add admin emails — kept in client only for UI gating
   "admin@aivatar.app",
+  "leojaeger2008@gmail.com",
 ]);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
