@@ -350,17 +350,19 @@ export async function serverGenerateTextFal(opts: {
  * Storage quota
  * ============================================================ */
 
-export interface ServerQuota {
-  usedBytes: number;
-  limitBytes: number;
-  projectLimit: number;
-  isOverLimit: boolean;
-  percentUsed: number;
-  hasAddon: boolean;
+/**
+ * Was der Server über den Speicher eines Kunden WIRKLICH weiss: nur wie viele
+ * Storage-Boost-Addons aktiv sind (`GET /api/storage/quota` → `{ activeAddons }`).
+ * Der tatsächliche Verbrauch liegt im localStorage des Kunden und ist
+ * serverseitig nicht sichtbar — deshalb hier bewusst kein `usedBytes`.
+ */
+export interface ServerStorageInfo {
+  activeAddons: number;
 }
 
-export function fetchStorageQuota(email: string): Promise<ServerQuota> {
-  return getJson<ServerQuota>(`/api/storage/quota?email=${encodeURIComponent(email)}`);
+export async function fetchStorageInfo(email: string): Promise<ServerStorageInfo> {
+  const data = await getJson<{ activeAddons?: number }>(`/api/storage/quota?email=${encodeURIComponent(email)}`);
+  return { activeAddons: Number(data?.activeAddons || 0) };
 }
 
 export interface StorageCheckoutOpts {

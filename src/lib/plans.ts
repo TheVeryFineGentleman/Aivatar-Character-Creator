@@ -128,6 +128,25 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
 export const PLAN_RANK: Record<PlanTier, number> = { basic: 0, premium: 1, full: 2, studio: 3 };
 
 /**
+ * Produkt-Nummern der Datenbank (`products.id`) je Tier — für das Admin-Panel.
+ *
+ * ACHTUNG, das Naming ist verdreht (siehe Kopf dieser Datei):
+ *   DB-Code PREMIUM (id 4) = Anzeigename "Pro"     (247 €)
+ *   DB-Code FULL    (id 5) = Anzeigename "Premium" (297 €)
+ *
+ * `null` = Nummer hier (noch) nicht bekannt. Das Admin-Panel fragt sie dann
+ * einmalig ab und merkt sie sich im Browser; ausserdem lernt es die Nummer
+ * automatisch, sobald ein Lookup eine Lizenz mit dieser Produkt-ID liefert.
+ * Im UI wird IMMER `label` gezeigt, nie der DB-Code.
+ */
+export const DEFAULT_PLAN_PRODUCT_IDS: Record<PlanTier, number | null> = {
+  basic: null,
+  premium: 4, // DB-Code PREMIUM
+  full: 5,    // DB-Code FULL
+  studio: null,
+};
+
+/**
  * Vollverkauf-Variante (Einmalkauf, kein Abo). In dieser Version werden KEINE
  * Pläne/Abos/Upselling-Flächen angezeigt (Pricing-Links, Preis-Chip, Promo-Banner),
  * weil der Nutzer bereits alles gekauft hat.
