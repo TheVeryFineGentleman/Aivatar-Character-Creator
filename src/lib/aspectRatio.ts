@@ -15,13 +15,20 @@ export const ASPECT_RATIOS: AspectOption[] = [
 ];
 
 /**
- * The only ratios the video pipeline (Veo / fal) renders cleanly — used by the
- * Story/Reel Format dropdown so users can't pick a ratio that would get snapped
- * anyway. Images elsewhere still use the full ASPECT_RATIOS list.
+ * The only ratios the video pipeline renders cleanly — used by the Story/Reel
+ * format dropdown so users can't pick a ratio that would get snapped anyway.
+ * Images elsewhere still use the full ASPECT_RATIOS list.
+ *
+ * EIGENE Beschriftungen statt der aus ASPECT_RATIOS: hier wählt man nicht bloß
+ * ein Seitenverhältnis, sondern die Gattung. Hochkant IST das Reel, quer IST das
+ * Video — „Widescreen" sagt das nicht, und in einem Schritt, der nach dem Reel
+ * fragt, las sich 16:9 wie eine Variante davon. Die Bild-Auswahl auf anderen
+ * Seiten bleibt bei „Widescreen", dort geht es wirklich nur um das Format.
  */
-export const VIDEO_ASPECT_RATIOS: AspectOption[] = ASPECT_RATIOS.filter((a) =>
-  a.value === "9:16" || a.value === "16:9",
-);
+export const VIDEO_ASPECT_RATIOS: AspectOption[] = [
+  { value: "9:16", label: "9:16 — Reel (hochkant)",  tailwindClass: "aspect-[9/16]" },
+  { value: "16:9", label: "16:9 — Video (quer)",     tailwindClass: "aspect-video" },
+];
 
 export function aspectClass(value: string): string {
   return ASPECT_RATIOS.find((a) => a.value === value)?.tailwindClass || "aspect-square";

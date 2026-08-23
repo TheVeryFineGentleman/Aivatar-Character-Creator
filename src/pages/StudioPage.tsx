@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Camera, Sparkles, Loader2, Check, RefreshCw, X, Trash2, Mountain,
+  Camera, Sparkles, Loader2, Trash2, Mountain,
   Plus, RotateCcw, ImageDown, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { ImageGrid, type ImageSlot } from "@/components/ImageGrid";
 import { MultiDownloadButton } from "@/components/DownloadButton";
 import { PlanGate } from "@/components/PlanGate";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
-import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
+import { SuggestionField } from "@/components/ai/SuggestionField";
 import { useProjectProfile } from "@/hooks/useProjectProfile";
 import { buildProfilePreamble } from "@/lib/projectProfile";
 import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
@@ -187,7 +187,7 @@ function buildPrompt(opts: {
 }
 
 export default function StudioPage() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeyMessage } = useSettings();
   const { plan } = useAuth();
 
   // Uploaded references + all inputs are persisted per project.
@@ -204,9 +204,6 @@ export default function StudioPage() {
   const [customPrompt, setCustomPrompt] = useProjectValue("studio:customPrompt", "");
   const [count, setCount] = useProjectValue("studio:count", plan.maxImagesPerRun === 1 ? 1 : 4);
 
-  const [aiSuggestion, setAiSuggestion] = useState("");
-  const [suggesting, setSuggesting] = useState(false);
-
   // KI-Assistent state (prompt history persisted; live chat draft is transient)
   const [promptVersions, setPromptVersions] = useProjectValue<string[]>("studio:promptVersions", []);
   const [promptVersionIdx, setPromptVersionIdx] = useProjectValue("studio:promptVersionIdx", 0);
@@ -219,7 +216,9 @@ export default function StudioPage() {
 
   const generate = async () => {
     if (!hasGenKey) {
-      toast.error("Bitte hinterlege zuerst deinen API-Key in den Einstellungen.");
+      toast.error(missingKeyMessage ?? "Bitte hinterlege zuerst deine API-Keys.", {
+        description: "Google und fal.ai sind beide Pflicht — beide in den Einstellungen eintragen.",
+      });
       return;
     }
     if (refs.length === 0 && !customPrompt.trim()) {
@@ -283,38 +282,6 @@ export default function StudioPage() {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
       setSlots(s => s.map(x => x.id === id ? { ...x, status: "error", error: err.message, errorHint: err.hint } : x));
     }
-  };
-
-  const suggestBackground = async () => {
-    if (!hasGenKey) { toast.error("API-Key fehlt."); return; }
-    setSuggesting(true);
-    try {
-      const seed = customPrompt.trim() || sceneDescription.trim() || `${shotType} portrait, ${style} style`;
-      const result = await generateText(genChain, {
-        prompt: buildProfilePreamble(projectProfile) + `Der Nutzer hat folgenden Bild-Kontext: "${seed}".
-
-Beschreibe einen passenden Hintergrund. STRENGE REGELN:
-- Antworte NUR mit der reinen Hintergrundbeschreibung
-- KEINE Einleitungen, keine Erklärungen
-- KEINE Details über Personen oder Charaktere
-- 2-3 Sätze auf Deutsch`,
-      });
-      const s = result.trim();
-      if (s) setAiSuggestion(s);
-      else toast.error("Keine Vorschläge erhalten.");
-    } catch (e: any) {
-      const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
-      toast.error(err.message);
-    } finally {
-      setSuggesting(false);
-    }
-  };
-
-  const applySuggestion = () => {
-    if (!aiSuggestion) return;
-    setSceneDescription(aiSuggestion);
-    setAiSuggestion("");
-    if (background === "white" || background === "greenscreen") setBackground("scenery");
   };
 
   // ── KI-Assistent: build a polished image prompt from natural-language input ──
@@ -481,7 +448,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
           <label className="text-xs text-ink-50/55">Hintergrund</label>
           <div className="inline-flex rounded-lg bg-ink-800/40 border border-white/8 p-1 gap-1 w-fit">
             {[
-              { id: "white",       label: "Weiß",        icon: <div className="w-4 h-4 rounded-full bg-white border border-white/30" /> },
+              { id: "white",       label: "Weiß",        icon: <div className="w-4 h-4 rounded-full bg-pure border border-white/30" /> },
               { id: "greenscreen", label: "Green Screen", icon: <div className="w-4 h-4 rounded-full bg-green-500 border border-white/30" /> },
               { id: "scenery",     label: "Custom",       icon: <Mountain className="w-4 h-4" /> },
             ].map((option) => {
@@ -509,53 +476,25 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
             "overflow-hidden transition-all duration-300 ease-in-out w-full",
             background === "scenery" ? "max-h-96 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0",
           )}>
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
-                value={sceneDescription}
-                onChange={(e) => setSceneDescription(e.target.value)}
-                rows={3}
-              />
-
-              {aiSuggestion && (
-                <div className="animate-fade-in rounded-lg border border-flare-400/30 bg-flare-500/5 p-3 max-w-2xl">
-                  <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-flare-300 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-ink-50 leading-relaxed">{aiSuggestion}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button onClick={applySuggestion} size="sm" className="flex-1" iconLeft={<Check className="w-4 h-4" />}>
-                      Übernehmen
-                    </Button>
-                    <Button
-                      onClick={suggestBackground}
-                      disabled={suggesting}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      {suggesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                    </Button>
-                    <Button onClick={() => setAiSuggestion("")} variant="ghost" size="sm">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {!aiSuggestion && (
-                <Button
-                  onClick={suggestBackground}
-                  loading={suggesting}
-                  variant="secondary"
-                  size="sm"
-                  iconLeft={<Sparkles className="w-3.5 h-3.5" />}
-                >
-                  KI-Vorschlag
-                </Button>
-              )}
-            </div>
+            {/* Drei Hintergründe stehen im leeren Feld — vorher lieferte ein
+                Knopf genau einen Vorschlag, den man nur annehmen oder verwerfen
+                konnte. */}
+            <SuggestionField
+              as="textarea"
+              rows={3}
+              placeholder="Beschreibe die Szene... (z.B. 'Strand bei Sonnenuntergang', 'Urbaner Park im Herbst')"
+              value={sceneDescription}
+              onChange={setSceneDescription}
+              emptyHint="Wähle einen Hintergrund oder schreib deinen eigenen…"
+              cacheKey={`studio:sceneDescription:${style}:${shotType}`}
+              what="der Hintergrund/Ort der Aufnahme"
+              shape="2–3 Sätze auf Deutsch, nur der Hintergrund — keine Personen"
+              current={sceneDescription}
+              context={[
+                `Aufnahme: ${SHOT_TYPES.find((s) => s.value === shotType)?.label ?? shotType}, Look: ${STYLES.find((s) => s.value === style)?.label ?? style}.`,
+                customPrompt.trim() ? `Bild-Kontext des Nutzers: "${customPrompt.trim().slice(0, 300)}"` : "",
+              ].filter(Boolean).join("\n")}
+            />
           </div>
         </div>
 
@@ -591,7 +530,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                   // 20px knob, 2px gutters on both sides → 44 − 20 − 2 − 2 = 20
                   // travel distance, so translate-x-5 lands the knob flush with
                   // a 2px right gutter inside the pill.
-                  "absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200",
+                  "absolute top-0.5 left-0.5 w-5 h-5 bg-pure rounded-full shadow-sm transition-transform duration-200",
                   useCustomPrompt ? "translate-x-5" : "translate-x-0",
                 )}
               />
@@ -611,11 +550,6 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                     <div className="flex items-center justify-between mb-2 h-7">
                       <div className="flex items-center gap-2 min-w-0">
                         <label htmlFor="custom-prompt-input" className="text-sm font-medium">Custom Image Prompt</label>
-                        <AiSuggestButton
-                          label="KI-Vorschlag"
-                          buildPrompt={() => `Schreibe einen detaillierten, direkt nutzbaren Bild-Prompt für eine Pose/Szene, passend zum Projekt. Aktuell: "${customPrompt || "—"}". Antworte nur mit dem Prompt.`}
-                          onApply={(v) => handleCustomPromptChange(v)}
-                        />
                       </div>
                       {promptVersions.length > 0 && (
                         <div className="flex items-center gap-1">
@@ -641,13 +575,19 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                         </div>
                       )}
                     </div>
-                    <Textarea
-                      id="custom-prompt-input"
+                    <SuggestionField
+                      as="textarea"
                       placeholder="Beschreibe eine bestimmte Pose oder Szene..."
                       value={customPrompt}
-                      onChange={(e) => handleCustomPromptChange(e.target.value)}
+                      onChange={handleCustomPromptChange}
                       rows={5}
-                      className="min-h-[124px]"
+                      fieldClassName="min-h-[124px]"
+                      emptyHint="Wähle einen Prompt oder schreib deinen eigenen…"
+                      cacheKey={`studio:customPrompt:${style}:${shotType}`}
+                      what="ein direkt nutzbarer Bild-Prompt für Pose und Szene"
+                      shape="2–4 Sätze, konkret und visuell"
+                      current={customPrompt}
+                      context={`Aufnahme: ${SHOT_TYPES.find((s) => s.value === shotType)?.label ?? shotType}, Look: ${STYLES.find((s) => s.value === style)?.label ?? style}.`}
                     />
                   </div>
 
@@ -702,7 +642,7 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                                 className={cn(
                                   "h-6 px-2 text-[11px] font-medium rounded transition-colors",
                                   active
-                                    ? "bg-flare-grad text-white"
+                                    ? "bg-flare-grad text-pure"
                                     : tab.enabled
                                       ? "text-ink-50/55 hover:text-ink-50 hover:bg-white/5"
                                       : "text-ink-50/30 cursor-not-allowed",
@@ -715,8 +655,14 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                         </div>
                       </div>
                     </div>
+                    {/* Die drei Aufträge stehen IM leeren Feld — passend zum
+                        Projekt-Profil und zum gewählten Ziel (Prompt /
+                        Hintergrund / Beides). */}
                     <div className="p-3 rounded-lg border border-white/8 bg-ink-800/30 h-[124px]">
-                      <Textarea
+                      <SuggestionField
+                        as="textarea"
+                        className="h-full"
+                        fieldClassName="h-full min-h-0 text-sm resize-none bg-transparent !border-0 !p-0 !shadow-none focus:!ring-0"
                         placeholder={
                           aiTarget === "prompt"
                             ? "Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'…"
@@ -725,14 +671,25 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                               : "Beschreibe Person und Hintergrund, z.B. 'Person liest ein Buch im gemütlichen Café'…"
                         }
                         value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
+                        onChange={setChatInput}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
                             handleGenerateWithAI();
                           }
                         }}
-                        className="h-full min-h-0 text-sm resize-none bg-transparent !border-0 !p-0 !shadow-none focus:!ring-0"
+                        disabled={generatingPrompt}
+                        emptyHint="Der Assistent könnte…"
+                        cacheKey={`studio:assistant:${aiTarget}:${style}`}
+                        kind="instruction"
+                        what={
+                          aiTarget === "prompt"
+                            ? "einen Bild-Prompt für die Person schreiben lassen"
+                            : aiTarget === "background"
+                              ? "einen Hintergrund beschreiben lassen"
+                              : "Bild-Prompt und Hintergrund zusammen schreiben lassen"
+                        }
+                        context={`Look: ${STYLES.find((s) => s.value === style)?.label ?? style}, Aufnahme: ${SHOT_TYPES.find((s) => s.value === shotType)?.label ?? shotType}.`}
                       />
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { ImagePlus, X, Upload } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { fileToBase64, compressImageToFitSize } from "@/lib/image";
+import { fileToBase64, prepareReferenceImage } from "@/lib/image";
 import { uid } from "@/lib/uid";
 
 export interface RefImage {
@@ -30,7 +30,9 @@ export function ImageDropZone({ images, onChange, max = 3, label = "Referenzbild
     const next: RefImage[] = [];
     for (const f of Array.from(files).slice(0, remaining)) {
       if (!f.type.startsWith("image/")) continue;
-      const compressed = await compressImageToFitSize(f);
+      // Auf Referenzgröße runterrechnen, nicht nur unter 4 MB drücken: dieses
+      // base64 geht bei jedem Generierungslauf erneut mit über die Leitung.
+      const compressed = await prepareReferenceImage(f);
       const { base64, mimeType } = await fileToBase64(compressed);
       next.push({
         id: uid(),

@@ -200,7 +200,7 @@ function RoundActionBtn({
         "w-10 h-10 rounded-full flex items-center justify-center transition-all border backdrop-blur",
         "active:scale-95",
         tone === "danger"
-          ? "bg-danger/85 border-danger/40 text-white hover:bg-danger hover:shadow-lg hover:shadow-danger/30"
+          ? "bg-danger/85 border-danger/40 text-pure hover:bg-danger hover:shadow-lg hover:shadow-danger/30"
           : "bg-white/12 border-white/15 text-ink-50 hover:bg-white/20 hover:shadow-lg",
       )}
     >

@@ -13,3 +13,6 @@ dist-ssr/
 # Logs & misc
 *.log
 .DS_Store
+
+# Lokale Claude-Code-Konfiguration und Worktrees (volle Repo-Kopien)
+.claude/

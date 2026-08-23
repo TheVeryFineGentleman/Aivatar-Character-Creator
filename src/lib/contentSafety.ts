@@ -61,7 +61,7 @@ const RULES: Rule[] = [
   { category: "sexual", re: /low[-\s]?cut|low\s*neckline|deep\s*neckline|tiefer?\s*ausschnitt/gi },
   { category: "sexual", re: /busty|big\s*breasts?|huge\s*breasts?|\bboobs?\b|\btits?\b|\bnipples?\b/gi },
   { category: "sexual", re: /\bbreasts?\b|brüste|busen/gi },
-  { category: "sexual", re: /genital\w*|\bpenis\b|\bvagina\b|vulva|\banus\b|buttocks|\bbutt\b|crotch|\bschritt\b|\bpo\b/gi },
+  { category: "sexual", re: /genital\w*|\bpenis\b|\bvagina\b|vulva|\banus\b|buttocks|\bbutt\b|crotch/gi },
   { category: "sexual", re: /seductive|verf(ü|ue)hrerisch|alluring|provoc\w*|provokant|suggestive|anz(ü|ue)glich/gi },
   { category: "sexual", re: /masturbat\w*|orgasm\w*|\bcum\b|ejacul\w*/gi },
   { category: "sexual", re: /escort|prostitu\w*|hooker|stripper|stripteas\w*|camgirl/gi },
@@ -88,6 +88,16 @@ const RULES: Rule[] = [
   { category: "impersonation", re: /(sieht\s*genau\s*aus\s*wie|exakt\s*wie)\b[^.,;\n]*/gi },
 ];
 
+// Kurze deutsche Homonyme, die NUR im Portrait-Wunsch-Kontext als Genital-
+// Begriffe gemeint sein können. In Storyboard-/Szenentexten sind „Schritt"
+// („macht einen Schritt zur Kamera") und „Po" alltägliche Wörter — dort würde
+// die ersatzlose Streichung die beschriebene HANDLUNG verstümmeln und das Bild
+// zeigte etwas anderes als das Storyboard. Deshalb eigener Regelsatz, der beim
+// Szenentext-Softening (scope: "scene") übersprungen wird.
+const AMBIGUOUS_PORTRAIT_RULES: Rule[] = [
+  { category: "sexual", re: /\bschritt\b|\bpo\b/gi },
+];
+
 /** Tidy up the artefacts left behind after phrases are removed. */
 function tidy(text: string): string {
   return text
@@ -99,18 +109,27 @@ function tidy(text: string): string {
     .trim();
 }
 
+export interface SanitizeOpts {
+  /** "portrait" (Default, bisheriges Verhalten): volle Denylist inkl. der
+   *  ambigen deutschen Kurzwörter. "scene": Storyboard-/Szenentexte — die
+   *  ambigen Homonyme (Schritt, Po) bleiben stehen, damit die beschriebene
+   *  Handlung nicht verstümmelt wird. Die eindeutigen Regeln gelten immer. */
+  scope?: "portrait" | "scene";
+}
+
 /**
  * Strip disallowed phrases from a single free-text wish. The result is what
  * gets baked into the image prompt; the original text the user typed is left
  * alone elsewhere (the chat still shows / stores exactly what they wrote).
  */
-export function sanitizeText(raw: string | undefined | null): SafetyResult {
+export function sanitizeText(raw: string | undefined | null, opts?: SanitizeOpts): SafetyResult {
   const input = (raw ?? "").toString();
   if (!input.trim()) return { clean: "", changed: false, categories: [] };
 
+  const rules = opts?.scope === "scene" ? RULES : [...RULES, ...AMBIGUOUS_PORTRAIT_RULES];
   let out = input;
   const categories = new Set<string>();
-  for (const rule of RULES) {
+  for (const rule of rules) {
     if (rule.re.test(out)) {
       categories.add(rule.category);
       out = out.replace(rule.re, " ");
@@ -161,6 +180,19 @@ export function looksLikeMinor(ageText: string | undefined | null): boolean {
  */
 export const SAFE_PORTRAIT_CLAUSE =
   "Keep this a wholesome, tasteful, fully-clothed, strictly non-sexual and age-appropriate portrait. " +
+  "No nudity, no revealing, sheer or suggestive clothing, no sexual, fetish or provocative elements, " +
+  "no hateful or extremist symbols, no gore or graphic violence, and not a real or identifiable public person.";
+
+/**
+ * Szenen-Variante der Policy-Garantie — identischer Policy-Inhalt, aber OHNE
+ * das Wort „portrait": Im Reel-/Story-Retry stand die Portrait-Formulierung an
+ * Recency-Position und forderte damit wörtlich ein statisch posiertes Portrait
+ * — das direkte Gegenteil der Kernzeilen „not a portrait" / „do NOT render a
+ * static posed portrait". SAFE_PORTRAIT_CLAUSE bleibt unverändert für die
+ * Charakter-Generatoren (characterPrompt.ts).
+ */
+export const SAFE_SCENE_CLAUSE =
+  "Keep this scene wholesome, tasteful, fully-clothed, strictly non-sexual and age-appropriate. " +
   "No nudity, no revealing, sheer or suggestive clothing, no sexual, fetish or provocative elements, " +
   "no hateful or extremist symbols, no gore or graphic violence, and not a real or identifiable public person.";
 

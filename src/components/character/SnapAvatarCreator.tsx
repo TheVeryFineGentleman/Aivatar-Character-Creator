@@ -57,7 +57,7 @@ function buildSnapPrompt(opts: { gender: string; ageRange: string; nationalityCo
 }
 
 export function SnapAvatarCreator() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeyMessage } = useSettings();
   const { plan } = useAuth();
   const limiter = useGenerationLimiter();
 
@@ -79,7 +79,12 @@ export function SnapAvatarCreator() {
   };
 
   const snap = async () => {
-    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key in den Einstellungen."); return; }
+    if (!hasGenKey) {
+      toast.error(missingKeyMessage ?? "Bitte hinterlege zuerst deine API-Keys.", {
+        description: "Google und fal.ai sind beide Pflicht — beide in den Einstellungen eintragen.",
+      });
+      return;
+    }
 
     const { allowed, reason } = limiter.clampCount(count);
     if (reason) toast.info(reason);

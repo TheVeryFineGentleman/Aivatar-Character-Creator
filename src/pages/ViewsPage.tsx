@@ -15,7 +15,8 @@ import { ASPECT_RATIOS } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useProjectValue, useProjectRefImages, useProjectResults } from "@/hooks/useProjectGallery";
 import { downloadAllAsZip, DOWNLOAD_RESOLUTIONS } from "@/lib/image";
-import { urlToBase64 } from "@/lib/image";
+import { urlToReferenceBase64 } from "@/lib/image";
+import { mapLimit, IMAGE_CONCURRENCY } from "@/lib/concurrency";
 import { Menu, MenuItem, MenuSection } from "@/components/ui/Menu";
 import { AIError } from "@/lib/ai";
 import { generateImage } from "@/lib/generate";
@@ -101,21 +102,24 @@ function buildViewPrompt(view: typeof ANGLES[number], style: string): string {
 }
 
 export default function ViewsPage() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeyMessage } = useSettings();
   const [refs, setRefs] = useProjectRefImages("views:refs");
   const [selectedRef, setSelectedRef] = useProjectValue("views:selectedRef", 0);
   const [aspectRatio, setAspectRatio] = useProjectValue("views:aspectRatio", "1:1");
   const [style, setStyle] = useProjectValue("views:style", "realistic");
   const [results, setResults] = useProjectResults("views:results");
-  const [currentAngle, setCurrentAngle] = useState(0);
+  // Fertig gewordene Ansichten. Ersetzt den früheren „aktueller Index" — der
+  // ergibt bei parallelem Lauf keinen Sinn mehr, „4 von 6 fertig" schon.
+  const [doneCount, setDoneCount] = useState(0);
   const [running, setRunning] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const handleGenerate = async () => {
-    if (!hasGenKey) { toast.error("API-Key fehlt."); return; }
+    if (!hasGenKey) { toast.error(missingKeyMessage ?? "API-Keys fehlen.", { description: "Google und fal.ai sind beide Pflicht." }); return; }
     if (refs.length === 0) { toast.error("Lade ein Referenzbild hoch."); return; }
 
     setRunning(true);
+    setDoneCount(0);
     const ref = refs[Math.min(selectedRef, refs.length - 1)];
     const fresh: ImageSlotData[] = ANGLES.map(() => ({ id: uid(), status: "loading" as const }));
     setResults(fresh);
@@ -125,8 +129,7 @@ export default function ViewsPage() {
     // lever for keeping the same person across all 6 views.
     let frontAnchor: { mimeType: string; base64: string } | null = null;
 
-    for (let i = 0; i < ANGLES.length; i++) {
-      setCurrentAngle(i);
+    const renderAngle = async (i: number) => {
       try {
         const references = [{ mimeType: ref.mimeType, base64: ref.base64 }];
         if (frontAnchor && i > 0) references.push(frontAnchor);
@@ -137,20 +140,30 @@ export default function ViewsPage() {
           aspectRatio,
         });
         setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "done", dataUrl } : x));
-
-        // First angle (front) → cache as identity anchor for the rest.
-        if (i === 0 && dataUrl) {
-          try {
-            const { base64, mimeType } = await urlToBase64(dataUrl);
-            frontAnchor = { base64, mimeType };
-          } catch { /* not fatal — original ref alone still keeps identity reasonable */ }
-        }
+        return dataUrl;
       } catch (e: any) {
         const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
         setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "error", error: err.message, errorHint: err.hint } : x));
+        return null;
+      } finally {
+        setDoneCount(n => n + 1);
       }
-      if (i < ANGLES.length - 1) await new Promise(r => setTimeout(r, 1500));
+    };
+
+    // Nur die Frontansicht muss zuerst fertig sein — sie IST der Identitätsanker
+    // für alle anderen. Die restlichen fünf hängen nur an ihr, nicht aneinander,
+    // und laufen deshalb parallel statt nacheinander. Gleiche Referenzlage pro
+    // Bild wie vorher, also gleiches Ergebnis — nur ohne das Warten.
+    const front = await renderAngle(0);
+    if (front) {
+      try {
+        const { base64, mimeType } = await urlToReferenceBase64(front);
+        frontAnchor = { base64, mimeType };
+      } catch { /* not fatal — original ref alone still keeps identity reasonable */ }
     }
+
+    const rest = ANGLES.map((_, i) => i).slice(1);
+    await mapLimit(rest, IMAGE_CONCURRENCY, (i) => renderAngle(i));
 
     setRunning(false);
   };
@@ -169,7 +182,7 @@ export default function ViewsPage() {
       const front = results[0];
       if (front?.status === "done" && front.dataUrl) {
         try {
-          const { base64, mimeType } = await urlToBase64(front.dataUrl);
+          const { base64, mimeType } = await urlToReferenceBase64(front.dataUrl);
           references.push({ base64, mimeType });
         } catch { /* fall back to user ref only */ }
       }
@@ -246,7 +259,7 @@ export default function ViewsPage() {
     }
   };
 
-  const progress = running ? ((currentAngle + 1) / ANGLES.length) * 100 : results.length > 0 ? 100 : 0;
+  const progress = running ? (doneCount / ANGLES.length) * 100 : results.length > 0 ? 100 : 0;
   const validCount = results.filter(r => r.status === "done").length;
 
   return (
@@ -328,7 +341,7 @@ export default function ViewsPage() {
           className="mb-4"
           iconLeft={running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
         >
-          {running ? `Ansicht ${currentAngle + 1} von ${ANGLES.length}…` : "6 Ansichten generieren"}
+          {running ? `${doneCount} von ${ANGLES.length} Ansichten fertig…` : "6 Ansichten generieren"}
         </Button>
 
         {/* Progress bar */}

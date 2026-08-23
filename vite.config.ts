@@ -36,7 +36,9 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 5173,
+    // 5173 bleibt der Standard. PORT erlaubt eine zweite Instanz parallel zum
+    // laufenden Testserver, ohne ihm den Port wegzunehmen.
+    port: Number(process.env.PORT) || 5173,
   },
   // `npm start` serves the production build with `vite preview`. Since Vite
   // 5.4.12 the preview server rejects any Host header not in preview.allowedHosts

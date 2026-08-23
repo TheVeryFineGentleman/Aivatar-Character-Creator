@@ -14,11 +14,15 @@ export const ls = {
       return fallback;
     }
   },
-  set(key: string, value: unknown): void {
+  /** `false` = nicht gespeichert (Quota voll oder localStorage aus). Der
+   *  Rueckgabewert ist wichtig: ein still verworfener Save sieht fuer den
+   *  Nutzer exakt wie Datenverlust aus, ohne dass irgendwo etwas steht. */
+  set(key: string, value: unknown): boolean {
     try {
       const v = typeof value === "string" ? value : JSON.stringify(value);
       localStorage.setItem(PREFIX + key, v);
-    } catch { /* quota or disabled */ }
+      return true;
+    } catch { return false; /* quota or disabled */ }
   },
   remove(key: string): void {
     try { localStorage.removeItem(PREFIX + key); } catch { /* noop */ }
@@ -51,9 +55,13 @@ export const ls = {
 export const KEYS = {
   API_GOOGLE: "api.google",
   API_FAL: "api.fal",
+  API_ELEVEN: "api.eleven",
   PROVIDER: "api.provider",
   CREDENTIALS: "credentials",
-  THEME: "theme",
+  // v2: mit dem Wechsel auf das helle Erscheinungsbild hochgezählt. Sonst
+  // gewönne bei jedem bestehenden Nutzer das automatisch gespeicherte "dark"
+  // gegen den neuen Standard — genauso wie bei color-theme-v2.
+  THEME: "theme-v2",
   COOKIE_CONSENT: "cookie.consent",
   DISCLAIMER_SEEN: "disclaimer.seen",
   CURRENT_PROJECT: "project.current",

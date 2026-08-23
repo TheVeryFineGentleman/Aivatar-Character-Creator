@@ -20,27 +20,44 @@ export default {
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       colors: {
-        // Surface / Background (deep) + Foreground (50–200)
+        /**
+         * Overlay-Weiß (`bg-white/5`, `border-white/8`, …). Es ist KEIN echtes
+         * Weiß mehr, sondern der Aufheller/Abdunkler der aktuellen Fläche: im
+         * Light-Theme kippt die Variable auf Dunkel, sonst wären sämtliche
+         * Haarlinien und Hover-Flächen auf hellem Grund unsichtbar.
+         * Wer echtes Weiß braucht (Text auf dem Brand-Verlauf), nimmt `pure`.
+         */
+        white: "rgb(var(--c-white) / <alpha-value>)",
+        /** Immer echtes Weiß — themeunabhängig, z. B. auf farbigen Flächen. */
+        pure: "#ffffff",
+        // Surface / Background (deep) + Foreground (50–200).
+        // Werte kommen aus CSS-Variablen: das Light-Theme dreht die Skala um
+        // (50 = Text, 950 = Fläche bleibt die BEDEUTUNG, nur die Helligkeit
+        // tauscht), dadurch bleibt jede bestehende Klasse korrekt.
         ink: {
-          50:  "#f4f5f8",
-          100: "#e6e8ee",
-          200: "#cdd1dc",
-          300: "#a1a8bb",
-          400: "#737b94",
-          500: "#3a4054",
-          600: "#262b3a",
-          700: "#1a1e2b",
-          800: "#11141d",
-          900: "#0b0d14",
-          950: "#06070b",
+          50:  "rgb(var(--c-ink-50) / <alpha-value>)",
+          100: "rgb(var(--c-ink-100) / <alpha-value>)",
+          200: "rgb(var(--c-ink-200) / <alpha-value>)",
+          300: "rgb(var(--c-ink-300) / <alpha-value>)",
+          400: "rgb(var(--c-ink-400) / <alpha-value>)",
+          500: "rgb(var(--c-ink-500) / <alpha-value>)",
+          600: "rgb(var(--c-ink-600) / <alpha-value>)",
+          700: "rgb(var(--c-ink-700) / <alpha-value>)",
+          800: "rgb(var(--c-ink-800) / <alpha-value>)",
+          900: "rgb(var(--c-ink-900) / <alpha-value>)",
+          950: "rgb(var(--c-ink-950) / <alpha-value>)",
         },
         // Accent palette — hue/saturation come from CSS vars so the whole scale
         // swaps when the user changes the color theme (see index.css).
         flare: {
-          50:  "hsl(var(--flare-h) var(--flare-s) 96% / <alpha-value>)",
-          100: "hsl(var(--flare-h) var(--flare-s) 90% / <alpha-value>)",
-          200: "hsl(var(--flare-h) var(--flare-s) 78% / <alpha-value>)",
-          300: "hsl(var(--flare-h) var(--flare-s) 66% / <alpha-value>)",
+          // 50–300 sind die TEXT-Stufen (`text-flare-200` auf `bg-flare-500/15`).
+          // Ihre Helligkeit ist deshalb theme-abhängig: hell auf dunklem Grund,
+          // dunkel auf hellem — sonst steht blasses Lila auf blassem Lila.
+          // 400 aufwärts sind Flächen und Ränder und bleiben fest.
+          50:  "hsl(var(--flare-h) var(--flare-s) var(--flare-l-50) / <alpha-value>)",
+          100: "hsl(var(--flare-h) var(--flare-s) var(--flare-l-100) / <alpha-value>)",
+          200: "hsl(var(--flare-h) var(--flare-s) var(--flare-l-200) / <alpha-value>)",
+          300: "hsl(var(--flare-h) var(--flare-s) var(--flare-l-300) / <alpha-value>)",
           400: "hsl(var(--flare-h) var(--flare-s) 56% / <alpha-value>)",
           500: "hsl(var(--flare-h) var(--flare-s) 51% / <alpha-value>)",
           600: "hsl(var(--flare-h) var(--flare-s) 42% / <alpha-value>)",
@@ -52,8 +69,9 @@ export default {
         glacier: {
           50:  "#ecf9fb",
           100: "#cdf0f5",
-          200: "#9be0e9",
-          300: "#5ec9d8",
+          // Wie bei `flare`: 200/300 tragen Text auf getönter Fläche.
+          200: "rgb(var(--c-glacier-200) / <alpha-value>)",
+          300: "rgb(var(--c-glacier-300) / <alpha-value>)",
           400: "#2bb0c4",
           500: "#1294a8",
           600: "#0c7689",
@@ -61,16 +79,21 @@ export default {
           800: "#08434f",
           900: "#063138",
         },
-        // Status
-        success: "#10b981",
-        warn:    "#f59e0b",
-        danger:  "#ef4444",
+        // Status. Ebenfalls theme-abhängig: die hellen Töne stehen fast überall
+        // als TEXT auf ihrer eigenen 10%-Fläche (`text-warn` auf `bg-warn/10`).
+        // Auf Dunkel trägt das, auf Hell wäre es Amber auf Blassamber — der
+        // wichtigste Hinweis der App („API-Key fehlt") wäre der unleserlichste.
+        success: "rgb(var(--c-success) / <alpha-value>)",
+        warn:    "rgb(var(--c-warn) / <alpha-value>)",
+        danger:  "rgb(var(--c-danger) / <alpha-value>)",
       },
       boxShadow: {
         // Brand glow tracks the active color theme (var defined in index.css).
         glow: "0 0 0 1px var(--brand-glow), 0 8px 40px -8px var(--brand-glow)",
-        soft: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 28px -12px rgba(0,0,0,0.6)",
-        ring: "0 0 0 1px rgba(255,255,255,0.06)",
+        // Innenkante und Schlagschatten folgen dem Theme: der weiße Innenrand
+        // wäre auf hellem Grund unsichtbar, der harte schwarze Schatten zu laut.
+        soft: "0 1px 0 0 rgb(var(--c-white) / 0.04) inset, 0 8px 28px -12px var(--shadow-strong)",
+        ring: "0 0 0 1px rgb(var(--c-white) / 0.06)",
       },
       borderRadius: {
         "4xl": "2rem",
@@ -113,8 +136,8 @@ export default {
       backgroundImage: {
         // CSS-variable based so color themes can swap the brand gradient at runtime.
         "flare-grad":   "linear-gradient(135deg, var(--brand-1, #ff8a1f) 0%, var(--brand-2, #f86b0a) 50%, var(--brand-3, #d54f00) 100%)",
-        "ink-grad":     "radial-gradient(1200px 600px at 0% -10%, rgba(255,138,31,0.10), transparent 60%), radial-gradient(900px 500px at 100% 110%, rgba(18,148,168,0.10), transparent 60%), #06070b",
-        "grid-faint":   "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+        "ink-grad":     "radial-gradient(1200px 600px at 0% -10%, var(--bg-wash-1), transparent 60%), radial-gradient(900px 500px at 100% 110%, var(--bg-wash-2), transparent 60%), var(--page-bg)",
+        "grid-faint":   "linear-gradient(rgb(var(--c-white) / 0.03) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--c-white) / 0.03) 1px, transparent 1px)",
       },
     },
   },

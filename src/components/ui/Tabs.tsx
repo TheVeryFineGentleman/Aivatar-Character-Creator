@@ -35,7 +35,7 @@ export function TabsTrigger({ value, children, icon }: { value: string; children
       className={cn(
         "relative inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all",
         active
-          ? "bg-flare-grad text-white shadow-glow"
+          ? "bg-flare-grad text-pure shadow-glow"
           : "text-ink-50/65 hover:text-ink-50 hover:bg-white/5",
       )}
     >

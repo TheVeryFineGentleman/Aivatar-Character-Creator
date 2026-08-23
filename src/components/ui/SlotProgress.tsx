@@ -14,6 +14,13 @@ interface Props {
   className?: string;
   /** Bar-Höhe in tailwind units. Default: medium. */
   barSize?: "thin" | "medium" | "thick";
+  /**
+   * Balken mitzeichnen? Die Szenenkachel setzt das auf `false`: dort zeigt
+   * `SceneBusyBar` den EINEN Fortschritt für Bild, Clip und Stimme zusammen —
+   * ein zweiter Balken auf derselben Kante wäre genau die Stapelei, die dort
+   * abgeschafft wurde. Der Erfolgs-Haken bleibt davon unberührt.
+   */
+  showBar?: boolean;
 }
 
 const sizeClass = { thin: "h-1", medium: "h-1.5", thick: "h-2" } as const;
@@ -32,6 +39,7 @@ export function SlotProgress({
   expectedMs = 25000,
   className,
   barSize = "medium",
+  showBar = true,
 }: Props) {
   const [progress, setProgress] = useState(0);
   const [showFlash, setShowFlash] = useState(false);
@@ -95,13 +103,13 @@ export function SlotProgress({
       {showFlash && (
         <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
           <div className="animate-success-flash w-20 h-20 rounded-full bg-success/95 shadow-[0_8px_40px_-4px_rgba(16,185,129,0.55)] flex items-center justify-center backdrop-blur">
-            <Check className="w-10 h-10 text-white" strokeWidth={3} />
+            <Check className="w-10 h-10 text-pure" strokeWidth={3} />
           </div>
         </div>
       )}
 
       {/* ── Bottom progress bar ───────────────────────────────────────────── */}
-      {barVisible && (
+      {showBar && barVisible && (
         <div
           className={cn(
             "pointer-events-none absolute inset-x-0 bottom-0 px-2.5 pb-2 z-20",

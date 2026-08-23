@@ -37,7 +37,7 @@ export function PromoBanner({ variant = "inline", className }: Props) {
       return { id: "pro", title: "Mehr aus Aivatar holen", body: "Mit Pro schaltest du Character Chat, Character Views, Pose-Grid und 40 Bilder pro Durchgang frei.", cta: "Pro ansehen", to: "/pricing" };
     }
     if (plan.tier === "premium") {
-      return { id: "premium-up", title: "Story & Reels brauchen Premium", body: "Multi-Szenen-Storyboards, KI-Dialoge und Veo3-Videos gibt's nur im Premium-Paket.", cta: "Premium ansehen", to: "/pricing" };
+      return { id: "premium-up", title: "Story & Reels brauchen Premium", body: "Multi-Szenen-Storyboards, KI-Dialoge und KI-Videos gibt's nur im Premium-Paket.", cta: "Premium ansehen", to: "/pricing" };
     }
     // Premium- und Full-Käufer haben bereits alles freigeschaltet.
     return null;
@@ -54,7 +54,7 @@ export function PromoBanner({ variant = "inline", className }: Props) {
 
   if (variant === "hero") {
     return (
-      <div className={cn("relative rounded-3xl bg-flare-grad text-white p-6 sm:p-8 shadow-glow overflow-hidden", className)}>
+      <div className={cn("relative rounded-3xl bg-flare-grad text-pure p-6 sm:p-8 shadow-glow overflow-hidden", className)}>
         <button onClick={hide} className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center">
           <X className="w-3.5 h-3.5" />
         </button>
@@ -66,7 +66,7 @@ export function PromoBanner({ variant = "inline", className }: Props) {
         <p className="text-sm opacity-90 max-w-md mb-4">{promo.body}</p>
         <Link
           to={promo.to}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white text-flare-600 text-sm font-semibold hover:bg-white/90 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-pure text-flare-600 text-sm font-semibold hover:bg-pure/90 transition-colors"
         >
           {promo.cta} <ArrowRight className="w-4 h-4" />
         </Link>

@@ -2,9 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Flächen-Skala ──────────────────────────────────────────────────────────
+ *  `ink` und das Overlay-`white` aus tailwind.config lesen diese Variablen als
+ *  RGB-Tripel. Dadurch kippt das gesamte Erscheinungsbild an EINER Stelle —
+ *  jede bestehende Klasse (`bg-ink-900/70`, `border-white/8`, `text-ink-50/55`)
+ *  behält ihre Bedeutung und bekommt nur die Helligkeit des aktiven Themes.
+ *
+ *  HELL ist der Standard und steht deshalb direkt auf `:root`: so ist schon der
+ *  allererste Frame hell, noch bevor React die Theme-Klasse setzt.
+ *  ------------------------------------------------------------------------ */
 :root {
-  color-scheme: dark;
-  --grain-opacity: 0.035;
+  color-scheme: light;
+  /* Kein Korn auf Hell: die dunklen Punkte legen einen Grauschleier über die
+     weiße Fläche — genau das, was „hell" nicht sein soll. */
+  --grain-opacity: 0;
+
+  /* Der farbige Hauch im Hintergrund gehört zum DUNKLEN Theme: die Töne der
+     Akzent-Farben sind für einen fast schwarzen Untergrund gemischt und liegen
+     auf Weiß als deutlich sichtbare farbige Wolken darüber — je nach gewählter
+     Farbkombination lila, orange oder türkis eingefärbt statt weiß.
+     Hell bleibt deshalb weiß, bei JEDER Akzentfarbe. Der Akzent zeigt sich in
+     Knöpfen, Reglern und Hervorhebungen, nicht in der Grundfläche. */
+  --bg-wash-1: transparent;
+  --bg-wash-2: transparent;
+
+  --c-white:   17 20 32;      /* Overlay-Tint: auf Hell dunkel, sonst unsichtbar */
+  --c-ink-50:  23 26 35;      /* Primärtext */
+  --c-ink-100: 33 37 49;
+  --c-ink-200: 47 52 68;
+  --c-ink-300: 84 92 112;     /* Sekundärtext */
+  --c-ink-400: 118 126 145;
+  --c-ink-500: 156 164 181;
+  --c-ink-600: 200 206 218;
+  --c-ink-700: 220 225 234;
+  --c-ink-800: 233 236 243;   /* Eingabefelder */
+  --c-ink-900: 255 255 255;   /* Karten — weiß auf weißer Seite, abgesetzt
+                                 über Hairline + Schatten (siehe shadow-soft) */
+  --c-ink-950: 240 242 247;   /* eingelassene Flächen INNERHALB der Karten */
+
+  --page-bg: #ffffff;
+  /* Kräftiger als auf Dunkel: auf weißer Seite trägt allein der Schatten die
+     Abgrenzung der (ebenfalls weißen) Karten. */
+  --shadow-strong: rgba(18, 22, 38, 0.22);
+  --selection-fg: #0b0d14;
+
+  /* Kräftiger als die Dark-Varianten — sie stehen als Text auf hellem Grund. */
+  --c-success:   4 120 87;
+  --c-warn:    180  83  9;
+  --c-danger:  185  28 28;
+
+  /* Akzent-TEXT (text-flare-100/200/300, text-glacier-200/300): dunkle Töne,
+     damit er auf der hellen getönten Fläche steht statt darin zu verschwinden. */
+  --flare-l-50:  30%;
+  --flare-l-100: 33%;
+  --flare-l-200: 37%;
+  --flare-l-300: 42%;
+  --c-glacier-200: 10  93 108;
+  --c-glacier-300: 12 118 137;
+  /* Helligkeit für Akzent-Text, dessen Farbton fest zur Sache gehört (die drei
+     Werkzeug-Farben, Plan-Plaketten). Nur die Helligkeit dreht mit dem Theme. */
+  --accent-l-text: 38%;
+
   /* Default = Neon (purple / cyan), matching the original Projekt default.
      --flare-h / --flare-s drive the whole `flare` accent scale in tailwind.config. */
   --flare-h: 263;
@@ -15,6 +73,49 @@
   --brand-glow: rgba(168, 85, 247, 0.40);
   --bg-tint-1: rgba(168, 85, 247, 0.12);
   --bg-tint-2: rgba(6, 182, 212, 0.10);
+}
+
+/* Dunkel — die ursprüngliche Skala. Gilt für das Dark-Theme UND für jede Fläche,
+ * die bewusst dunkel bleiben soll (`data-surface="dark"`, z. B. die TopBar).
+ * Custom Properties vererben sich: die Deklaration am Element selbst schlägt den
+ * geerbten Wert von <html>, ganz ohne Spezifitäts-Wettrennen. */
+:root.dark,
+[data-surface="dark"] {
+  color-scheme: dark;
+  --grain-opacity: 0.035;
+
+  /* Nur hier bekommt der Hintergrund den farbigen Hauch der Akzent-Farbe. */
+  --bg-wash-1: var(--bg-tint-1);
+  --bg-wash-2: var(--bg-tint-2);
+
+  --c-white:   255 255 255;
+  --c-ink-50:  244 245 248;
+  --c-ink-100: 230 232 238;
+  --c-ink-200: 205 209 220;
+  --c-ink-300: 161 168 187;
+  --c-ink-400: 115 123 148;
+  --c-ink-500: 58 64 84;
+  --c-ink-600: 38 43 58;
+  --c-ink-700: 26 30 43;
+  --c-ink-800: 17 20 29;
+  --c-ink-900: 11 13 20;
+  --c-ink-950: 6 7 11;
+
+  --page-bg: #06070b;
+  --shadow-strong: rgba(0, 0, 0, 0.6);
+  --selection-fg: #ffffff;
+
+  --c-success:  16 185 129;
+  --c-warn:    245 158  11;
+  --c-danger:  239  68  68;
+
+  --flare-l-50:  96%;
+  --flare-l-100: 90%;
+  --flare-l-200: 78%;
+  --flare-l-300: 66%;
+  --c-glacier-200: 155 224 233;
+  --c-glacier-300:  94 201 216;
+  --accent-l-text: 72%;
 }
 
 /* ── Color themes — full accent swap (hue + gradient + glow + body tint) ──── */
@@ -75,10 +176,11 @@ html, body, #root {
 
 body {
   background:
-    radial-gradient(1200px 600px at 0% -10%, var(--bg-tint-1), transparent 60%),
-    radial-gradient(900px 500px at 100% 110%, var(--bg-tint-2), transparent 60%),
-    #06070b;
+    radial-gradient(1200px 600px at 0% -10%, var(--bg-wash-1), transparent 60%),
+    radial-gradient(900px 500px at 100% 110%, var(--bg-wash-2), transparent 60%),
+    var(--page-bg);
   background-attachment: fixed;
+  color: rgb(var(--c-ink-50));
   font-feature-settings: "ss01", "cv11";
   letter-spacing: -0.01em;
   transition: background 400ms ease;
@@ -93,8 +195,8 @@ body::before {
   z-index: 0;
   opacity: var(--grain-opacity);
   background-image:
-    radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px),
-    radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px);
+    radial-gradient(rgb(var(--c-white) / 0.6) 1px, transparent 1px),
+    radial-gradient(rgb(var(--c-white) / 0.4) 1px, transparent 1px);
   background-size: 3px 3px, 7px 7px;
   background-position: 0 0, 1px 2px;
 }
@@ -103,12 +205,12 @@ body::before {
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
+  background: rgb(var(--c-white) / 0.14);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgb(var(--c-white) / 0.26); background-clip: padding-box; }
 
 /* Scrollbar ausblenden (Scrollen bleibt möglich) — z. B. TopBar-Nav. */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -117,7 +219,7 @@ body::before {
 /* Selection — tracks the active accent theme */
 ::selection {
   background: var(--brand-glow);
-  color: #fff;
+  color: var(--selection-fg);
 }
 
 /* Reusable Layer-Components */
@@ -134,7 +236,7 @@ body::before {
            focus:outline-none focus:ring-2 focus:ring-flare-400/60 focus:ring-offset-2 focus:ring-offset-ink-950;
   }
   .btn-primary {
-    @apply btn bg-flare-grad text-white shadow-glow hover:brightness-110 active:brightness-95;
+    @apply btn bg-flare-grad text-pure shadow-glow hover:brightness-110 active:brightness-95;
   }
   .btn-secondary {
     @apply btn bg-white/5 text-ink-50 border border-white/10 hover:bg-white/10;
@@ -173,7 +275,7 @@ body::before {
 
 /* Loading shimmer skeleton */
 .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%);
+  background: linear-gradient(90deg, rgb(var(--c-white) / 0.05) 0%, rgb(var(--c-white) / 0.14) 50%, rgb(var(--c-white) / 0.05) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
 }

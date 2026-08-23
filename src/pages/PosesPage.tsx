@@ -16,10 +16,12 @@ import { ASPECT_RATIOS } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useProjectValue, useProjectRefImages, useProjectResults } from "@/hooks/useProjectGallery";
 import { downloadAllAsZip, DOWNLOAD_RESOLUTIONS } from "@/lib/image";
-import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
+import { SuggestionField } from "@/components/ai/SuggestionField";
+import { useFieldSuggestions } from "@/hooks/useFieldSuggestions";
 import { Menu, MenuItem, MenuSection } from "@/components/ui/Menu";
 import { AIError } from "@/lib/ai";
 import { generateImage } from "@/lib/generate";
+import { mapLimit, IMAGE_CONCURRENCY } from "@/lib/concurrency";
 import { uid } from "@/lib/uid";
 import { cn } from "@/lib/cn";
 
@@ -64,7 +66,7 @@ const BG_OPTIONS = [
 ];
 
 export default function PosesPage() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeyMessage } = useSettings();
 
   const [refs, setRefs] = useProjectRefImages("poses:refs");
   const [selectedRef, setSelectedRef] = useProjectValue("poses:selectedRef", 0);
@@ -75,7 +77,8 @@ export default function PosesPage() {
   const [background, setBackground] = useProjectValue("poses:background", "white");
 
   const [results, setResults] = useProjectResults("poses:results");
-  const [currentPose, setCurrentPose] = useState(0);
+  // Fertig gewordene Posen — „aktueller Index" gibt es im parallelen Lauf nicht mehr.
+  const [doneCount, setDoneCount] = useState(0);
   const [running, setRunning] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -83,17 +86,34 @@ export default function PosesPage() {
   const cols = gridConfig.cols;
   const bgLabel = BG_OPTIONS.find(b => b.value === background)?.label || background;
 
+  // Outfit und Ort beschreiben dieselbe Aufnahme — deshalb ein gemeinsamer Lauf:
+  // ein Call statt zwei, und die Vorschläge passen zueinander statt sich zu
+  // widersprechen (Abendkleid + Fitnessstudio).
+  const suggest = useFieldSuggestions(
+    "poses:situation",
+    [
+      { key: "outfit", what: "das Outfit der Person in dieser Posen-Reihe", shape: "wenige Worte", current: outfit },
+      { key: "location", what: "der Ort/Hintergrund der Aufnahme", shape: "wenige Worte", current: location },
+    ],
+    { context: `Posen-Grid mit ${gridConfig.count} Posen, Format ${aspectRatio}.` },
+  );
+
   const handleGenerate = async () => {
-    if (!hasGenKey) { toast.error("API-Key fehlt."); return; }
+    if (!hasGenKey) { toast.error(missingKeyMessage ?? "API-Keys fehlen.", { description: "Google und fal.ai sind beide Pflicht." }); return; }
     if (refs.length === 0) { toast.error("Lade ein Referenzbild hoch."); return; }
 
     setRunning(true);
+    setDoneCount(0);
     const ref = refs[Math.min(selectedRef, refs.length - 1)];
     const fresh: ImageSlotData[] = Array.from({ length: gridConfig.count }, () => ({ id: uid(), status: "loading" as const }));
     setResults(fresh);
 
-    for (let i = 0; i < gridConfig.count; i++) {
-      setCurrentPose(i);
+    // Parallel: jede Pose hängt einzig am hochgeladenen Referenzbild, nie am
+    // Ergebnis der vorherigen. Die alte Schleife lief nur deshalb nacheinander
+    // (plus 1,5 s Pause), weil sie so entstanden ist — einen fachlichen Grund
+    // gab es nie. Das Fenster deckelt die Requests gegen 429er.
+    const indices = Array.from({ length: gridConfig.count }, (_, i) => i);
+    await mapLimit(indices, IMAGE_CONCURRENCY, async (i) => {
       const pose = POSE_BANK[i % POSE_BANK.length];
       const prompt = [
         `Same character as in the reference image — strict identity lock (face, body, hair colour).`,
@@ -115,9 +135,10 @@ export default function PosesPage() {
       } catch (e: any) {
         const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
         setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "error", error: err.message, errorHint: err.hint } : x));
+      } finally {
+        setDoneCount(n => n + 1);
       }
-      if (i < gridConfig.count - 1) await new Promise(r => setTimeout(r, 1500));
-    }
+    });
 
     setRunning(false);
   };
@@ -200,7 +221,7 @@ export default function PosesPage() {
     }
   };
 
-  const progress = running ? ((currentPose + 1) / gridConfig.count) * 100 : results.length > 0 ? 100 : 0;
+  const progress = running ? (doneCount / gridConfig.count) * 100 : results.length > 0 ? 100 : 0;
   const validCount = results.filter(r => r.status === "done").length;
 
   return (
@@ -269,35 +290,28 @@ export default function PosesPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-medium block">Outfit (optional)</label>
-              <AiSuggestButton
-                label="Vorschlag"
-                buildPrompt={() => `Schlage ein passendes Outfit für diese Charakter-/Posen-Reihe vor. Antworte NUR mit einer kurzen Outfit-Beschreibung (wenige Worte). Aktuell: "${outfit || "—"}".`}
-                onApply={setOutfit}
-              />
-            </div>
-            <Input
+            <label className="text-xs font-medium block">Outfit (optional)</label>
+            <SuggestionField
               value={outfit}
-              onChange={(e) => setOutfit(e.target.value)}
+              onChange={setOutfit}
               placeholder="z. B. Business Anzug"
+              items={suggest.get("outfit")}
+              loading={suggest.busy("outfit")}
+              onReroll={() => suggest.reroll("outfit")}
+              emptyHint="Wähle ein Outfit oder schreib dein eigenes…"
             />
           </div>
           <div className="space-y-1.5 col-span-2">
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-medium block">Ort (optional)</label>
-              <AiSuggestButton
-                label="Vorschlag"
-                disabled={background !== "location"}
-                buildPrompt={() => `Schlage einen passenden Ort/Hintergrund für die Szene vor. Antworte NUR mit einer kurzen Ortsbeschreibung (wenige Worte). Aktuell: "${location || "—"}".`}
-                onApply={setLocation}
-              />
-            </div>
-            <Input
+            <label className="text-xs font-medium block">Ort (optional)</label>
+            <SuggestionField
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={setLocation}
               placeholder="z. B. Büro, Park"
               disabled={background !== "location"}
+              items={suggest.get("location")}
+              loading={suggest.busy("location")}
+              onReroll={() => suggest.reroll("location")}
+              emptyHint="Wähle einen Ort oder schreib deinen eigenen…"
             />
           </div>
         </div>
@@ -311,7 +325,7 @@ export default function PosesPage() {
           iconLeft={running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
         >
           {running
-            ? `Pose ${currentPose + 1} von ${gridConfig.count}…`
+            ? `${doneCount} von ${gridConfig.count} Posen fertig…`
             : `${gridConfig.count} Posen generieren`}
         </Button>
 

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, type Theme, COLOR_THEMES } from "@/hooks/useTheme";
+import { useElevenVoices } from "@/hooks/useElevenVoices";
+import { checkGeminiKey } from "@/lib/ai";
 import { toast } from "sonner";
 import { Trash2, ExternalLink, Eye, EyeOff, Sun, Moon, Monitor, KeyRound, Palette, HardDrive, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -16,17 +18,25 @@ import { cn } from "@/lib/cn";
 type SectionId = "connect" | "appearance" | "storage";
 
 export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { provider, setProvider, googleKey, setGoogleKey, falKey, setFalKey, clearAll, hasFalKey, hasGoogleKey } = useSettings();
+  const { provider, setProvider, googleKey, setGoogleKey, falKey, setFalKey, elevenKey, setElevenKey, clearAll, hasFalKey, hasGoogleKey } = useSettings();
   const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   const { plan } = useAuth();
   const [section, setSection] = useState<SectionId>("connect");
   const [showG, setShowG] = useState(false);
   const [showF, setShowF] = useState(false);
+  const [showE, setShowE] = useState(false);
   const [g, setG] = useState(googleKey);
   const [f, setF] = useState(falKey);
+  const [el, setEl] = useState(elevenKey);
 
-  // fal.ai ist Video-only — bei Plänen ohne videoGen blenden wir Key-Feld
-  // und Provider-Toggle aus und resetten die Priorität auf Google.
+  // ElevenLabs-Feld und Provider-Toggle bleiben Video-Plänen vorbehalten.
+  //
+  // DAS fal-KEY-FELD NICHT MEHR: fal ist seit der Pflicht-Regelung
+  // (`hasGenKey` in useSettings) für JEDEN Plan erforderlich. Bliebe das Feld
+  // planabhängig verborgen, wäre die Pflicht auf Plänen ohne Video-Freischaltung
+  // unerfüllbar — die App verlangte einen Key, den man nirgends eintragen kann,
+  // und wäre damit tot. Was der Plan freischaltet, entscheidet weiterhin `plan`;
+  // der Key gehört davon getrennt.
   const showFal = plan.videoGen;
   useEffect(() => {
     if (!showFal && provider === "fal") setProvider("google");
@@ -43,6 +53,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   const save = () => {
     setGoogleKey(g);
     setFalKey(f);
+    setElevenKey(el);
     toast.success("API-Keys gespeichert.");
     onClose();
   };
@@ -50,16 +61,16 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   const resetEverything = () => {
     if (!confirm("Alle Keys, Theme und Provider zurücksetzen? Projekte bleiben erhalten.")) return;
     clearAll();
-    setG(""); setF("");
-    setTheme("dark");
+    setG(""); setF(""); setEl("");
+    setTheme("light");
     setColorTheme("neon");
     setProvider("google");
     toast.success("Einstellungen zurückgesetzt.");
   };
 
-  // Setup-Lücke → amber Punkt im Nav: Google-Key fehlt (kritisch) oder
-  // fal-Key fehlt obwohl der Plan Video kann (kein Fallback).
-  const connectNeedsAttention = !hasGoogleKey || (showFal && !hasFalKey);
+  // Setup-Lücke → amber Punkt im Nav. Beide Keys sind Pflicht, also zählt jeder
+  // fehlende — unabhängig vom Plan (siehe `showFal` oben).
+  const connectNeedsAttention = !hasGoogleKey || !hasFalKey;
 
   const nav: { id: SectionId; label: string; icon: React.ReactNode; dot?: boolean; meta?: string }[] = [
     { id: "connect",    label: "Verbindung",       icon: <KeyRound className="w-4 h-4" />, dot: connectNeedsAttention },
@@ -128,27 +139,93 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
           {/* ── Inhalt ── */}
           <div className="flex-1 min-h-0 p-6 overflow-y-auto">
           {section === "connect" && (
-            <div className="space-y-6">
+            /* Ein Block pro Dienst, jeder mit derselben Kopfzeile:
+               Name · wofür · Zustand. Damit beantwortet ein Blick von oben nach
+               unten „was brauche ich, was habe ich, was fehlt" — vorher standen
+               Zustand (in den Provider-Kacheln) und Eingabefeld an verschiedenen
+               Stellen, und nur ElevenLabs sagte überhaupt, ob es funktioniert. */
+            <div className="space-y-3">
               {connectNeedsAttention && (
-                <div className="flex items-center gap-2.5 rounded-2xl border border-warn/35 bg-warn/10 px-3.5 py-3">
-                  <span className="w-2 h-2 rounded-full flex-none" style={{ background: "#e0aa4a" }} />
+                <div className="flex items-start gap-2.5 rounded-2xl border border-warn/35 bg-warn/10 px-3.5 py-3">
+                  <span className="w-2 h-2 rounded-full flex-none mt-1.5" style={{ background: "#e0aa4a" }} />
                   <span className="text-xs text-warn">
-                    {!hasGoogleKey ? "Google-Key fehlt — Text & Bilder brauchen ihn." : "fal.ai-Key fehlt — Video-Fallback ist inaktiv."}
+                    {!hasGoogleKey && !hasFalKey
+                      ? "Beide Keys fehlen. Google macht Texte und Bilder, fal.ai die Clips, die Lippensynchronität und die Stimme — ohne beide startet keine Generierung."
+                      : !hasGoogleKey
+                      ? "Google-Key fehlt — ohne ihn entstehen weder Texte noch Bilder. Er ist Pflicht."
+                      : "fal.ai-Key fehlt — ohne ihn keine Clips, keine Lippensynchronität und keine feste Stimme. Er ist Pflicht."}
                   </span>
                 </div>
               )}
 
+              <KeyCard
+                title="Google Gemini"
+                purpose="Texte, Storyboards und alle Bilder."
+                requirement="Pflicht"
+                state={looksSwapped("google", g)
+                  ? keyState(g, googleKey, "google")
+                  : <GoogleStatus googleKey={googleKey} dirty={g.trim() !== googleKey} />}
+                value={g}
+                onChange={setG}
+                reveal={showG}
+                onReveal={() => setShowG(!showG)}
+                placeholder="AIza…"
+                linkUrl={BACKEND.geminiKeyUrl}
+                linkLabel="aistudio.google.com → API Keys"
+              >
+                <TutorialCTA tutorialId="google-api-key" />
+              </KeyCard>
+
+              <KeyCard
+                title="fal.ai"
+                purpose="Clips (Kling), Lippensynchronität und die feste Sprecherstimme."
+                requirement="Pflicht"
+                state={keyState(f, falKey, "fal")}
+                value={f}
+                onChange={setF}
+                reveal={showF}
+                onReveal={() => setShowF(!showF)}
+                placeholder="fal_…"
+                linkUrl={BACKEND.falKeyUrl}
+                linkLabel="fal.ai → Dashboard → Keys"
+              >
+                <TutorialCTA tutorialId="fal-api-key" />
+              </KeyCard>
+
               {showFal && (
-                <Section
-                  title="Video-Provider — Priorität"
-                  hint="Text & Bilder laufen immer über Google Gemini. Diese Auswahl gilt nur für Video: der bevorzugte Provider wird zuerst genutzt, der andere als Fallback (wenn dessen Key gesetzt ist)."
+                <KeyCard
+                  title="ElevenLabs"
+                  purpose="Deine eigenen und native deutsche Stimmen statt der Standardliste. Ohne Key läuft die Stimme über fal.ai."
+                  requirement="Optional"
+                  /* Der Zustand bezieht sich auf den GESPEICHERTEN Key, nicht auf
+                     das Eingabefeld — sonst liefe bei jedem Tastendruck eine
+                     Anfrage, und „verbunden" stünde da, bevor irgendwas gilt. */
+                  state={<ElevenStatus elevenKey={elevenKey} dirty={el.trim() !== elevenKey} />}
+                  value={el}
+                  onChange={setEl}
+                  reveal={showE}
+                  onReveal={() => setShowE(!showE)}
+                  placeholder="sk_…"
+                  linkUrl={BACKEND.elevenKeyUrl}
+                  linkLabel="elevenlabs.io → Settings → API Keys"
                 >
+                  <TutorialCTA tutorialId="eleven-voice" />
+                </KeyCard>
+              )}
+
+              {showFal && (
+                <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
+                  <div className="text-sm font-semibold text-ink-50">Wer macht Texte & Bilder zuerst?</div>
+                  <div className="text-xs text-ink-50/55 mt-1 mb-3">
+                    Der Gewählte kommt zuerst dran, der andere springt bei einem Fehler ein — sofern dessen Key gesetzt ist.
+                    Gilt nur für Texte und Bilder: Clips laufen immer über Kling (fal.ai), ohne Ausweichen.
+                  </div>
                   <div className="flex gap-2">
                     <ProviderTile
                       active={provider === "google"}
                       onClick={() => setProvider("google")}
-                      title="Google Veo"
-                      hint={hasGoogleKey ? "Key vorhanden" : "Kein Google-Key gesetzt"}
+                      title="Google"
+                      hint={hasGoogleKey ? "Key vorhanden" : "Kein Key — kann nicht einspringen"}
                       ok={hasGoogleKey}
                       right={<Badge tone="accent">Standard</Badge>}
                     />
@@ -156,42 +233,12 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                       active={provider === "fal"}
                       onClick={() => setProvider("fal")}
                       title="fal.ai"
-                      hint={hasFalKey ? "Key vorhanden" : "Kein fal-Key gesetzt"}
+                      hint={hasFalKey ? "Key vorhanden" : "Kein Key — kann nicht einspringen"}
                       ok={hasFalKey}
                       right={<Badge tone="cool">Alternative</Badge>}
                     />
                   </div>
-                </Section>
-              )}
-
-              <Section title="Google Gemini API-Key" hint="Erstelle einen Key auf aistudio.google.com.">
-                <Input
-                  type={showG ? "text" : "password"}
-                  value={g}
-                  onChange={(e) => setG(e.target.value)}
-                  placeholder="AIza…"
-                  iconLeft={<button type="button" onClick={() => setShowG(!showG)}>{showG ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>}
-                />
-                <a href={BACKEND.geminiKeyUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-flare-300 hover:text-flare-200">
-                  aistudio.google.com → API Keys <ExternalLink className="w-3 h-3" />
-                </a>
-                <div className="mt-3"><TutorialCTA tutorialId="google-api-key" /></div>
-              </Section>
-
-              {showFal && (
-                <Section title="fal.ai API-Key" hint="Wird für Video-Generierung verwendet.">
-                  <Input
-                    type={showF ? "text" : "password"}
-                    value={f}
-                    onChange={(e) => setF(e.target.value)}
-                    placeholder="fal_…"
-                    iconLeft={<button type="button" onClick={() => setShowF(!showF)}>{showF ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>}
-                  />
-                  <a href={BACKEND.falKeyUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-glacier-300 hover:text-glacier-200">
-                    fal.ai → Dashboard → Keys <ExternalLink className="w-3 h-3" />
-                  </a>
-                  <div className="mt-3"><TutorialCTA tutorialId="fal-api-key" /></div>
-                </Section>
+                </div>
               )}
             </div>
           )}
@@ -260,6 +307,163 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Zustands-Plakette in der Kopfzeile eines Dienstes. Immer an derselben
+ *  Stelle, damit man die drei Blöcke von oben nach unten abscannen kann. */
+function StatePill({ tone, label }: { tone: "ok" | "warn" | "idle"; label: string }) {
+  const color = tone === "ok" ? "#3fa66a" : tone === "warn" ? "#d9a441" : "#8a90a0";
+  return (
+    <span
+      title={label}
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] whitespace-nowrap max-w-[15rem]",
+        "border bg-white/5 border-white/10",
+        tone === "ok" ? "text-ink-50/75" : tone === "warn" ? "text-warn" : "text-ink-50/50",
+      )}
+    >
+      <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: color }} />
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
+/** Zustand eines Key-Feldes. Der Entwurf im Eingabefeld zählt NICHT als
+ *  verbunden — sonst stünde „Verbunden" da, bevor „Speichern" gedrückt wurde. */
+/**
+ * Sieht der eingetragene Wert nach dem Key aus, der in DIESES Feld gehört?
+ *
+ * Der häufigste Fehler mit zwei Pflicht-Keys ist der simpelste: beide sind
+ * gültig, aber vertauscht. Google antwortet darauf mit „API key not valid" —
+ * und der Nutzer prüft einen Key, an dem nichts falsch ist, weil die Meldung
+ * über den ORT nichts sagt.
+ *
+ * Bewusst nur ein HINWEIS, keine Sperre: Key-Formate ändern sich, und eine
+ * Formatprüfung, die einen gültigen neuen Key ablehnt, wäre schlimmer als das
+ * Problem. Google-Keys beginnen seit jeher mit „AIza", fal-Keys nicht.
+ */
+function looksSwapped(kind: "google" | "fal", value: string): boolean {
+  const v = value.trim();
+  if (!v) return false;
+  if (kind === "google") return !v.startsWith("AIza");
+  return v.startsWith("AIza");
+}
+
+function keyState(draft: string, saved: string, kind?: "google" | "fal") {
+  if (kind && looksSwapped(kind, draft)) {
+    return <StatePill tone="warn" label={kind === "google" ? "Sieht nicht nach einem Google-Key aus" : "Das ist ein Google-Key"} />;
+  }
+  if (draft.trim() !== saved) return <StatePill tone="warn" label="Noch nicht gespeichert" />;
+  if (saved) return <StatePill tone="ok" label="Verbunden" />;
+  return <StatePill tone="warn" label="Kein Key" />;
+}
+
+/**
+ * Wie `ElevenStatus`, nur für Google: fragt den Key wirklich bei Google an,
+ * statt „Verbunden" zu behaupten, weil das Feld gefüllt ist.
+ *
+ * Genau diese Lücke hat uns Stunden gekostet — die Einstellungen sagten
+ * „Verbunden", während Google jeden Aufruf mit „API key not valid" ablehnte.
+ * Geprüft wird der GESPEICHERTE Key (nicht das Eingabefeld), sonst liefe bei
+ * jedem Tastendruck eine Anfrage.
+ */
+function GoogleStatus({ googleKey, dirty }: { googleKey: string; dirty: boolean }) {
+  const [state, setState] = useState<Awaited<ReturnType<typeof checkGeminiKey>> | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (dirty || !googleKey) { setState(null); return; }
+    let alive = true;
+    setBusy(true);
+    checkGeminiKey(googleKey)
+      .then((r) => { if (alive) setState(r); })
+      .finally(() => { if (alive) setBusy(false); });
+    return () => { alive = false; };
+  }, [googleKey, dirty]);
+
+  if (dirty)      return <StatePill tone="warn" label="Noch nicht gespeichert" />;
+  if (!googleKey) return <StatePill tone="warn" label="Kein Key" />;
+  if (busy)       return <StatePill tone="idle" label="Wird geprüft …" />;
+  if (!state)     return <StatePill tone="idle" label="Nicht geprüft" />;
+  if (!state.ok)  return <StatePill tone="warn" label={state.message} />;
+  // Ein akzeptierter Key, dem die benutzten Modelle fehlen, ist genauso wenig
+  // brauchbar — nur scheitert er später und mit einer ganz anderen Meldung.
+  if (!state.hasText || !state.hasImage) {
+    return <StatePill tone="warn" label={`Key gültig, aber ${!state.hasText ? "Text" : "Bild"}-Modell nicht freigeschaltet`} />;
+  }
+  return <StatePill tone="ok" label={`Verbunden · ${state.models} Modelle`} />;
+}
+
+/**
+ * Zeigt, ob der gespeicherte ElevenLabs-Key wirklich trägt. Ein Key-Feld allein
+ * beantwortet die Frage „bin ich verbunden?" nicht — ein Tippfehler fällt sonst
+ * erst beim ersten Vertonungsversuch auf, also mitten in einem Rendering-Lauf.
+ */
+function ElevenStatus({ elevenKey, dirty }: { elevenKey: string; dirty: boolean }) {
+  const { voices, loading, error } = useElevenVoices(elevenKey);
+  const own = voices.filter((v) => v.category && v.category !== "premade").length;
+
+  if (dirty)      return <StatePill tone="warn" label="Noch nicht gespeichert" />;
+  if (!elevenKey) return <StatePill tone="idle" label="Nicht verbunden" />;
+  if (loading)    return <StatePill tone="idle" label="Wird geprüft …" />;
+  if (error)      return <StatePill tone="warn" label={error} />;
+  return <StatePill tone="ok" label={`Verbunden · ${voices.length} Stimmen, ${own} eigene`} />;
+}
+
+/** Ein Dienst: Kopfzeile (Name · Pflicht/Optional · Zustand), ein Satz wofür,
+ *  das Key-Feld, die Fundstelle des Keys. Für alle drei identisch aufgebaut. */
+function KeyCard({
+  title, purpose, requirement, state,
+  value, onChange, reveal, onReveal, placeholder,
+  linkUrl, linkLabel, children,
+}: {
+  title: string;
+  purpose: string;
+  requirement: string;
+  state: React.ReactNode;
+  value: string;
+  onChange: (v: string) => void;
+  reveal: boolean;
+  onReveal: () => void;
+  placeholder: string;
+  linkUrl: string;
+  linkLabel: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-ink-50">{title}</span>
+          <Badge tone={requirement === "Optional" ? "neutral" : "accent"} className="!text-[9px] !py-0">
+            {requirement}
+          </Badge>
+        </div>
+        <div className="flex-none">{state}</div>
+      </div>
+      <p className="text-xs text-ink-50/55 mt-1 mb-3 leading-snug">{purpose}</p>
+      <Input
+        type={reveal ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        iconLeft={
+          <button type="button" onClick={onReveal} title={reveal ? "Key verbergen" : "Key anzeigen"}>
+            {reveal ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        }
+      />
+      <a
+        href={linkUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 inline-flex items-center gap-1 text-xs text-flare-300 hover:text-flare-200"
+      >
+        {linkLabel} <ExternalLink className="w-3 h-3" />
+      </a>
+      {children && <div className="mt-3">{children}</div>}
+    </section>
   );
 }
 

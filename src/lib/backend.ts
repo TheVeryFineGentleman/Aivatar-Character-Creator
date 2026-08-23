@@ -46,6 +46,7 @@ export const BACKEND = {
   // External help links
   geminiKeyUrl: "https://aistudio.google.com/app/apikey",
   falKeyUrl:    "https://fal.ai/dashboard/keys",
+  elevenKeyUrl: "https://elevenlabs.io/app/settings/api-keys",
 };
 
 export const SUPA_FUNC = (name: string) => `${BACKEND.supabaseUrl}/functions/v1/${name}`;

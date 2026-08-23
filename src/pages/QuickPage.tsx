@@ -44,7 +44,7 @@ const STYLE_OPTIONS = [
 ];
 
 export default function QuickPage() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeys } = useSettings();
   const { plan } = useAuth();
 
   const [gender, setGender] = useProjectValue("quick:gender", "");
@@ -115,7 +115,8 @@ export default function QuickPage() {
   const missing: string[] = [];
   if (!gender) missing.push("Geschlecht");
   if (!ageId) missing.push("Alter");
-  if (!hasGenKey) missing.push("API-Key (Einstellungen)");
+  // Beide Keys sind Pflicht — die Zeile benennt, welcher davon fehlt.
+  if (!hasGenKey) missing.push(`${missingKeys.map((p) => (p === "google" ? "Google-Key" : "fal.ai-Key")).join(" + ")} (Einstellungen)`);
 
   return (
     <PlanGate requires="basic" feature="Der Quick Character Creator">

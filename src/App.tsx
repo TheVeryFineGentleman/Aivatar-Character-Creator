@@ -7,6 +7,7 @@ import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
 import { useProjects } from "@/hooks/useProjects";
 import { loadProject } from "@/lib/projectStorage";
+import { shouldAskForProfile, type ProjectProfile } from "@/lib/projectProfile";
 import { TutorialPanel } from "@/components/tutorials/TutorialPanel";
 import { TutorialLauncher } from "@/components/tutorials/TutorialLauncher";
 import HomePage from "@/pages/HomePage";
@@ -36,7 +37,7 @@ export default function App() {
     if (!current || promptedFor.current === current.id) return;
     promptedFor.current = current.id;
     const stored = (loadProject(current.id)?.state as { values?: Record<string, unknown> } | undefined)?.values?.profile;
-    if (!stored) setProfileOpen(true);
+    if (shouldAskForProfile(stored as ProjectProfile | null | undefined)) setProfileOpen(true);
   }, [current?.id]);
 
   return (

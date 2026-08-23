@@ -27,6 +27,31 @@ export async function urlToBase64(url: string): Promise<{ base64: string; mimeTy
   return fileToBase64(blob);
 }
 
+/**
+ * Wie `urlToBase64`, aber das Ergebnis ist auf Referenzgröße gestutzt.
+ *
+ * Für Bilder, die selbst GENERIERT wurden und dann als Referenz in den nächsten
+ * Request wandern (Front-Anker der Ansichten, Vorgängerbild einer Story-Szene).
+ * Die kommen in voller Modellauflösung als PNG zurück — als Referenz sind sie
+ * damit unnötig schwer. Bei Fehlschlag wird still das Original zurückgegeben,
+ * denn ein großer Anker ist immer noch besser als gar keiner.
+ */
+export async function urlToReferenceBase64(url: string): Promise<{ base64: string; mimeType: string }> {
+  const orig = await urlToBase64(url);
+  try {
+    const shrunk = await compressDataUrlForApi(
+      `data:${orig.mimeType};base64,${orig.base64}`,
+      REFERENCE_MAX_EDGE,
+      0.85,
+    );
+    const [meta, b64] = shrunk.split(",");
+    if (!b64) return orig;
+    return { base64: b64, mimeType: /data:(.*?);/.exec(meta)?.[1] || orig.mimeType };
+  } catch {
+    return orig;
+  }
+}
+
 const blobUrls = new Set<string>();
 export function trackBlobUrl(blob: Blob): string {
   const url = URL.createObjectURL(blob);
@@ -54,6 +79,64 @@ export async function compressImageToFitSize(file: File, maxBytes = 4 * 1024 * 1
     q -= 0.12;
   }
   return result;
+}
+
+/** Lange Kante eines Referenzbildes, das an ein Bildmodell geht. */
+export const REFERENCE_MAX_EDGE = 1024;
+
+/**
+ * Ein hochgeladenes Bild für die Verwendung als REFERENZ aufbereiten.
+ *
+ * Warum nicht `compressImageToFitSize`: die senkt nur die JPEG-Qualität und
+ * lässt die Auflösung unangetastet — ein 4000x3000-Handyfoto bleibt ein
+ * 4000x3000-Bild und geht mit mehreren MB als base64 in JEDEN einzelnen
+ * Generierungs-Request (bei Story: mal Anzahl Szenen). Der Upload dominiert
+ * dadurch die wahrgenommene Generierungsdauer.
+ *
+ * Für den Zweck „das Modell soll diese Person/dieses Objekt wiedererkennen"
+ * bringt mehr als ~1024 px lange Kante nichts — die Identität steckt in den
+ * Proportionen, nicht in der Pixelzahl. 1024/q0.85 kostet typisch ~200–400 KB
+ * statt 4 MB, also grob ein Zehntel Upload bei gleichem Ergebnis.
+ *
+ * Transparente PNGs bekommen einen weißen Hintergrund, sonst würde der
+ * Alpha-Kanal beim JPEG-Encode schwarz auslaufen.
+ */
+export async function prepareReferenceImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  let img: HTMLImageElement;
+  const objUrl = URL.createObjectURL(file);
+  try {
+    img = await loadImage(objUrl);
+  } catch {
+    URL.revokeObjectURL(objUrl);
+    return file; // nicht dekodierbar — unverändert durchreichen
+  }
+  URL.revokeObjectURL(objUrl);
+
+  const long = Math.max(img.naturalWidth, img.naturalHeight);
+  if (!long) return file;
+  // Schon klein genug UND schon komprimiert → nichts zu gewinnen.
+  if (long <= REFERENCE_MAX_EDGE && file.size <= 600 * 1024) return file;
+
+  const scale = Math.min(1, REFERENCE_MAX_EDGE / long);
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.85),
+  );
+  if (!blob || blob.size >= file.size) return file; // kein Gewinn → Original behalten
+  return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -203,6 +286,41 @@ export async function cropDataUrlToAspect(
     };
     img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
+  });
+}
+
+/**
+ * Sprecher-Maske für OmniHuman: gleiche Abmessungen wie das Startbild, schwarz,
+ * mit einer WEISSEN Hälfte auf der Sprecher-Seite („Only the person in the
+ * white area of the mask will speak").
+ *
+ * Bewusst eine stumpfe Halbbild-Maske statt einer erkannten Gesichts-Box: die
+ * Duo-Bilder werden mit fest zugewiesenen Seiten generiert (Sprecher links ODER
+ * rechts), damit ist die Hälfte deterministisch richtig — ohne einen weiteren
+ * Modell-Aufruf, der selbst wieder falsch liegen könnte. Scheitert etwas, wird
+ * geworfen statt eine leere/volle Maske zu liefern: eine falsche Maske hieße,
+ * die falsche Person spricht in einem BEZAHLTEN Clip.
+ */
+export async function makeSideMaskDataUrl(imageDataUrl: string, side: "left" | "right"): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) { reject(new Error("Maske: Startbild hat keine Abmessungen.")); return; }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Maske: Canvas nicht verfügbar.")); return; }
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#fff";
+      const half = Math.round(w / 2);
+      ctx.fillRect(side === "left" ? 0 : half, 0, side === "left" ? half : w - half, h);
+      try { resolve(canvas.toDataURL("image/png")); }
+      catch (e) { reject(e instanceof Error ? e : new Error("Maske: toDataURL fehlgeschlagen.")); }
+    };
+    img.onerror = () => reject(new Error("Maske: Startbild nicht ladbar."));
+    img.src = imageDataUrl;
   });
 }
 

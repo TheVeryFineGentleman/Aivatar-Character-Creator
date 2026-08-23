@@ -79,12 +79,12 @@ export function TutorialCTA({ tutorialId, className }: { tutorialId: string; cla
         {/* Play-Button — klassisches Video-Overlay */}
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex items-center justify-center w-11 h-11 rounded-full bg-black/45 ring-2 ring-white/80 backdrop-blur-sm transition-transform group-hover:scale-110">
-            <Play className="w-5 h-5 translate-x-[1px] text-white fill-white" />
+            <Play className="w-5 h-5 translate-x-[1px] text-pure fill-pure" />
           </span>
         </span>
         {/* Dauer-Badge unten rechts */}
         {meta?.duration && (
-          <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-white">
+          <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-pure">
             {meta.duration}
           </span>
         )}

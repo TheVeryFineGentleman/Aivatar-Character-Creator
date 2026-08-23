@@ -1,7 +1,8 @@
 /**
  * Theme hook — persists preference and toggles `dark` / `light` on <html>.
  * Also manages a separate `colorTheme` (accent palette variant) via `data-color-theme`.
- * Default: dark mode + sunset accents.
+ * Default: helles Erscheinungsbild + Neon-Akzente. Flächen, die bewusst dunkel
+ * bleiben (TopBar), setzen `data-surface="dark"` — siehe index.css.
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -37,7 +38,7 @@ const ThemeContext = createContext<ThemeValue | null>(null);
 const COLOR_THEME_KEY = "color-theme-v2";
 
 function systemPref(): "dark" | "light" {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -61,7 +62,7 @@ function loadColorTheme(): ColorTheme {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => ls.get<Theme>(KEYS.THEME) || "dark");
+  const [theme, setThemeState] = useState<Theme>(() => ls.get<Theme>(KEYS.THEME) || "light");
   const [colorTheme, setColorThemeState] = useState<ColorTheme>(() => loadColorTheme());
 
   const resolved: "dark" | "light" = theme === "system" ? systemPref() : theme;

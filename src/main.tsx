@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 import App from "./App";
 import { AuthProvider } from "./hooks/useAuth";
 import { SettingsProvider } from "./hooks/useSettings";
-import { ThemeProvider } from "./hooks/useTheme";
+import { ThemeProvider, useTheme } from "./hooks/useTheme";
 import { ProjectsProvider } from "./hooks/useProjects";
 import { TutorialsProvider } from "./hooks/useTutorials";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -22,6 +22,29 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Toasts folgen dem Theme: die Farben kommen aus denselben Flächen-Variablen
+ *  wie der Rest der App, sonst klebte auf der hellen Oberfläche eine schwarze
+ *  Box. `theme` muss mit — sonst zeichnet sonner seine eigenen Bedienelemente
+ *  (Schließen-Kreuz) weiterhin für den falschen Untergrund. */
+function AppToaster() {
+  const { resolved } = useTheme();
+  return (
+    <Toaster
+      theme={resolved}
+      position="bottom-right"
+      toastOptions={{
+        style: {
+          background: "rgb(var(--c-ink-900) / 0.96)",
+          border: "1px solid rgb(var(--c-white) / 0.10)",
+          color: "rgb(var(--c-ink-50))",
+          backdropFilter: "blur(12px)",
+          borderRadius: "16px",
+        },
+      }}
+    />
+  );
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
@@ -33,19 +56,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <ProjectsProvider>
                   <TutorialsProvider>
                   <App />
-                  <Toaster
-                    theme="dark"
-                    position="bottom-right"
-                    toastOptions={{
-                      style: {
-                        background: "rgba(17,20,29,0.95)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
-                        backdropFilter: "blur(12px)",
-                        borderRadius: "16px",
-                      },
-                    }}
-                  />
+                  <AppToaster />
                   </TutorialsProvider>
                 </ProjectsProvider>
               </AuthProvider>

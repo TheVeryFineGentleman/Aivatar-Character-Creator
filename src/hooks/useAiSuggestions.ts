@@ -13,6 +13,12 @@ import { useProjectProfile } from "@/hooks/useProjectProfile";
 import { buildProfilePreamble } from "@/lib/projectProfile";
 import { generateText } from "@/lib/generate";
 import { AIError, extractJson } from "@/lib/ai";
+import {
+  buildSuggestPrompt,
+  parseSuggestions,
+  DEFAULT_SUGGEST_COUNT,
+  type SuggestSpec,
+} from "@/lib/aiSuggest";
 
 interface RunOpts<T> {
   prompt: string;
@@ -60,5 +66,29 @@ export function useAiSuggestions() {
     [genChain, hasGenKey, profile],
   );
 
-  return { run, loading, hasGenKey };
+  /**
+   * Mehrere Vorschläge auf einmal — EIN Call, nicht n Calls. Das ist der
+   * Normalfall in der App: an jedem KI-Feld stehen drei Vorschläge zur Auswahl,
+   * statt dass ein Knopf ungefragt einen einzelnen Wert einsetzt.
+   *
+   * Liefert nie mehr als `count` und nie Duplikate; bei einem Fehler eine leere
+   * Liste (die Fehlermeldung kam schon als Toast).
+   */
+  const runMany = useCallback(
+    async function runMany(spec: SuggestSpec): Promise<string[]> {
+      const count = spec.count ?? DEFAULT_SUGGEST_COUNT;
+      const raw = await run<unknown>({
+        prompt: buildSuggestPrompt({ ...spec, count }),
+        json: true,
+        // Vorschläge dürfen ruhig auseinanderliegen — sonst kommen dreimal
+        // Formulierungen derselben Idee.
+        temperature: 1,
+      });
+      if (raw == null) return [];
+      return parseSuggestions(raw, count);
+    },
+    [run],
+  );
+
+  return { run, runMany, loading, hasGenKey };
 }

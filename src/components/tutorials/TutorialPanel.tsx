@@ -98,7 +98,7 @@ export function TutorialPanel({ onOpenSettings }: { onOpenSettings: () => void }
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-flare-grad flex items-center justify-center shadow-glow">
-                <GraduationCap className="w-4 h-4 text-white" />
+                <GraduationCap className="w-4 h-4 text-pure" />
               </div>
               <h2 className="text-[15px] font-semibold">Video-Tutorials</h2>
             </div>
@@ -114,9 +114,17 @@ export function TutorialPanel({ onOpenSettings }: { onOpenSettings: () => void }
           </button>
         </div>
 
+        {/* EIN Scrollbereich für Player UND Liste.
+            Vorher war nur die Liste scrollbar (`flex-1 overflow-y-auto`), der
+            Player darüber fest (`flex-none`). Auf niedrigen Fenstern hiess das:
+            das Video frisst die Höhe, und im verbleibenden Rest scrollt eine
+            Liste in Briefschlitzgrösse — man scrollte „unten am Ding" statt am
+            Dialog. Jetzt läuft der ganze Inhalt durch; nur die Kopfzeile mit dem
+            Schliessen-Knopf bleibt stehen, damit sie nie ausser Reichweite ist. */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
         {/* Player des aktiven Videos — zentriert in der Mitte, Titel oben, Aktion darunter */}
         {active && (
-          <div className="px-5 pt-4 pb-4 border-b border-white/5 flex-none">
+          <div className="px-5 pt-4 pb-4 border-b border-white/5">
             <div className="mx-auto flex flex-col" style={{ width: "min(100%, calc(52vh * 16 / 9))" }}>
               <div className="mb-2.5 flex items-center gap-2 min-w-0">
                 <Play className="w-4 h-4 flex-none fill-current" style={{ color: active.color }} />
@@ -161,7 +169,7 @@ export function TutorialPanel({ onOpenSettings }: { onOpenSettings: () => void }
         )}
 
         {/* Liste */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+        <div className="px-3 py-3 space-y-4">
           {grouped.map(({ cat, items }) => (
             <div key={cat}>
               <div className="px-2 mb-1.5 text-[10px] uppercase tracking-widest text-ink-50/40 font-medium">
@@ -202,6 +210,7 @@ export function TutorialPanel({ onOpenSettings }: { onOpenSettings: () => void }
               </div>
             </div>
           ))}
+        </div>
         </div>
       </aside>
       </div>

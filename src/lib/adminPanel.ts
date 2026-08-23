@@ -137,7 +137,7 @@ export const FEATURE_LABELS: { key: FeatureKey; label: string }[] = [
   { key: "poseGrid", label: "Posen-Raster" },
   { key: "smartRemix", label: "Smart Remix" },
   { key: "storyReel", label: "Story & Reel" },
-  { key: "videoGen", label: "Videos (Veo)" },
+  { key: "videoGen", label: "Videos (Kling)" },
 ];
 
 export function planFeatures(tier: PlanTier): string[] {

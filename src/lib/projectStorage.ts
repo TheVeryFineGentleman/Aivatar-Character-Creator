@@ -101,18 +101,20 @@ export function loadProject(id: string): ProjectData | null {
   return ls.get<ProjectData>(KEYS.PROJECT_PREFIX + id);
 }
 
-export function saveProjectState(id: string, state: unknown): void {
+/** `false` = der Save ist an der Quota gescheitert (siehe `ls.set`). */
+export function saveProjectState(id: string, state: unknown): boolean {
   const data = loadProject(id);
-  if (!data) return;
+  if (!data) return false;
   const json = JSON.stringify(state);
   const next: ProjectData = {
     meta: { ...data.meta, modifiedAt: Date.now(), sizeBytes: json.length * 2 },
     state,
   };
-  ls.set(KEYS.PROJECT_PREFIX + id, next);
+  const ok = ls.set(KEYS.PROJECT_PREFIX + id, next);
   // bubble updated meta into index
   const idx = listProjects().map((p) => (p.id === id ? next.meta : p));
   writeIndex(idx);
+  return ok;
 }
 
 /** Ensure there is always at least one project; returns its meta. */

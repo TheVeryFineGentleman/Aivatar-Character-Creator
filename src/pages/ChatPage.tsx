@@ -19,6 +19,7 @@ import { ASPECT_RATIOS, aspectClass } from "@/lib/aspectRatio";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectGallery, useProjectValue } from "@/hooks/useProjectGallery";
+import { useFieldSuggestions } from "@/hooks/useFieldSuggestions";
 import { AIError } from "@/lib/ai";
 import { generateImage } from "@/lib/generate";
 import { buildChatPrompts } from "@/lib/characterPrompt";
@@ -82,7 +83,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeyMessage } = useSettings();
   const { plan } = useAuth();
 
   const [answers, setAnswers] = useProjectValue<Record<number, string>>("chat:answers", {});
@@ -93,19 +94,41 @@ export default function ChatPage() {
   const [slots, setSlots] = useProjectGallery("chat");
   const [running, setRunning] = useState(false);
   const [chatOpen, setChatOpen] = useState(true);
-  const [suggestions, setSuggestions] = useState<string[]>(() => pick3(SUGGESTIONS[QUESTIONS[0].id]));
+  const [fallbackSuggestions, setFallbackSuggestions] = useState<string[]>(() => pick3(SUGGESTIONS[QUESTIONS[0].id]));
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Alle 13 Fragen in EINEM Lauf — die KI sieht das Projekt-Profil und schlägt
+  // Antworten vor, die zum Thema passen (bei „Fitness-Reels" ein anderer Körperbau
+  // als bei „Kinderbuch"). Die statische Liste oben bleibt als Rückfall, wenn kein
+  // Key gesetzt ist oder der Lauf nichts liefert — Vorschläge stehen also immer.
+  const aiSuggest = useFieldSuggestions(
+    "chat:answers",
+    QUESTIONS.map((q) => ({
+      key: String(q.id),
+      what: q.question.replace(/^Welche[rs]? |^Wie |^Gibt es /, "").replace(/\?$/, ""),
+      shape: "1–3 Wörter",
+    })),
+    { context: "Es entsteht EIN Charakter — die Vorschläge aller Felder müssen zu derselben Person passen." },
+  );
 
   // Fresh suggestions whenever the current question changes.
   useEffect(() => {
     const q = QUESTIONS[step];
-    setSuggestions(q ? pick3(SUGGESTIONS[q.id]) : []);
+    setFallbackSuggestions(q ? pick3(SUGGESTIONS[q.id]) : []);
   }, [step]);
 
+  const currentQuestion = QUESTIONS[step];
+  const aiForStep = currentQuestion ? aiSuggest.get(String(currentQuestion.id)) : [];
+  const suggestions = aiForStep.length > 0 ? aiForStep : fallbackSuggestions;
+
+  // Nur die Vorschläge der SICHTBAREN Frage neu holen. Vorher zog der Knopf die
+  // Antworten aller 13 Fragen neu — ein voller Gruppen-Call für eine Frage.
   const rerollSuggestions = () => {
-    const q = QUESTIONS[step];
-    if (q) setSuggestions(pick3(SUGGESTIONS[q.id]));
+    if (currentQuestion && (aiForStep.length > 0 || aiSuggest.hasGenKey)) {
+      aiSuggest.reroll(String(currentQuestion.id));
+    }
+    if (currentQuestion) setFallbackSuggestions(pick3(SUGGESTIONS[currentQuestion.id]));
   };
 
   const applySuggestion = (text: string) => {
@@ -175,7 +198,12 @@ export default function ChatPage() {
   const reviewComplete = step >= QUESTIONS.length;
 
   const generate = async (mode: "append" | "replace" = "append") => {
-    if (!hasGenKey) { toast.error("Bitte hinterlege zuerst deinen API-Key."); return; }
+    if (!hasGenKey) {
+      toast.error(missingKeyMessage ?? "Bitte hinterlege zuerst deine API-Keys.", {
+        description: "Google und fal.ai sind beide Pflicht — beide in den Einstellungen eintragen.",
+      });
+      return;
+    }
     const limit = plan.maxImagesPerRun === -1 ? count : Math.min(count, plan.maxImagesPerRun);
     const fresh: ImageSlot[] = Array.from({ length: limit }, () => ({ id: uid(), status: "loading" as const }));
     setSlots((prev) => mode === "replace" ? fresh : [...prev, ...fresh]);
@@ -242,7 +270,7 @@ export default function ChatPage() {
                     <div className={cn(
                       "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
                       m.role === "user"
-                        ? "bg-flare-grad text-white rounded-br-md"
+                        ? "bg-flare-grad text-pure rounded-br-md"
                         : "bg-white/[0.04] border border-white/8 text-ink-50 rounded-bl-md",
                     )}>
                       {m.text}

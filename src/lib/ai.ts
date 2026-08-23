@@ -113,6 +113,63 @@ const MODELS = {
   image: "gemini-3.1-flash-image",
 } as const;
 
+/**
+ * Prüft einen Google-Key — und sagt, WAS Google dazu meint.
+ *
+ * Nutzt die Modell-LISTE statt einer Generierung: der Aufruf kostet kein
+ * Kontingent, erzeugt nichts und beantwortet trotzdem beide Fragen, an denen es
+ * praktisch immer hängt — akzeptiert Google den Key überhaupt, und kennt er die
+ * Modelle, die diese App anspricht.
+ *
+ * Der Anlass: „API key not valid" bei einem Key, der nachweislich existiert. Ohne
+ * eine Prüfung, die von der eigentlichen Generierung getrennt ist, lässt sich
+ * nicht unterscheiden, ob der Key, seine Einschränkungen, das Projekt oder der
+ * Modellname das Problem ist — und der Nutzer prüft dann tagelang das Falsche.
+ */
+export async function checkGeminiKey(apiKey: string): Promise<
+  | { ok: true; models: number; hasText: boolean; hasImage: boolean }
+  | { ok: false; message: string; hint?: string }
+> {
+  const key = (apiKey || "").trim();
+  if (!key) return { ok: false, message: "Kein Key eingetragen." };
+  // Unsichtbare Zeichen sind der klassische Copy-&-Paste-Unfall: der Key sieht
+  // richtig aus, enthält aber ein Zeilenende oder ein geschütztes Leerzeichen.
+  // Google sieht dann eine andere Zeichenkette und antwortet „not valid".
+  if (/[\s ​-‍﻿]/.test(key)) {
+    return {
+      ok: false,
+      message: "Der Key enthält unsichtbare Zeichen (Leerzeichen, Zeilenumbruch).",
+      hint: "Feld leeren und den Key ohne umgebende Zeichen neu einfügen.",
+    };
+  }
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`,
+    );
+    if (!res.ok) {
+      let raw = ""; try { raw = await res.text(); } catch { /* noop */ }
+      const msg = extractApiMessage(raw) || `Google antwortet mit ${res.status}.`;
+      // Googles eigener Wortlaut, plus die Deutung, die er nicht mitliefert.
+      const hint = /not valid|invalid/i.test(msg)
+        ? "Meist eine EINSCHRAENKUNG am Key: Google-Konsole -> Anmeldedaten -> dieser Key -> Anwendungseinschraenkungen auf 'Keine' setzen, und unter API-Einschraenkungen muss die Generative Language API erlaubt sein."
+        : /disabled|has not been used|SERVICE_DISABLED/i.test(msg)
+        ? "Die Generative Language API ist im Google-Projekt nicht aktiviert — in der Konsole aktivieren."
+        : undefined;
+      return { ok: false, message: msg, hint };
+    }
+    const data = await res.json();
+    const names: string[] = (data?.models || []).map((m: any) => String(m?.name || ""));
+    return {
+      ok: true,
+      models: names.length,
+      hasText: names.some((n) => n.includes(MODELS.text)),
+      hasImage: names.some((n) => n.includes(MODELS.image)),
+    };
+  } catch (e: any) {
+    return { ok: false, message: e?.message || "Google ist nicht erreichbar." };
+  }
+}
+
 interface Part {
   text?: string;
   inlineData?: { mimeType: string; data: string };
@@ -195,9 +252,17 @@ interface GeminiTextOpts {
   temperature?: number;
   maxOutputTokens?: number;
   json?: boolean;
+  /**
+   * Bilder, die das Modell ANSEHEN soll — als `inlineData`-Parts neben dem Text.
+   *
+   * Ohne sie beschreibt eine Frage wie „wie sieht diese Person aus?" nichts,
+   * sondern erfindet: das Modell bekommt den Bildinhalt gar nicht zu sehen und
+   * antwortet trotzdem. Ein leeres Array ändert den Request nicht.
+   */
+  images?: { mimeType: string; base64: string }[];
 }
 
-export async function geminiText({ prompt, apiKey, model = MODELS.text, temperature, maxOutputTokens, json }: GeminiTextOpts): Promise<string> {
+export async function geminiText({ prompt, apiKey, model = MODELS.text, temperature, maxOutputTokens, json, images }: GeminiTextOpts): Promise<string> {
   if (!apiKey) throw new AIError("NO_KEY", "Kein API-Key hinterlegt.", "Öffne die Einstellungen und füge deinen Gemini-Key ein.");
   const generationConfig: Record<string, any> = {};
   if (typeof temperature === "number") generationConfig.temperature = temperature;
@@ -208,7 +273,16 @@ export async function geminiText({ prompt, apiKey, model = MODELS.text, temperat
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      contents: [{
+        role: "user",
+        // Bilder VOR den Text: Gemini bezieht die Frage dann auf das, was
+        // darüber steht. Umgekehrt liest sich der Prompt wie eine Frage ohne
+        // Gegenstand, und die Antwort driftet ins Allgemeine.
+        parts: [
+          ...(images ?? []).map((im) => ({ inlineData: { mimeType: im.mimeType, data: im.base64 } })),
+          { text: prompt },
+        ],
+      }],
       ...(Object.keys(generationConfig).length ? { generationConfig } : {}),
     }),
   });

@@ -17,17 +17,24 @@ type ModeSpec = {
   id: SubMode;
   label: string;
   Icon: LucideIcon;
-  color: string;
+  /** Farbton + Sättigung, z. B. "263 70%". Die Helligkeit kommt aus
+   *  --accent-l-text und dreht mit dem Theme — fest helle Töne wären auf der
+   *  weißen Fläche nicht lesbar. */
+  hue: string;
   planKey?: "chatCreator" | "characterViews" | "poseGrid" | "smartRemix";
   tierLabel?: "Pro" | "Premium";
 };
 
+/** Akzentfarbe in Textstärke — Helligkeit aus dem Theme. */
+const accent = (hue: string, alpha?: number) =>
+  `hsl(${hue} var(--accent-l-text)${alpha != null ? ` / ${alpha}` : ""})`;
+
 const MODES: ModeSpec[] = [
-  { id: "quick", label: "Quick Creator",   Icon: Sparkles,   color: "hsl(263 70% 70%)" },
-  { id: "chat",  label: "Chat Creator",    Icon: Users,      color: "hsl(270 60% 72%)", planKey: "chatCreator",    tierLabel: "Pro" },
-  { id: "views", label: "Character Views", Icon: LayoutGrid, color: "hsl(188 94% 60%)", planKey: "characterViews", tierLabel: "Pro" },
-  { id: "poses", label: "Pose Grid",       Icon: LayoutGrid, color: "hsl(160 70% 55%)", planKey: "poseGrid",       tierLabel: "Pro" },
-  { id: "remix", label: "Smart Remix",     Icon: Wand2,      color: "hsl(330 82% 64%)", planKey: "smartRemix",     tierLabel: "Pro" },
+  { id: "quick", label: "Quick Creator",   Icon: Sparkles,   hue: "263 70%" },
+  { id: "chat",  label: "Chat Creator",    Icon: Users,      hue: "270 60%", planKey: "chatCreator",    tierLabel: "Pro" },
+  { id: "views", label: "Character Views", Icon: LayoutGrid, hue: "188 94%", planKey: "characterViews", tierLabel: "Pro" },
+  { id: "poses", label: "Pose Grid",       Icon: LayoutGrid, hue: "160 70%", planKey: "poseGrid",       tierLabel: "Pro" },
+  { id: "remix", label: "Smart Remix",     Icon: Wand2,      hue: "330 82%", planKey: "smartRemix",     tierLabel: "Pro" },
 ];
 
 // ─── CharacterPage ───────────────────────────────────────────────────────────
@@ -77,7 +84,7 @@ export default function CharacterPage() {
       setIndicator({
         left: eRect.left - wRect.left,
         width: eRect.width,
-        color: m?.color ?? "hsl(263 70% 70%)",
+        color: accent(m?.hue ?? "263 70%"),
       });
     };
     const r = requestAnimationFrame(tick);
@@ -133,9 +140,9 @@ export default function CharacterPage() {
                     : "border-transparent text-ink-50/60 hover:text-ink-50 hover:bg-white/5",
                 )}
                 style={active ? {
-                  background: `${m.color}1e`,
-                  color: m.color,
-                  outline: `1px solid ${m.color}44`,
+                  background: accent(m.hue, 0.12),
+                  color: accent(m.hue),
+                  outline: `1px solid ${accent(m.hue, 0.3)}`,
                 } : undefined}
               >
                 <Icon size={14} />
@@ -146,7 +153,7 @@ export default function CharacterPage() {
                     style={{
                       // Pro = amber, Premium = lila (Projekt-Farbschema)
                       background: m.tierLabel === "Premium" ? "hsl(263 70% 55% / 0.18)" : "hsl(38 92% 55% / 0.18)",
-                      color:      m.tierLabel === "Premium" ? "hsl(263 70% 78%)"        : "hsl(38 92% 65%)",
+                      color:      m.tierLabel === "Premium" ? accent("263 70%")               : accent("38 92%"),
                       letterSpacing: "0.05em",
                     }}
                   >

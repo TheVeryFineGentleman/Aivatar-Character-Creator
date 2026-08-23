@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Wand2, Sparkles, Loader2, RefreshCw, RotateCcw, ImageDown, Trash2, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
-import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
+import { SuggestionField } from "@/components/ai/SuggestionField";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -34,7 +34,7 @@ const STYLE_OPTIONS = [
 ];
 
 export default function RemixPage() {
-  const { genChain, hasGenKey } = useSettings();
+  const { genChain, hasGenKey, missingKeys } = useSettings();
   const { plan } = useAuth();
 
   const [refs, setRefs] = useProjectRefImages("remix:refs");
@@ -95,7 +95,8 @@ export default function RemixPage() {
   // Missing-input hint
   const missing: string[] = [];
   if (!hasInput) missing.push("Bild hochladen oder Idee eingeben");
-  if (!hasGenKey) missing.push("API-Key (Einstellungen)");
+  // Beide Keys sind Pflicht — die Zeile benennt, welcher davon fehlt.
+  if (!hasGenKey) missing.push(`${missingKeys.map((p) => (p === "google" ? "Google-Key" : "fal.ai-Key")).join(" + ")} (Einstellungen)`);
 
   return (
     <PlanGate requires="premium" feature="Smart Remix">
@@ -124,19 +125,19 @@ export default function RemixPage() {
 
         {/* Idea */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-sm font-medium block">Idee / Beschreibung (optional)</label>
-            <AiSuggestButton
-              label="KI-Idee"
-              buildPrompt={() => `Schlage eine kreative Bild-Idee/Beschreibung vor, die zu diesem Projekt passt (1-2 Sätze, konkret & visuell). Aktuell: "${idea || "—"}". Antworte nur mit der Idee.`}
-              onApply={setIdea}
-            />
-          </div>
-          <Textarea
+          <label className="text-sm font-medium block">Idee / Beschreibung (optional)</label>
+          <SuggestionField
+            as="textarea"
+            rows={3}
             placeholder="z.B. 'mutige Weltraum-Pilotin im Retro-Sci-Fi-Look' — oder leer lassen und nur das Bild sprechen lassen."
             value={idea}
-            onChange={(e) => setIdea(e.target.value)}
-            rows={3}
+            onChange={setIdea}
+            emptyHint="Wähle eine Idee oder schreib deine eigene…"
+            cacheKey={`remix:idea:${style}`}
+            what="eine Bild-Idee für den Charakter, der aus der Vorlage entsteht"
+            shape="1–2 Sätze, konkret und visuell"
+            current={idea}
+            context={`Stil: ${STYLE_OPTIONS.find((s) => s.id === style)?.label ?? style}. Es entsteht ein eigenständiger Charakter, keine Kopie der Vorlage.`}
           />
         </div>
 

@@ -73,11 +73,15 @@ export async function userPrefix(email: string): Promise<string> {
 
 // ── Asset upload / delete ─────────────────────────────────────────────────────
 
-export type AssetKind = "refs" | "generated" | "videos";
+// "audio": die TTS-Sprachspuren des Voice-Locks — sie müssen genauso durable
+// sein wie Bild/Video, sonst lässt sich ein Clip nach einem Reload nicht mehr
+// neu vertonen.
+export type AssetKind = "refs" | "generated" | "videos" | "audio";
 
 const EXT_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
   "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov",
+  "audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/wav": "wav", "audio/ogg": "ogg",
 };
 
 /** Upload a Blob / data-URL / remote URL and return its public Spaces URL. */
@@ -112,9 +116,10 @@ export async function uploadAsset(
   // makes the browser refuse to play it back. Force the correct type per kind.
   let contentType = blob.type;
   if (kind === "videos" && !/^video\//.test(contentType)) contentType = "video/mp4";
+  if (kind === "audio" && !/^audio\//.test(contentType)) contentType = "audio/mpeg";
   if ((kind === "generated" || kind === "refs") && !/^image\//.test(contentType)) contentType = "image/png";
   if (contentType !== blob.type) blob = new Blob([blob], { type: contentType });
-  const ext = EXT_BY_MIME[contentType] || (kind === "videos" ? "mp4" : "png");
+  const ext = EXT_BY_MIME[contentType] || (kind === "videos" ? "mp4" : kind === "audio" ? "mp3" : "png");
   const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const key = `${PROJECT_PREFIX}/${prefix}/${projectId}/${kind}/${id}.${ext}`;
   return putObject(key, blob, contentType, /* public */ true);

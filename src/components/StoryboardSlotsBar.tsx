@@ -191,9 +191,12 @@ export function StoryboardSlotsBar() {
                     )}
                   </div>
 
-                  {/* Aktions-Menü oben rechts — nur sichtbar bei Hover */}
+                  {/* Aktions-Menü oben rechts. Dauerhaft sichtbar: mit
+                      `opacity-0` + `group-hover` war es auf Touch-Geräten gar
+                      nicht erreichbar — Umbenennen und Löschen eines Slots gab
+                      es dort schlicht nicht. */}
                   {!editing && (
-                    <div className="pointer-events-auto opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                    <div className="pointer-events-auto">
                       <Menu
                         align="right"
                         triggerClassName="p-1 rounded hover:bg-white/5"

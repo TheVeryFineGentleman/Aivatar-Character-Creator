@@ -17,7 +17,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 // Variant feel ported from Projekt: hover shadow per-tone + active scale/brightness feedback
 const variantClass: Record<Variant, string> = {
   primary:
-    "bg-flare-grad text-white shadow-glow hover:brightness-110 hover:shadow-lg hover:shadow-flare-500/30 active:brightness-95",
+    "bg-flare-grad text-pure shadow-glow hover:brightness-110 hover:shadow-lg hover:shadow-flare-500/30 active:brightness-95",
   secondary:
     "bg-white/5 text-ink-50 border border-white/10 hover:bg-white/10 hover:border-white/15 hover:shadow-md",
   ghost:

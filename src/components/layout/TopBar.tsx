@@ -165,8 +165,11 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
     );
 
   return (
-    <header className={cn(
-      "sticky top-0 z-30 flex items-center gap-2 px-4 h-14",
+    // `data-surface="dark"` setzt die Flächen-Variablen für diesen Teilbaum auf
+    // die dunkle Skala zurück (siehe index.css). Die Leiste bleibt damit dunkel,
+    // während der Rest der App hell ist — ohne eine einzige Klasse hier zu ändern.
+    <header data-surface="dark" className={cn(
+      "sticky top-0 z-30 flex items-center gap-2 px-4 h-14 text-ink-50",
       "bg-ink-950/85 backdrop-blur-xl border-b border-white/5",
     )}>
       {/* ── Left: logo + divider + project switcher + storage ── */}
@@ -175,7 +178,7 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
           <div
             className="w-[30px] h-[30px] rounded-[9px] shrink-0 flex items-center justify-center bg-flare-grad shadow-glow"
           >
-            <Sparkles size={15} className="text-white" />
+            <Sparkles size={15} className="text-pure" />
           </div>
           <span className="hidden sm:block text-[15px] font-bold tracking-tight">Aivatar</span>
         </Link>
@@ -324,7 +327,7 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
             <Menu
               triggerClassName="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/5 transition-colors"
               trigger={
-                <div className="w-7 h-7 rounded-lg bg-flare-grad flex items-center justify-center text-white text-xs font-semibold shadow-glow">
+                <div className="w-7 h-7 rounded-lg bg-flare-grad flex items-center justify-center text-pure text-xs font-semibold shadow-glow">
                   {credentials.email.charAt(0).toUpperCase()}
                 </div>
               }
