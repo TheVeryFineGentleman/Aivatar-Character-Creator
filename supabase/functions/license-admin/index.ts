@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const KEY_MANAGER_BASE = "https://key-manager-wmmjk.ondigitalocean.app";
 const ADMIN_API_KEY = "9876";
-const ALLOWED_EMAILS = new Set(["sattelite.de@gmail.com", "1", "2", "3"]);
+const ALLOWED_EMAILS = new Set(["sattelite.de@gmail.com", "leojaeger2008@gmail.com", "1", "2", "3"]);
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {

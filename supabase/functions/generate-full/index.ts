@@ -75,11 +75,11 @@ serve(async (req) => {
     // ===== IMAGE MODE - Gemini 3.1 Flash Image Preview =====
     if (mode === "image") {
       const { prompt, referenceImages, aspectRatio = "1:1" } = body;
-      console.log("🖼️ Image generation via Gemini 3.1 Flash Image Preview (backend key)");
+      console.log("🖼️ Image generation via Gemini 2.5 Flash Image (backend key)");
       console.log("📐 Aspect ratio:", aspectRatio);
       console.log("🖼️ Reference images:", referenceImages?.length || 0);
 
-      const model = "gemini-3.1-flash-image-preview";
+      const model = "gemini-2.5-flash-image";
       const enhancedPrompt = `${SAFETY_COMPLIANCE_PREFIX}${prompt}\n\nIMPORTANT: Render this image in 4K ultra high resolution (3840x2160 pixels). Maximum detail, sharpness, and clarity.`;
       const parts: any[] = [{ text: enhancedPrompt }];
 

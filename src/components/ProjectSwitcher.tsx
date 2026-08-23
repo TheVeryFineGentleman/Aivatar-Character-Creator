@@ -1,318 +1,145 @@
-import React, { useEffect, useRef, useState } from "react";
-import { ChevronDown, Plus, Trash2, FolderOpen, Loader2, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  ProjectMeta,
-  MAX_PROJECTS,
-  listProjects,
-  createProject,
-  deleteProject,
-  isStorageReady,
-} from "@/lib/projectStorage";
+/**
+ * TopBar widget — switch between projects, rename or delete, create a new one.
+ * Closes the popover after each destructive/navigation action.
+ */
+import { useState } from "react";
+import { Folder, FolderPlus, ChevronDown, Check, Pencil, Trash2, Loader2, X } from "lucide-react";
+import { Menu, MenuDivider, MenuSection } from "@/components/ui/Menu";
+import { Badge } from "@/components/ui/Badge";
+import { useProjects } from "@/hooks/useProjects";
+import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
+import { toast } from "sonner";
+import { cn } from "@/lib/cn";
 
-interface ProjectSwitcherProps {
-  email: string;
-  activeProjectId: string | null;
-  onSwitchProject: (projectId: string | null) => void | Promise<void>;
-  onProjectsChanged?: (projects: ProjectMeta[]) => void;
-}
-
-export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
-  email,
-  activeProjectId,
-  onSwitchProject,
-  onProjectsChanged,
-}) => {
-  const [projects, setProjects] = useState<ProjectMeta[]>([]);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newName, setNewName] = useState("");
+export function ProjectSwitcher() {
+  const { projects, current, switchTo, create, remove, canCreateMore, quota } = useProjects();
   const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
 
-  const [confirmDelete, setConfirmDelete] = useState<ProjectMeta | null>(null);
+  if (!current) return null;
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  // „Umbenennen" öffnet jetzt den Bearbeiten-Dialog (Projektname + Profil).
+  const openEdit = (id: string) => {
+    if (id !== current.id) switchTo(id);
+    setEditOpen(true);
+  };
 
-  // Initial load + when email changes.
-  useEffect(() => {
-    if (!email) {
-      setProjects([]);
+  const handleDelete = (id: string, name: string) => {
+    if (projects.length <= 1) {
+      toast.error("Mindestens ein Projekt muss bestehen bleiben.");
       return;
     }
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email]);
-
-  const refresh = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const list = await listProjects(email);
-      setProjects(list);
-      onProjectsChanged?.(list);
-    } catch (err: any) {
-      setError(err?.message || "Konnte Projekte nicht laden");
-    } finally {
-      setLoading(false);
-    }
+    if (!confirm(`„${name}" wirklich löschen? Alle Daten gehen verloren.`)) return;
+    remove(id);
+    toast.success("Projekt gelöscht.");
   };
 
-  // Close dropdown on outside click.
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    window.addEventListener("mousedown", handler);
-    return () => window.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const activeProject = projects.find((p) => p.id === activeProjectId) || null;
-  const canCreateMore = projects.length < MAX_PROJECTS;
-
-  const handleCreate = async () => {
-    if (!newName.trim()) return;
-    setCreating(true);
-    setError(null);
-    try {
-      const meta = await createProject(email, newName.trim());
-      setNewName("");
-      setShowCreateModal(false);
-      await refresh();
-      await onSwitchProject(meta.id);
-    } catch (err: any) {
-      setError(err?.message || "Konnte Projekt nicht anlegen");
-    } finally {
-      setCreating(false);
+  const handleCreate = () => {
+    const name = newName.trim() || `Projekt ${projects.length + 1}`;
+    const meta = create(name);
+    if (!meta) {
+      toast.error(`Projekt-Limit erreicht (${quota.projectLimit}). Upgrade auf 25 GB für mehr Slots.`);
+      return;
     }
-  };
-
-  const handleDelete = async (project: ProjectMeta) => {
-    setConfirmDelete(null);
-    setLoading(true);
-    setError(null);
-    try {
-      await deleteProject(email, project.id);
-      if (activeProjectId === project.id) {
-        await onSwitchProject(null);
-      }
-      await refresh();
-    } catch (err: any) {
-      setError(err?.message || "Löschen fehlgeschlagen");
-    } finally {
-      setLoading(false);
-    }
+    toast.success(`„${meta.name}" erstellt.`);
+    setNewName("");
+    setCreating(false);
   };
 
   return (
     <>
-      <div ref={containerRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium",
-            "bg-background/80 backdrop-blur-sm border border-border/60",
-            "hover:bg-background hover:border-primary/40 transition-colors",
-            "max-w-[220px]"
-          )}
-        >
-          <FolderOpen className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span className="truncate">
-            {activeProject ? activeProject.name : "Kein Projekt"}
-          </span>
-          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")} />
-        </button>
+    <Menu
+      align="left"
+      triggerClassName="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white/5 transition-colors max-w-[200px]"
+      trigger={
+        <>
+          <Folder className="w-3.5 h-3.5 text-flare-300 flex-shrink-0" />
+          <span className="text-sm font-medium truncate">{current.name}</span>
+          <ChevronDown className="w-3.5 h-3.5 text-ink-50/55 flex-shrink-0" />
+        </>
+      }
+    >
+      <div className="w-72">
+        <div className="px-3.5 py-2.5 border-b border-white/5 flex items-center justify-between">
+          <span className="text-[10px] uppercase tracking-widest text-ink-50/45 font-medium">Projekte</span>
+          <Badge tone="neutral" className="!text-[9px] !py-0">
+            {quota.projectsUsed} / {quota.projectLimit}
+          </Badge>
+        </div>
 
-        {open && (
-          <div className="absolute top-full left-0 mt-2 w-72 rounded-lg border border-border/60 bg-background/95 backdrop-blur-md shadow-xl z-30 overflow-hidden">
-            <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border/40 flex items-center justify-between">
-              <span>Projekte ({projects.length}/{MAX_PROJECTS})</span>
-              {loading && <Loader2 className="w-3 h-3 animate-spin" />}
-            </div>
-
-            {!isStorageReady() && (
-              <div className="px-3 py-3 text-[11px] text-amber-500 bg-amber-500/10 border-b border-amber-500/30">
-                ⚠️ DO Spaces nicht konfiguriert. Trage <code className="font-mono">VITE_DO_SPACES_SECRET</code> in <code className="font-mono">.env</code> ein und starte den Dev-Server neu.
-              </div>
-            )}
-
-            {projects.length === 0 && !loading && isStorageReady() && (
-              <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-                Noch keine Projekte
-              </div>
-            )}
-
+        <MenuSection>
+          <div className="max-h-72 overflow-y-auto">
             {projects.map((p) => {
-              const isActive = p.id === activeProjectId;
+              const active = p.id === current.id;
               return (
                 <div
                   key={p.id}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-sm group hover:bg-muted/40",
-                    isActive && "bg-primary/10"
+                    "group flex items-center gap-2 px-3.5 py-2 hover:bg-white/5 transition-colors",
+                    active && "bg-white/3",
                   )}
                 >
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setOpen(false);
-                      if (!isActive) await onSwitchProject(p.id);
-                    }}
-                    className="flex-1 text-left flex items-center gap-2 min-w-0"
-                  >
-                    {isActive ? (
-                      <Check className="w-3.5 h-3.5 text-primary shrink-0" />
-                    ) : (
-                      <span className="w-3.5 h-3.5 shrink-0" />
-                    )}
-                    <span className="truncate">{p.name}</span>
+                  <button onClick={() => switchTo(p.id)} className="flex-1 flex items-center gap-2 text-left text-sm min-w-0">
+                    <Folder className={cn("w-3.5 h-3.5 flex-shrink-0", active ? "text-flare-300" : "text-ink-50/55")} />
+                    <span className={cn("truncate", active ? "text-ink-50" : "text-ink-50/80")}>{p.name}</span>
+                    {active && <Check className="w-3 h-3 text-flare-300 flex-shrink-0" />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(p)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/20 text-destructive"
-                    title="Projekt löschen"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
+                    <button onClick={() => openEdit(p.id)} className="p-1 rounded hover:bg-white/5 hover:text-flare-300" title="Umbenennen & Profil bearbeiten">
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => handleDelete(p.id, p.name)} className="p-1 rounded hover:bg-white/5 hover:text-danger" title="Löschen" disabled={projects.length <= 1}>
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
-
-            <button
-              type="button"
-              disabled={!canCreateMore}
-              onClick={() => {
-                setOpen(false);
-                setShowCreateModal(true);
-              }}
-              className={cn(
-                "w-full flex items-center gap-2 px-3 py-2 text-sm border-t border-border/40",
-                canCreateMore
-                  ? "hover:bg-primary/10 text-primary"
-                  : "text-muted-foreground/60 cursor-not-allowed"
-              )}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>
-                {canCreateMore ? "Neues Projekt" : `Maximum (${MAX_PROJECTS}) erreicht`}
-              </span>
-            </button>
-
-            {error && (
-              <div className="px-3 py-2 text-[11px] text-destructive bg-destructive/10 border-t border-destructive/20">
-                {error}
-              </div>
-            )}
           </div>
-        )}
-      </div>
+        </MenuSection>
 
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm"
-          onClick={() => !creating && setShowCreateModal(false)}
-        >
-          <div
-            className="w-[90%] max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-1">Neues Projekt</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Gib einen Namen ein. Du kannst maximal {MAX_PROJECTS} Projekte anlegen.
-            </p>
+        <MenuDivider />
+
+        {creating ? (
+          <div className="px-3.5 py-2.5 flex items-center gap-2">
             <input
-              type="text"
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && newName.trim() && !creating) handleCreate();
-                if (e.key === "Escape" && !creating) setShowCreateModal(false);
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") { setCreating(false); setNewName(""); }
               }}
-              placeholder="z.B. 'Sommer-Reel' oder 'Promo Q3'"
-              maxLength={40}
-              className={cn(
-                "w-full px-3 py-2 rounded-lg bg-background border border-border",
-                "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary",
-                "text-sm"
-              )}
+              placeholder="Projektname"
+              className="flex-1 bg-ink-950/60 border border-white/10 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-flare-400/50"
             />
-            {error && (
-              <div className="mt-3 p-2 rounded text-xs text-destructive bg-destructive/10 border border-destructive/20">
-                {error}
-              </div>
+            <button onClick={handleCreate} className="p-1.5 rounded hover:bg-white/5 hover:text-flare-300">
+              <Check className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => { setCreating(false); setNewName(""); }} className="p-1.5 rounded hover:bg-white/5 hover:text-danger">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => canCreateMore ? setCreating(true) : toast.error(`Projekt-Limit erreicht (${quota.projectLimit}).`)}
+            disabled={!canCreateMore}
+            className={cn(
+              "w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left transition-colors",
+              canCreateMore
+                ? "text-ink-50/85 hover:bg-white/5 hover:text-ink-50"
+                : "text-ink-50/35 cursor-not-allowed",
             )}
-            <div className="flex gap-2 justify-end mt-5">
-              <button
-                type="button"
-                disabled={creating}
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 rounded-lg text-sm border border-border hover:bg-muted/40 disabled:opacity-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                type="button"
-                disabled={creating || !newName.trim()}
-                onClick={handleCreate}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground",
-                  "hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed",
-                  "flex items-center gap-2"
-                )}
-              >
-                {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Anlegen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirm Modal */}
-      {confirmDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm"
-          onClick={() => setConfirmDelete(null)}
-        >
-          <div
-            className="w-[90%] max-w-md rounded-xl border border-destructive/40 bg-card p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-2">Projekt löschen?</h3>
-            <p className="text-sm text-muted-foreground mb-1">
-              <span className="font-medium text-foreground">"{confirmDelete.name}"</span> wird
-              komplett gelöscht — inklusive aller Referenzbilder, generierten Bilder und Videos.
-            </p>
-            <p className="text-xs text-destructive mt-2">Diese Aktion kann nicht rückgängig gemacht werden.</p>
-            <div className="flex gap-2 justify-end mt-5">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 rounded-lg text-sm border border-border hover:bg-muted/40"
-              >
-                Abbrechen
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(confirmDelete)}
-                className="px-4 py-2 rounded-lg text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Endgültig löschen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderPlus className="w-4 h-4 text-flare-300" />}
+            Neues Projekt
+            {!canCreateMore && <Badge tone="warn" className="!text-[9px] !py-0 ml-auto">Limit</Badge>}
+          </button>
+        )}
+      </div>
+    </Menu>
+    <ProfileSetupDialog open={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
     </>
   );
-};
+}

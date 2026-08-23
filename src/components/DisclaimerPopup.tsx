@@ -1,69 +1,72 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AlertTriangle } from "lucide-react";
-import { getCookie, setCookie } from "@/lib/storage";
+/**
+ * First-visit disclaimer: KI-Bilder, eigene API-Keys, kein Tracking.
+ * Acceptance is stored locally, so it never reappears for that browser.
+ */
+import { useEffect, useState } from "react";
+import { ShieldAlert, KeyRound, Lock } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { KEYS, ls } from "@/lib/storage";
 
-const DISCLAIMER_COOKIE_KEY = "disclaimer_accepted";
-
-export const DisclaimerPopup = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
+export function DisclaimerPopup() {
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const disclaimerAccepted = getCookie(DISCLAIMER_COOKIE_KEY);
-    if (!disclaimerAccepted) {
-      setIsOpen(true);
+    if (!ls.get<boolean>(KEYS.DISCLAIMER_SEEN)) {
+      setOpen(true);
     }
   }, []);
 
-  const handleAccept = () => {
-    if (dontShowAgain) {
-      // Cookie speichern für 365 Tage
-      setCookie(DISCLAIMER_COOKIE_KEY, "true", 365);
-    }
-    setIsOpen(false);
+  const accept = () => {
+    ls.set(KEYS.DISCLAIMER_SEEN, true);
+    setOpen(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-            Wichtiger Hinweis
-          </DialogTitle>
-          <DialogDescription className="text-base pt-2">
-            Verwende ausschließlich Bilder, deren Nutzung dir rechtlich erlaubt ist. Für alle generierten Inhalte trägt der Nutzer selbst die volle Verantwortung.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex items-center space-x-2 py-4">
-          <Checkbox
-            id="dont-show"
-            checked={dontShowAgain}
-            onCheckedChange={(checked) => setDontShowAgain(checked === true)}
-          />
-          <label
-            htmlFor="dont-show"
-            className="text-sm text-muted-foreground cursor-pointer select-none"
-          >
-            Nicht mehr anzeigen
-          </label>
+    <Dialog
+      open={open}
+      onClose={accept}
+      title="Willkommen im Avatar Creator Studio"
+      subtitle="Drei kurze Dinge, bevor du loslegst."
+      size="md"
+      closeOnBackdrop={false}
+      footer={
+        <div className="flex justify-end">
+          <Button onClick={accept}>Verstanden — loslegen</Button>
         </div>
-        <DialogFooter>
-          <Button onClick={handleAccept} className="w-full">
-            Verstanden
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+      }
+    >
+      <div className="space-y-4">
+        <Row
+          icon={<ShieldAlert className="w-5 h-5" />}
+          title="KI-generierte Inhalte"
+          text="Alle Bilder werden von einer KI erzeugt. Es können Fehler, künstliche Artefakte oder unrealistische Details entstehen. Du bist verantwortlich für die Nutzung der erzeugten Inhalte."
+        />
+        <Row
+          icon={<KeyRound className="w-5 h-5" />}
+          title="Eigene API-Keys"
+          text="Du nutzt deinen eigenen Google-Gemini-Key (und optional fal.ai). Wir leiten nichts an unsere Server weiter — alle KI-Calls gehen direkt von deinem Browser an Google."
+        />
+        <Row
+          icon={<Lock className="w-5 h-5" />}
+          title="Keine Tracker"
+          text="Wir nutzen keine Analytics, kein Tracking, keine Drittanbieter-Cookies. Login-Daten und Projekte liegen nur in deinem Browser-Storage."
+        />
+      </div>
     </Dialog>
   );
-};
+}
+
+function Row({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-10 h-10 rounded-2xl bg-flare-500/12 border border-flare-400/25 flex items-center justify-center text-flare-300 flex-shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold mb-0.5">{title}</div>
+        <div className="text-xs text-ink-50/65 leading-relaxed">{text}</div>
+      </div>
+    </div>
+  );
+}

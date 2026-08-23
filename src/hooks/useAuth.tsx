@@ -1,174 +1,161 @@
-import { useState, useEffect, useCallback } from "react";
-import { saveToLocalStorage, getFromLocalStorage, removeFromLocalStorage } from "@/lib/storage";
-import { getFunctionHeaders, getFunctionUrl, hasBackendConfig } from "@/lib/backend";
-import { getDisplayPlanName } from "@/lib/plans";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { BACKEND, SUPA_FUNC } from "@/lib/backend";
+import { ls, KEYS } from "@/lib/storage";
+import { planFromServer, PLANS, type PlanCapabilities, type PlanTier } from "@/lib/plans";
 
-const AUTH_STORAGE_KEY = "aivatar_auth";
-const CREDENTIALS_STORAGE_KEY = "aivatar_credentials";
-
-interface AuthData {
-  isAuthenticated: boolean;
-  email: string;
-  planCode: string;
-  planName: string;
-  status: string;
-  expiresAt: string | null;
-  productId?: string;
-}
-
-interface CredentialsData {
+export interface Credentials {
   email: string;
   licenseKey: string;
 }
 
-interface ValidationResponse {
+interface LicenseInfo {
   valid: boolean;
-  email?: string;
-  planCode?: string;
-  planName?: string;
-  status?: string;
-  expiresAt?: string | null;
-  productId?: string;
+  tier: PlanTier;
+  productCode?: string;
+  expiresAt?: string;
+  isAdmin?: boolean;
 }
 
-const DEV_ACCOUNTS: Record<string, { password: string; planCode: string; planName: string }> = {
-  "1": { password: "1", planCode: "BASIC", planName: "Basic" },
-  "2": { password: "2", planCode: "PREMIUM", planName: "Pro" },
-  "3": { password: "3", planCode: "FULL", planName: "Premium" },
-};
+interface AuthValue {
+  credentials: Credentials | null;
+  license: LicenseInfo | null;
+  loading: boolean;
+  error: string | null;
+  signIn: (c: Credentials) => Promise<boolean>;
+  signOut: () => void;
+  refresh: () => Promise<void>;
+  plan: PlanCapabilities;
+}
 
-const EMPTY_AUTH: AuthData = {
-  isAuthenticated: false,
-  email: "",
-  planCode: "",
-  planName: "",
-  status: "",
-  expiresAt: null,
-  productId: undefined,
-};
+const AuthContext = createContext<AuthValue | null>(null);
 
-export const useAuth = () => {
-  const [authData, setAuthData] = useState<AuthData>(EMPTY_AUTH);
-  const [isLoading, setIsLoading] = useState(true);
+const ADMIN_EMAILS = new Set<string>([
+  // Add admin emails — kept in client only for UI gating
+  "admin@aivatar.app",
+  "leojaeger2008@gmail.com",
+]);
 
-  const validateLicense = useCallback(
-    async (email: string, licenseKey: string): Promise<{ success: boolean; data?: ValidationResponse; message?: string }> => {
-      const devAccount = DEV_ACCOUNTS[email];
-      if (devAccount && devAccount.password === licenseKey) {
-        return {
-          success: true,
-          data: {
-            valid: true,
-            email,
-            planCode: devAccount.planCode,
-            planName: devAccount.planName,
-            status: "active",
-            expiresAt: null,
-            productId: "dev",
-          },
-        };
-      }
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [credentials, setCredentials] = useState<Credentials | null>(() => ls.get<Credentials>(KEYS.CREDENTIALS));
+  const [license, setLicense] = useState<LicenseInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-      if (!hasBackendConfig()) {
-        return { success: false, message: "Backend-Konfiguration fehlt" };
-      }
+  const checkLicense = useCallback(async (c: Credentials): Promise<LicenseInfo> => {
+    // Local dev-account bypass — mirrors the Projekt build so testing each tier
+    // is one keystroke away. Login with:
+    //   "1"/"1" = Basic
+    //   "2"/"2" = Pro     (Anzeige) / premium (intern)
+    //   "3"/"3" = Premium (Anzeige) / full    (intern) + admin
+    //   "4"/"4" = Full    (Anzeige) / studio  (intern) — Vollverkaufsvariante
+    // Never hits the server.
+    const email = c.email.trim();
+    const key = c.licenseKey.trim();
+    const DEV: Record<string, { tier: PlanTier; productCode: string; isAdmin?: boolean }> = {
+      "1": { tier: "basic",   productCode: "DEV-BASIC" },
+      "2": { tier: "premium", productCode: "DEV-PREMIUM" },
+      "3": { tier: "full",    productCode: "DEV-FULL", isAdmin: true },
+      "4": { tier: "studio",  productCode: "DEV-STUDIO" },
+    };
+    if (DEV[email] && key === email) {
+      return {
+        valid: true,
+        tier: DEV[email].tier,
+        productCode: DEV[email].productCode,
+        expiresAt: undefined,
+        isAdmin: !!DEV[email].isAdmin,
+      };
+    }
 
-      try {
-        const response = await fetch(getFunctionUrl("license-check"), {
-          method: "POST",
-          headers: getFunctionHeaders(),
-          body: JSON.stringify({ email, licenseKey }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Validation failed:", response.status, errorText);
-          return { success: false, message: `Netzwerkfehler (${response.status})` };
-        }
-
-        const data: ValidationResponse = await response.json();
-        return { success: data.valid, data, message: data.valid ? undefined : "Lizenz ungültig" };
-      } catch (error) {
-        console.error("Validation error:", error);
-        return { success: false, message: "Verbindungsfehler" };
-      }
-    },
-    []
-  );
-
-  const clearAuth = useCallback(() => {
-    setAuthData(EMPTY_AUTH);
-    removeFromLocalStorage(AUTH_STORAGE_KEY);
-    removeFromLocalStorage(CREDENTIALS_STORAGE_KEY);
+    // Läuft über die Supabase Edge Function `license-check` — die injiziert
+    // serverseitig den toolApiKey (den das Tool nicht kennt) und leitet an den
+    // Key-Manager weiter. Direkt an den Key-Manager ginge nicht: der verlangt
+    // toolApiKey und würde sonst mit 400 abweisen.
+    const res = await fetch(SUPA_FUNC("license-check"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(BACKEND.supabaseAnonKey ? { Authorization: `Bearer ${BACKEND.supabaseAnonKey}` } : {}),
+      },
+      body: JSON.stringify({ email: c.email, licenseKey: c.licenseKey }),
+    });
+    let data: any = null;
+    try { data = await res.json(); } catch { /* noop */ }
+    if (!res.ok || !data?.valid) {
+      // Key-Manager liefert den Grund als `reason`; ältere/andere Backends als `code`.
+      const code = data?.reason || data?.code || `HTTP_${res.status}`;
+      const messages: Record<string, string> = {
+        LICENSE_NOT_FOUND: "Lizenzschlüssel nicht gefunden – prüfe deine Eingabe.",
+        LICENSE_EXPIRED: "Lizenz abgelaufen – bitte erneuere deine Lizenz.",
+        LICENSE_NOT_ACTIVE: "Lizenz ist nicht aktiv.",
+        EMAIL_MISMATCH: "E-Mail stimmt nicht mit der Lizenz überein.",
+        LICENSE_FOR_OTHER_TOOL: "Dieser Lizenzschlüssel gehört zu einem anderen Produkt.",
+      };
+      throw new Error(messages[code] || data?.error || "Lizenzprüfung fehlgeschlagen.");
+    }
+    // Key-Manager liefert das Produkt als `planCode`; Fallbacks für andere Backends.
+    const planCode = data.planCode || data.productCode || data.product?.code;
+    return {
+      valid: true,
+      tier: planFromServer(planCode),
+      productCode: planCode,
+      expiresAt: data.expiresAt,
+      isAdmin: ADMIN_EMAILS.has(c.email.toLowerCase()),
+    };
   }, []);
 
-  const refreshAuth = useCallback(async () => {
-    const savedCredentials: CredentialsData | null = getFromLocalStorage(CREDENTIALS_STORAGE_KEY);
-
-    if (!savedCredentials?.email || !savedCredentials?.licenseKey) {
-      clearAuth();
-      setIsLoading(false);
-      return;
+  const signIn = useCallback(async (c: Credentials) => {
+    setLoading(true); setError(null);
+    try {
+      const info = await checkLicense(c);
+      setCredentials(c);
+      setLicense(info);
+      ls.set(KEYS.CREDENTIALS, c);
+      return true;
+    } catch (e: any) {
+      setError(e.message || "Unbekannter Fehler");
+      return false;
+    } finally {
+      setLoading(false);
     }
+  }, [checkLicense]);
 
-    const result = await validateLicense(savedCredentials.email, savedCredentials.licenseKey);
+  const signOut = useCallback(() => {
+    setCredentials(null);
+    setLicense(null);
+    ls.remove(KEYS.CREDENTIALS);
+  }, []);
 
-    if (result.success && result.data) {
-      const newAuthData: AuthData = {
-        isAuthenticated: true,
-        email: result.data.email || savedCredentials.email,
-        planCode: result.data.planCode || "",
-        planName: getDisplayPlanName(result.data.planCode, result.data.planName),
-        status: result.data.status || "",
-        expiresAt: result.data.expiresAt || null,
-        productId: result.data.productId,
-      };
-      setAuthData(newAuthData);
-      saveToLocalStorage(AUTH_STORAGE_KEY, newAuthData);
-    } else {
-      clearAuth();
+  const refresh = useCallback(async () => {
+    if (!credentials) return;
+    try {
+      const info = await checkLicense(credentials);
+      setLicense(info);
+    } catch (e: any) {
+      // license invalidated server-side
+      setLicense({ valid: false, tier: "basic" });
+      setError(e.message);
     }
-
-    setIsLoading(false);
-  }, [clearAuth, validateLicense]);
+  }, [checkLicense, credentials]);
 
   useEffect(() => {
-    refreshAuth();
-  }, [refreshAuth]);
-
-  const login = async (email: string, licenseKey: string): Promise<{ success: boolean; message?: string }> => {
-    const result = await validateLicense(email, licenseKey);
-
-    if (result.success && result.data) {
-      const newAuthData: AuthData = {
-        isAuthenticated: true,
-        email: result.data.email || email,
-        planCode: result.data.planCode || "",
-        planName: getDisplayPlanName(result.data.planCode, result.data.planName),
-        status: result.data.status || "",
-        expiresAt: result.data.expiresAt || null,
-        productId: result.data.productId,
-      };
-
-      const credentials: CredentialsData = { email, licenseKey };
-      setAuthData(newAuthData);
-      saveToLocalStorage(AUTH_STORAGE_KEY, newAuthData);
-      saveToLocalStorage(CREDENTIALS_STORAGE_KEY, credentials);
-      return { success: true };
+    if (credentials && !license) {
+      void refresh();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return { success: false, message: result.message || "Ungültige E-Mail oder License Key." };
-  };
+  const plan = useMemo(() => PLANS[license?.tier ?? "basic"], [license]);
 
-  const logout = useCallback(() => {
-    clearAuth();
-  }, [clearAuth]);
+  return (
+    <AuthContext.Provider value={{ credentials, license, loading, error, signIn, signOut, refresh, plan }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
-  return {
-    authData,
-    isLoading,
-    login,
-    logout,
-    refreshAuth,
-  };
-};
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+}
