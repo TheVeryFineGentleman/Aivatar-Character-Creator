@@ -53,6 +53,8 @@ const POSE_BANK = [
   "leaning forward, hands on knees",
 ];
 
+const poseFor = (i: number) => POSE_BANK[i % POSE_BANK.length];
+
 const GRID_SIZES = [
   { id: "2x2", label: "2×2 (4 Posen)",  count: 4,  cols: 2 },
   { id: "3x3", label: "3×3 (9 Posen)",  count: 9,  cols: 3 },
@@ -114,7 +116,12 @@ export default function PosesPage() {
     // gab es nie. Das Fenster deckelt die Requests gegen 429er.
     const indices = Array.from({ length: gridConfig.count }, (_, i) => i);
     await mapLimit(indices, IMAGE_CONCURRENCY, async (i) => {
-      const pose = POSE_BANK[i % POSE_BANK.length];
+      const pose = poseFor(i);
+      // Wie beim Nachziehen: der Slot wird über seine id angesprochen. Wer
+      // während des Laufs eine schon gescheiterte Pose löscht, verschiebt sonst
+      // alle folgenden Positionen — und die noch laufenden Aufrufe schrieben
+      // ihr Bild in die falsche Kachel.
+      const slotId = fresh[i].id;
       const prompt = [
         `Same character as in the reference image — strict identity lock (face, body, hair colour).`,
         `Pose: ${pose}.`,
@@ -131,10 +138,14 @@ export default function PosesPage() {
           references: [{ mimeType: ref.mimeType, base64: ref.base64 }],
           aspectRatio,
         });
-        setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "done", dataUrl } : x));
+        // Die Pose wandert MIT in den Slot. Sonst hinge sie an der Position im
+        // Raster — und die verschiebt sich, sobald eine einzelne Pose gelöscht
+        // wird: „Neu generieren" auf Kachel 5 lieferte danach die Pose von
+        // Kachel 6.
+        setResults(prev => prev.map(x => x.id === slotId ? { ...x, status: "done", dataUrl, prompt: pose } : x));
       } catch (e: any) {
         const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
-        setResults(prev => prev.map((x, idx) => idx === i ? { ...x, status: "error", error: err.message, errorHint: err.hint } : x));
+        setResults(prev => prev.map(x => x.id === slotId ? { ...x, status: "error", error: err.message, errorHint: err.hint, prompt: pose } : x));
       } finally {
         setDoneCount(n => n + 1);
       }
@@ -147,8 +158,13 @@ export default function PosesPage() {
     const idx = results.findIndex(r => r.id === id);
     if (idx < 0) return;
     const ref = refs[Math.min(selectedRef, refs.length - 1)];
-    setResults(prev => prev.map((x, i) => i === idx ? { ...x, status: "loading", error: undefined } : x));
-    const pose = POSE_BANK[idx % POSE_BANK.length];
+    // Angesprochen wird der Slot über seine id, nicht über die Position: der
+    // Nutzer darf während des Nachziehens eine andere Pose löschen, und danach
+    // stimmt jede gemerkte Position nicht mehr.
+    setResults(prev => prev.map(x => x.id === id ? { ...x, status: "loading", error: undefined } : x));
+    // Die im Slot vermerkte Pose gewinnt; die Position ist nur der Notnagel für
+    // Slots aus älteren Läufen, die noch keine mitführen.
+    const pose = results[idx].prompt || poseFor(idx);
     const prompt = [
       `Same character as in the reference image — strict identity lock.`,
       `Pose: ${pose}.`,
@@ -163,11 +179,38 @@ export default function PosesPage() {
         references: [{ mimeType: ref.mimeType, base64: ref.base64 }],
         aspectRatio,
       });
-      setResults(prev => prev.map((x, i) => i === idx ? { ...x, status: "done", dataUrl } : x));
+      setResults(prev => prev.map(x => x.id === id ? { ...x, status: "done", dataUrl, prompt: pose } : x));
     } catch (e: any) {
       const err = e instanceof AIError ? e : new AIError("UNKNOWN", e.message || "Fehler");
-      setResults(prev => prev.map((x, i) => i === idx ? { ...x, status: "error", error: err.message, errorHint: err.hint } : x));
+      setResults(prev => prev.map(x => x.id === id ? { ...x, status: "error", error: err.message, errorHint: err.hint, prompt: pose } : x));
     }
+  };
+
+  /**
+   * EINZELNE POSE AUS DEM RASTER NEHMEN.
+   *
+   * Bisher gab es nur „Zurücksetzen" für alle — eine misslungene Pose kostete
+   * also das ganze Raster. Gelöscht wird wirklich (die Kachel verschwindet,
+   * statt leer stehen zu bleiben), deshalb liegt „Rückgängig" im Hinweis
+   * daneben: neu erzeugen liefert nie dasselbe Bild zurück.
+   */
+  const removePose = (id: string) => {
+    const idx = results.findIndex(r => r.id === id);
+    if (idx < 0) return;
+    const removed = results[idx];
+    setResults(prev => prev.filter(r => r.id !== id));
+    toast.success("Pose entfernt.", {
+      description: "Neu erzeugen liefert ein anderes Bild — dieses hier kommt nur über „Rückgängig“ zurück.",
+      action: {
+        label: "Rückgängig",
+        onClick: () => setResults(prev => {
+          if (prev.some(r => r.id === removed.id)) return prev;
+          const next = [...prev];
+          next.splice(Math.min(idx, next.length), 0, removed);
+          return next;
+        }),
+      },
+    });
   };
 
   const handleDownloadAll = async () => {
@@ -175,7 +218,9 @@ export default function PosesPage() {
     if (valid.length === 0) return;
     const canvas = document.createElement("canvas");
     const size = 512, pad = 8;
-    const rows = Math.ceil(gridConfig.count / cols);
+    // Aus der tatsächlichen Anzahl, nicht aus der Rastergröße: nach dem Löschen
+    // einzelner Posen hätte das Composite sonst eine leere weiße Zeile.
+    const rows = Math.max(1, Math.ceil(results.length / cols));
     canvas.width = cols * size + (cols + 1) * pad;
     canvas.height = rows * size + (rows + 1) * pad;
     const ctx = canvas.getContext("2d");
@@ -350,6 +395,7 @@ export default function PosesPage() {
                   aspectClass="aspect-square"
                   index={i + 1}
                   onRetry={retry}
+                  onDelete={removePose}
                   onZoom={() => slot.status === "done" && setLightboxIndex(i)}
                   filenamePrefix={`pose-${i + 1}`}
                 />

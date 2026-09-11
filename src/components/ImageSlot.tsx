@@ -128,20 +128,44 @@ export function ImageSlotCard({
 
       {/* ── Error ── */}
       {slot.status === "error" && (
-        <div className="absolute inset-0 flex flex-col bg-danger/8">
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center justify-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-danger/20 flex items-center justify-center shrink-0">
-              <AlertCircle className="w-4 h-4 text-danger" />
+        <div
+          className="absolute inset-0 flex flex-col bg-danger/8"
+          // In einer kleinen Kachel (25er-Raster: ~140 px) passt eine lange
+          // Fehlerbeschreibung nicht — der Tooltip zeigt sie ganz, ohne dass
+          // man im Briefmarkenformat scrollen muss.
+          title={[slot.error || "Generierung fehlgeschlagen", slot.errorHint].filter(Boolean).join("\n\n")}
+        >
+          {/* ZENTRIEREN DARF DEN TEXT NICHT AUS DER KACHEL SCHIEBEN.
+              Vorher stand `justify-center` direkt auf dem Scrollbereich: sobald
+              die Beschreibung höher wurde als die Kachel, verteilte sich der
+              Überschuss nach OBEN UND UNTEN — der Anfang lag über dem
+              Scrollbereich, war abgeschnitten und per Scrollen nicht mehr
+              erreichbar. Jetzt zentriert eine innere Fläche mit `min-h-full`:
+              passt der Text, sieht es aus wie vorher; passt er nicht, wächst
+              sie nach unten und der Text beginnt sichtbar oben.
+              `p-3` sitzt bewusst INNEN — bei border-box bleibt `min-h-full`
+              damit exakt die Kachelhöhe, sonst gäbe es allein durch das
+              Padding immer eine Scrollleiste. */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="min-h-full p-3 flex flex-col items-center justify-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-danger/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-4 h-4 text-danger" />
+              </div>
+              <p
+                className="text-danger text-center w-full leading-snug font-medium text-xs"
+                style={{ whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "break-word" }}
+              >
+                {slot.error || "Generierung fehlgeschlagen"}
+              </p>
+              {slot.errorHint && (
+                <p
+                  className="text-[10.5px] text-ink-50/55 leading-snug text-center w-full"
+                  style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
+                >
+                  {slot.errorHint}
+                </p>
+              )}
             </div>
-            <p
-              className="text-danger text-center w-full leading-snug font-medium text-xs"
-              style={{ whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "break-word" }}
-            >
-              {slot.error || "Generierung fehlgeschlagen"}
-            </p>
-            {slot.errorHint && (
-              <p className="text-[10.5px] text-ink-50/55 leading-snug text-center">{slot.errorHint}</p>
-            )}
           </div>
           <div className="flex items-center justify-center gap-2 p-2 shrink-0">
             {onRetry && (

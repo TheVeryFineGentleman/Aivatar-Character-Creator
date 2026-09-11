@@ -657,12 +657,20 @@ STRENGE REGELN: Nur die reine Hintergrundbeschreibung. Keine Personen. 2-3 Sätz
                     </div>
                     {/* Die drei Aufträge stehen IM leeren Feld — passend zum
                         Projekt-Profil und zum gewählten Ziel (Prompt /
-                        Hintergrund / Beides). */}
-                    <div className="p-3 rounded-lg border border-white/8 bg-ink-800/30 h-[124px]">
+                        Hintergrund / Beides).
+
+                        DIE HÖHE GEHÖRT DEM FELD, NICHT DEM KASTEN. Vorher stand
+                        `h-[124px]` fest auf dem Kasten und `h-full` auf dem
+                        Feld — damit galt die Höhe als vom Layout vergeben, das
+                        Feld durfte für sein Angebot nicht wachsen, und der
+                        dritte Auftrag war unten abgeschnitten. Jetzt trägt das
+                        Feld die Ruhehöhe (100 px + 2×12 px Innenabstand = die
+                        bisherigen 124 px), der Kasten ergibt sich daraus und
+                        wächst mit, sobald die Vorschläge mehr Platz brauchen. */}
+                    <div className="p-3 rounded-lg border border-white/8 bg-ink-800/30">
                       <SuggestionField
                         as="textarea"
-                        className="h-full"
-                        fieldClassName="h-full min-h-0 text-sm resize-none bg-transparent !border-0 !p-0 !shadow-none focus:!ring-0"
+                        fieldClassName="min-h-[100px] text-sm resize-none bg-transparent !border-0 !p-0 !shadow-none focus:!ring-0"
                         placeholder={
                           aiTarget === "prompt"
                             ? "Beschreibe was du möchtest, z.B. 'Person sitzt auf einem Stuhl und lächelt'…"

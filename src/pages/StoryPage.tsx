@@ -5424,7 +5424,13 @@ REGELN:
                   <SuggestionField
                     as="textarea"
                     className="flex-1"
-                    fieldClassName="h-full min-h-[160px]"
+                    // Kein `h-full`: das galt als „Höhe gehört dem Layout" und
+                    // verbot dem Feld, für sein Angebot zu wachsen — „Neue
+                    // Vorschläge" lag dadurch 10 px unterhalb der Kante und war
+                    // weder zu sehen noch zu treffen. Gefüllt hat `h-full` das
+                    // Feld ohnehin nicht (die Höhe kam von `rows`), es fällt
+                    // also nur die Sperre weg.
+                    fieldClassName="min-h-[160px]"
                     rows={8}
                     value={aiAssistantInput}
                     onChange={setAiAssistantInput}
