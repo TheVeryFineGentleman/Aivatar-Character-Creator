@@ -10,7 +10,13 @@ import { ThemeProvider, useTheme } from "./hooks/useTheme";
 import { ProjectsProvider } from "./hooks/useProjects";
 import { TutorialsProvider } from "./hooks/useTutorials";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { TabLockGate } from "./components/TabLockGate";
+import { startTabLock } from "./lib/tabLock";
 import "./index.css";
+
+// Vor dem ersten Render: bis entschieden ist, welcher Tab speichert, schreibt
+// keiner (siehe lib/tabLock).
+startTabLock();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,16 +57,18 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-            <SettingsProvider>
-              <AuthProvider>
-                <ProjectsProvider>
-                  <TutorialsProvider>
-                  <App />
-                  <AppToaster />
-                  </TutorialsProvider>
-                </ProjectsProvider>
-              </AuthProvider>
-            </SettingsProvider>
+            <TabLockGate>
+              <SettingsProvider>
+                <AuthProvider>
+                  <ProjectsProvider>
+                    <TutorialsProvider>
+                    <App />
+                    <AppToaster />
+                    </TutorialsProvider>
+                  </ProjectsProvider>
+                </AuthProvider>
+              </SettingsProvider>
+            </TabLockGate>
           </ThemeProvider>
         </QueryClientProvider>
       </BrowserRouter>

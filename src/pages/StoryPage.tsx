@@ -25,6 +25,7 @@ import { VideoMerger } from "@/components/VideoMerger";
 import { VoicePicker } from "@/components/VoicePicker";
 import { VIDEO_ASPECT_RATIOS, aspectClass, videoAspect } from "@/lib/aspectRatio";
 import { loadProject, saveProjectState } from "@/lib/projectStorage";
+import { canWrite } from "@/lib/tabLock";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -1421,8 +1422,9 @@ export default function StoryPage() {
     const state = (loadProject(projectId)?.state ?? {}) as Record<string, unknown>;
     const ok = saveProjectState(projectId, { ...state, story: sanitized });
     // Ein an der Quota gescheiterter Save sah bisher exakt wie Datenverlust aus,
-    // ohne dass irgendwo etwas stand. Einmal pro Sitzung sagen.
-    if (!ok && !quotaWarnedRef.current) {
+    // ohne dass irgendwo etwas stand. Einmal pro Sitzung sagen. Im gesperrten
+    // Tab (siehe `lib/tabLock`) scheitert jeder Save gewollt — kein voller Speicher.
+    if (!ok && !quotaWarnedRef.current && canWrite()) {
       quotaWarnedRef.current = true;
       toast.error("Der Browser-Speicher ist voll — das Storyboard wird nicht mehr gesichert.", {
         description: "Alte Projekte loeschen oder Bilder/Clips in den Bucket auslagern.",

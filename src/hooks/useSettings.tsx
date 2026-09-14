@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { KEYS, ls } from "@/lib/storage";
+import { cleanApiKey } from "@/lib/apiKey";
 
 export type Provider = "google" | "fal";
 
@@ -98,9 +99,12 @@ const SettingsContext = createContext<SettingsValue | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [provider, setProviderState] = useState<Provider>(() => (ls.get<Provider>(KEYS.PROVIDER) as Provider) || "google");
-  const [googleKey, setGoogleKeyState] = useState<string>(() => ls.get<string>(KEYS.API_GOOGLE) || "");
-  const [falKey, setFalKeyState] = useState<string>(() => ls.get<string>(KEYS.API_FAL) || "");
-  const [elevenKey, setElevenKeyState] = useState<string>(() => ls.get<string>(KEYS.API_ELEVEN) || "");
+  // Auch beim Laden säubern: ein früher mit Anführungszeichen o. ä. gespeicherter
+  // Key repariert sich so beim nächsten Start selbst (die Effekte unten
+  // schreiben den sauberen Wert zurück).
+  const [googleKey, setGoogleKeyState] = useState<string>(() => cleanApiKey(String(ls.get<string>(KEYS.API_GOOGLE) || "")));
+  const [falKey, setFalKeyState] = useState<string>(() => cleanApiKey(String(ls.get<string>(KEYS.API_FAL) || "")));
+  const [elevenKey, setElevenKeyState] = useState<string>(() => cleanApiKey(String(ls.get<string>(KEYS.API_ELEVEN) || "")));
 
   useEffect(() => { ls.set(KEYS.PROVIDER, provider); }, [provider]);
   useEffect(() => { ls.set(KEYS.API_GOOGLE, googleKey); }, [googleKey]);
@@ -108,9 +112,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => { ls.set(KEYS.API_ELEVEN, elevenKey); }, [elevenKey]);
 
   const setProvider = useCallback((p: Provider) => setProviderState(p), []);
-  const setGoogleKey = useCallback((k: string) => setGoogleKeyState(k.trim()), []);
-  const setFalKey = useCallback((k: string) => setFalKeyState(k.trim()), []);
-  const setElevenKey = useCallback((k: string) => setElevenKeyState(k.trim()), []);
+  const setGoogleKey = useCallback((k: string) => setGoogleKeyState(cleanApiKey(k)), []);
+  const setFalKey = useCallback((k: string) => setFalKeyState(cleanApiKey(k)), []);
+  const setElevenKey = useCallback((k: string) => setElevenKeyState(cleanApiKey(k)), []);
 
   const clearAll = useCallback(() => {
     setGoogleKeyState("");

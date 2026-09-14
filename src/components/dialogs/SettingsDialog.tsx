@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme, type Theme, COLOR_THEMES } from "@/hooks/useTheme";
 import { useElevenVoices } from "@/hooks/useElevenVoices";
 import { checkGeminiKey } from "@/lib/ai";
+import { cleanApiKey, keyFormatHint } from "@/lib/apiKey";
 import { toast } from "sonner";
 import { Trash2, ExternalLink, Eye, EyeOff, Sun, Moon, Monitor, KeyRound, Palette, HardDrive, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -51,11 +52,22 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   }, [open, onClose]);
 
   const save = () => {
+    const nextGoogle = cleanApiKey(g);
+    const googleChanged = nextGoogle !== googleKey;
     setGoogleKey(g);
     setFalKey(f);
     setElevenKey(el);
     toast.success("API-Keys gespeichert.");
     onClose();
+    // Der Dialog ist danach zu, `GoogleStatus` sieht also keiner mehr — ohne
+    // diese Meldung erführe man erst beim ersten Bild, ob Google den Key nimmt.
+    if (googleChanged && nextGoogle) {
+      void checkGeminiKey(nextGoogle).then((r) => {
+        if (!r.ok) toast.error(`Google lehnt den Key ab: ${r.message}`, { description: r.hint });
+        else if (!r.hasText || !r.hasImage) toast.warning(`Google-Key gültig, aber das ${!r.hasText ? "Text" : "Bild"}-Modell ist nicht freigeschaltet.`);
+        else toast.success("Google hat den Key angenommen.");
+      });
+    }
   };
 
   const resetEverything = () => {
@@ -162,9 +174,11 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 title="Google Gemini"
                 purpose="Texte, Storyboards und alle Bilder."
                 requirement="Pflicht"
-                state={looksSwapped("google", g)
-                  ? keyState(g, googleKey, "google")
-                  : <GoogleStatus googleKey={googleKey} dirty={g.trim() !== googleKey} />}
+                /* Immer die echte Prüfung — der Formathinweis steht UNTER dem
+                   Feld. Früher ersetzte er die Prüfung, auch nach dem Speichern,
+                   und ein Key mit Anführungszeichen sah für immer kaputt aus. */
+                state={<GoogleStatus googleKey={googleKey} dirty={cleanApiKey(g) !== googleKey} />}
+                note={keyFormatHint("google", g)}
                 value={g}
                 onChange={setG}
                 reveal={showG}
@@ -180,7 +194,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 title="fal.ai"
                 purpose="Clips (Kling), Lippensynchronität und die feste Sprecherstimme."
                 requirement="Pflicht"
-                state={keyState(f, falKey, "fal")}
+                state={keyState(f, falKey)}
+                note={keyFormatHint("fal", f)}
                 value={f}
                 onChange={setF}
                 reveal={showF}
@@ -200,7 +215,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   /* Der Zustand bezieht sich auf den GESPEICHERTEN Key, nicht auf
                      das Eingabefeld — sonst liefe bei jedem Tastendruck eine
                      Anfrage, und „verbunden" stünde da, bevor irgendwas gilt. */
-                  state={<ElevenStatus elevenKey={elevenKey} dirty={el.trim() !== elevenKey} />}
+                  state={<ElevenStatus elevenKey={elevenKey} dirty={cleanApiKey(el) !== elevenKey} />}
                   value={el}
                   onChange={setEl}
                   reveal={showE}
@@ -330,31 +345,10 @@ function StatePill({ tone, label }: { tone: "ok" | "warn" | "idle"; label: strin
 }
 
 /** Zustand eines Key-Feldes. Der Entwurf im Eingabefeld zählt NICHT als
- *  verbunden — sonst stünde „Verbunden" da, bevor „Speichern" gedrückt wurde. */
-/**
- * Sieht der eingetragene Wert nach dem Key aus, der in DIESES Feld gehört?
- *
- * Der häufigste Fehler mit zwei Pflicht-Keys ist der simpelste: beide sind
- * gültig, aber vertauscht. Google antwortet darauf mit „API key not valid" —
- * und der Nutzer prüft einen Key, an dem nichts falsch ist, weil die Meldung
- * über den ORT nichts sagt.
- *
- * Bewusst nur ein HINWEIS, keine Sperre: Key-Formate ändern sich, und eine
- * Formatprüfung, die einen gültigen neuen Key ablehnt, wäre schlimmer als das
- * Problem. Google-Keys beginnen seit jeher mit „AIza", fal-Keys nicht.
- */
-function looksSwapped(kind: "google" | "fal", value: string): boolean {
-  const v = value.trim();
-  if (!v) return false;
-  if (kind === "google") return !v.startsWith("AIza");
-  return v.startsWith("AIza");
-}
-
-function keyState(draft: string, saved: string, kind?: "google" | "fal") {
-  if (kind && looksSwapped(kind, draft)) {
-    return <StatePill tone="warn" label={kind === "google" ? "Sieht nicht nach einem Google-Key aus" : "Das ist ein Google-Key"} />;
-  }
-  if (draft.trim() !== saved) return <StatePill tone="warn" label="Noch nicht gespeichert" />;
+ *  verbunden — sonst stünde „Verbunden" da, bevor „Speichern" gedrückt wurde.
+ *  Ob der Key ins richtige Feld gehört, sagt `keyFormatHint` unter dem Feld. */
+function keyState(draft: string, saved: string) {
+  if (cleanApiKey(draft) !== saved) return <StatePill tone="warn" label="Noch nicht gespeichert" />;
   if (saved) return <StatePill tone="ok" label="Verbunden" />;
   return <StatePill tone="warn" label="Kein Key" />;
 }
@@ -414,7 +408,7 @@ function ElevenStatus({ elevenKey, dirty }: { elevenKey: string; dirty: boolean 
 /** Ein Dienst: Kopfzeile (Name · Pflicht/Optional · Zustand), ein Satz wofür,
  *  das Key-Feld, die Fundstelle des Keys. Für alle drei identisch aufgebaut. */
 function KeyCard({
-  title, purpose, requirement, state,
+  title, purpose, requirement, state, note,
   value, onChange, reveal, onReveal, placeholder,
   linkUrl, linkLabel, children,
 }: {
@@ -422,6 +416,8 @@ function KeyCard({
   purpose: string;
   requirement: string;
   state: React.ReactNode;
+  /** Hinweis zum eingetragenen Wert, direkt unter dem Feld (z. B. vertauschte Keys). */
+  note?: string | null;
   value: string;
   onChange: (v: string) => void;
   reveal: boolean;
@@ -454,6 +450,7 @@ function KeyCard({
           </button>
         }
       />
+      {note && <p className="mt-2 text-xs text-warn leading-snug">{note}</p>}
       <a
         href={linkUrl}
         target="_blank"

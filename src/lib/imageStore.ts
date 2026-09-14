@@ -8,6 +8,8 @@
  * by key prefix.
  */
 
+import { canWrite } from "@/lib/tabLock";
+
 const DB_NAME = "aivatar";
 const STORE = "images";
 const SEP = "::";
@@ -77,6 +79,9 @@ export async function saveGallery(
   pageKey: string,
   items: { id: string; dataUrl: string }[],
 ): Promise<void> {
+  // Gesperrter Tab (siehe `lib/tabLock`): sein Stand ist veraltet, und dieser
+  // Save LÖSCHT nebenbei alles unter dem Präfix, was er nicht kennt.
+  if (!canWrite()) return;
   try {
     const db = await openDB();
     const keep = new Set(items.map((it) => keyOf(projectId, pageKey, it.id)));
@@ -113,6 +118,7 @@ export async function saveGallery(
 
 /** Remove every image belonging to a project (used when a project is deleted). */
 export async function clearProjectImages(projectId: string): Promise<void> {
+  if (!canWrite()) return;
   try {
     const db = await openDB();
     await new Promise<void>((resolve, reject) => {

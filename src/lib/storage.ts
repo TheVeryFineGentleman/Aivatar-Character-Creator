@@ -1,6 +1,11 @@
 /**
  * Type-safe localStorage helper with namespaced keys.
+ *
+ * Alle Schreibzugriffe laufen durch `canWrite()`: nur der Tab mit der
+ * Tab-Sperre speichert (siehe `lib/tabLock`).
  */
+
+import { canWrite } from "@/lib/tabLock";
 
 const PREFIX = "aivatar:";
 
@@ -16,8 +21,10 @@ export const ls = {
   },
   /** `false` = nicht gespeichert (Quota voll oder localStorage aus). Der
    *  Rueckgabewert ist wichtig: ein still verworfener Save sieht fuer den
-   *  Nutzer exakt wie Datenverlust aus, ohne dass irgendwo etwas steht. */
+   *  Nutzer exakt wie Datenverlust aus, ohne dass irgendwo etwas steht.
+   *  Auch `false` im gesperrten Tab — dort wird gewollt nichts geschrieben. */
   set(key: string, value: unknown): boolean {
+    if (!canWrite()) return false;
     try {
       const v = typeof value === "string" ? value : JSON.stringify(value);
       localStorage.setItem(PREFIX + key, v);
@@ -25,9 +32,11 @@ export const ls = {
     } catch { return false; /* quota or disabled */ }
   },
   remove(key: string): void {
+    if (!canWrite()) return;
     try { localStorage.removeItem(PREFIX + key); } catch { /* noop */ }
   },
   clear(prefix?: string): void {
+    if (!canWrite()) return;
     try {
       const keys = Object.keys(localStorage);
       for (const k of keys) {
