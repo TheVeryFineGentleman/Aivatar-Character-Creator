@@ -77,6 +77,22 @@ export function createProject(name: string): ProjectMeta {
   return meta;
 }
 
+/**
+ * Ein vollständiges Projekt schreiben (Import / Support-Wiederherstellung).
+ * Die ID bleibt erhalten — spätere Uploads landen so im selben Bucket-Ordner
+ * wie die schon vorhandenen Dateien. Ändert NICHT das aktive Projekt.
+ * `false` = nicht gespeichert (Quota voll oder gesperrter Tab, siehe `ls.set`).
+ */
+export function putProject(meta: ProjectMeta, state: unknown): boolean {
+  const json = JSON.stringify(state ?? {});
+  const full: ProjectMeta = { ...meta, sizeBytes: json.length * 2 };
+  if (!ls.set(KEYS.PROJECT_PREFIX + meta.id, { meta: full, state: state ?? {} } satisfies ProjectData)) return false;
+  const items = listProjects().filter((p) => p.id !== meta.id);
+  items.unshift(full);
+  writeIndex(items);
+  return true;
+}
+
 export function renameProject(id: string, newName: string): void {
   const items = listProjects();
   const next = items.map((p) => (p.id === id ? { ...p, name: newName.trim() || p.name, modifiedAt: Date.now() } : p));

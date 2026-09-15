@@ -5,6 +5,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { LoginDialog } from "@/components/dialogs/LoginDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
+import { RecoveryPrompt } from "@/components/dialogs/RecoveryDialog";
 import { useProjects } from "@/hooks/useProjects";
 import { loadProject } from "@/lib/projectStorage";
 import { shouldAskForProfile, type ProjectProfile } from "@/lib/projectProfile";
@@ -65,6 +66,7 @@ export default function App() {
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <ProfileSetupDialog open={profileOpen} onClose={() => setProfileOpen(false)} />
       <TutorialPanel onOpenSettings={() => setSettingsOpen(true)} />
+      <RecoveryPrompt />
     </>
   );
 }

@@ -2,22 +2,47 @@
  * TopBar widget — switch between projects, rename or delete, create a new one.
  * Closes the popover after each destructive/navigation action.
  */
-import { useState } from "react";
-import { Folder, FolderPlus, ChevronDown, Check, Pencil, Trash2, Loader2, X } from "lucide-react";
-import { Menu, MenuDivider, MenuSection } from "@/components/ui/Menu";
+import { useRef, useState } from "react";
+import { Folder, FolderPlus, ChevronDown, Check, Pencil, Trash2, Loader2, X, Download, Upload } from "lucide-react";
+import { Menu, MenuDivider, MenuItem, MenuSection } from "@/components/ui/Menu";
 import { Badge } from "@/components/ui/Badge";
 import { useProjects } from "@/hooks/useProjects";
 import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
+import { downloadBundle, exportAllProjects, importBundle, parseBundle, summarizeImport } from "@/lib/projectTransfer";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
 
 export function ProjectSwitcher() {
-  const { projects, current, switchTo, create, remove, canCreateMore, quota } = useProjects();
+  const { projects, current, switchTo, create, remove, canCreateMore, quota, refresh } = useProjects();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [editOpen, setEditOpen] = useState(false);
+  // Das Datei-Feld steht AUSSERHALB des Menüs: das Popover schließt beim Klick,
+  // und mit ihm verschwände das Feld, bevor der Dateidialog zurückkommt.
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (!current) return null;
+
+  const handleExport = () => {
+    const bundle = exportAllProjects();
+    downloadBundle(bundle);
+    toast.success(`${bundle.projects.length} Projekt${bundle.projects.length === 1 ? "" : "e"} gesichert.`, {
+      description: "Heb die Datei gut auf — damit holst du deine Projekte in jeden Browser zurück.",
+    });
+  };
+
+  const handleImportFile = async (file: File) => {
+    try {
+      const res = importBundle(parseBundle(await file.text()), quota.projectLimit);
+      if (res.imported[0]) switchTo(res.imported[0].id);
+      else refresh();
+      const msg = summarizeImport(res);
+      if (res.imported.length) toast.success(msg.title, { description: msg.description });
+      else toast.error(msg.title, { description: msg.description });
+    } catch (e: any) {
+      toast.error("Import fehlgeschlagen.", { description: e?.message });
+    }
+  };
 
   // „Umbenennen" öffnet jetzt den Bearbeiten-Dialog (Projektname + Profil).
   const openEdit = (id: string) => {
@@ -137,8 +162,27 @@ export function ProjectSwitcher() {
             {!canCreateMore && <Badge tone="warn" className="!text-[9px] !py-0 ml-auto">Limit</Badge>}
           </button>
         )}
+
+        <MenuDivider />
+        <MenuItem icon={<Download className="w-4 h-4 text-flare-300" />} onClick={handleExport}>
+          Alle Projekte sichern
+        </MenuItem>
+        <MenuItem icon={<Upload className="w-4 h-4 text-flare-300" />} onClick={() => fileRef.current?.click()}>
+          Sicherung importieren
+        </MenuItem>
       </div>
     </Menu>
+    <input
+      ref={fileRef}
+      type="file"
+      accept="application/json,.json"
+      hidden
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        e.target.value = "";
+        if (f) void handleImportFile(f);
+      }}
+    />
     <ProfileSetupDialog open={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
     </>
   );

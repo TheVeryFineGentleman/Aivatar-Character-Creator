@@ -14,6 +14,9 @@ interface LicenseInfo {
   productCode?: string;
   expiresAt?: string;
   isAdmin?: boolean;
+  /** Sitzungs-Token vom key-manager — nur für echte Lizenzen (der Dev-Login
+   *  bekommt keins). Weist Konto-Routen wie die Wiederherstellung aus. */
+  sessionToken?: string;
 }
 
 interface AuthValue {
@@ -101,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       productCode: planCode,
       expiresAt: data.expiresAt,
       isAdmin: ADMIN_EMAILS.has(c.email.toLowerCase()),
+      sessionToken: typeof data.sessionToken === "string" ? data.sessionToken : undefined,
     };
   }, []);
 
