@@ -14,7 +14,7 @@ export default function LegalPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <SmallCard icon={<FileText className="w-4 h-4" />} title="Impressum" body="Verantwortlich gemäß §5 TMG: Aivatar GbR, Musterstraße 1, 10115 Berlin." />
-        <SmallCard icon={<ShieldCheck className="w-4 h-4" />} title="Datenschutz" body="Wir speichern deinen API-Key niemals serverseitig. Lizenz-Daten ausschließlich für Zugriffskontrolle." />
+        <SmallCard icon={<ShieldCheck className="w-4 h-4" />} title="Datenschutz" body="Deine API-Keys bleiben im Browser — nur wenn du es ausdrücklich einschaltest, liegen sie verschlüsselt in deinem Konto. Lizenz-Daten dienen der Zugriffskontrolle." />
         <SmallCard icon={<Cookie className="w-4 h-4" />} title="Cookies" body="Nur funktionale Cookies, keine Tracker. Du kannst Cookies jederzeit löschen." />
       </div>
 
@@ -26,15 +26,28 @@ export default function LegalPage() {
           <li>3. Es ist untersagt, mit dem Tool Inhalte zu erstellen, die gegen geltendes Recht verstoßen oder Persönlichkeitsrechte Dritter verletzen.</li>
           <li>4. Kein Anspruch auf Verfügbarkeit der externen KI-Dienste. Wir können Rate-Limits, Ausfälle oder Modell-Änderungen nicht beeinflussen.</li>
           <li>5. Lizenzschlüssel sind nicht übertragbar. Missbrauch führt zur Sperrung ohne Erstattung.</li>
+          <li>6. Deine Projekte werden in deinem Konto gespeichert, damit sie nach dem Login in jedem Browser verfügbar sind. Deine API-Keys speichern wir nur, wenn du das in den Einstellungen ausdrücklich einschaltest — siehe „API-Keys im Konto“.</li>
         </ul>
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="text-lg font-semibold mb-3">API-Keys im Konto (freiwillig)</h2>
+        <div className="space-y-3 text-sm text-ink-50/75">
+          <p><strong className="text-ink-50">Standard ist aus.</strong> Ohne dein Zutun bleiben deine API-Keys (Google Gemini, fal.ai, ElevenLabs) ausschließlich im Speicher deines Browsers.</p>
+          <p>In den Einstellungen kannst du „Keys in meinem Konto speichern“ ankreuzen. Erst nach deiner Bestätigung im darauf folgenden Hinweis werden die Keys übertragen. Zustimmung, Zeitpunkt und Fassung dieses Hinweises halten wir fest.</p>
+          <p><strong className="text-ink-50">Zweck:</strong> ausschließlich, um dir deine Keys nach dem Login in jedem Browser und auf jedem Gerät wieder bereitzustellen. Wir nutzen sie für nichts anderes und geben sie nicht an Dritte weiter.</p>
+          <p><strong className="text-ink-50">Schutz:</strong> Die Keys werden verschlüsselt gespeichert (AES-256-GCM). Der Schlüssel liegt getrennt von der Datenbank in der Server-Umgebung. Herausgegeben werden sie nur an deinen angemeldeten Zugang.</p>
+          <p><strong className="text-ink-50">Widerruf:</strong> Entfernst du das Häkchen, löschen wir die Keys sofort aus deinem Konto. In dem Browser, in dem du gerade arbeitest, bleiben sie eingetragen. Unabhängig davon kannst du deine Keys jederzeit bei Google bzw. fal.ai zurückziehen.</p>
+          <p><strong className="text-ink-50">Verbrauch:</strong> Die Nutzung deiner Keys rechnest du weiterhin direkt mit Google bzw. fal.ai ab. Für Kosten, die durch deine Keys entstehen, bist du verantwortlich.</p>
+        </div>
       </Card>
 
       <Card className="mt-4">
         <h2 className="text-lg font-semibold mb-3">Datenschutz im Detail</h2>
         <div className="space-y-3 text-sm text-ink-50/75">
-          <p>API-Keys werden ausschließlich im <code className="font-mono text-flare-300 bg-white/5 px-1 rounded">localStorage</code> deines Browsers gespeichert. Die App sendet sie direkt von deinem Gerät an Google bzw. fal.ai — niemals an unsere Server.</p>
-          <p>Lizenz-Verifikation läuft über unseren Server (E-Mail + Schlüssel). Es werden keine generierten Bilder oder Texte gespeichert.</p>
-          <p>Projekt-Daten kannst du optional in unserem DigitalOcean-Spaces-Storage ablegen — nur dann werden Dateien serverseitig gespeichert (verschlüsselt at-rest).</p>
+          <p>API-Keys liegen im <code className="font-mono text-flare-300 bg-white/5 px-1 rounded">localStorage</code> deines Browsers. Die App sendet sie direkt von deinem Gerät an Google bzw. fal.ai. An unseren Server gehen sie nur, wenn du „Keys in meinem Konto speichern“ einschaltest (siehe oben) — dann verschlüsselt.</p>
+          <p>Lizenz-Verifikation läuft über unseren Server (E-Mail + Schlüssel). Es werden keine generierten Bilder oder Texte zur Auswertung gespeichert.</p>
+          <p>Deine Projekte (Namen, Szenen, Texte, Einstellungen und die Verweise auf deine Dateien) speichern wir in deinem Konto, damit sie nach dem Login überall verfügbar sind. Die erzeugten Bilder, Videos und Sprachspuren liegen in unserem DigitalOcean-Spaces-Speicher. Löschst du ein Projekt, entfernen wir es samt seiner Dateien; ältere Fassungen halten wir kurzzeitig vor, damit versehentlich Überschriebenes zurückgeholt werden kann.</p>
         </div>
       </Card>
     </div>

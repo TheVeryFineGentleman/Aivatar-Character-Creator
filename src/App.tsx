@@ -8,6 +8,7 @@ import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
 import { RecoveryPrompt } from "@/components/dialogs/RecoveryDialog";
 import { SessionTokenSync } from "@/components/SessionTokenSync";
 import { SyncConflictDialog } from "@/components/dialogs/SyncConflictDialog";
+import { AccountKeysSync } from "@/components/AccountKeysSync";
 import { useProjects } from "@/hooks/useProjects";
 import { loadProject } from "@/lib/projectStorage";
 import { shouldAskForProfile, type ProjectProfile } from "@/lib/projectProfile";
@@ -71,6 +72,7 @@ export default function App() {
       <RecoveryPrompt />
       <SessionTokenSync />
       <SyncConflictDialog />
+      <AccountKeysSync />
     </>
   );
 }

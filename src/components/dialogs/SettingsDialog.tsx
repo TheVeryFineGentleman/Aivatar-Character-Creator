@@ -13,6 +13,7 @@ import { Trash2, ExternalLink, Eye, EyeOff, Sun, Moon, Monitor, KeyRound, Palett
 import { Badge } from "@/components/ui/Badge";
 import { BACKEND } from "@/lib/backend";
 import { StorageMeter } from "@/components/StorageMeter";
+import { AccountKeysConsent } from "@/components/AccountKeysConsent";
 import { TutorialCTA } from "@/components/tutorials/TutorialCTA";
 import { cn } from "@/lib/cn";
 
@@ -227,6 +228,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   <TutorialCTA tutorialId="eleven-voice" />
                 </KeyCard>
               )}
+
+              <AccountKeysConsent />
 
               {showFal && (
                 <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
