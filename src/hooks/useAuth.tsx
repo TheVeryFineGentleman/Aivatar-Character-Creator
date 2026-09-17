@@ -52,22 +52,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     //   "3"/"3" = Premium (Anzeige) / full    (intern) + admin
     //   "4"/"4" = Full    (Anzeige) / studio  (intern) — Vollverkaufsvariante
     // Never hits the server.
-    const email = c.email.trim();
-    const key = c.licenseKey.trim();
-    const DEV: Record<string, { tier: PlanTier; productCode: string; isAdmin?: boolean }> = {
-      "1": { tier: "basic",   productCode: "DEV-BASIC" },
-      "2": { tier: "premium", productCode: "DEV-PREMIUM" },
-      "3": { tier: "full",    productCode: "DEV-FULL", isAdmin: true },
-      "4": { tier: "studio",  productCode: "DEV-STUDIO" },
-    };
-    if (DEV[email] && key === email) {
-      return {
-        valid: true,
-        tier: DEV[email].tier,
-        productCode: DEV[email].productCode,
-        expiresAt: undefined,
-        isAdmin: !!DEV[email].isAdmin,
+    //
+    // NUR `vite dev`. Vorher galt die Abkürzung auch auf der Live-Seite: „3"/„3"
+    // schaltete dort für jeden Premium mit Admin frei — und der Code ist
+    // öffentlich auf GitHub lesbar. Im Produktions-Build entfernt der Minifier
+    // den ganzen Block samt Konten.
+    if (import.meta.env.DEV) {
+      const email = c.email.trim();
+      const key = c.licenseKey.trim();
+      const DEV: Record<string, { tier: PlanTier; productCode: string; isAdmin?: boolean }> = {
+        "1": { tier: "basic",   productCode: "DEV-BASIC" },
+        "2": { tier: "premium", productCode: "DEV-PREMIUM" },
+        "3": { tier: "full",    productCode: "DEV-FULL", isAdmin: true },
+        "4": { tier: "studio",  productCode: "DEV-STUDIO" },
       };
+      if (DEV[email] && key === email) {
+        return {
+          valid: true,
+          tier: DEV[email].tier,
+          productCode: DEV[email].productCode,
+          expiresAt: undefined,
+          isAdmin: !!DEV[email].isAdmin,
+        };
+      }
     }
 
     // Läuft über die Supabase Edge Function `license-check` — die injiziert

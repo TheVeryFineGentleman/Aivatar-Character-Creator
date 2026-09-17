@@ -64,7 +64,8 @@ export function ProjectSwitcher() {
     const name = newName.trim() || `Projekt ${projects.length + 1}`;
     const meta = create(name);
     if (!meta) {
-      toast.error(`Projekt-Limit erreicht (${quota.projectLimit}). Upgrade auf 25 GB für mehr Slots.`);
+      // Kein „Upgrade für mehr Slots": auch das Speicher-Add-on erlaubt nur 3 Projekte.
+      toast.error(`Projekt-Limit erreicht (${quota.projectLimit}). Lösch ein Projekt, um ein neues anzulegen.`);
       return;
     }
     toast.success(`„${meta.name}" erstellt.`);
@@ -147,20 +148,30 @@ export function ProjectSwitcher() {
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => canCreateMore ? setCreating(true) : toast.error(`Projekt-Limit erreicht (${quota.projectLimit}).`)}
-            disabled={!canCreateMore}
-            className={cn(
-              "w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left transition-colors",
-              canCreateMore
-                ? "text-ink-50/85 hover:bg-white/5 hover:text-ink-50"
-                : "text-ink-50/35 cursor-not-allowed",
+          <>
+            <button
+              onClick={() => canCreateMore ? setCreating(true) : toast.error(`Projekt-Limit erreicht (${quota.projectLimit}).`)}
+              disabled={!canCreateMore}
+              className={cn(
+                "w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left transition-colors",
+                canCreateMore
+                  ? "text-ink-50/85 hover:bg-white/5 hover:text-ink-50"
+                  : "text-ink-50/35 cursor-not-allowed",
+              )}
+            >
+              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderPlus className="w-4 h-4 text-flare-300" />}
+              Neues Projekt
+              {!canCreateMore && <Badge tone="warn" className="!text-[9px] !py-0 ml-auto">Limit</Badge>}
+            </button>
+            {/* Der gesperrte Knopf feuert kein onClick — ohne diese Zeile sah
+                ein Kunde nur einen grauen Knopf und keinen Grund dafür. */}
+            {!canCreateMore && (
+              <p className="px-3.5 pb-2.5 -mt-1 text-[11px] leading-snug text-ink-50/55">
+                Du kannst höchstens {quota.projectLimit} Projekte haben. Lösch ein Projekt, um ein neues
+                anzulegen — sichere es vorher am besten über „Alle Projekte sichern".
+              </p>
             )}
-          >
-            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderPlus className="w-4 h-4 text-flare-300" />}
-            Neues Projekt
-            {!canCreateMore && <Badge tone="warn" className="!text-[9px] !py-0 ml-auto">Limit</Badge>}
-          </button>
+          </>
         )}
 
         <MenuDivider />
