@@ -11,6 +11,7 @@ import { ProjectsProvider } from "./hooks/useProjects";
 import { TutorialsProvider } from "./hooks/useTutorials";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TabLockGate } from "./components/TabLockGate";
+import { ProjectSyncRoot } from "./components/ProjectSyncRoot";
 import { startTabLock } from "./lib/tabLock";
 import "./index.css";
 
@@ -60,12 +61,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <TabLockGate>
               <SettingsProvider>
                 <AuthProvider>
-                  <ProjectsProvider>
-                    <TutorialsProvider>
-                    <App />
-                    <AppToaster />
-                    </TutorialsProvider>
-                  </ProjectsProvider>
+                  <ProjectSyncRoot>
+                    <ProjectsProvider>
+                      <TutorialsProvider>
+                      <App />
+                      <AppToaster />
+                      </TutorialsProvider>
+                    </ProjectsProvider>
+                  </ProjectSyncRoot>
                 </AuthProvider>
               </SettingsProvider>
             </TabLockGate>

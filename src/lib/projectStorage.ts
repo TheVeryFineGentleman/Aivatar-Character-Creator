@@ -2,12 +2,30 @@
  * Project management — keeps each project's app state under its own namespaced key
  * so users can switch between named projects without losing state.
  *
- * Storage backend is localStorage by default (browser-only, no DigitalOcean Spaces calls).
- * Future: swap to S3 by hot-swapping `readProjectData` / `writeProjectData`.
+ * localStorage ist die schnelle Kopie, mit der die App arbeitet. Der Speicherort
+ * ist seit 2026-09 das Konto: jede Änderung hier meldet `onProjectWrite`, und
+ * `lib/projectSync` lädt sie ins Konto hoch. Deshalb MUSS jeder Schreibzugriff
+ * auf Projekte durch diese Datei laufen.
  */
 
 import { KEYS, ls } from "@/lib/storage";
 import { uid } from "@/lib/uid";
+
+/** Name des automatisch angelegten Projekts — leer wird es nicht ins Konto geladen. */
+export const DEFAULT_PROJECT_NAME = "Mein erstes Projekt";
+
+export type ProjectWriteEvent = { type: "changed" | "deleted"; id: string };
+const writeListeners = new Set<(e: ProjectWriteEvent) => void>();
+
+/** Meldet jede Projekt-Änderung (für den Konto-Abgleich). */
+export function onProjectWrite(listener: (e: ProjectWriteEvent) => void): () => void {
+  writeListeners.add(listener);
+  return () => { writeListeners.delete(listener); };
+}
+
+function emitWrite(e: ProjectWriteEvent) {
+  for (const l of writeListeners) l(e);
+}
 
 export interface ProjectMeta {
   id: string;
@@ -72,7 +90,7 @@ export function createProject(name: string): ProjectMeta {
   const items = listProjects();
   items.unshift(meta);
   writeIndex(items);
-  ls.set(KEYS.PROJECT_PREFIX + id, { meta, state: {} } satisfies ProjectData);
+  if (ls.set(KEYS.PROJECT_PREFIX + id, { meta, state: {} } satisfies ProjectData)) emitWrite({ type: "changed", id });
   setCurrentProjectId(id);
   return meta;
 }
@@ -90,6 +108,7 @@ export function putProject(meta: ProjectMeta, state: unknown): boolean {
   const items = listProjects().filter((p) => p.id !== meta.id);
   items.unshift(full);
   writeIndex(items);
+  emitWrite({ type: "changed", id: meta.id });
   return true;
 }
 
@@ -100,7 +119,7 @@ export function renameProject(id: string, newName: string): void {
   const data = ls.get<ProjectData>(KEYS.PROJECT_PREFIX + id);
   if (data) {
     data.meta = { ...data.meta, name: newName.trim() || data.meta.name, modifiedAt: Date.now() };
-    ls.set(KEYS.PROJECT_PREFIX + id, data);
+    if (ls.set(KEYS.PROJECT_PREFIX + id, data)) emitWrite({ type: "changed", id });
   }
 }
 
@@ -111,6 +130,7 @@ export function deleteProject(id: string): void {
   if (getCurrentProjectId() === id) {
     setCurrentProjectId(items[0]?.id ?? null);
   }
+  emitWrite({ type: "deleted", id });
 }
 
 export function loadProject(id: string): ProjectData | null {
@@ -130,6 +150,7 @@ export function saveProjectState(id: string, state: unknown): boolean {
   // bubble updated meta into index
   const idx = listProjects().map((p) => (p.id === id ? next.meta : p));
   writeIndex(idx);
+  if (ok) emitWrite({ type: "changed", id });
   return ok;
 }
 
@@ -138,7 +159,7 @@ export function ensureProject(): ProjectMeta {
   let items = listProjects();
   let currentId = getCurrentProjectId();
   if (!items.length) {
-    return createProject("Mein erstes Projekt");
+    return createProject(DEFAULT_PROJECT_NAME);
   }
   if (!currentId || !items.find((p) => p.id === currentId)) {
     setCurrentProjectId(items[0].id);

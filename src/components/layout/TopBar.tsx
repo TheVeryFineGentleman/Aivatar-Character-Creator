@@ -14,6 +14,7 @@ import { Menu, MenuItem, MenuSection, MenuDivider } from "@/components/ui/Menu";
 import { cn } from "@/lib/cn";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StorageMeter } from "@/components/StorageMeter";
+import { SyncStatus } from "@/components/SyncStatus";
 import { isFullSale } from "@/lib/plans";
 
 // Build-Version (Git-Commit) — oben links, damit sofort sichtbar ist, welcher
@@ -208,6 +209,7 @@ export function TopBar({ onLogin, onSettings, settingsOpen }: { onLogin: () => v
             <div className="w-px h-5 bg-white/10 mx-1 shrink-0" />
             <ProjectSwitcher />
             <StorageMeter variant="compact" />
+            <SyncStatus />
           </>
         )}
       </div>

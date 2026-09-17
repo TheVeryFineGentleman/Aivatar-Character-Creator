@@ -7,6 +7,7 @@ import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { ProfileSetupDialog } from "@/components/dialogs/ProfileSetupDialog";
 import { RecoveryPrompt } from "@/components/dialogs/RecoveryDialog";
 import { SessionTokenSync } from "@/components/SessionTokenSync";
+import { SyncConflictDialog } from "@/components/dialogs/SyncConflictDialog";
 import { useProjects } from "@/hooks/useProjects";
 import { loadProject } from "@/lib/projectStorage";
 import { shouldAskForProfile, type ProjectProfile } from "@/lib/projectProfile";
@@ -69,6 +70,7 @@ export default function App() {
       <TutorialPanel onOpenSettings={() => setSettingsOpen(true)} />
       <RecoveryPrompt />
       <SessionTokenSync />
+      <SyncConflictDialog />
     </>
   );
 }
