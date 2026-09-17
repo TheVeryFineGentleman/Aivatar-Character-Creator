@@ -45,12 +45,12 @@ export function DisclaimerPopup() {
         <Row
           icon={<KeyRound className="w-5 h-5" />}
           title="Eigene API-Keys"
-          text="Du nutzt deinen eigenen Google-Gemini-Key (und optional fal.ai). Wir leiten nichts an unsere Server weiter — alle KI-Calls gehen direkt von deinem Browser an Google."
+          text="Du nutzt deinen eigenen Google-Gemini-Key (und optional fal.ai). Anfragen an Google gehen direkt von deinem Browser dorthin; Clips, Stimmen und alles über fal.ai laufen über unseren Server, der deinen Key nur durchreicht."
         />
         <Row
           icon={<Lock className="w-5 h-5" />}
           title="Keine Tracker"
-          text="Wir nutzen keine Analytics, kein Tracking, keine Drittanbieter-Cookies. Login-Daten und Projekte liegen nur in deinem Browser-Storage."
+          text="Wir nutzen keine Analytics, kein Tracking, keine Drittanbieter-Cookies. Deine Projekte liegen in deinem Konto, damit du sie in jedem Browser wiederfindest."
         />
       </div>
     </Dialog>

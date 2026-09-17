@@ -35,7 +35,7 @@ export function CookieConsent() {
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold mb-0.5">Wir nutzen LocalStorage</div>
             <div className="text-xs text-ink-50/65 leading-relaxed">
-              Aivatar speichert API-Keys, Login und Projekte nur in deinem Browser — keine Tracker, keine Drittanbieter-Cookies.
+              Aivatar speichert deine API-Keys im Browser und deine Projekte in deinem Konto — keine Tracker, keine Drittanbieter-Cookies.
               Details in den{" "}
               <Link to="/legal" className="text-flare-300 hover:text-flare-200 underline">Hinweisen zum Datenschutz</Link>.
             </div>

@@ -45,7 +45,7 @@ export default function LegalPage() {
       <Card className="mt-4">
         <h2 className="text-lg font-semibold mb-3">Datenschutz im Detail</h2>
         <div className="space-y-3 text-sm text-ink-50/75">
-          <p>API-Keys liegen im <code className="font-mono text-flare-300 bg-white/5 px-1 rounded">localStorage</code> deines Browsers. Die App sendet sie direkt von deinem Gerät an Google bzw. fal.ai. An unseren Server gehen sie nur, wenn du „Keys in meinem Konto speichern“ einschaltest (siehe oben) — dann verschlüsselt.</p>
+          <p>API-Keys liegen im <code className="font-mono text-flare-300 bg-white/5 px-1 rounded">localStorage</code> deines Browsers. Den Google-Key sendet die App direkt von deinem Gerät an Google. Der fal.ai- und der ElevenLabs-Key laufen für Bilder, Clips und Stimmen über unseren Server, der sie an den jeweiligen Anbieter durchreicht und nicht aufbewahrt. Dauerhaft gespeichert wird ein Key nur, wenn du „Keys in meinem Konto speichern“ einschaltest (siehe oben) — dann verschlüsselt.</p>
           <p>Lizenz-Verifikation läuft über unseren Server (E-Mail + Schlüssel). Es werden keine generierten Bilder oder Texte zur Auswertung gespeichert.</p>
           <p>Deine Projekte (Namen, Szenen, Texte, Einstellungen und die Verweise auf deine Dateien) speichern wir in deinem Konto, damit sie nach dem Login überall verfügbar sind. Die erzeugten Bilder, Videos und Sprachspuren liegen in unserem DigitalOcean-Spaces-Speicher. Löschst du ein Projekt, entfernen wir es samt seiner Dateien; ältere Fassungen halten wir kurzzeitig vor, damit versehentlich Überschriebenes zurückgeholt werden kann.</p>
         </div>
