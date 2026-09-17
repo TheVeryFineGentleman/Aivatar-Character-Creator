@@ -3,12 +3,22 @@
  *
  * Images & videos go to the Space; text / inputs / project structure stay in
  * localStorage. Objects live under:
- *   aivatar-projects/<sha1(email)>/projects/<projectId>/<kind>/<id>.<ext>
+ *   aivatar-projects/<sha1(email)>/<projectId>/<kind>/<id>.<ext>
  *
  * Upload returns a public URL that we then store in the (localStorage) project
- * state. Everything degrades gracefully when Spaces isn't configured.
+ * state. Everything degrades gracefully when storage isn't available.
+ *
+ * SEIT 2026-09: Hochladen und Löschen laufen über den Server (/api/storage/*),
+ * ausgewiesen mit dem Sitzungs-Token; den Ordner bestimmt der Server aus dem
+ * Token. Vorher lud die App direkt mit dem Spaces-Schlüssel hoch — der stand
+ * dafür öffentlich im JavaScript, und jeder Besucher hätte alle Dateien aller
+ * Kunden löschen können. Der direkte Weg bleibt NUR für `vite dev` (der
+ * Dev-Login bekommt kein Token); im Produktions-Build gibt es ihn nicht, dort
+ * enthält `doSpaces` keine Zugangsdaten.
  */
 
+import { API } from "@/lib/backend";
+import { getSessionToken } from "@/lib/session";
 import {
   putObject,
   deleteObject,
@@ -20,8 +30,12 @@ import {
 
 export const PROJECT_PREFIX = "aivatar-projects";
 
+/** Direkter Bucket-Zugang: nur `vite dev` mit Schlüssel in der lokalen .env. */
+const DIRECT = import.meta.env.DEV && isConfigured();
+
+/** Können Dateien gerade dauerhaft gespeichert werden? */
 export function isStorageReady(): boolean {
-  return isConfigured();
+  return DIRECT || !!getSessionToken();
 }
 
 // ── User namespace (sha1(email)) ─────────────────────────────────────────────
@@ -84,6 +98,34 @@ const EXT_BY_MIME: Record<string, string> = {
   "audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/wav": "wav", "audio/ogg": "ogg",
 };
 
+function toDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error("Datei nicht lesbar."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function postStorage(path: string, body: unknown): Promise<Response> {
+  const token = getSessionToken();
+  if (!token) throw new Error("Nicht angemeldet — Dateien können nicht gespeichert werden.");
+  return fetch(API(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+}
+
+async function errorCode(res: Response): Promise<string> {
+  try {
+    const data = await res.json();
+    return String(data?.error || res.status);
+  } catch {
+    return String(res.status);
+  }
+}
+
 /** Upload a Blob / data-URL / remote URL and return its public Spaces URL. */
 export async function uploadAsset(
   email: string,
@@ -91,18 +133,41 @@ export async function uploadAsset(
   kind: AssetKind,
   source: Blob | string,
 ): Promise<string> {
-  if (!isConfigured()) throw new Error("DO Spaces nicht konfiguriert.");
+  if (DIRECT) return uploadDirect(email, projectId, kind, source);
+
+  const src = typeof source === "string" ? source : await toDataUrl(source);
+  const sourceUrl = src.startsWith("data:") ? undefined : src;
+  let res = await postStorage(
+    "/api/storage/upload",
+    sourceUrl ? { projectId, kind, sourceUrl } : { projectId, kind, dataUrl: src },
+  );
+
+  // Adresse außerhalb der Server-Freigabe (nur fal wird dort selbst abgeholt):
+  // die Datei hier laden und als Daten schicken.
+  if (res.status === 400 && sourceUrl && (await errorCode(res.clone())) === "SOURCE_NOT_ALLOWED") {
+    const resp = await fetch(sourceUrl);
+    if (!resp.ok) throw new Error(`Download fehlgeschlagen: ${resp.status}`);
+    res = await postStorage("/api/storage/upload", { projectId, kind, dataUrl: await toDataUrl(await resp.blob()) });
+  }
+
+  if (!res.ok) throw new Error(`Speichern im Bucket fehlgeschlagen (${res.status}): ${await errorCode(res)}`);
+  const data = (await res.json()) as { url?: string };
+  if (!data.url) throw new Error("Speichern im Bucket fehlgeschlagen: keine URL erhalten.");
+  return data.url;
+}
+
+/** Nur `vite dev`: direkt mit dem Schlüssel aus der lokalen .env. */
+async function uploadDirect(email: string, projectId: string, kind: AssetKind, source: Blob | string): Promise<string> {
   const prefix = await userPrefix(email);
   let blob: Blob;
   if (typeof source === "string") {
     if (source.startsWith("data:")) {
       const match = source.match(/^data:([^;]+);base64,(.+)$/);
       if (!match) throw new Error("Ungültige data URL");
-      const mime = match[1];
       const bin = atob(match[2]);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      blob = new Blob([bytes], { type: mime });
+      blob = new Blob([bytes], { type: match[1] });
     } else {
       const resp = await fetch(source);
       if (!resp.ok) throw new Error(`Download fehlgeschlagen: ${resp.status}`);
@@ -111,7 +176,7 @@ export async function uploadAsset(
   } else {
     blob = source;
   }
-  // Normalize the content type. Veo/fal sometimes return an mp4 body without a
+  // Normalize the content type. fal sometimes returns an mp4 body without a
   // proper Content-Type header — uploading that as "application/octet-stream"
   // makes the browser refuse to play it back. Force the correct type per kind.
   let contentType = blob.type;
@@ -126,21 +191,35 @@ export async function uploadAsset(
 }
 
 export async function deleteAssetByUrl(url: string): Promise<void> {
-  if (!isConfigured() || !url.startsWith(SPACES_PUBLIC_BASE)) return;
-  const key = keyFromPublicUrl(url);
-  if (!key) return;
-  try { await deleteObject(key); } catch (err: any) {
+  if (!url.startsWith(SPACES_PUBLIC_BASE)) return;
+  try {
+    if (DIRECT) {
+      const key = keyFromPublicUrl(url);
+      if (key) await deleteObject(key);
+      return;
+    }
+    if (!getSessionToken()) return;
+    const res = await postStorage("/api/storage/delete", { url });
+    if (!res.ok) console.warn("[projectAssets] deleteAssetByUrl failed:", res.status, await errorCode(res));
+  } catch (err: any) {
     console.warn("[projectAssets] deleteAssetByUrl failed:", err?.message);
   }
 }
 
 /** Remove every asset of a project (used when a project is deleted). */
 export async function deleteProjectAssets(email: string, projectId: string): Promise<void> {
-  if (!isConfigured()) return;
-  const prefix = await userPrefix(email);
-  try { await deletePrefix(`${PROJECT_PREFIX}/${prefix}/${projectId}/`); } catch (err: any) {
+  try {
+    if (DIRECT) {
+      const prefix = await userPrefix(email);
+      await deletePrefix(`${PROJECT_PREFIX}/${prefix}/${projectId}/`);
+      return;
+    }
+    if (!getSessionToken()) return;
+    const res = await postStorage("/api/storage/delete-project", { projectId });
+    if (!res.ok) console.warn("[projectAssets] deleteProjectAssets failed:", res.status, await errorCode(res));
+  } catch (err: any) {
     console.warn("[projectAssets] deleteProjectAssets failed:", err?.message);
   }
 }
 
-export { isConfigured as spacesConfigured };
+export { isStorageReady as spacesConfigured };

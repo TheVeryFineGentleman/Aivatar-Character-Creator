@@ -1,8 +1,14 @@
 // DigitalOcean Spaces (S3-compatible) client.
 // Hand-rolled AWS Signature V4 to avoid pulling the 50KB+ aws-sdk into the bundle.
-// Used for project save/load: state.json, reference images, generated images, videos.
 //
-// Required env vars (Vite, prefix VITE_ so they're shipped to the browser):
+// NUR NOCH FÜR DIE LOKALE ENTWICKLUNG (`vite dev`). Im Produktions-Build sind
+// die Zugangsdaten `undefined` und der Minifier entfernt die Werte ganz — sie
+// standen vorher öffentlich im JavaScript, und jeder Besucher hätte damit alle
+// Dateien aller Kunden löschen können. In Prod laufen Uploads über den Server
+// (/api/storage/*, siehe projectAssets). Öffentlich bleiben nur Bucket-Name und
+// Region (für SPACES_PUBLIC_BASE) — die sind kein Geheimnis.
+//
+// Env vars for local dev (.env):
 //   VITE_DO_SPACES_KEY     - Access Key ID
 //   VITE_DO_SPACES_SECRET  - Secret Access Key
 //   VITE_DO_SPACES_REGION  - e.g. "fra1"
@@ -13,8 +19,8 @@
 // with PUT, GET, DELETE methods, plus headers Authorization, x-amz-content-sha256,
 // x-amz-date, content-type.
 
-const ACCESS_KEY = import.meta.env.VITE_DO_SPACES_KEY as string | undefined;
-const SECRET_KEY = import.meta.env.VITE_DO_SPACES_SECRET as string | undefined;
+const ACCESS_KEY = import.meta.env.DEV ? (import.meta.env.VITE_DO_SPACES_KEY as string | undefined) : undefined;
+const SECRET_KEY = import.meta.env.DEV ? (import.meta.env.VITE_DO_SPACES_SECRET as string | undefined) : undefined;
 const REGION = (import.meta.env.VITE_DO_SPACES_REGION as string | undefined) || "fra1";
 const BUCKET = (import.meta.env.VITE_DO_SPACES_BUCKET as string | undefined) || "template-pictures-bucket";
 const ENDPOINT_HOST =
