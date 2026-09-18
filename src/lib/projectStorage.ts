@@ -44,12 +44,12 @@ const GB = 1024 ** 3;
 
 export const STORAGE_FREE = {
   bytes: 3 * GB,
-  projects: 3,
+  projects: 20,
 };
 
 export const STORAGE_ADDON = {
   bytes: 25 * GB,
-  projects: 3,
+  projects: 20,
 };
 
 /** Effective limits — addon replaces (not adds to) free. */

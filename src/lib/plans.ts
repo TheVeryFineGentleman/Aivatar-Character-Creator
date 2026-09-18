@@ -63,7 +63,7 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
     storyReel: false,
     videoGen: false,
     maxImagesPerRun: 1,
-    maxProjects: 3,
+    maxProjects: 20,
     storageBytes: 3 * GB,
   },
   premium: {
@@ -82,7 +82,7 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
     storyReel: false,
     videoGen: false,
     maxImagesPerRun: 40,
-    maxProjects: 3,
+    maxProjects: 20,
     storageBytes: 3 * GB,
   },
   full: {
@@ -101,7 +101,7 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
     storyReel: true,
     videoGen: true,
     maxImagesPerRun: -1,
-    maxProjects: 3,
+    maxProjects: 20,
     storageBytes: 3 * GB,
   },
   studio: {
@@ -120,7 +120,7 @@ export const PLANS: Record<PlanTier, PlanCapabilities> = {
     storyReel: true,
     videoGen: true,
     maxImagesPerRun: -1,
-    maxProjects: 3,
+    maxProjects: 20,
     storageBytes: 3 * GB,
   },
 };

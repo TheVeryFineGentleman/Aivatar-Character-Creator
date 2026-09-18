@@ -43,7 +43,7 @@ export function StorageUpgradeModal({ open, onClose }: { open: boolean; onClose:
       open={open}
       onClose={onClose}
       title={quota.hasAddon ? "Speicher-Addon aktiv" : "Mehr Speicher freischalten"}
-      subtitle={quota.hasAddon ? "Du nutzt das 25-GB-Addon." : "Erweitere auf 25 GB und 3 Projekte für 5 € / Monat."}
+      subtitle={quota.hasAddon ? "Du nutzt das 25-GB-Addon." : "Erweitere auf 25 GB Speicher für 5 € / Monat."}
       size="lg"
       footer={
         <div className="flex justify-between gap-3 items-center">
@@ -66,14 +66,14 @@ export function StorageUpgradeModal({ open, onClose }: { open: boolean; onClose:
           active={!quota.hasAddon}
           title="Free"
           price="0 €"
-          features={["3 GB Speicher", "1 Projekt", "Alle Studio-Tools"]}
+          features={["3 GB Speicher", "20 Projekte", "Alle Studio-Tools"]}
         />
         <Tile
           tone="hot"
           active={quota.hasAddon}
           title="Storage Addon"
           price="5 € / mo"
-          features={["25 GB Speicher", "3 Projekte", "Inkl. Backups"]}
+          features={["25 GB Speicher", "20 Projekte", "Inkl. Backups"]}
           highlight
         />
       </div>

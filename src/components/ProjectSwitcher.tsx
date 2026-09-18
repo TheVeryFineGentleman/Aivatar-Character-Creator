@@ -64,7 +64,7 @@ export function ProjectSwitcher() {
     const name = newName.trim() || `Projekt ${projects.length + 1}`;
     const meta = create(name);
     if (!meta) {
-      // Kein „Upgrade für mehr Slots": auch das Speicher-Add-on erlaubt nur 3 Projekte.
+      // Kein „Upgrade für mehr Slots": auch das Speicher-Add-on erlaubt nicht mehr als 20 Projekte.
       toast.error(`Projekt-Limit erreicht (${quota.projectLimit}). Lösch ein Projekt, um ein neues anzulegen.`);
       return;
     }
